@@ -1,5 +1,6 @@
 // Single source of truth for the Electron context bridge API surface.
 import type { MeshNode, MQTTSettings, MQTTStatus } from '../renderer/lib/types';
+import type { BeaconFeedApi } from './beacon';
 import type {
   EnvironmentReading,
   EnvironmentTelemetryRow,
@@ -17,6 +18,7 @@ import type {
   TAKContactsUpdate,
   TAKEnrollmentRequest,
   TAKGeochatMessage,
+  TAKInboundChat,
   TAKNodeUpdate,
   TAKRemoteCredentialSummary,
   TAKRemoteSettings,
@@ -261,6 +263,7 @@ export type BleCoexistenceAcquireScanResult =
   | ({ ok: false; code: 'scan_busy'; owner: BleScanOwner } & BleCoexistenceState);
 
 export interface ElectronAPI {
+  beacon: BeaconFeedApi;
   translation: TranslationAPI;
   // ─── Database operations ────────────────────────────────────────────────────
   db: {
@@ -846,7 +849,7 @@ export interface ElectronAPI {
       minZoom: number;
       maxZoom: number;
       basemapId: OfflineMapBasemapId;
-      /** CARTO `@2x` tiles when devicePixelRatio > 1; ignored for OSM. */
+      /** Legacy flag; current basemap sources do not serve retina variants. */
       retina?: boolean;
     }) => Promise<{ tileCount: number; sizeEstimateBytes: number; withinCaps: boolean }>;
     download: (req: {
@@ -854,7 +857,7 @@ export interface ElectronAPI {
       minZoom: number;
       maxZoom: number;
       basemapId: OfflineMapBasemapId;
-      /** CARTO `@2x` tiles when devicePixelRatio > 1; ignored for OSM. */
+      /** Legacy flag; current basemap sources do not serve retina variants. */
       retina?: boolean;
     }) => Promise<{ jobId: string }>;
     cancel: (jobId: string) => Promise<{ cancelled: boolean }>;
@@ -928,11 +931,27 @@ export interface ElectronAPI {
 
   notificationSounds: NotificationSoundsApi;
 
-  // ─── Safe storage ────────────────────────────────────────────────────────────
-  safeStorage: {
-    encrypt: (plaintext: string) => Promise<string | null>;
-    decrypt: (ciphertext: string) => Promise<string | null>;
-    isAvailable: () => Promise<boolean>;
+  // ─── Main-owned secure secret storage ───────────────────────────────────────
+  secureSecrets: {
+    status: () => Promise<{ available: boolean; persistent: boolean }>;
+    list: () => Promise<string[]>;
+    getAll: () => Promise<Record<string, string>>;
+    get: (key: string) => Promise<string | null>;
+    set: (
+      key: string,
+      value: string,
+      requirePersistent?: boolean,
+    ) => Promise<{ available: boolean; persistent: boolean; verified: boolean }>;
+    remove: (key: string) => Promise<void>;
+    migrateLegacyIdentityCiphertext: (
+      ciphertext: string,
+    ) => Promise<{ available: boolean; persistent: boolean; verified: boolean }>;
+    migrateLegacyBackupCiphertext: (
+      protocol: 'meshcore' | 'meshtastic',
+      id: number,
+      format: 'per-node' | 'meshtastic-single',
+      ciphertext: string,
+    ) => Promise<{ available: boolean; persistent: boolean; verified: boolean }>;
   };
 
   // ─── App settings ────────────────────────────────────────────────────────────
@@ -943,6 +962,8 @@ export interface ElectronAPI {
     getAll: () => Promise<Record<string, string>>;
     /** Write a single SQLite-backed app setting. Keys are allow-listed in main. */
     set: (key: string, value: string) => Promise<{ changes: number }>;
+    /** Remove an allow-listed SQLite-backed app setting. */
+    remove: (key: string) => Promise<{ changes: number }>;
   };
 
   // ─── OS emoji panel ──────────────────────────────────────────────────────────
@@ -1117,6 +1138,11 @@ export interface ElectronAPI {
     getContacts: () => Promise<TAKContact[]>;
     /** Batched contact changes, at most about once per second. */
     onContacts: (cb: (update: TAKContactsUpdate) => void) => () => void;
+    /**
+     * A GeoChat message a local TAK client sent. The renderer sends it on the mesh only when its
+     * room is bridged to a channel that allows sending.
+     */
+    onInboundChat: (cb: (message: TAKInboundChat) => void) => () => void;
     /** Start (or restart) the relay to a remote TAK server; saves the settings. */
     remoteStart: (settings: TAKRemoteSettings) => Promise<void>;
     remoteStop: () => Promise<void>;

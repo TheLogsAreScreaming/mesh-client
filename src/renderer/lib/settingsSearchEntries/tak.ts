@@ -125,6 +125,13 @@ const takEntries: readonly SettingSearchEntry[] = [
     keywords: ['tak', 'cot', 'filter', 'relay', 'unmatched'],
   },
   {
+    id: 'tak.styles.relayIcon',
+    slot: 'TAK',
+    labelKey: 'takServerPanel.unitStylesRelayIcon',
+    sectionKey: STYLES,
+    keywords: ['tak', 'cot', 'icon', 'iconset', 'repeater', 'room server', 'router', 'symbol'],
+  },
+  {
     id: 'tak.styles.addFilter',
     slot: 'TAK',
     labelKey: 'takServerPanel.unitStylesAddFilter',
@@ -196,8 +203,10 @@ export const takSurface: SettingsSearchSurface = {
     'takServerPanel.unitFilter*': 'fields of a filter row added by the indexed Add filter control',
     'takServerPanel.channelRelayTitle': 'section heading; its channel rows are indexed',
     'takServerPanel.channelRelayRoom*': 'GeoChat room field in each indexed channel row',
+    'takServerPanel.channelRelaySend*': 'TAK send opt-in in each indexed channel row',
     'takServerPanel.channelRelayUnnamed': 'fallback channel name in a row',
     'takServerPanel.channelRelayNoChannels*': 'empty-state text before a radio lists channels',
-    'takServerPanel.channelRelayDescMeshtastic': 'section prose; its channel rows are indexed',
+    'takServerPanel.channelRelayHelp': 'section prose; its channel rows are indexed',
+    'takServerPanel.channelRelayHelpMeshtastic': 'section prose; its channel rows are indexed',
   },
 };

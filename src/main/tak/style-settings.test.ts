@@ -71,6 +71,72 @@ describe('parseTakStyleSettings', () => {
   });
 });
 
+describe('parseTakStyleSettings filter conditions', () => {
+  const withFilter = (extra: Record<string, unknown>) => ({
+    ...VALID,
+    filters: [{ ...VALID.filters[0], ...extra }],
+  });
+
+  it('keeps a node kind and protocol and omits them when absent', () => {
+    const parsed = parseTakStyleSettings(withFilter({ nodeKind: 'room', protocol: 'meshcore' }));
+    expect(parsed.filters[0]).toMatchObject({ nodeKind: 'room', protocol: 'meshcore' });
+    const plain = parseTakStyleSettings(VALID).filters[0];
+    expect(plain).not.toHaveProperty('nodeKind');
+    expect(plain).not.toHaveProperty('protocol');
+  });
+
+  it('accepts a filter with a node kind and no name patterns', () => {
+    const parsed = parseTakStyleSettings(withFilter({ nodeKind: 'sensor', patterns: [] }));
+    expect(parsed.filters[0]).toMatchObject({ nodeKind: 'sensor', patterns: [] });
+  });
+
+  it.each([
+    ['an unknown node kind', { nodeKind: 'gateway' }, /nodeKind/],
+    ['a non-string node kind', { nodeKind: 3 }, /nodeKind/],
+    ['an unknown protocol', { protocol: 'aprs' }, /protocol/],
+    ['a non-string protocol', { protocol: null }, /protocol/],
+  ])('rejects %s', (_label, extra, message) => {
+    expect(() => parseTakStyleSettings(withFilter(extra))).toThrow(message);
+  });
+});
+
+describe('parseTakStyleSettings relay icon', () => {
+  const ICON = 'geoops/WildFire/Repeater.png';
+
+  it('keeps a trimmed icon set path, including spaces in the file name', () => {
+    expect(parseTakStyleSettings({ ...VALID, relayIconsetPath: ` ${ICON} ` })).toMatchObject({
+      relayIconsetPath: ICON,
+    });
+    expect(
+      parseTakStyleSettings({
+        ...VALID,
+        relayIconsetPath: 'uid/WildFire/Repeater Mobile Relay.png',
+      }).relayIconsetPath,
+    ).toBe('uid/WildFire/Repeater Mobile Relay.png');
+  });
+
+  it('omits the field when absent or blank', () => {
+    expect(parseTakStyleSettings(VALID)).not.toHaveProperty('relayIconsetPath');
+    expect(parseTakStyleSettings({ ...VALID, relayIconsetPath: '  ' })).not.toHaveProperty(
+      'relayIconsetPath',
+    );
+  });
+
+  it.each([
+    ['not a string', 7],
+    ['too few segments', 'uid/Repeater.png'],
+    ['too many segments', 'uid/a/b/Repeater.png'],
+    ['an empty segment', 'uid//Repeater.png'],
+    ['markup', 'uid/WildFire/"><x a="'],
+    ['a control character', 'uid/Wild\nFire/Repeater.png'],
+    ['a DEL character', 'uid/Wild\u007fFire/Repeater.png'],
+    ['a C1 control character', 'uid/Wild\u0085Fire/Repeater.png'],
+    ['over the length cap', `uid/WildFire/${'x'.repeat(260)}.png`],
+  ])('rejects %s', (_label, relayIconsetPath) => {
+    expect(() => parseTakStyleSettings({ ...VALID, relayIconsetPath })).toThrow(/relayIconsetPath/);
+  });
+});
+
 describe('load/save TAK style settings', () => {
   it('returns the defaults when nothing was saved', () => {
     expect(loadTakStyleSettings()).toEqual(DEFAULT_TAK_STYLE_SETTINGS);

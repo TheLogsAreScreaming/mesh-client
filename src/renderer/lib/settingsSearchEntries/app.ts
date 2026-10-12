@@ -11,6 +11,7 @@ const hasContactRetention = (ctx: SettingsSearchContext) =>
 
 const DANGER = 'appPanel.dangerZoneSection';
 const RETENTION = 'appPanel.retentionLimitsHeading';
+const UPDATES = 'appPanel.updatesSection';
 
 const appEntries: readonly SettingSearchEntry[] = [
   {
@@ -279,6 +280,13 @@ const appEntries: readonly SettingSearchEntry[] = [
     keywords: ['clock', 'time format'],
   },
   {
+    id: 'app.updates.autoDownload',
+    slot: 'App',
+    labelKey: 'appPanel.autoUpdateDownload',
+    sectionKey: UPDATES,
+    keywords: ['update', 'updater', 'auto-download', 'package manager', 'install'],
+  },
+  {
     id: 'app.appearance.fontSize',
     slot: 'App',
     labelKey: 'appPanel.fontSize',
@@ -399,7 +407,7 @@ const appEntries: readonly SettingSearchEntry[] = [
   {
     id: 'app.mecp.showComposeButton',
     slot: 'App',
-    labelKey: 'mecp.section.showComposeButton',
+    labelKey: 'mecp.section.showComposeButtons',
     sectionKey: 'mecp.section.title',
     keywords: ['mecp', 'emergency', 'report'],
   },
@@ -556,6 +564,8 @@ export const appSurface: SettingsSearchSurface = {
   exempt: {
     'chatTranslation.offlinePrivacy':
       'Translation section help, status, or child action; its parent setting is indexed',
+    'chatTranslation.secureUrlRequired':
+      'Translation server migration status; its parent online-translation setting is indexed',
     'chatTranslation.optInDescription':
       'Translation section help, status, or child action; its parent setting is indexed',
     'chatTranslation.enable':
@@ -723,7 +733,7 @@ export const appSurface: SettingsSearchSurface = {
     'chatPanel.clearChannelMessagesRadioChanged': 'warning toast, not a control',
     'radioPanel.directMessages': 'channel option label in the Danger Zone clear-messages picker',
     'mecp.section.hint': 'section prose, no control',
-    'mecp.section.showComposeButtonHint': 'help text for the indexed MECP compose toggle',
+    'mecp.section.showComposeButtonsHint': 'help text for the indexed MECP compose toggle',
     'mecp.section.standingAlertHint': 'help text for the indexed standing-alert toggle',
     'mecp.section.learnMore': 'external documentation link',
     'mecp.section.protocolSource': 'external source link',

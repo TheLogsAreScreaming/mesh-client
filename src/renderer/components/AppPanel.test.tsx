@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
 import { hydrateAxeThemeColors } from '../lib/a11yTestHelpers';
+import { APP_SETTINGS_STORAGE_KEY } from '../lib/appSettingsStorage';
 import { FONT_SCALE_STORAGE_KEY } from '../lib/fontScale';
 import { MESSAGE_RETENTION_KEYS } from '../lib/messageRetention';
 import {
@@ -296,6 +297,175 @@ describe('AppPanel: sound notification toggle', () => {
   });
 });
 
+describe('AppPanel: auto-download updates toggle', () => {
+  const defaultProps = {
+    protocol: 'meshtastic' as const,
+    nodeCount: 0,
+    messageCount: 0,
+    channels: [] as { index: number; name: string }[],
+    myNodeNum: null as number | null,
+    onLocationFilterChange: vi.fn(),
+  };
+
+  beforeEach(() => {
+    localStorage.removeItem(APP_SETTINGS_STORAGE_KEY);
+    vi.mocked(window.electronAPI.appSettings.set).mockReset();
+    vi.mocked(window.electronAPI.appSettings.set).mockResolvedValue({ changes: 1 });
+  });
+
+  it('renders checked by default', async () => {
+    render(
+      <ToastProvider>
+        <AppPanel {...defaultProps} />
+      </ToastProvider>,
+    );
+    const checkbox = await screen.findByRole('checkbox', {
+      name: /download updates automatically/i,
+    });
+    expect(checkbox).toBeChecked();
+  });
+
+  it('unchecking persists 0 to localStorage and SQLite', async () => {
+    render(
+      <ToastProvider>
+        <AppPanel {...defaultProps} />
+      </ToastProvider>,
+    );
+    const checkbox = await screen.findByRole('checkbox', {
+      name: /download updates automatically/i,
+    });
+    act(() => {
+      fireEvent.click(checkbox);
+    });
+    expect(checkbox).not.toBeChecked();
+    const parsed = JSON.parse(localStorage.getItem(APP_SETTINGS_STORAGE_KEY) ?? '{}') as Record<
+      string,
+      unknown
+    >;
+    expect(parsed.autoUpdateDownloadEnabled).toBe(false);
+    expect(window.electronAPI.appSettings.set).toHaveBeenCalledWith(
+      'autoUpdateDownloadEnabled',
+      '0',
+    );
+
+    act(() => {
+      fireEvent.click(checkbox);
+    });
+    expect(checkbox).toBeChecked();
+    expect(window.electronAPI.appSettings.set).toHaveBeenLastCalledWith(
+      'autoUpdateDownloadEnabled',
+      '1',
+    );
+  });
+
+  it('rolls back the checkbox and localStorage and shows an error when the SQLite write fails', async () => {
+    vi.mocked(window.electronAPI.appSettings.set).mockRejectedValueOnce(new Error('db locked'));
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(
+      <ToastProvider>
+        <AppPanel {...defaultProps} />
+      </ToastProvider>,
+    );
+    const checkbox = await screen.findByRole('checkbox', {
+      name: /download updates automatically/i,
+    });
+    act(() => {
+      fireEvent.click(checkbox);
+    });
+    await waitFor(() => {
+      expect(checkbox).toBeChecked();
+    });
+    const parsed = JSON.parse(localStorage.getItem(APP_SETTINGS_STORAGE_KEY) ?? '{}') as Record<
+      string,
+      unknown
+    >;
+    expect(parsed.autoUpdateDownloadEnabled).toBe(true);
+    expect(
+      await screen.findByText('Could not save the automatic update download setting.'),
+    ).toBeInTheDocument();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('[AppPanel] autoUpdateDownloadEnabled persist failed'),
+    );
+    warn.mockRestore();
+  });
+
+  it('does not let a slow SQLite hydrate overwrite a change made while it was pending', async () => {
+    let resolveGetAll: (value: Record<string, string>) => void = () => {};
+    vi.mocked(window.electronAPI.appSettings.getAll).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveGetAll = resolve;
+      }),
+    );
+    render(
+      <ToastProvider>
+        <AppPanel {...defaultProps} />
+      </ToastProvider>,
+    );
+    const checkbox = await screen.findByRole('checkbox', {
+      name: /download updates automatically/i,
+    });
+    act(() => {
+      fireEvent.click(checkbox);
+    });
+    expect(checkbox).not.toBeChecked();
+
+    await act(async () => {
+      resolveGetAll({ autoUpdateDownloadEnabled: '1' });
+      await Promise.resolve();
+    });
+    expect(checkbox).not.toBeChecked();
+  });
+
+  it('hydrates any non-1 SQLite value as off', async () => {
+    vi.mocked(window.electronAPI.appSettings.getAll).mockResolvedValueOnce({
+      autoUpdateDownloadEnabled: 'yes',
+    });
+    render(
+      <ToastProvider>
+        <AppPanel {...defaultProps} />
+      </ToastProvider>,
+    );
+    const checkbox = await screen.findByRole('checkbox', {
+      name: /download updates automatically/i,
+    });
+    await waitFor(() => {
+      expect(checkbox).not.toBeChecked();
+    });
+  });
+
+  it('turns the checkbox off when SQLite settings cannot be read', async () => {
+    vi.mocked(window.electronAPI.appSettings.getAll).mockRejectedValueOnce(new Error('db down'));
+    render(
+      <ToastProvider>
+        <AppPanel {...defaultProps} />
+      </ToastProvider>,
+    );
+    const checkbox = await screen.findByRole('checkbox', {
+      name: /download updates automatically/i,
+    });
+    await waitFor(() => {
+      expect(checkbox).not.toBeChecked();
+    });
+  });
+
+  it('hydrates an off value from SQLite on mount', async () => {
+    vi.mocked(window.electronAPI.appSettings.getAll).mockResolvedValueOnce({
+      autoUpdateDownloadEnabled: '0',
+    });
+    render(
+      <ToastProvider>
+        <AppPanel {...defaultProps} />
+      </ToastProvider>,
+    );
+    const checkbox = await screen.findByRole('checkbox', {
+      name: /download updates automatically/i,
+    });
+    await waitFor(() => {
+      expect(checkbox).not.toBeChecked();
+    });
+  });
+});
+
 describe('AppPanel: MeshCore Radio-owned settings are not on App', () => {
   const defaultProps = {
     nodeCount: 0,
@@ -385,6 +555,10 @@ describe('AppPanel: support bundle exports', () => {
         <AppPanel {...defaultProps} protocol="meshtastic" />
       </ToastProvider>,
     );
+
+    expect(
+      await screen.findByText(/MECP emergency audit logs.*sender and channel identifiers/i),
+    ).toBeInTheDocument();
 
     fireEvent.click(
       await screen.findByRole('button', { name: /Export support bundle for developer/i }),

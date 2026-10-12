@@ -34,7 +34,9 @@
     "takRemoteConnecting": "uzaktan bağlantı",
     "takRemoteError": "uzaktan hata",
     "takRemoteOnly": "TAK {{remote}}",
-    "takWithRemote": "{{local}}, {{remote}}"
+    "takWithRemote": "{{local}}, {{remote}}",
+    "savedSettingsUnavailable": "Kaydedilen ayarlar yüklenemedi",
+    "savedSettingsRecovery": "Kaydedilen verileriniz saklandı. Sistem anahtarlığınızın kullanılabilir olup olmadığını kontrol edin veya bir dakika bekleyin ve tekrar deneyin."
   },
   "appPanel": {
     "failedSaveRetention": "Mesaj saklama ayarı kaydedilemedi.",
@@ -334,7 +336,7 @@
     "exportForGitHubDesc": "Hata ayıklama anlık görüntüsünü ve günlük dosyalarını tek bir zip dosyasında içerir. Herkese açık GitHub sorunlarına eklemek güvenlidir.",
     "exportForDeveloper": "Geliştirici için destek paketini dışa aktarın",
     "exportForDeveloperButton": "Geliştirici için Dışa Aktarma",
-    "exportForDeveloperWarning": "Kaydedilmiş şifreleri (MeshCore oda kimlik bilgileri, MQTT ayarları vb.) içerebilecek tam veritabanınızı içerir. Bu paketi yalnızca bakımcılarla özel olarak paylaşın; asla herkese açık GitHub'da paylaşmayın.",
+    "exportForDeveloperWarning": "Kaydedilmiş şifreleri, mesaj metnini, gönderen ve kanal kimliklerini ve konum ayrıntılarını içerebilecek tam veritabanınızı ve MECP acil durum denetim günlüklerini içerir. Bu paketi yalnızca bakımcılarla özel olarak paylaşın; asla herkese açık GitHub'da paylaşmayın.",
     "exportSupportBundleFailed": "Destek paketi dışa aktarılamadı: {{message}}",
     "storeForwardHistoryProfileLabel": "Sakla ve İlet yakalama profili",
     "storeForwardHistoryProfileAria": "Sakla ve İlet geçmişini yakalama agresifliği",
@@ -414,7 +416,11 @@
       "empty": "Engellenmiş düğüm yok.",
       "unblockAria": "{{node}} engelini kaldır",
       "unblockFailed": "Bu düğümün engeli kaldırılamadı."
-    }
+    },
+    "updatesSection": "Güncellemeler",
+    "autoUpdateDownload": "~Güncellemeleri otomatik olarak indir",
+    "autoUpdateDownloadDesc": "Her kontrolden sonra arka plandaki en son güncellemeyi indirir. Kapalıyken, güncellemeler hala algılanır, ancak yalnızca İndir düğmesine bastığınızda indirilir — bir paket yöneticisi kurulumu gerçekleştirdiğinde kullanışlıdır.",
+    "autoUpdateDownloadSaveFailed": "Otomatik güncelleme indirme ayarı kaydedilemedi."
   },
   "aria": {
     "closeDialog": "İletişim kutusunu kapat",
@@ -724,7 +730,66 @@
       "noise": "Gürültü {{noise}} dBm",
       "path": "Yol: {{path}}",
       "hops_one": "{{count}} atlama",
-      "hops_other": "{{count}} atlama"
+      "hops_other": "{{count}} atlama",
+      "place": "Gönderen: {{place}}"
+    },
+    "firmwareBot": {
+      "label": "Bot yanıtı",
+      "status": {
+        "title": "Durum {{name}}",
+        "uptime": "Yukarı {{uptime}}",
+        "battery": "Pil {{mv}} mV ({{percent}}%)",
+        "storage": "Depolama {{used}}/{{total}} KB",
+        "counters": "{{seen}} görüldü, {{sent}} gönderildi, başarısız oldu {{fail}}"
+      },
+      "air": {
+        "title": "Yayın Süresi",
+        "tx": "TX {{seconds}} sn",
+        "rx": "RX {{seconds}} sn",
+        "rxPackets": "RX Flood {{flood}} / doğrudan {{direct}}",
+        "txPackets": "TX Flood {{flood}} / doğrudan {{direct}}"
+      },
+      "neighbors": {
+        "title_one": "{{count}} komşu",
+        "title_other": "{{count}} komşu",
+        "none": "Yakın zamanda hiçbiri duyulmadı",
+        "ago": "{{ago}} önce"
+      },
+      "trace": {
+        "title": "İz",
+        "hop": "{{hash}} {{snr}} dB",
+        "tail": "Dönüş SNR {{snr}} dB",
+        "directLink": "Doğrudan bağlantı",
+        "timeout": "Zaman aşımına uğradı",
+        "sent": "Gönderilmiş"
+      },
+      "lora": {
+        "title": "LoRa",
+        "freq": "{{freq}} MHz",
+        "sf": "SF{{sf}}",
+        "bw": "BW {{bw}} kHz",
+        "cr": "CR {{cr}}",
+        "power": "{{power}} dBm"
+      },
+      "version": {
+        "title": "Firmware",
+        "built": "{{built}} oluşturuldu"
+      },
+      "channels": {
+        "title": "Bot kanalları",
+        "bot": "Komutlar {{name}}",
+        "testing": "{{name}} test ediliyor",
+        "emergency": "Acil durum {{name}}",
+        "public": "Herkese açık {{name}}"
+      },
+      "help": {
+        "title": "Komutlar",
+        "diagTitle": "Teşhis komutları"
+      }
+    },
+    "healthCheck": {
+      "label": "MeshCore Sağlık Kontrolü kodu",
+      "tooltip": "MeshCore Sağlamlık Denetimi için test kodu. Gönderenin mesh'indeki gözlemciler, hangisinin aldığını bildirir."
     }
   },
   "common": {
@@ -760,7 +825,11 @@
     "emDash": "—",
     "saving": "Kaydediliyor...",
     "delete": "Silmek",
-    "copied": "Kopyalandı"
+    "copied": "Kopyalandı",
+    "botBadge": "Bot",
+    "botBadgeLabel": "Bot",
+    "botBadgeTooltip": "Otomatik yanıtlarından bot olduğu algılandı",
+    "retry": "Tekrar dene"
   },
   "configApplyNotice": {
     "persistNote": "Uygulanan ayarlar cihazın flash belleğine kaydedilir ve yeniden başlatmalarda devam eder.",
@@ -1093,7 +1162,8 @@
     "meshcoreBleWindowsInAppPairingHint": "Windows'ta, radyoyu buradan seçin ve ekranında gösterilen PIN'İ girin. Mesh Hub sizin için eşleştirir, böylece Windows Ayarları'nda eşleştirmeniz gerekmez. Önce telefonunuzdaki MeshCore uygulamasını kapatın; radyo aynı anda yalnızca bir Bluetooth bağlantısını kabul eder.",
     "stageEnterPinWindows": "Windows ile eşleştirmek için radyonuzda gösterilen PIN KODUNU GİRİN",
     "stagePairingWindows": "Windows ile eşleştiriliyor…",
-    "meshtasticSilentAfterConfigure": "Radyoya bağlandı, ancak kurulumdan sonra ağ trafiği göndermeyi durdurdu. Otomatik olarak yeniden bağlanıyor. Bu devam ederse, radyonun ağ bağlantısını kontrol edin veya yeniden başlatın."
+    "meshtasticSilentAfterConfigure": "Radyoya bağlandı, ancak kurulumdan sonra ağ trafiği göndermeyi durdurdu. Otomatik olarak yeniden bağlanıyor. Bu devam ederse, radyonun ağ bağlantısını kontrol edin veya yeniden başlatın.",
+    "mqttPacketTooLarge": "Aracı, {{limit}} baytlık güvenlik sınırından büyük bir MQTT paketi gönderdi; otomatik yeniden bağlanma devre dışı."
   },
   "contactGroupsModal": {
     "failedLoadMembers": "Üyeler yüklenemedi: {{message}}",
@@ -1570,7 +1640,7 @@
     "layerControlsAria": "Harita katmanı kontrollerini aç/kapat",
     "basemapHeading": "\"Basemap\"",
     "basemapSelectAria": "Harita altlık haritasını seçin",
-    "basemapDark": "Koyu (Carto)",
+    "basemapDark": "Koyu (OpenStreetMap)",
     "basemapOsm": "OpenStreetMap (açık)",
     "layersHeading": "Kaplamalar",
     "layerNodes": "Düğüm belirteçleri",
@@ -1605,7 +1675,8 @@
       "cacheStats": "Önbellek: {{count}} karo ({{size}})",
       "clear": "Döşeme önbelleğini temizle",
       "clearAria": "Çevrimdışı harita döşeme önbelleğini temizle",
-      "cleared": "Ön bellek temizlendi."
+      "cleared": "Ön bellek temizlendi.",
+      "viewCacheOnly": "Görüntülenen harita karoları otomatik olarak önbelleğe alınır. Bölge indirme USGS Topo ile kullanılabilir; OpenStreetMap önceden indirmeye izin vermez."
     },
     "basemapUsgsTopo": "USGS Topo (yalnızca ABD)",
     "layerIncidents": "Acil durum olayları",
@@ -3321,7 +3392,12 @@
     "frequencyOffsetLabel": "Frekans Kayması",
     "frequencyOffsetDesc": "Gelişmiş: Kristal kalibrasyon hatasını düzeltmek için hesaplanan merkez frekansına MHz cinsinden ofset eklenir. Test ekipmanınız yoksa 0 'da bırakın.",
     "enumLicensedOnlySuffix": "(Sadece Lisanslı)",
-    "unknownEnumValue": "Bilinmiyor ({{value}})"
+    "unknownEnumValue": "Bilinmiyor ({{value}})",
+    "floodScopePresetsTitle": "Kaydedilen bölgeler",
+    "floodScopePresetsHelp": "Bölgeleri buraya ekleyin, ardından Gönder'in yanında veya Radyo → Kanallarında her kanal için bir kapsam seçin. Bir bölgeyi kaydetmek veya kaldırmak, radyo varsayılanını ve kanal seçeneklerini değiştirmez.",
+    "floodScopeAddHashtag": "Kaydedilecek bölge etiketi",
+    "floodScopeAddSaved": "Bölgeyi kaydet",
+    "floodScopePresetsFull": "{{count}} bölgeye kadar tasarruf edebilirsiniz. Birini eklemeden önce diğerini kaldırın."
   },
   "rawPacketLog": {
     "filterPackets": "Paketleri filtrele",
@@ -3962,7 +4038,8 @@
       "enrollNoCert": "Kayıt yanıtının sertifikası yok",
       "enrollTooLarge": "Kayıt yanıtı çok büyük",
       "enrollKeyMismatch": "Sunucu farklı bir anahtar için bir sertifika döndürdü",
-      "enrollBusy": "Geçerli sertifika içe aktarma işleminin tamamlanmasını bekleyin"
+      "enrollBusy": "Geçerli sertifika içe aktarma işleminin tamamlanmasını bekleyin",
+      "frameTooLarge": "CoT olayı {{max}} baytı aşıyor"
     },
     "remoteUseTls": "TLS kullanın (önerilir)",
     "remotePlainTcpWarning": "Düz TCP şifrelenmemiştir: ağ yolundaki herkes aktarılan konumları okuyabilir. Sertifikalar kullanılmaz ve açılışta bağlantı kapalı kalır.",
@@ -4012,15 +4089,30 @@
     "unitTypeSensor": "Sensörü",
     "unitTypeAir": "Hava aracı",
     "channelRelayTitle": "MeshCore kanaldan TAK kanalına",
-    "channelRelayDesc": "Hangi kanal mesajlarının TAK 'a aktarılacağını seçin. Tracker fixes turns MeshCore tracker position messages (!MT1) harita işaretleyicilerine yerleştirin. Bir GeoChat odası, kanalı TAK sohbet odasına yansıtır. Her ikisi de tek bir yöne gider: TAK' den gelen hiçbir şey ağın üzerinden gönderilmez.",
     "channelRelayTrackers": "İzleyici düzeltmeleri",
     "channelRelayRoom": "{{channel}} için GeoChat odası",
     "channelRelayRoomPlaceholder": "GeoChat odası (kapalı)",
     "channelRelayNoChannels": "Kanallarını listelemek için bir MeshCore radyo bağlayın.",
     "channelRelayUnnamed": "Kanal {{n}}",
     "channelRelayTitleMeshtastic": "Meshtastic kanalları TAK'ye",
-    "channelRelayDescMeshtastic": "Hangi duyulmuş kanal mesajlarının TAK'a besleneceğini seçin. Bir GeoChat odası, MQTT üzerinden duyulan mesajlar da dahil olmak üzere kanalı TAK sohbet odasına yansıtır. Bu sadece tek yönlüdür: TAK'den hiçbir şey ağ üzerinden gönderilmez.",
-    "channelRelayNoChannelsMeshtastic": "Kanallarını listelemek için bir Meshtastic radyo bağlayın."
+    "channelRelayNoChannelsMeshtastic": "Kanallarını listelemek için bir Meshtastic radyo bağlayın.",
+    "unitStylesPreviewKind": "Test edilecek düğüm türü",
+    "unitStylesPreviewProtocol": "Test edilecek protokol",
+    "unitFilterKind": "{{n}} filtresi için düğüm türü",
+    "unitFilterAnyKind": "Herhangi bir düğüm türü",
+    "unitFilterProtocol": "{{n}} filtresi için protokol",
+    "unitFilterAnyProtocol": "Herhangi bir protokol",
+    "unitKindCompanion": "Refakatçiler ve müşteriler",
+    "unitKindRepeater": "Tekrarlayıcılar ve yönlendiriciler",
+    "unitKindRoom": "Oda sunucuları",
+    "unitKindSensor": "Sensörleri",
+    "unitKindTracker": "İzleyiciler",
+    "unitStylesRelayIcon": "Tekrarlayıcılar, yönlendiriciler ve oda sunucuları için simge",
+    "unitStylesRelayIconHint": "İsteğe bağlı. UID/grup/dosya adı olarak atak simge kümesindeki bir simgenin yolu. Bu simge setine sahip olmayan cihazlar kurulum sembolünü gösterir.",
+    "channelRelayHelp": "Hangi kanal mesajlarının TAK 'a aktarılacağını seçin. Tracker fixes turns MeshCore tracker position messages (!MT1) harita işaretleyicilerine yerleştirin. Bir GeoChat odası, kanalı TAK sohbet odasına yansıtır. Bir kanal için TAK öğesini işaretlemediğiniz sürece TAK öğesinden gelen hiçbir şey mesh üzerinden gönderilmez: daha sonra odasına gönderilen TAK cihazlarına bağlı mesajlar, gönderenin arama işareti ile birlikte bu telsizden bu kanala iletilir.",
+    "channelRelaySend": "TAK gönderebilir",
+    "channelRelaySendFor": "TAK cihazların {{channel}} 'a göndermesine izin verin",
+    "channelRelayHelpMeshtastic": "Hangi kanal mesajlarının TAK 'a aktarılacağını seçin. Bir GeoChat odası, MQTT üzerinden duyulan mesajlar da dahil olmak üzere kanalı TAK sohbet odasına yansıtır. Bir kanal için TAK öğesini işaretlemediğiniz sürece TAK öğesinden gelen hiçbir şey mesh üzerinden gönderilmez: daha sonra odasına gönderilen TAK cihazlarına bağlı mesajlar, gönderenin arama işareti ile birlikte bu telsizden bu kanala iletilir."
   },
   "telemetryPanel": {
     "title": "Telemetri",
@@ -4173,7 +4265,6 @@
     "exportLog": "Export MECP log",
     "compose": {
       "title": "Compose MECP report",
-      "open": "Open MECP compose",
       "severity": "Severity",
       "category": "Category",
       "codes": "Codes",
@@ -4184,7 +4275,12 @@
       "byteBudget": "{{used}} / {{max}} bytes",
       "send": "Send MECP",
       "gpsFailed": "GPS düzeltmesi alınamadı",
-      "sendFailed": "MECP raporu gönderilemedi"
+      "sendFailed": "MECP raporu gönderilemedi",
+      "openResponse": "MECP ile yanıt verin",
+      "requestTitle": "MECP talebi veya raporu",
+      "responseTitle": "MECP yanıtı",
+      "showAllCodes": "Tüm MECP kodlarını göster",
+      "openRequest": "MECP ile talepte bulunun veya rapor verin"
     },
     "rebroadcast": {
       "title": "MECP RF rebroadcast",
@@ -4206,10 +4302,10 @@
       "hint": "Mesh Acil Durum İletişim Protokolü — Sohbetten raporlar oluşturun, Meshtastic ve MeshCore arasında RF'yi burada köprüleyin ve dayanıklı alınan denetim günlüğünü dışa aktarın.",
       "learnMore": "MECP nasıl çalışır?",
       "protocolSource": "GitHub'daki protokol kaynağı",
-      "showComposeButton": "Sohbette MECP düğmesini göster",
-      "showComposeButtonHint": "Varsayılan olarak kapalı. Etkinleştirildiğinde, Sohbet acil durum raporları oluşturmak ve göndermek için bir MECP düğmesi gösterir.",
       "standingAlert": "Olay Komuta istasyonu (ayakta alarm)",
-      "standingAlertHint": "Varsayılan olarak kapalı. EOC'ler ve izlenen istasyonlar için: kırmızı bir başlığı yukarıda tutar ve görev çubuğunu yanıp söner veya biri her yeni Mayday'e veya ACİL duruma bakana kadar rıhtımı sektirir. Herkes hala bir kerelik uyarı tonunu duyar ve tostu görür."
+      "standingAlertHint": "Varsayılan olarak kapalı. EOC'ler ve izlenen istasyonlar için: kırmızı bir başlığı yukarıda tutar ve görev çubuğunu yanıp söner veya biri her yeni Mayday'e veya ACİL duruma bakana kadar rıhtımı sektirir. Herkes hala bir kerelik uyarı tonunu duyar ve tostu görür.",
+      "showComposeButtons": "Sohbette MECP düğmelerini göster",
+      "showComposeButtonsHint": "Varsayılan olarak kapalı. Etkinleştirildiğinde, Sohbet kırmızı bir istek/rapor düğmesi ve mavi bir yanıt düğmesi gösterir."
     },
     "exportLogEmpty": "Alınan günlükte henüz MECP mesajı yok",
     "block": {
@@ -4568,7 +4664,11 @@
     "pendingChanges_other": "{{count}} değişiklik",
     "read": "Ayarlar okundu",
     "radioConnected": "Telsiz bağlı",
-    "radioDisconnected": "Telsiz bağlantısı kesildi"
+    "radioDisconnected": "Telsiz bağlantısı kesildi",
+    "scope": "Varsayılan Flood kapsamı",
+    "defaultScope": "Bölge adı (kapsam dışı için boş)",
+    "scopeSummary": "Bu düğümün gönderdiği Flood paketlerinin bölgesi",
+    "scopeHint": "Firmware v1.15+: #us-tn-tri gibi bir genel bölge adı girin; bölge sınırı olmaması için boş bırakın. Flood duyurularına ve Flood üzerinden oda mesajı teslimine uygulanır. Doğrudan rotalar ve oda erişim izinleri ayrıdır. Companion telsizin ve kanallarının kapsamları ayrı ayarlanır."
   },
   "chatTranslation": {
     "translate": "Mesajı çevir",
@@ -4599,7 +4699,7 @@
     "deletePack": "{{pack}} paketini sil",
     "downloadPack": "{{pack}} paketini indir",
     "delete": "Silmek",
-    "onlinePrivacy": "Çevrimiçi çeviri, seçilen mesaj metnini yalnızca Çevrimiçi çevir'i seçtiğinizde yapılandırılmış LibreTranslate sunucunuza gönderir. Otomatik çeviri her zaman çevrimdışı kalır.",
+    "onlinePrivacy": "Çevrimiçi çeviri, seçilen mesaj metnini yalnızca Çevrimiçi çevir'i seçtiğinizde yapılandırılmış LibreTranslate sunucunuza gönderir. Otomatik çeviri her zaman çevrimdışı kalır. HTTP yalnızca localhost ve geri döngü adresleri için kullanılabilir; diğer tüm sunucular HTTPS kullanmalıdır.",
     "serverUrl": "LibreTranslate sunucu URL'si",
     "apiKey": "API anahtarı (isteğe bağlı)",
     "savedKey": "API anahtarı güvenli bir şekilde kaydedilir. Boş bir alan, onu yalnızca aynı sunucu URL'si için tutar.",
@@ -4631,6 +4731,158 @@
     "downloadSize": "İndir ({{size}})",
     "readLanguagesHint": "Bu dillerdeki mesajlar asla otomatik olarak çevrilmez. Çevir altında seçilen dil her zaman okuduğunuz bir dil olarak sayılır.",
     "pivotHint": "Bir paket, Fransızca'dan İngilizce'ye gibi bir çeviri yönünü kapsar. Diğer dil çiftleri İngilizce'ye çevrilir: Fransızca'dan Almanca'ya Fransız → İngilizcesi ve İngilizce → Almanca paketlerine ihtiyaç vardır. İngilizceye çeviri sadece bir pakete ihtiyaç duyar.",
-    "hideTranslation": "Çeviriyi gizle"
+    "hideTranslation": "Çeviriyi gizle",
+    "secureUrlRequired": "Çevrimiçi çeviri duraklatıldı. Sunucunuz ve kayıtlı anahtarınız tutuldu; devam etmek için bir https URL'si kullanın."
+  },
+  "liveTraffic": {
+    "controlPacket": "Kontrol paketi",
+    "discoveryRequest": "Düğüm keşif isteği",
+    "discoveryResponse": "Düğüm keşif yanıtı",
+    "directoryLimited": "Bu haritanın düğüm dizini sınıra ulaştı. Bazı düğümler eksik olabilir.",
+    "directoryLimitedShort": "Eksik dizin",
+    "sources": {
+      "CoreScope": "CoreScope",
+      "MQTT": "MQTT",
+      "RF": "RF",
+      "Beacon": "Beacon",
+      "unknown": "Bilinmeyen kaynak"
+    },
+    "corescope": {
+      "feed": "Bölgesel CoreScope",
+      "preset": "Bölgesel CoreScope haritası",
+      "url": "CoreScope harita URL’si",
+      "waitingHint": "Gözlemcileri izlemek için yukarıdan bir CoreScope akışına bağlanın. Yerel telsiz gerekmez.",
+      "disconnected": "Bağlanmak için bir CoreScope harita URL’si seçin."
+    },
+    "trafficSource": "Trafik kaynağı",
+    "estimatedRouteHint": "CoreScope bazı düğüm kimliklerini tahmin etti. Bu bağlantılar doğrulanmamıştır; eksik atlamalar bilinmiyor.",
+    "connectionActionFailed": "Akış bağlantısı güncellenemedi. Tekrar deneyin.",
+    "cancelConnection": "Bağlantıyı iptal et",
+    "estimatedLinks": "Sunucu tahminlerini içeren bağlantılar",
+    "additionalLocations_one": "{{count}} daha fazla konum",
+    "additionalLocations_other": "{{count}} daha fazla konum",
+    "mapOverview": "Genel Bakış",
+    "mapModes": "Harita modu",
+    "title": "Canlı trafik",
+    "pause": "Duraklat",
+    "resume": "Devam et",
+    "regions": {
+      "all": "Tüm bölgeler"
+    },
+    "region": "Harita alanı",
+    "transportScope": "Taşıma kodu",
+    "scopeHint": "Gözlemlenen paketlerin taşıma kodlarını filtreleyin veya scoped (kapsam belirtilmiş) ya da unscoped (kapsam belirtilmemiş) yazın. Kodlar pakete özeldir ve telsiz ayarlarını değiştirmez.",
+    "allScopes": "Tüm kapsamlar",
+    "unscoped": "Kapsam belirtilmemiş",
+    "packetType": "Paket türü",
+    "kinds": {
+      "all": "Tüm paketler",
+      "message": "Mesajlar",
+      "telemetry": "Telemetri",
+      "other": "Diğer",
+      "routing": "Yönlendirme",
+      "advert": "Düğüm duyuruları / konum"
+    },
+    "scoped": "Kapsam belirtilmiş",
+    "speed": "Oynatma",
+    "speedNormal": "1×",
+    "mapAria": "Canlı paket trafik haritası",
+    "speedFast": "2×",
+    "darkMap": "Koyu",
+    "topographicMap": "USGS topoğrafik harita",
+    "basemap": "Harita stili",
+    "streetMap": "Sokak haritası",
+    "waitingHint": "Canlı trafiği görmek için bir telsiz bağlayın.",
+    "animationDisclaimer": "Hareket, gerçek telsiz hızını değil paket sırasını gösterir. Bilinmeyen atlamalarda yol kesilir.",
+    "waiting": "Paket gözlemleri bekleniyor",
+    "meshtasticDisclaimer": "Alım bağlantıları örnek gösterimdir. Normal paketler her aktarma düğümünü göstermez.",
+    "noFilterMatches": "Bu filtrelerle eşleşen yeni paket yok.",
+    "feed": "Paket akışı",
+    "emptyFeed": "Bu istemci paketleri aldıkça burada görünürler. Konumu bilinen düğümler haritada gösterilebilir.",
+    "inspectPacket": "{{time}} zamanındaki {{kind}} paketini incele",
+    "packetList": "Son paket gözlemleri",
+    "noSignal": "Sinyal verisi yok",
+    "route": "Rota kanıtı",
+    "inspector": "Paket ayrıntıları",
+    "closeInspector": "Paket ayrıntılarını kapat",
+    "signalValues": "{{rssi}} dBm / {{snr}} dB",
+    "signal": "RSSI/SNR",
+    "source": "Şununla gözlemlendi:",
+    "routeStatus": {
+      "partial": "Kısmi yol / alım bağlantısı",
+      "resolved": "Çözümlenmiş paket yolu",
+      "estimated": "Sunucunun tahmin ettiği rota",
+      "direct": "Doğrudan gözlem",
+      "unparsed": "Ayrıştırılmamış paket",
+      "unlocated": "Çizilebilir rota yok"
+    },
+    "meshtasticInspector": "Bir alım ilişkisi, doğrulanmış bir aktarma zinciri değildir. Ayrıntılı yollar yalnızca paket bu bilgileri içeriyorsa gösterilir.",
+    "meshcoreInspector": "Yalnızca kimliği çözümlenen bitişik atlamalar birleştirilir. Bilinmeyen veya belirsiz hash değerleri rotada boşluk bırakır.",
+    "filterHint": "Yalnızca görünümü filtreler. Telsiz ayarları değişmez.",
+    "knownLocations": "Konumu bilinen noktalar",
+    "filters": "Filtreler",
+    "observationCount_one": "{{count}} paket",
+    "mappedCount": "{{count}} haritada gösterilen",
+    "observationCount_other": "{{count}} paket",
+    "nodeCount": "{{count}} düğüm gösteriliyor",
+    "toggleFeed": "Paket akışını genişlet veya daralt",
+    "expandFeed": "Paket akışı penceresini büyüt",
+    "shrinkFeed": "Paket akışı penceresini küçült",
+    "moveFeed": "Paket akışını taşı",
+    "moveFeedHint": "Taşımak için sürükleyin veya ok tuşlarını kullanın. Daha büyük adımlarla taşımak için Shift tuşunu basılı tutun.",
+    "encryptedContent": "Şifreli mesaj",
+    "resetFeed": "Paket akışı konumunu sıfırla",
+    "contentUnavailable": "Mesaj içeriği mevcut değil",
+    "beacon": {
+      "feed": "Bölgesel Beacon",
+      "url": "Beacon harita URL’si",
+      "region": "Akış bölgesi",
+      "connect": "Bağlan",
+      "disconnect": "Bağlantıyı kes",
+      "readOnly": "Herkese açık akış · API anahtarı gerekmez",
+      "waitingHint": "Gözlemcilerin alımlarını izlemek için yukarıdan bölgesel bir Beacon akışına bağlanın. Yerel telsiz gerekmez.",
+      "configure": "Yapılandır",
+      "listeningHint": "Bağlandı. Bölgesel gözlemciler paket aldıkça yeni gözlemler görüntülenir.",
+      "status": {
+        "connecting": "Bölgesel gözlemcilere bağlanılıyor…",
+        "live": "Canlı bölgesel akış",
+        "reconnecting": "Yeniden bağlanılıyor…",
+        "disconnected": "Bağlanmak için bir Beacon harita URL’si seçin.",
+        "error": "Bağlantı kurulamıyor.",
+        "feedOpenFailed": "Bölgesel harita akışı açılamadı.",
+        "refreshing": "Akış kesintisinden sonra bölgesel harita yenileniyor.",
+        "connectionInterrupted": "Bölgesel harita bağlantısı kesildi.",
+        "publicHttpsRejected": "Bu herkese açık HTTPS bölgesel haritası açılamadı."
+      },
+      "preset": "Bölgesel Beacon haritası",
+      "custom": "Özel URL"
+    },
+    "localRadio": "Yerel telsiz",
+    "packetColorHint": "Bir paket, bildirilen tüm yollarında aynı renkte gösterilir. Tekrarlanan raporlar gruplandırılır.",
+    "closeSource": "Akış ayarlarını kapat",
+    "aboutMap": "Bu trafik haritası hakkında",
+    "zoomIn": "Yakınlaştır",
+    "zoomOut": "Uzaklaştır",
+    "reports_one": "{{count}} rapor",
+    "observedLinks": "Gözlemlenen bağlantılar",
+    "reports_other": "{{count}} rapor",
+    "mapLinkLimit": "Harita, bu paketin en son {{count}} bağlantısını gösterir.",
+    "additionalLinks_other": "{{count}} ek bağlantı",
+    "additionalLinks_one": "{{count}} ek bağlantı",
+    "zoomControls": "Harita yakınlaştırma kontrolleri",
+    "reportsLabel": "Görünümdeki raporlar",
+    "mixedCodes": "Birden çok taşıma kodu",
+    "connectionState": {
+      "live": "Canlı",
+      "reconnecting": "Yeniden bağlanılıyor",
+      "connecting": "Bağlanıyor",
+      "disconnected": "Bağlantı kesildi",
+      "error": "Bağlantı hatası"
+    },
+    "areas": {
+      "all": "Tüm trafik",
+      "viewport": "Geçerli harita alanı"
+    },
+    "fitTraffic": "Trafiğe odaklan"
   }
 }

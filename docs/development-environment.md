@@ -51,7 +51,7 @@ Docs are built with MkDocs Material.
      - `.\.venv\Scripts\Activate.ps1`
 2. Install the docs dependencies:
    - `pnpm run docs:install`
-   - or (manual): `python3 -m pip install -r docs/requirements.txt`
+   - or (manual): `python3 -m pip install --require-hashes --only-binary=:all: -r docs/requirements.txt`
 3. Build locally:
    - `pnpm run docs:build`
 4. Preview locally:
@@ -538,7 +538,7 @@ Output goes to the `release/` directory.
 
 **macOS (`dist:mac`)** runs `electron-builder --mac --x64 --arm64 --publish never` (Intel + Apple Silicon DMG/ZIP pairs), then **`node scripts/verify-mac-packaging.mjs`**. Verify stages **`00-READ-ME-BEFORE-EXTRACTING-macOS-ZIP.txt`** for GitHub Releases, asserts both arch `.dmg` + `.zip` artifacts, deep-validates every archive (symlink-preserving ZIP extract via `ditto -xk`, DMG mount including **IMPORTANT-Read-Me.txt**), launcher/framework sizes, Squirrel/Mantle/ReactiveObjC framework symlinks, and the bundled Bluetooth helper — same checks CI `packaging-smoke` uses on downloaded artifacts. **Developer ID–signed** builds also run `codesign --verify --deep --strict` and `xcrun stapler validate` on the finished `.app`, plus `codesign --verify --strict` on the bundled Bluetooth helper; unsigned or ad-hoc (non–Developer ID) local builds skip that gate and are still expected to pass verify. Building both arches is slower than a single-arch pack.
 
-**Optional macOS signing (release parity):** export the same env vars CI uses before `pnpm run dist:mac` or `dist:mac:publish`:
+**Optional macOS signing (release parity):** export the same env vars CI uses before `pnpm run dist:mac`. `dist:mac:publish` requires them and also requires `RELEASE_ID` plus `GH_TOKEN` for an existing draft release; it builds with publishing disabled, verifies every artifact in required Developer ID mode, and only then uploads through the controlled release uploader.
 
 ```bash
 export CSC_LINK='…' # base64 .p12 Developer ID Application cert
@@ -550,7 +550,7 @@ export APPLE_TEAM_ID='…'
 pnpm run dist:mac
 ```
 
-When `CSC_LINK` is unset, electron-builder skips signing/notarization (`CSC_IDENTITY_AUTO_DISCOVERY=false` in CI). See [Release Process — macOS code signing and notarization](release-process.md#macos-code-signing-and-notarization).
+When `CSC_LINK` is unset, local `dist:mac` can skip signing/notarization. Release workflow macOS jobs and `dist:mac:publish` fail closed unless the complete signing/notarization configuration is present and the app plus bundled sidecar match `APPLE_TEAM_ID`. See [Release Process — macOS code signing and notarization](release-process.md#macos-code-signing-and-notarization).
 
 ### Build analysis
 

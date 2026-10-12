@@ -36,7 +36,7 @@ Before opening a GitHub issue, use **App → Support / Bug reports → Export fo
 
 Open `manifest.json` first when triaging: `appVersion` is package semver; **`buildChannel`** is `test` (Build Binaries / Flatpak no-release), `release` (official Release or Flatpak tag), or `local` (unmarked local dist). For CI builds, `buildInfo.runUrl` links to the exact GitHub Actions run — do not assume `appVersion` alone means an official release. Test-build downloadable installers include `-run{N}` in the filename; if the filename and `runUrl` disagree, trust `runUrl` / the `[Startup] runtime … run=` log line.
 
-**Do not attach Export for Developer or `mesh-client.db` to public GitHub issues.** The developer bundle includes your SQLite database, which may contain **saved passwords** (MeshCore room/repeater credentials, MQTT settings, etc.).— share only via a **private channel** when a maintainer requests **Export for Developer**.
+**Do not attach Export for Developer or `mesh-client.db` to public GitHub issues.** The developer bundle includes your SQLite database, which may contain **saved passwords** (MeshCore room/repeater credentials, MQTT settings, etc.), plus MECP emergency audit logs that may contain message text, sender/channel identifiers, and location details. Share it only via a **private channel** when a maintainer requests **Export for Developer**.
 
 Works on macOS, Windows, Linux (.deb / .rpm / AppImage), and Flatpak. Local data paths:
 
@@ -62,7 +62,7 @@ Works on macOS, Windows, Linux (.deb / .rpm / AppImage), and Flatpak. Local data
 | `meshcore.orphanRoomMessageCount`                                       | number                    | Room posts whose `room_server_id` is not in current contacts                                               |
 | `meshcore.roomNodeCount` / `roomMessageCount` / `roomsLastReadKeyCount` | numbers                   | Rooms triage counts                                                                                        |
 
-Zip contents also include **`mesh-client.log.1`** when present (prior session preserved on restart, or size-rotated backup; export may tail-cap large backups). When present, support bundles also include **`mecp-received.log`** / **`mecp-received.log.1`** (durable MECP emergency audit trail — separate from the session app log).
+Zip contents also include **`mesh-client.log.1`** when present (prior session preserved on restart, or size-rotated backup; export may tail-cap large backups). Only the private developer bundle includes **`mecp-received.log`** / **`mecp-received.log.1`** (durable MECP emergency audit trail — separate from the session app log); the public-safe GitHub report always omits them.
 
 The top-level **`legend`** explains that ids like `offline-meshcore` are **internal hydration-slot store keys**, not “disconnected.” When connect reuses that slot (`hydrationSlotIsLiveSession: true`), the id still contains `offline-` while BLE/MQTT are up — that is **expected**.
 
@@ -993,7 +993,7 @@ Legacy SQLite rows could cross-contaminate the shared `nodes` table before proto
 
 ### Map tab without internet (offline / no WAN)
 
-**Basemap tiles:** The map background uses **OpenStreetMap** by default (or **Carto Dark** if selected). On the Map tab, use the **Layers** control under the **online/stale/offline** status counts (top right) to switch basemaps and toggle overlays (node markers, movement trails, waypoints, diagnostic halos). The `TileLayer` is defined in [`MapPanel.tsx`](https://github.com/charlottemeshtastic/mesh-client/blob/main/src/renderer/components/MapPanel.tsx). Tiles are served through the privileged **`mesh-tiles:`** protocol and stored under the app **userData** `tile-cache/` directory (viewed tiles cache automatically while online; ~1 GiB LRU). Use **Layers → Offline maps → Download current view** while online to pre-fetch a region (estimate + confirm; a single job is capped at about **half** the cache budget so downloaded tiles are not immediately evicted). Downloads pause if the link drops and resume after a stable connection (~60s). Optional **Auto-cache** downloads the current view after a short settle when the viewport key changes. On high-DPI displays, **Carto Dark** region downloads may fetch `@2x` tiles. **Clear tile cache** frees disk. **Without internet access, uncached areas look blank**; previously downloaded or viewed tiles still render. Overlays (markers, trails, polylines, halos) come from local/SQLite state and still work offline. Developer reference: [`docs/development/offline-maps.md`](development/offline-maps.md).
+**Basemap tiles:** The map background uses **OpenStreetMap** by default, with a **Dark (OpenStreetMap)** option styled locally without an API key. Use **Layers** under the status counts to switch basemaps and toggle overlays. Tiles are served through the privileged **`mesh-tiles:`** protocol and viewed tiles are cached automatically under the app **userData** `tile-cache/` directory (~1 GiB LRU). OpenStreetMap permits normal viewport caching but prohibits prefetching, so region downloads and **Auto-cache** are available only with **USGS Topo** selected. For USGS, **Download current view** estimates and confirms a region; downloads pause on a dropped connection and resume after ~60s stable online. **Clear tile cache** frees disk. **Without internet, uncached areas look blank**; cached tiles and local mesh overlays still render. Older CARTO dark tiles are kept on disk but are not displayed by the new dark source; view an area online once to cache its replacement. Developer reference: [`docs/development/offline-maps.md`](development/offline-maps.md).
 
 **Overlays:** **Node markers, polylines, position trails, and other vector layers** are separate from the tile layer. If nodes have latitude/longitude (from RF, MQTT, SQLite, or your session), those overlays can still **render on top of a missing or partial basemap**.
 
@@ -1041,6 +1041,8 @@ With **Wi‑Fi off** or **airplane mode** on, using a **packaged** build if poss
 
 The app functions fully offline; this is not a critical error. When there is no WAN, the footer shows a muted **Updates paused (offline)** state and does not amber-nag or retry in a loop. If an update was already downloaded (**ready**), the footer keeps that ready/install state instead of switching to offline. When connectivity returns and stays stable (~60s), one quiet update check runs (including after a network-class failure while the browser still reports online). If a real (non-network) update error occurs, the footer shows **Update error**; use **Check for updates** in the app menu or retry from the footer when applicable. Update checks are rate-limited by the GitHub API and may silently skip when the limit is reached.
 
+**Manage updates with a package manager:** Turn off **App → Updates → Download updates automatically**. The app still checks for updates and shows the new version in the footer, but only downloads it when you press **Download**. Installation always waits for you to restart.
+
 **Footer shows vX.Y.Z then Update error after Cut release:** The GitHub release may have been published with an `untagged-*` tag instead of `vX.Y.Z` (draft detach / leftover placeholder ref). On GitHub → Releases, confirm the latest release tag is `vX.Y.Z`. Repair with `GH_TOKEN=YOUR_ADMIN_PAT node scripts/repair-published-release-tag.mjs --tag vX.Y.Z`, or edit the release in the GitHub UI. CI prepare/finalize repair `tag_name` and delete orphan `untagged-*` refs; verify fails if any matching release is still untagged; a **Repair published release tag** workflow also runs on Publish.
 
 ### Language and translations
@@ -1067,7 +1069,7 @@ Inbound MECP messages are appended to a durable audit file under the app `userDa
 - Windows: `%APPDATA%\mesh-client\mecp-received.log`
 - Linux: `~/.config/mesh-client/mecp-received.log`
 
-Use **App → MECP → Export MECP log**, or open a GitHub/Developer support bundle (includes the file when non-empty). Developer reference: [`docs/development/mecp.md`](development/mecp.md).
+Use **App → MECP → Export MECP log**, or open a private Developer support bundle (includes the file when non-empty). Public-safe GitHub support bundles omit MECP logs. Developer reference: [`docs/development/mecp.md`](development/mecp.md).
 
 **MAYDAY/URGENT alerts ignore mute**
 

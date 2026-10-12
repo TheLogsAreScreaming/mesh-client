@@ -1,20 +1,23 @@
 //! Loopback HTTP + WebSocket API for app-wide GATT sessions (Meshtastic / MeshCore).
+//! Every route requires the per-process bearer token Electron main hands over on stdin.
 
+mod auth;
 mod gatt;
 mod status;
 
 use std::sync::Arc;
 
-use axum::Router;
 use axum::extract::DefaultBodyLimit;
 use axum::routing::{delete, get, post};
+use axum::{Router, middleware};
 use http::HeaderValue;
 use tower_http::cors::{AllowOrigin, Any, CorsLayer};
 
 use crate::gatt::GattManager;
 
-pub fn router(gatt_manager: Arc<GattManager>) -> Router {
-    Router::new()
+pub fn router(gatt_manager: Arc<GattManager>, auth_token: String) -> Result<Router, String> {
+    let auth = auth::ApiAuth::try_new(auth_token)?;
+    Ok(Router::new()
         .route("/api/v1/status", get(status::status))
         .route("/api/v1/gatt/availability", get(gatt::gatt_availability))
         .route("/api/v1/gatt/scan", get(gatt::gatt_scan))
@@ -61,6 +64,11 @@ pub fn router(gatt_manager: Arc<GattManager>) -> Router {
         .layer(DefaultBodyLimit::max(4 * 1024 * 1024))
         .layer(localhost_cors_layer())
         .with_state(gatt_manager)
+        // Last layer is outermost: every HTTP route and WebSocket upgrade authenticates first.
+        .layer(middleware::from_fn_with_state(
+            auth,
+            auth::require_bearer_auth,
+        )))
 }
 
 fn localhost_cors_layer() -> CorsLayer {

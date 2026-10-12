@@ -6,8 +6,8 @@ import { createRoot } from 'react-dom/client';
 import { I18nextProvider } from 'react-i18next';
 
 import ErrorBoundary from './components/ErrorBoundary';
+import { SecureSecretsStartup } from './components/SecureSecretsStartup';
 import { installBundledEmojiData } from './lib/bundledEmojiData';
-import { runConnectionPanelStorageMigrations } from './lib/connectionPanelStorageMigrations';
 import { installDevElectronApiStubIfNeeded } from './lib/devElectronApiStub';
 import i18n from './lib/i18n';
 import { IconMotionProvider } from './lib/icons/iconMotionContext';
@@ -55,20 +55,16 @@ void (async () => {
 
   initReduceMotionDefaultIfAbsent();
   syncReduceMotionDatasetFromStorage();
-  runConnectionPanelStorageMigrations();
-
-  // Kick App chunk download immediately after locale (parallel with splash paint).
-  void import('./App').catch((e: unknown) => {
-    console.error('[main] App chunk prefetch failed:', e instanceof Error ? e.message : String(e));
-  });
 
   createRoot(document.getElementById('root')!).render(
     <I18nextProvider i18n={i18n}>
       <ErrorBoundary>
         <IconMotionProvider>
-          <Suspense fallback={<AppBootSplash />}>
-            <App />
-          </Suspense>
+          <SecureSecretsStartup>
+            <Suspense fallback={<AppBootSplash />}>
+              <App />
+            </Suspense>
+          </SecureSecretsStartup>
         </IconMotionProvider>
       </ErrorBoundary>
     </I18nextProvider>,

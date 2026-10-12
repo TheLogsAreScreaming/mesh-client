@@ -46,9 +46,12 @@ function runUpdate(args, env = {}, cwd = repoRoot, scriptPath = updateScriptPath
 }
 
 describe('update.sh Bluetooth helper rebuild and upstream watchers', () => {
+  it('watches the patched mqtt-packet dependency for upstream updates', () => {
+    expect(updateScript).toMatch(/WATCH_ENTRIES=\([\s\S]*'mqtt-packet\|mqtt-packet\|/);
+  });
+
   it('builds the Bluetooth helper and cleans only after a successful opt-in build', () => {
     const rebuildFunction = updateScript.match(/rebuild_ble_sidecar\(\) \{([\s\S]*?)^\}/m)?.[1];
-
     expect(rebuildFunction).toBeDefined();
     expect(rebuildFunction).toContain('cargo build --features gatt-ble');
     expect(rebuildFunction).not.toContain('clone-ratspeak-stack');

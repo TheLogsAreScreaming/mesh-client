@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
+import type { BeaconConnectRequest, BeaconConnectResult, BeaconFeedUpdate } from '../shared/beacon';
 import type {
   BlePeripheralOwner,
   BleScanOwner,
@@ -40,6 +41,7 @@ import type {
   TAKContactsUpdate,
   TAKEnrollmentRequest,
   TAKGeochatMessage,
+  TAKInboundChat,
   TAKNodeUpdate,
   TAKRemoteCredentialSummary,
   TAKRemoteSettings,
@@ -57,6 +59,18 @@ import type {
 export type { GattBleDevice, GattBleSessionId, SerialPort };
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  beacon: {
+    connect: (request: BeaconConnectRequest) =>
+      ipcRenderer.invoke('beacon:connect', request) as Promise<BeaconConnectResult>,
+    disconnect: () => ipcRenderer.invoke('beacon:disconnect') as Promise<void>,
+    onUpdate: (callback: (update: BeaconFeedUpdate) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, update: BeaconFeedUpdate): void => {
+        callback(update);
+      };
+      ipcRenderer.on('beacon:update', handler);
+      return () => ipcRenderer.removeListener('beacon:update', handler);
+    },
+  },
   translation: {
     getStatus: () => ipcRenderer.invoke('translation:getStatus'),
     setEnabled: (enabled: boolean) => ipcRenderer.invoke('translation:setEnabled', enabled),
@@ -973,13 +987,37 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('notificationSounds:read', event, id),
   },
 
-  // ─── Safe storage (OS-keychain-backed encryption) ──────────────
-  safeStorage: {
-    encrypt: (plaintext: string): Promise<string | null> =>
-      ipcRenderer.invoke('storage:encrypt', plaintext),
-    decrypt: (ciphertext: string): Promise<string | null> =>
-      ipcRenderer.invoke('storage:decrypt', ciphertext),
-    isAvailable: (): Promise<boolean> => ipcRenderer.invoke('storage:isAvailable'),
+  // ─── Main-owned secure secret storage ──────────────────────────
+  secureSecrets: {
+    status: (): Promise<{ available: boolean; persistent: boolean }> =>
+      ipcRenderer.invoke('secureSecrets:status'),
+    list: (): Promise<string[]> => ipcRenderer.invoke('secureSecrets:list'),
+    getAll: (): Promise<Record<string, string>> => ipcRenderer.invoke('secureSecrets:getAll'),
+    get: (key: string): Promise<string | null> => ipcRenderer.invoke('secureSecrets:get', key),
+    set: (
+      key: string,
+      value: string,
+      requirePersistent?: boolean,
+    ): Promise<{ available: boolean; persistent: boolean; verified: boolean }> =>
+      ipcRenderer.invoke('secureSecrets:set', key, value, requirePersistent),
+    remove: (key: string): Promise<void> => ipcRenderer.invoke('secureSecrets:remove', key),
+    migrateLegacyIdentityCiphertext: (
+      ciphertext: string,
+    ): Promise<{ available: boolean; persistent: boolean; verified: boolean }> =>
+      ipcRenderer.invoke('secureSecrets:migrateLegacyIdentityCiphertext', ciphertext),
+    migrateLegacyBackupCiphertext: (
+      protocol: 'meshcore' | 'meshtastic',
+      id: number,
+      format: 'per-node' | 'meshtastic-single',
+      ciphertext: string,
+    ): Promise<{ available: boolean; persistent: boolean; verified: boolean }> =>
+      ipcRenderer.invoke(
+        'secureSecrets:migrateLegacyBackupCiphertext',
+        protocol,
+        id,
+        format,
+        ciphertext,
+      ),
   },
 
   // ─── App settings ──────────────────────────────────────────────
@@ -990,6 +1028,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getAll: (): Promise<Record<string, string>> => ipcRenderer.invoke('appSettings:get'),
     set: (key: string, value: string): Promise<{ changes: number }> =>
       ipcRenderer.invoke('appSettings:set', key, value),
+    remove: (key: string): Promise<{ changes: number }> =>
+      ipcRenderer.invoke('appSettings:remove', key),
   },
 
   // ─── Power events ──────────────────────────────────────────────
@@ -1157,6 +1197,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
       };
       ipcRenderer.on('tak:contacts', handler);
       return () => ipcRenderer.off('tak:contacts', handler);
+    },
+    onInboundChat: (cb: (message: TAKInboundChat) => void): (() => void) => {
+      const handler = (_: unknown, message: TAKInboundChat) => {
+        cb(message);
+      };
+      ipcRenderer.on('tak:inboundChat', handler);
+      return () => ipcRenderer.off('tak:inboundChat', handler);
     },
     remoteStart: (settings: TAKRemoteSettings): Promise<void> =>
       ipcRenderer.invoke('tak:remoteStart', settings),

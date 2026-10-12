@@ -20,7 +20,8 @@ jobs:
       prev_tag: ${{ steps.compare.outputs.prev_tag }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        # actions/checkout v6.1.0
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           fetch-depth: 0
 
@@ -38,7 +39,8 @@ jobs:
           --write-readme READ-ME-FIRST-flatpak.md
 
       - name: Upload READ-ME-FIRST warning
-        uses: actions/upload-artifact@v7
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: READ-ME-FIRST-flatpak
           path: READ-ME-FIRST-flatpak.md
@@ -62,7 +64,8 @@ jobs:
             runner: ubuntu-24.04-arm
             cargo_target: aarch64-unknown-linux-gnu
     steps:
-      - uses: actions/checkout@v6
+      # actions/checkout v6.1.0
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
 
       - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8
         with:
@@ -82,7 +85,9 @@ jobs:
           tar -cf "${GITHUB_WORKSPACE}/mesh-hub-ble-${{ matrix.arch }}.tar" \
             -C "${GITHUB_WORKSPACE}/resources/ble-sidecar" mesh-hub-ble
 
-      - uses: actions/upload-artifact@v7
+      # actions/upload-artifact v7.0.2
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: mesh-hub-ble-${{ matrix.arch }}
           path: mesh-hub-ble-${{ matrix.arch }}.tar
@@ -99,6 +104,10 @@ jobs:
     runs-on: ${{ matrix.runner }}
     permissions:
       contents: read
+    env:
+      FLATPAK_BUILDER_IMAGE:
+        "ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-24.08@sha256:\
+        66eb59fd5d923833e8e4142f60e542156aad4b8b1d5db38149d814c659e274bc"
     strategy:
       fail-fast: false
       matrix:
@@ -108,13 +117,16 @@ jobs:
           - arch: aarch64
             runner: ubuntu-24.04-arm
     container:
-      image: ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-24.08
+      image: "ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-24.08@sha256:\
+        66eb59fd5d923833e8e4142f60e542156aad4b8b1d5db38149d814c659e274bc"
       options: --privileged
 
     steps:
-      - uses: actions/checkout@v6
+      # actions/checkout v6.1.0
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      # actions/download-artifact v8.0.2
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           name: mesh-hub-ble-${{ matrix.arch }}
           path: .sidecar-artifacts
@@ -135,18 +147,23 @@ jobs:
         run: node scripts/write-schema-upgrade-notice.mjs
 
       - name: Download READ-ME-FIRST warning
-        uses: actions/download-artifact@v8
+        # actions/download-artifact v8.0.2
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           name: READ-ME-FIRST-flatpak
           path: flatpak-warnings
 
       - name: Generate offline pnpm sources
         run: |
+          python3 -m pip install --require-hashes --only-binary=:all: \
+            -r scripts/requirements-flatpak-generator.txt
           FBTOOLS=git+https://github.com/flatpak/flatpak-builder-tools
           # ac5a296a+: YAML storeDir: for pnpm v11 (storeDir= breaks pnpm-workspace.yaml).
           # --force-reinstall: image may preinstall flatpak_node_generator==0.1.0; same
           # version makes plain pip install a no-op (leaves storeDir= generator).
-          pip3 install --force-reinstall --no-cache-dir \
+          # --no-deps: runtime deps come only from the hash-locked requirements file.
+          # --no-build-isolation: poetry-core is that hash-locked build backend.
+          pip3 install --force-reinstall --no-cache-dir --no-deps --no-build-isolation \
             "${FBTOOLS}@ac5a296ac6111aa2319daf532f609a067b88d8a9#subdirectory=node"
           # GitHub github.com/.../raw/... 404s; skip Playwright browser zips (Electron E2E).
           node scripts/patch-flatpak-node-generator-playwright.mjs
@@ -252,7 +269,8 @@ jobs:
 
       # Artifact name ends with .flatpak so publish flatten → flatpak-dist/*.flatpak matches.
       - name: Upload Flatpak bundle
-        uses: actions/upload-artifact@v7
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: io.github.charlottemeshtastic.MeshHub.flatpak-${{ matrix.arch }}.flatpak
           path: |
@@ -262,7 +280,8 @@ jobs:
 
       # Schema warning beside the bundle for Actions downloads.
       - name: Upload READ-ME-FIRST with Flatpak artifacts
-        uses: actions/upload-artifact@v7
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: flatpak-schema-warning-${{ matrix.arch }}
           path: flatpak-warnings/READ-ME-FIRST-flatpak.md
@@ -271,17 +290,42 @@ jobs:
   publish:
     name: Publish to GitHub Release
     needs: flatpak
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    environment: release
     permissions:
+      artifact-metadata: write
+      attestations: write
       contents: write
+      id-token: write
+    env:
+      FLATPAK_BUILDER_IMAGE:
+        "ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-24.08@sha256:\
+        66eb59fd5d923833e8e4142f60e542156aad4b8b1d5db38149d814c659e274bc"
 
     steps:
-      - uses: actions/checkout@v6
+      - name: Require exact semver release tag
+        env:
+          RELEASE_REF: ${{ github.ref }}
+          RELEASE_REF_PROTECTED: ${{ github.ref_protected }}
+        run: |
+          if [[ ! "${RELEASE_REF}" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Flatpak publishing requires an exact vX.Y.Z tag."
+            exit 1
+          fi
+          if [ "${RELEASE_REF_PROTECTED}" != 'true' ]; then
+            echo "::error::Flatpak publishing requires a protected tag."
+            exit 1
+          fi
+
+      # actions/checkout v6.1.0
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           ref: ${{ github.sha }}
 
-      - uses: actions/download-artifact@v8
+      # actions/download-artifact v8.0.2
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           pattern: 'io.github.charlottemeshtastic.MeshHub.flatpak-*.flatpak'
           path: flatpak-dist
@@ -303,6 +347,28 @@ jobs:
             mv "$staging" "flatpak-dist/${name}"
           done
 
+      - name: Write reviewed Flatpak builder predicate
+        run: |
+          node scripts/flatpak-builder-provenance.mjs write-predicate \
+            --output flatpak-builder-predicate.json \
+            --source-sha "$GITHUB_SHA" \
+            --builder-image "$FLATPAK_BUILDER_IMAGE"
+
+      # actions/attest v4.2.2
+      - name: Sign Flatpak builder provenance
+        id: flatpak_attestation
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: flatpak-dist/*.flatpak
+          predicate-type: https://github.com/charlottemeshtastic/mesh-client/attestations/flatpak-builder/v1
+          predicate-path: flatpak-builder-predicate.json
+
+      - name: Verify signed Flatpak provenance and bundle digests
+        env:
+          ATTESTATION_BUNDLE_PATH: ${{ steps.flatpak_attestation.outputs.bundle-path }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/flatpak-builder-provenance.mjs verify-github
+
       - name: Resolve release tag from package.json
         id: release_tag
         run: echo "value=v$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
@@ -319,4 +385,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_ID: ${{ steps.draft.outputs.release_id }}
-        run: node scripts/ci-upload-release-assets.mjs flatpak-dist/*.flatpak
+        run: >-
+          node scripts/ci-upload-release-assets.mjs
+          flatpak-dist/*.flatpak
+          flatpak-dist/mesh-client-flatpak-attestation.sigstore.json

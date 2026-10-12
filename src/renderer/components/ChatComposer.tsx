@@ -1642,7 +1642,12 @@ export function ChatComposer({
                         {(
                           [
                             { value: '', label: t('chatPanel.floodScopeOverrideDefault') },
-                            ...floodScopePresets.map((tag) => ({
+                            ...[
+                              ...new Set([
+                                ...floodScopePresets,
+                                ...(floodScopeOverride.startsWith('#') ? [floodScopeOverride] : []),
+                              ]),
+                            ].map((tag) => ({
                               value: tag,
                               label: tag,
                             })),

@@ -903,7 +903,7 @@ describe('ChatComposer', () => {
     ).toBeNull();
   });
 
-  it('shows flood-scope menu button when showFloodScopeOverride is true', () => {
+  it('shows a compact flood-scope menu button until an override is selected', () => {
     render(
       <ChatComposer
         protocol="meshcore"
@@ -914,9 +914,12 @@ describe('ChatComposer', () => {
         onSendChunk={vi.fn()}
       />,
     );
-    expect(
-      screen.getByRole('button', { name: 'Change flood scope for this channel' }),
-    ).toBeInTheDocument();
+    const button = screen.getByRole('button', {
+      name: 'Change flood scope for this channel',
+    });
+    expect(button).toBeInTheDocument();
+    expect(button).toHaveTextContent('');
+    expect(button).toHaveAttribute('title', 'Remembered per channel.');
   });
 
   it('sends with saved floodScopeOverride after selecting from menu', async () => {

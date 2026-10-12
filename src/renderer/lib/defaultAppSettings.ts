@@ -70,6 +70,12 @@ export const DEFAULT_APP_SETTINGS_SHARED = {
   meshcoreOpenWireCompatEnabled: false,
   /** MeshCore companion path hash mode: 0 = 1-byte, 1 = 2-byte, 2 = 3-byte (firmware v1.14+). */
   meshcorePathHashMode: 0 as 0 | 1 | 2,
+  /**
+   * When true (default), packaged builds download update artifacts in the background after each
+   * check. When false, updates are still checked but only downloaded on an explicit "Download".
+   * Lets package-manager deployments own the artifact.
+   */
+  autoUpdateDownloadEnabled: true,
   /** When true, show the Chat MECP compose button (default off). */
   mecpComposeEnabled: false,
   /** Node silence alert threshold; null = use protocol capability defaults. */

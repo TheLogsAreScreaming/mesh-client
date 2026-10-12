@@ -71,6 +71,78 @@ describe('TakUnitFiltersSection', () => {
     expect(await screen.findByText('Saved and applied')).toBeInTheDocument();
   });
 
+  it('fills and saves the relay icon path, and omits it when cleared', async () => {
+    const icon = 'abc123/WildFire/Repeater.png';
+    vi.mocked(tak().getStyleSettings).mockResolvedValue({ ...SAVED, relayIconsetPath: icon });
+    const user = userEvent.setup();
+    await renderSection();
+    const input = screen.getByLabelText('Icon for repeaters, routers and room servers');
+    expect(input).toHaveValue(icon);
+
+    await user.clear(input);
+    await user.type(input, '  abc123/WildFire/Repeater Mobile Relay.png ');
+    await user.click(screen.getByRole('button', { name: 'Save styles' }));
+    expect(tak().setStyleSettings).toHaveBeenLastCalledWith({
+      ...SAVED,
+      relayIconsetPath: 'abc123/WildFire/Repeater Mobile Relay.png',
+    });
+
+    await user.clear(input);
+    await user.click(screen.getByRole('button', { name: 'Save styles' }));
+    expect(tak().setStyleSettings).toHaveBeenLastCalledWith(SAVED);
+  });
+
+  it('saves a filter that matches by node type and protocol with no name pattern', async () => {
+    const user = userEvent.setup();
+    await renderSection();
+    await user.click(screen.getByRole('button', { name: 'Add filter' }));
+    await user.selectOptions(screen.getByLabelText('Node type for filter 2'), 'Room servers');
+    await user.selectOptions(screen.getByLabelText('Protocol for filter 2'), 'MeshCore');
+    await user.selectOptions(screen.getByLabelText('Team role for filter 2'), 'RTO');
+    await user.click(screen.getByRole('button', { name: 'Save styles' }));
+
+    expect(tak().setStyleSettings).toHaveBeenLastCalledWith({
+      sendUnmatched: true,
+      filters: [
+        SAVED.filters[0],
+        {
+          enabled: true,
+          op: 'startsWith',
+          patterns: [],
+          nodeKind: 'room',
+          protocol: 'meshcore',
+          stripMatch: false,
+          style: { cotType: 'a-f-G-U-C', group: 'Cyan', role: 'RTO' },
+        },
+      ],
+    });
+  });
+
+  it('fills the node type and protocol from saved settings', async () => {
+    vi.mocked(tak().getStyleSettings).mockResolvedValue({
+      sendUnmatched: true,
+      filters: [{ ...SAVED.filters[0], nodeKind: 'sensor', protocol: 'meshtastic' }],
+    });
+    await renderSection();
+    expect(screen.getByLabelText('Node type for filter 1')).toHaveValue('sensor');
+    expect(screen.getByLabelText('Protocol for filter 1')).toHaveValue('meshtastic');
+  });
+
+  it('previews a node-type filter for the chosen node type', async () => {
+    vi.mocked(tak().getStyleSettings).mockResolvedValue({
+      sendUnmatched: true,
+      filters: [{ ...SAVED.filters[0], patterns: [], nodeKind: 'sensor' }],
+    });
+    const user = userEvent.setup();
+    await renderSection();
+    await user.type(screen.getByLabelText('Test a node name'), 'Creek gauge');
+    expect(
+      screen.getByText('No filter matches; drawn from its advertised role'),
+    ).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText('Node type to test'), 'Sensors');
+    expect(screen.getByText('Filter 1 applies; shown as "Creek gauge"')).toBeInTheDocument();
+  });
+
   it('removes a filter', async () => {
     const user = userEvent.setup();
     await renderSection();

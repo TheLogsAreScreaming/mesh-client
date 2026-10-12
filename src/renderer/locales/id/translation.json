@@ -34,7 +34,9 @@
     "takRemoteConnecting": "koneksi jarak jauh",
     "takRemoteError": "kesalahan jarak jauh",
     "takRemoteOnly": "TAK {{remote}}",
-    "takWithRemote": "{{local}}, {{remote}}"
+    "takWithRemote": "{{local}}, {{remote}}",
+    "savedSettingsUnavailable": "Pengaturan yang disimpan tidak dapat dimuat",
+    "savedSettingsRecovery": "Data Anda yang disimpan telah disimpan. Periksa apakah ring kunci sistem Anda tersedia, atau tunggu sebentar dan coba lagi."
   },
   "appPanel": {
     "failedSaveRetention": "Gagal menyimpan setelan retensi pesan.",
@@ -334,7 +336,7 @@
     "exportForGitHubDesc": "Termasuk snapshot debug dan file log dalam satu zip. Aman untuk dilampirkan ke masalah GitHub publik.",
     "exportForDeveloper": "Ekspor paket dukungan untuk pengembang",
     "exportForDeveloperButton": "Ekspor untuk Pengembang",
-    "exportForDeveloperWarning": "Termasuk database lengkap Anda, yang mungkin berisi kata sandi yang disimpan (kredensial ruang MeshCore, pengaturan MQTT, dll.). Bagikan bundel ini secara pribadi hanya kepada pengelola — jangan pernah di GitHub publik.",
+    "exportForDeveloperWarning": "Termasuk database lengkap dan log audit darurat MECP Anda, yang mungkin berisi kata sandi tersimpan, teks pesan, pengenal pengirim dan kanal, serta detail lokasi. Bagikan bundel ini secara pribadi hanya kepada pengelola — jangan pernah di GitHub publik.",
     "exportSupportBundleFailed": "Tidak dapat mengekspor paket dukungan: {{message}}",
     "storeForwardHistoryProfileLabel": "Profil pengejar Simpan & Teruskan",
     "storeForwardHistoryProfileAria": "Simpan & Teruskan sejarah mengejar keagresifan",
@@ -414,7 +416,11 @@
       "empty": "Tidak ada node yang diblokir.",
       "unblockAria": "Buka blokiran {{node}}",
       "unblockFailed": "Tidak dapat membuka blokir simpul itu."
-    }
+    },
+    "updatesSection": "Pembaruan",
+    "autoUpdateDownload": "Unduh pembaruan secara otomatis",
+    "autoUpdateDownloadDesc": "Mengunduh pembaruan terbaru di latar belakang setelah setiap pemeriksaan. Ketika mati, pembaruan masih terdeteksi tetapi hanya diunduh ketika Anda menekan tombol Unduh — berguna ketika manajer paket menangani instalasi.",
+    "autoUpdateDownloadSaveFailed": "Tidak dapat menyimpan pengaturan unduhan pembaruan otomatis."
   },
   "aria": {
     "closeDialog": "Tutup dialog",
@@ -724,7 +730,66 @@
       "noise": "Kebisingan {{noise}} dBm",
       "path": "Jalur: {{path}}",
       "hops_one": "{{count}} hop",
-      "hops_other": "{{count}} hop"
+      "hops_other": "{{count}} hop",
+      "place": "Dari: {{place}}"
+    },
+    "firmwareBot": {
+      "label": "Balasan bot",
+      "status": {
+        "title": "Status {{name}}",
+        "uptime": "Naik {{uptime}}",
+        "battery": "Baterai {{mv}} mV ({{percent}}%)",
+        "storage": "Penyimpanan {{used}}/{{total}} KB",
+        "counters": "Terlihat {{seen}}, dikirim {{sent}}, gagal {{fail}}"
+      },
+      "air": {
+        "title": "Jam tayang",
+        "tx": "TX {{seconds}} dtk",
+        "rx": "RX {{seconds}} dtk",
+        "rxPackets": "RX Flood {{flood}} / langsung {{direct}}",
+        "txPackets": "TX Flood {{flood}} / langsung {{direct}}"
+      },
+      "neighbors": {
+        "title_one": "{{count}} tetangga",
+        "title_other": "{{count}} tetangga",
+        "none": "Tidak ada yang terdengar baru-baru ini",
+        "ago": "{{ago}} yang lalu"
+      },
+      "trace": {
+        "title": "Jejak",
+        "hop": "{{hash}} {{snr}} dB",
+        "tail": "Kembalikan SNR {{snr}} dB",
+        "directLink": "Tautan langsung",
+        "timeout": "Waktu habis",
+        "sent": "Terkirim"
+      },
+      "lora": {
+        "title": "LoRa",
+        "freq": "{{freq}}MHz",
+        "sf": "SF{{sf}}",
+        "bw": "BW {{bw}} kHz",
+        "cr": "CR {{cr}}",
+        "power": "{{power}} dBm"
+      },
+      "version": {
+        "title": "Firmware",
+        "built": "Dibangun {{built}}"
+      },
+      "channels": {
+        "title": "Saluran bot",
+        "bot": "Perintah {{name}}",
+        "testing": "Menguji {{name}}",
+        "emergency": "Darurat {{name}}",
+        "public": "Publik {{name}}"
+      },
+      "help": {
+        "title": "Perintah",
+        "diagTitle": "Perintah diagnostik"
+      }
+    },
+    "healthCheck": {
+      "label": "MeshCore Kode Pemeriksaan Kesehatan",
+      "tooltip": "Kode tes untuk MeshCore Pemeriksaan Kesehatan. Pengamat pada laporan mesh pengirim yang mana dari mereka yang menerimanya."
     }
   },
   "common": {
@@ -760,7 +825,11 @@
     "emDash": "—",
     "saving": "Menyimpan...",
     "delete": "Menghapus",
-    "copied": "Disalin"
+    "copied": "Disalin",
+    "botBadge": "Bot",
+    "botBadgeLabel": "Bot",
+    "botBadgeTooltip": "Terdeteksi sebagai bot dari balasan otomatisnya",
+    "retry": "Coba lagi"
   },
   "configApplyNotice": {
     "persistNote": "Pengaturan yang diterapkan disimpan ke memori flash perangkat dan bertahan selama reboot.",
@@ -1093,7 +1162,8 @@
     "meshcoreBleWindowsInAppPairingHint": "Di Windows, pilih radio di sini dan masukkan PIN yang ditampilkan di layarnya. Mesh Hub memasangkannya untuk Anda, jadi Anda tidak perlu memasangkannya di Pengaturan Windows. Tutup aplikasi MeshCore di ponsel Anda terlebih dahulu; radio hanya menerima satu koneksi Bluetooth pada satu waktu.",
     "stageEnterPinWindows": "Masukkan PIN yang ditampilkan di radio Anda untuk memasangkannya dengan Windows",
     "stagePairingWindows": "Memasangkan dengan Windows…",
-    "meshtasticSilentAfterConfigure": "Terhubung ke radio, tetapi berhenti mengirim lalu lintas mesh setelah penyiapan. Menghubungkan kembali secara otomatis. Jika ini terus terjadi, periksa koneksi jaringan radio atau mulai ulang."
+    "meshtasticSilentAfterConfigure": "Terhubung ke radio, tetapi berhenti mengirim lalu lintas mesh setelah penyiapan. Menghubungkan kembali secara otomatis. Jika ini terus terjadi, periksa koneksi jaringan radio atau mulai ulang.",
+    "mqttPacketTooLarge": "Broker mengirim paket MQTT yang lebih besar dari batas aman {{limit}} byte; sambungan ulang otomatis dinonaktifkan."
   },
   "contactGroupsModal": {
     "failedLoadMembers": "Gagal memuat anggota: {{message}}",
@@ -1570,7 +1640,7 @@
     "layerControlsAria": "Alihkan kontrol lapisan peta",
     "basemapHeading": "Peta dasar",
     "basemapSelectAria": "Pilih peta dasar",
-    "basemapDark": "Gelap (Carto)",
+    "basemapDark": "Gelap (OpenStreetMap)",
     "basemapOsm": "OpenStreetMap (Light)",
     "layersHeading": "Overlay",
     "layerNodes": "Penanda simpul",
@@ -1605,7 +1675,8 @@
       "cacheStats": "Cache: {{count}} tiles ({{size}})",
       "clear": "Bersihkan singgahan ubin",
       "clearAria": "Bersihkan cache ubin peta offline",
-      "cleared": "Cache ubin dikosongkan."
+      "cleared": "Cache ubin dikosongkan.",
+      "viewCacheOnly": "Ubin peta yang dilihat disimpan dalam cache secara otomatis. Unduhan wilayah tersedia pada USGS Topo; OpenStreetMap tidak mengizinkan pengunduhan terlebih dahulu."
     },
     "basemapUsgsTopo": "USGS Topo (khusus AS)",
     "layerIncidents": "Insiden darurat",
@@ -3321,7 +3392,12 @@
     "frequencyOffsetLabel": "Ofset Frekuensi",
     "frequencyOffsetDesc": "Lanjutan: offset dalam MHz ditambahkan ke frekuensi pusat yang dihitung untuk memperbaiki kesalahan kalibrasi kristal. Berangkat pada 0 kecuali Anda memiliki peralatan uji.",
     "enumLicensedOnlySuffix": "(hanya berlisensi)",
-    "unknownEnumValue": "Tidak diketahui ({{value}})"
+    "unknownEnumValue": "Tidak diketahui ({{value}})",
+    "floodScopePresetsTitle": "Wilayah tersimpan",
+    "floodScopePresetsHelp": "Tambahkan wilayah di sini, lalu pilih ruang lingkup untuk setiap saluran di samping Kirim atau di → Saluran Radio. Menyimpan atau menghapus suatu wilayah membuat pilihan default dan saluran radio tidak berubah.",
+    "floodScopeAddHashtag": "Hashtag wilayah untuk disimpan",
+    "floodScopeAddSaved": "Simpan wilayah",
+    "floodScopePresetsFull": "Anda bisa menghemat hingga {{count}} wilayah. Hapus satu sebelum menambahkan yang lain."
   },
   "rawPacketLog": {
     "filterPackets": "Filter paket",
@@ -3962,7 +4038,8 @@
       "enrollNoCert": "Tanggapan pendaftaran tidak memiliki sertifikat",
       "enrollTooLarge": "Respons pendaftaran terlalu besar",
       "enrollKeyMismatch": "Server mengembalikan sertifikat untuk kunci yang berbeda",
-      "enrollBusy": "Tunggu hingga impor sertifikat saat ini selesai"
+      "enrollBusy": "Tunggu hingga impor sertifikat saat ini selesai",
+      "frameTooLarge": "Peristiwa CoT melebihi {{max}} byte"
     },
     "remoteUseTls": "Gunakan TLS (disarankan)",
     "remotePlainTcpWarning": "TCP biasa tidak terenkripsi: siapa pun di jalur jaringan dapat membaca posisi yang disampaikan. Sertifikat tidak digunakan, dan koneksi saat peluncuran tidak aktif.",
@@ -4012,15 +4089,30 @@
     "unitTypeSensor": "Sensor",
     "unitTypeAir": "Pesawat",
     "channelRelayTitle": "MeshCore saluran ke TAK",
-    "channelRelayDesc": "Pilih umpan pesan saluran yang didengar ke TAK. Perbaikan pelacak mengubah pesan posisi pelacak MeshCore (!MT1) ke dalam penanda peta. Ruang GeoChat mencerminkan saluran ke ruang obrolan TAK itu. Keduanya hanya satu arah: tidak ada dari TAK yang dikirim melalui jejaring.",
     "channelRelayTrackers": "Perbaikan pelacak",
     "channelRelayRoom": "Ruang GeoChat untuk {{channel}}",
     "channelRelayRoomPlaceholder": "Ruang GeoChat (nonaktif)",
     "channelRelayNoChannels": "Hubungkan radio MeshCore untuk mengiklankan salurannya.",
     "channelRelayUnnamed": "Saluran {{n}}",
     "channelRelayTitleMeshtastic": "Meshtastic saluran ke TAK",
-    "channelRelayDescMeshtastic": "Pilih pesan saluran mana yang didengarkan yang dimasukkan ke TAK. Ruang GeoChat mencerminkan saluran, termasuk pesan yang didengar melalui MQTT, ke dalam ruang obrolan TAK tersebut. Ini hanya berlaku satu arah: tidak ada apa pun dari TAK yang dikirim melalui mesh.",
-    "channelRelayNoChannelsMeshtastic": "Hubungkan radio Meshtastic untuk mencantumkan salurannya."
+    "channelRelayNoChannelsMeshtastic": "Hubungkan radio Meshtastic untuk mencantumkan salurannya.",
+    "unitStylesPreviewKind": "Ketik untuk menguji",
+    "unitStylesPreviewProtocol": "Protokol untuk diuji",
+    "unitFilterKind": "Tipe node untuk filter {{n}}",
+    "unitFilterAnyKind": "Semua jenis simpul",
+    "unitFilterProtocol": "Protokol untuk filter {{n}}",
+    "unitFilterAnyProtocol": "Protokol apa saja",
+    "unitKindCompanion": "Teman dan klien",
+    "unitKindRepeater": "Repeater dan router",
+    "unitKindRoom": "Server ruangan",
+    "unitKindSensor": "Sensor",
+    "unitKindTracker": "Pelacak",
+    "unitStylesRelayIcon": "Ikon untuk repeater, router, dan server ruangan",
+    "unitStylesRelayIconHint": "Opsional. Jalur ikon dalam kumpulan ikon ATAK, sebagai kumpulan nama UID/grup/file. Perangkat tanpa kumpulan ikon tersebut menunjukkan simbol instalasi.",
+    "channelRelayHelp": "Pilih pesan saluran yang didengar dimasukkan ke TAK. Perbaikan pelacak mengubah MeshCore pesan posisi pelacak (!MT1) menjadi penanda peta. Ruang GeoChat mencerminkan saluran ke ruang obrolan TAK tersebut. Tidak ada apa pun dari TAK yang dikirim melalui mesh kecuali Anda mencentang TAK dapat mengirim untuk suatu saluran: maka pesan yang menghubungkan perangkat TAK yang diposkan di ruangannya ditransmisikan pada saluran tersebut dari radio ini, yang diawali dengan tanda panggilan pengirim.",
+    "channelRelaySend": "TAK dapat mengirim",
+    "channelRelaySendFor": "Biarkan perangkat TAK mengirim ke {{channel}}",
+    "channelRelayHelpMeshtastic": "Pilih pesan saluran mana yang didengarkan yang dimasukkan ke TAK. Ruang GeoChat mencerminkan saluran, termasuk pesan yang didengar melalui MQTT, ke dalam ruang obrolan TAK tersebut. Tidak ada apa pun dari TAK yang dikirim melalui mesh kecuali Anda mencentang TAK dapat mengirim untuk suatu saluran: maka pesan yang menghubungkan perangkat TAK yang diposkan di ruangannya ditransmisikan pada saluran tersebut dari radio ini, yang diawali dengan tanda panggilan pengirim."
   },
   "telemetryPanel": {
     "title": "Telemetri",
@@ -4173,7 +4265,6 @@
     "exportLog": "Export MECP log",
     "compose": {
       "title": "Compose MECP report",
-      "open": "Open MECP compose",
       "severity": "Severity",
       "category": "Category",
       "codes": "Codes",
@@ -4184,7 +4275,12 @@
       "byteBudget": "{{used}} / {{max}} bytes",
       "send": "Send MECP",
       "gpsFailed": "Tidak bisa mendapatkan perbaikan GPS",
-      "sendFailed": "Gagal mengirim laporan MECP"
+      "sendFailed": "Gagal mengirim laporan MECP",
+      "openResponse": "Tanggapi dengan MECP",
+      "requestTitle": "Permintaan atau laporan MECP",
+      "responseTitle": "Tanggapan MECP",
+      "showAllCodes": "Tampilkan semua kode MECP",
+      "openRequest": "Minta atau laporkan dengan MECP"
     },
     "rebroadcast": {
       "title": "MECP RF rebroadcast",
@@ -4206,10 +4302,10 @@
       "hint": "Protokol Komunikasi Darurat Mesh — menulis laporan dari Chat, menjembatani RF antara Meshtastic dan MeshCore di sini, dan mengekspor log audit yang diterima tahan lama.",
       "learnMore": "Cara kerja MECP",
       "protocolSource": "Sumber protokol di GitHub",
-      "showComposeButton": "Tampilkan tombol MECP di Obrolan",
-      "showComposeButtonHint": "Mati secara default. Saat diaktifkan, Obrolan menampilkan tombol MECP untuk menyusun dan mengirim laporan darurat.",
       "standingAlert": "Stasiun Komando Insiden (peringatan berdiri)",
-      "standingAlertHint": "Mati secara default. Untuk EOC dan stasiun yang dipantau: pasang spanduk merah dan nyalakan bilah tugas atau pantulkan dok sampai seseorang melihat setiap MAYDAY baru atau MENDESAK. Semua orang masih mendengar nada peringatan satu kali dan melihat roti panggang."
+      "standingAlertHint": "Mati secara default. Untuk EOC dan stasiun yang dipantau: pasang spanduk merah dan nyalakan bilah tugas atau pantulkan dok sampai seseorang melihat setiap MAYDAY baru atau MENDESAK. Semua orang masih mendengar nada peringatan satu kali dan melihat roti panggang.",
+      "showComposeButtons": "Tampilkan tombol MECP di Obrolan",
+      "showComposeButtonsHint": "Mati secara default. Saat diaktifkan, Obrolan menunjukkan tombol permintaan/laporan merah dan tombol respons biru."
     },
     "exportLogEmpty": "Belum ada pesan MECP di log yang diterima",
     "block": {
@@ -4568,7 +4664,11 @@
     "pendingChanges_other": "{{count}} perubahan",
     "read": "Pengaturan dibaca",
     "radioConnected": "Radio terhubung",
-    "radioDisconnected": "Radio terputus"
+    "radioDisconnected": "Radio terputus",
+    "scope": "Cakupan Flood default",
+    "defaultScope": "Nama wilayah (kosong untuk dibuka)",
+    "scopeSummary": "Wilayah untuk paket Flood keluar dari simpul ini",
+    "scopeHint": "Firmware v1.15+: masukkan wilayah publik seperti #us-tn-tri; kosongkan untuk tanpa batas wilayah. Berlaku untuk pengumuman Flood dan pengiriman pesan ruangan melalui Flood. Rute langsung dan akses ruangan terpisah. Radio Companion dan kanalnya memiliki pengaturan cakupan sendiri."
   },
   "chatTranslation": {
     "translate": "Terjemahkan pesan",
@@ -4599,7 +4699,7 @@
     "deletePack": "Hapus paket {{pack}}",
     "downloadPack": "Unduh paket {{pack}}",
     "delete": "Menghapus",
-    "onlinePrivacy": "Terjemahan online mengirimkan teks pesan yang dipilih ke server LibreTranslate Anda yang dikonfigurasi hanya bila Anda memilih Terjemahkan online. Terjemahan otomatis selalu offline.",
+    "onlinePrivacy": "Terjemahan online mengirimkan teks pesan yang dipilih ke server LibreTranslate Anda yang dikonfigurasi hanya bila Anda memilih Terjemahkan online. Terjemahan otomatis selalu offline. HTTP hanya diizinkan untuk localhost dan alamat loopback; semua server lain harus menggunakan HTTPS.",
     "serverUrl": "URL server LibreTranslate",
     "apiKey": "Kunci API (opsional)",
     "savedKey": "Kunci API disimpan dengan aman. Bidang kosong menyimpannya hanya untuk URL server yang sama.",
@@ -4631,6 +4731,158 @@
     "downloadSize": "Unduh ({{size}})",
     "readLanguagesHint": "Pesan dalam bahasa ini tidak pernah diterjemahkan secara otomatis. Bahasa yang dipilih di bawah Terjemahkan ke selalu dianggap sebagai bahasa yang Anda baca.",
     "pivotHint": "Paket mencakup satu arah terjemahan, seperti bahasa Prancis ke bahasa Inggris. Pasangan bahasa lainnya diterjemahkan melalui bahasa Inggris: French to German needs the French → English and English → German packs. Menerjemahkan ke dalam bahasa Inggris hanya membutuhkan satu paket.",
-    "hideTranslation": "Sembunyikan terjemahan"
+    "hideTranslation": "Sembunyikan terjemahan",
+    "secureUrlRequired": "Terjemahan online dihentikan sementara. Server Anda dan kunci yang disimpan telah disimpan; gunakan URL https untuk melanjutkan."
+  },
+  "liveTraffic": {
+    "controlPacket": "Paket kontrol",
+    "discoveryRequest": "Permintaan penemuan node",
+    "discoveryResponse": "Respons penemuan node",
+    "directoryLimited": "Direktori peta ini telah mencapai batas. Beberapa node mungkin tidak ditampilkan.",
+    "directoryLimitedShort": "Direktori tidak lengkap",
+    "sources": {
+      "CoreScope": "CoreScope",
+      "RF": "RF",
+      "MQTT": "MQTT",
+      "Beacon": "Beacon",
+      "unknown": "Sumber tidak diketahui"
+    },
+    "corescope": {
+      "feed": "CoreScope regional",
+      "preset": "Peta CoreScope regional",
+      "url": "URL peta CoreScope",
+      "waitingHint": "Hubungkan sumber CoreScope di atas untuk memantau pengamatnya. Radio lokal tidak diperlukan.",
+      "disconnected": "Pilih URL peta CoreScope untuk terhubung."
+    },
+    "trafficSource": "Sumber lalu lintas",
+    "connectionActionFailed": "Tidak dapat memperbarui koneksi sumber data. Coba lagi.",
+    "estimatedRouteHint": "CoreScope memperkirakan identitas beberapa node. Tautan ini belum terverifikasi; hop yang tidak tercatat tetap tidak diketahui.",
+    "cancelConnection": "Batalkan koneksi",
+    "estimatedLinks": "Tautan yang mencakup perkiraan server",
+    "additionalLocations_one": "{{count}} lokasi lainnya",
+    "additionalLocations_other": "{{count}} lokasi lainnya",
+    "mapOverview": "Ringkasan",
+    "title": "Lalu lintas langsung",
+    "mapModes": "Mode peta",
+    "pause": "Jeda",
+    "resume": "Lanjutkan",
+    "regions": {
+      "all": "Semua wilayah"
+    },
+    "region": "Area peta",
+    "transportScope": "Kode transpor",
+    "scopeHint": "Filter kode transpor paket yang diamati, atau masukkan scoped (dengan cakupan) atau unscoped (tanpa cakupan). Kode berlaku per paket dan tidak mengubah pengaturan radio.",
+    "unscoped": "Tanpa cakupan",
+    "scoped": "Dengan cakupan",
+    "allScopes": "Semua cakupan",
+    "kinds": {
+      "message": "Pesan",
+      "all": "Semua paket",
+      "advert": "Pengumuman node / posisi",
+      "telemetry": "Telemetri",
+      "routing": "Perutean",
+      "other": "Lainnya"
+    },
+    "packetType": "Jenis paket",
+    "speedFast": "2×",
+    "speed": "Pemutaran",
+    "speedNormal": "1×",
+    "mapAria": "Peta lalu lintas paket langsung",
+    "basemap": "Gaya peta",
+    "darkMap": "Gelap",
+    "waiting": "Menunggu pengamatan paket",
+    "topographicMap": "Peta topografi USGS",
+    "streetMap": "Peta jalan",
+    "waitingHint": "Hubungkan radio untuk melihat lalu lintas langsung.",
+    "animationDisclaimer": "Animasi menunjukkan urutan paket, bukan kecepatan transmisi radio. Hop yang tidak diketahui memutus jalur yang ditampilkan.",
+    "meshtasticDisclaimer": "Tautan penerimaan hanya menggambarkan hubungan penerimaan. Paket biasa tidak mengungkap setiap node perantara.",
+    "feed": "Aliran paket",
+    "noFilterMatches": "Tidak ada paket terbaru yang cocok dengan filter ini.",
+    "packetList": "Pengamatan paket terkini",
+    "emptyFeed": "Paket muncul di sini saat klien ini menerimanya. Node dengan posisi yang diketahui dapat ditampilkan pada peta.",
+    "inspectPacket": "Periksa paket {{kind}} pada {{time}}",
+    "noSignal": "Tidak ada data sinyal",
+    "route": "Bukti rute",
+    "closeInspector": "Tutup detail paket",
+    "inspector": "Detail paket",
+    "signalValues": "{{rssi}} dBm / {{snr}} dB",
+    "source": "Diamati melalui",
+    "signal": "RSSI / SNR",
+    "routeStatus": {
+      "partial": "Jalur sebagian / tautan penerimaan",
+      "estimated": "Rute perkiraan server",
+      "resolved": "Jalur paket yang teridentifikasi",
+      "unparsed": "Paket belum diurai",
+      "unlocated": "Tidak ada rute yang dapat digambar",
+      "direct": "Pengamatan langsung"
+    },
+    "meshtasticInspector": "Hubungan penerimaan bukan bukti adanya rantai perantara yang terkonfirmasi. Rincian jalur hanya ditampilkan jika paket memuatnya.",
+    "meshcoreInspector": "Hanya hop bersebelahan yang berhasil diidentifikasi yang dihubungkan. Hash yang tidak diketahui atau ambigu meninggalkan celah pada rute.",
+    "knownLocations": "Titik dengan lokasi diketahui",
+    "filters": "Filter",
+    "observationCount_one": "{{count}} paket",
+    "filterHint": "Filter hanya mengubah tampilan. Pengaturan radio tidak berubah.",
+    "observationCount_other": "{{count}} paket",
+    "nodeCount": "{{count}} node ditampilkan",
+    "mappedCount": "{{count}} dipetakan",
+    "expandFeed": "Perbesar jendela aliran paket",
+    "toggleFeed": "Buka atau ciutkan aliran paket",
+    "shrinkFeed": "Perkecil jendela aliran paket",
+    "moveFeed": "Pindahkan aliran paket",
+    "resetFeed": "Atur ulang posisi aliran paket",
+    "moveFeedHint": "Seret atau gunakan tombol panah untuk memindahkan jendela. Tahan Shift untuk langkah yang lebih besar.",
+    "encryptedContent": "Pesan terenkripsi",
+    "contentUnavailable": "Konten pesan tidak tersedia",
+    "beacon": {
+      "feed": "Beacon regional",
+      "connect": "Hubungkan",
+      "disconnect": "Putuskan koneksi",
+      "url": "URL peta Beacon",
+      "region": "Wilayah sumber data",
+      "configure": "Konfigurasikan",
+      "waitingHint": "Hubungkan sumber Beacon regional di atas untuk melihat penerimaan pengamatnya. Radio lokal tidak diperlukan.",
+      "readOnly": "Sumber data publik · Tidak memerlukan kunci API",
+      "listeningHint": "Terhubung. Pengamatan baru akan muncul saat pengamat regional menerima paket.",
+      "status": {
+        "connecting": "Menghubungkan ke pengamat regional…",
+        "live": "Aliran regional langsung",
+        "error": "Tidak dapat terhubung.",
+        "reconnecting": "Menghubungkan kembali…",
+        "disconnected": "Pilih URL peta Beacon untuk terhubung.",
+        "feedOpenFailed": "Umpan peta regional tidak dapat dibuka.",
+        "refreshing": "Memperbarui peta regional setelah umpan terputus.",
+        "connectionInterrupted": "Koneksi peta regional terputus.",
+        "publicHttpsRejected": "Peta regional HTTPS publik ini tidak dapat dibuka."
+      },
+      "preset": "Peta Beacon regional",
+      "custom": "URL khusus"
+    },
+    "closeSource": "Tutup pengaturan sumber data",
+    "localRadio": "Radio lokal",
+    "packetColorHint": "Paket yang sama ditampilkan dengan satu warna di semua jalur yang dilaporkan. Laporan berulang dikelompokkan.",
+    "aboutMap": "Tentang peta lalu lintas ini",
+    "zoomIn": "Perbesar",
+    "zoomOut": "Perkecil",
+    "reports_other": "{{count}} laporan",
+    "reports_one": "{{count}} laporan",
+    "additionalLinks_other": "{{count}} tautan tambahan",
+    "additionalLinks_one": "{{count}} tautan tambahan",
+    "observedLinks": "Tautan yang diamati",
+    "mapLinkLimit": "Peta menampilkan {{count}} tautan terbaru untuk paket ini.",
+    "reportsLabel": "Laporan yang ditampilkan",
+    "mixedCodes": "Beberapa kode transpor",
+    "connectionState": {
+      "live": "Langsung",
+      "connecting": "Menghubungkan",
+      "reconnecting": "Menghubungkan kembali",
+      "error": "Kesalahan koneksi",
+      "disconnected": "Terputus"
+    },
+    "zoomControls": "Kontrol zoom peta",
+    "areas": {
+      "all": "Semua lalu lintas",
+      "viewport": "Area peta saat ini"
+    },
+    "fitTraffic": "Sesuaikan tampilan lalu lintas"
   }
 }

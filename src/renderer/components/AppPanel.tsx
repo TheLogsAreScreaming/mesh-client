@@ -11,6 +11,7 @@ import { exportSupportBundleToDisk } from '@/renderer/lib/exportSupportBundle';
 import type { MessageClearRefreshOptions } from '@/renderer/lib/hydrateIdentityStoresFromDb';
 import { DetailsChevron } from '@/renderer/lib/icons/detailsChevron';
 import { isLoraBlocklistProtocol } from '@/renderer/lib/loraBlocklist';
+import { autoUpdateDownloadEnabledFromStored } from '@/shared/autoUpdateDownload';
 import { parseDatabaseSchemaTooNewFromMessage } from '@/shared/databaseSchemaTooNew';
 import type { SupportBundleMode } from '@/shared/support-bundle.types';
 
@@ -187,6 +188,8 @@ interface AppSettings {
   shareMyLocation: boolean;
   reduceMotion: boolean;
   use24HourTime: boolean;
+  /** Packaged builds download update artifacts after each check; App → Updates toggle. */
+  autoUpdateDownloadEnabled: boolean;
   meshcoreOpenWireCompatEnabled: boolean;
   meshcorePathHashMode: 0 | 1 | 2;
   mecpComposeEnabled: boolean;
@@ -343,6 +346,12 @@ export default function AppPanel({
 
   // ─── Node retention settings ────────────────────────────────
   const [settings, setSettings] = useState<AppSettings>(loadSettings);
+  /** Last auto-download value SQLite confirmed; a missing row means the updater default (on). */
+  const autoUpdateDownloadConfirmedRef = useRef<boolean>(
+    DEFAULT_APP_SETTINGS_SHARED.autoUpdateDownloadEnabled,
+  );
+  /** User toggled auto-download before the mount getAll() resolved; skip its stale value. */
+  const autoUpdateDownloadTouchedRef = useRef(false);
   const [themeColors, setThemeColors] = useState<Record<ThemeColorKey, string>>(loadThemeColors);
   const [themeSurfaceId, setThemeSurfaceId] = useState<ThemeSurfaceId>(loadThemeSurfaceId);
   const [hasSavedThemeSnapshot, setHasSavedThemeSnapshot] = useState<boolean>(hasThemeSnapshot);
@@ -515,6 +524,28 @@ export default function AppPanel({
     onHiddenProtocolsChange?.(settings.hiddenProtocols);
   }, [settings.hiddenProtocols, onHiddenProtocolsChange]);
 
+  const persistAutoUpdateDownload = useCallback(
+    (enabled: boolean) => {
+      autoUpdateDownloadTouchedRef.current = true;
+      void window.electronAPI.appSettings
+        .set('autoUpdateDownloadEnabled', enabled ? '1' : '0')
+        .then(() => {
+          autoUpdateDownloadConfirmedRef.current = enabled;
+        })
+        .catch((err: unknown) => {
+          console.warn(
+            '[AppPanel] autoUpdateDownloadEnabled persist failed ' + errLikeToLogString(err),
+          );
+          // Main reads only SQLite, so roll the UI back to what the updater will actually use.
+          const confirmed = autoUpdateDownloadConfirmedRef.current;
+          setSettings((prev) => ({ ...prev, autoUpdateDownloadEnabled: confirmed }));
+          mergeAppSetting('autoUpdateDownloadEnabled', confirmed, 'AppPanel updateSetting');
+          addToast(t('appPanel.autoUpdateDownloadSaveFailed'), 'error');
+        });
+    },
+    [addToast, t],
+  );
+
   const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
     mergeAppSetting(key, value, 'AppPanel updateSetting');
@@ -533,9 +564,12 @@ export default function AppPanel({
           console.warn('[AppPanel] use24HourTime persist failed ' + errLikeToLogString(err));
         });
     }
+    if (key === 'autoUpdateDownloadEnabled') {
+      persistAutoUpdateDownload(Boolean(value));
+    }
   };
 
-  // ─── DB-backed settings hydrate (message retention + 24h clock) ─
+  // ─── DB-backed settings hydrate (message retention + 24h clock + update auto-download) ─
   // Source of truth lives in SQLite (`app_settings` KV table). One getAll()
   // on mount so tests that mockResolvedValueOnce still see retention keys.
   const [retention, setRetention] = useState<MessageRetentionSettings>({
@@ -558,12 +592,26 @@ export default function AppPanel({
             prev.use24HourTime === enabled ? prev : { ...prev, use24HourTime: enabled },
           );
         }
+        if (!autoUpdateDownloadTouchedRef.current) {
+          const enabled = autoUpdateDownloadEnabledFromStored(raw?.autoUpdateDownloadEnabled);
+          autoUpdateDownloadConfirmedRef.current = enabled;
+          setSettings((prev) =>
+            prev.autoUpdateDownloadEnabled === enabled
+              ? prev
+              : { ...prev, autoUpdateDownloadEnabled: enabled },
+          );
+        }
         const loaded = parseMessageRetention(raw);
         setRetention(loaded);
         lastSavedRetentionRef.current = loaded;
       })
       .catch((err: unknown) => {
         console.warn('[AppPanel] app settings hydrate failed ' + errLikeToLogString(err));
+        if (cancelled || autoUpdateDownloadTouchedRef.current) return;
+        autoUpdateDownloadConfirmedRef.current = false;
+        setSettings((prev) =>
+          prev.autoUpdateDownloadEnabled ? { ...prev, autoUpdateDownloadEnabled: false } : prev,
+        );
       });
     return () => {
       cancelled = true;
@@ -1797,6 +1845,33 @@ export default function AppPanel({
         </div>
       </div>
 
+      {/* Updates — auto-download of packaged update artifacts (install stays manual). */}
+      <div className="space-y-2">
+        <h3 className="text-muted text-sm font-medium">{t('appPanel.updatesSection')}</h3>
+        <div
+          data-setting-anchor="app.updates.autoDownload"
+          className="bg-deep-black border-ink-800 flex items-center gap-2 rounded-xl border px-4 py-3"
+        >
+          <input
+            type="checkbox"
+            id="autoUpdateDownloadEnabled"
+            checked={settings.autoUpdateDownloadEnabled}
+            onChange={(e) => {
+              updateSetting('autoUpdateDownloadEnabled', e.target.checked);
+            }}
+            aria-label={t('appPanel.autoUpdateDownload')}
+            className="accent-brand-green"
+          />
+          <label
+            htmlFor="autoUpdateDownloadEnabled"
+            className="text-ink-300 cursor-pointer text-sm"
+          >
+            {t('appPanel.autoUpdateDownload')}
+          </label>
+          <HelpTooltip text={t('appPanel.autoUpdateDownloadDesc')} />
+        </div>
+      </div>
+
       {/* Appearance — collapsible; preset-only colors (no text input — Electron macOS menu warnings). */}
       <div className="space-y-2">
         <h3 className="text-muted text-sm font-medium">{t('appPanel.appearanceSection')}</h3>
@@ -2153,15 +2228,15 @@ export default function AppPanel({
                 onChange={(e) => {
                   updateSetting('mecpComposeEnabled', e.target.checked);
                 }}
-                aria-label={t('mecp.section.showComposeButton')}
+                aria-label={t('mecp.section.showComposeButtons')}
                 className="accent-brand-green h-4 w-4 rounded"
               />
               <label htmlFor="mecpComposeEnabled" className="text-ink-300 cursor-pointer text-sm">
-                {t('mecp.section.showComposeButton')}
+                {t('mecp.section.showComposeButtons')}
               </label>
             </div>
             <p className="text-muted pl-7 text-xs leading-relaxed">
-              {t('mecp.section.showComposeButtonHint')}
+              {t('mecp.section.showComposeButtonsHint')}
             </p>
           </div>
           <div data-setting-anchor="app.mecp.standingAlert" className="space-y-1">

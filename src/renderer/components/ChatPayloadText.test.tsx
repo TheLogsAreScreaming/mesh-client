@@ -26,7 +26,7 @@ describe('ChatPayloadText', () => {
     expect(screen.getByText(/hello world/)).toBeInTheDocument();
   });
 
-  it('renders MeshCore Open g:GIFID wire as inline GIF', () => {
+  it('automatically loads a MeshCore Open g:GIFID', () => {
     render(<ChatPayloadText text="g:a5viI92PAF89q" query="" />);
     const img = screen.getByRole('img', { name: 'GIF' });
     expect(img).toHaveAttribute('src', 'https://media.giphy.com/media/a5viI92PAF89q/giphy.gif');
@@ -36,14 +36,29 @@ describe('ChatPayloadText', () => {
     );
   });
 
-  it('renders shared location OSM messages as a LocationCard', () => {
+  it('automatically loads a replacement Giphy resource', () => {
+    const { rerender } = render(<ChatPayloadText text="g:a5viI92PAF89q" query="" />);
+    expect(screen.getByRole('img', { name: 'GIF' })).toHaveAttribute(
+      'src',
+      expect.stringContaining('a5viI92PAF89q'),
+    );
+
+    rerender(
+      <ChatPayloadText text="https://giphy.com/gifs/another-title-Kx82Lvb7wcYNO" query="" />,
+    );
+    expect(screen.getByRole('img', { name: 'GIF' })).toHaveAttribute(
+      'src',
+      expect.stringContaining('Kx82Lvb7wcYNO'),
+    );
+  });
+
+  it('automatically loads shared location tiles', () => {
     render(
       <ChatPayloadText
         text={
           '📍 Shared location: 39.7392, -104.9903\nhttps://www.openstreetmap.org/?mlat=39.7392&mlon=-104.9903'
         }
         query=""
-        loadLinkPreviews={false}
       />,
     );
     expect(screen.getByText(/39\.7392, -104\.9903/)).toBeInTheDocument();
@@ -69,7 +84,6 @@ describe('ChatPayloadText', () => {
             'https://www.openstreetmap.org/?mlat=39.7392&mlon=-104.9903'
           }
           query=""
-          loadLinkPreviews={false}
         />,
       );
       expect(screen.queryByRole('img', { name: 'Shared location map tile' })).toBeNull();
@@ -86,7 +100,6 @@ describe('ChatPayloadText', () => {
           '📍 Shared location: 39.7392, -104.9903\nhttps://www.openstreetmap.org/?mlat=39.7392&mlon=-104.9903'
         }
         query=""
-        loadLinkPreviews={false}
       />,
     );
     hydrateAxeThemeColors(document.documentElement);
@@ -99,6 +112,14 @@ describe('ChatPayloadText', () => {
     const link = screen.getByRole('link');
     expect(link).toHaveAttribute('href', 'https://example.com');
     expect(link).toHaveAttribute('target', '_blank');
+    expect(screen.queryByRole('button', { name: /Load remote content/ })).toBeNull();
+    expect(mockFetch).toHaveBeenCalledWith('https://example.com');
+  });
+
+  it('does not fetch HTTP links automatically', () => {
+    render(<ChatPayloadText text="http://example.com" query="" />);
+    expect(screen.getByRole('link')).toHaveAttribute('href', 'http://example.com');
+    expect(mockFetch).not.toHaveBeenCalled();
   });
 
   it('shows preview card when fetch returns metadata', async () => {
@@ -222,6 +243,10 @@ describe('ChatPayloadText', () => {
       );
       expect(screen.getByRole('link', { name: 'Open pilot location' })).toBeInTheDocument();
       expect(screen.getByText(/^Pilot .* from drone$/)).toBeInTheDocument();
+      expect(screen.getByRole('img', { name: 'Drone detection map tile' })).toHaveAttribute(
+        'src',
+        expect.stringContaining('mesh-tiles://osm/'),
+      );
       expect(mockFetch).not.toHaveBeenCalled();
     });
 
@@ -255,8 +280,35 @@ describe('ChatPayloadText', () => {
       expect(screen.getByLabelText('Mention bob')).toBeInTheDocument();
     });
 
-    it('leaves ordinary hop chat alone', () => {
+    it('adds a hop chip to a typed hop report with the place in the tooltip', () => {
       render(<ChatPayloadText text="3 hops to Firestone" query="" />);
+      expect(screen.getByText('3 hops to Firestone')).toBeInTheDocument();
+      const chip = screen.getByRole('group', { name: 'Signal report' });
+      expect(chip).toHaveTextContent('3 hops');
+      expect(chip).toHaveAttribute('title', 'From: Firestone');
+    });
+
+    it('adds a chip to a client ack line with SNR, RSSI and path', () => {
+      render(
+        <ChatPayloadText
+          text=", ack: SNR 12.2 dB, RSSI -41 dBm, 9 hops via F8F9, D4D4, E2B7"
+          query=""
+        />,
+      );
+      const chip = screen.getByRole('group', { name: 'Signal report' });
+      expect(chip).toHaveTextContent('9 hops');
+      expect(chip).toHaveTextContent('SNR 12.2 dB');
+      expect(chip).toHaveTextContent('RSSI -41 dBm');
+      expect(chip).toHaveAttribute('title', 'Path: F8F9, D4D4, E2B7');
+    });
+
+    it('does not strip a request token from a typed hop report', () => {
+      render(<ChatPayloadText text="[1a2b] 6 hops to Parker" query="" />);
+      expect(screen.getByText('[1a2b] 6 hops to Parker')).toBeInTheDocument();
+    });
+
+    it('leaves non-hop chat alone', () => {
+      render(<ChatPayloadText text="6 here. i win" query="" />);
       expect(screen.queryByTestId('signal-report-chip')).toBeNull();
     });
 
@@ -272,11 +324,103 @@ describe('ChatPayloadText', () => {
     });
   });
 
-  it('skips link preview fetch when loadLinkPreviews is false', async () => {
-    render(<ChatPayloadText text="see https://example.com" query="" loadLinkPreviews={false} />);
-    await waitFor(() => {
-      expect(screen.getByRole('link')).toHaveAttribute('href', 'https://example.com');
+  describe('MeshCore Health Check codes', () => {
+    it('labels a code without linking to any instance', () => {
+      render(<ChatPayloadText text="MHC-3163e6" query="" />);
+      expect(screen.getByText('MHC-3163e6')).toBeInTheDocument();
+      const chip = screen.getByRole('group', { name: 'MeshCore Health Check code' });
+      expect(chip).toHaveAttribute('data-code', 'MHC-3163E6');
+      expect(screen.queryByRole('link')).toBeNull();
     });
+
+    it('ignores codes inside other text', () => {
+      render(<ChatPayloadText text="see MHC-ABCDEF" query="" />);
+      expect(screen.queryByTestId('health-check-code-chip')).toBeNull();
+    });
+
+    it('has no axe violations', async () => {
+      const { container } = render(<ChatPayloadText text="MHC-BBFDA0" query="" />);
+      hydrateAxeThemeColors(document.documentElement);
+      expect(await axe(container)).toHaveNoViolations();
+    });
+  });
+
+  describe('Colorado-Mesh firmware bot replies', () => {
+    it('hides the request token on recognized replies and renders a status card', () => {
+      render(
+        <ChatPayloadText
+          text="[1a2b] CO Bot | up 1d 2h 3m | batt 4012mV 87% | storage 12/256KB | seen 10 sent 4 fail 0"
+          query=""
+        />,
+      );
+      expect(screen.queryByText(/\[1a2b\]/)).toBeNull();
+      const card = screen.getByRole('group', { name: 'Bot reply' });
+      expect(card).toHaveAttribute('data-kind', 'status');
+      expect(card).toHaveTextContent('Up 1d 2h 3m');
+      expect(card).toHaveTextContent('Battery 4012 mV (87%)');
+    });
+
+    it('renders trace hops with per-hop SNR', () => {
+      render(
+        <ChatPayloadText
+          text="[00ff] Trace @[bob] 1a2b3c4d 2h tail 5.25 | 2751@4.00 -> ea4d@-1.25"
+          query=""
+        />,
+      );
+      const card = screen.getByRole('group', { name: 'Bot reply' });
+      expect(card).toHaveTextContent('2 hops');
+      expect(card).toHaveTextContent('2751 4 dB');
+      expect(card).toHaveTextContent('ea4d -1.25 dB');
+      expect(card).toHaveTextContent('Return SNR 5.25 dB');
+    });
+
+    it('renders neighbor rows', () => {
+      render(
+        <ChatPayloadText
+          text="Neighbors: Ridge Rptr -92dBm 5.25 3m, abcd1234 -101dBm -2.00 1h"
+          query=""
+        />,
+      );
+      const card = screen.getByRole('group', { name: 'Bot reply' });
+      expect(card).toHaveTextContent('2 neighbors');
+      expect(card.querySelectorAll('li')).toHaveLength(2);
+      expect(card).toHaveTextContent('3m ago');
+    });
+
+    it('hides the token on test replies via the signal report parser', () => {
+      render(
+        <ChatPayloadText
+          text="[111b] @[alice] | 2 hops, 2-byte hashes, SNR -1.25 | recv 21:25:45"
+          query=""
+        />,
+      );
+      expect(screen.queryByText(/\[111b\]/)).toBeNull();
+      expect(screen.getByRole('group', { name: 'Signal report' })).toHaveTextContent('2 hops');
+    });
+
+    it('hides the token on unrecognized replies only when the sender is a known bot', () => {
+      const { rerender } = render(<ChatPayloadText text="[1a2b] Pong!" query="" />);
+      expect(screen.getByText('[1a2b] Pong!')).toBeInTheDocument();
+      rerender(<ChatPayloadText text="[1a2b] Pong!" query="" senderIsBot />);
+      expect(screen.getByText('Pong!')).toBeInTheDocument();
+    });
+
+    it('has no axe violations', async () => {
+      const { container } = render(
+        <ChatPayloadText
+          text="Air: tx 12s rx 340s | rx flood 10 direct 2 | tx flood 3 direct 1"
+          query=""
+        />,
+      );
+      hydrateAxeThemeColors(document.documentElement);
+      expect(await axe(container)).toHaveNoViolations();
+    });
+  });
+
+  it('never offers or fetches a cleartext link preview', () => {
+    render(<ChatPayloadText text="see http://example.com" query="" />);
+    expect(screen.getByRole('link')).toHaveAttribute('href', 'http://example.com');
+    expect(screen.queryByRole('button')).toBeNull();
     expect(mockFetch).not.toHaveBeenCalled();
   });
 });

@@ -6,10 +6,11 @@
 mod api;
 mod gatt;
 
-use std::net::SocketAddr;
+use std::net::{IpAddr, SocketAddr};
 use std::process::ExitCode;
 
 use clap::Parser;
+use tokio::io::{AsyncBufReadExt, BufReader};
 use tracing::{error, info};
 
 #[derive(Parser, Debug)]
@@ -27,8 +28,42 @@ struct Cli {
     storage_dir: Option<String>,
 }
 
-fn is_loopback_host(host: &str) -> bool {
-    matches!(host, "127.0.0.1" | "localhost" | "::1" | "[::1]")
+/// Parse an explicit loopback IP (IPv4 or IPv6, optionally bracketed); hostnames are refused.
+fn loopback_socket_addr(host: &str, port: u16) -> Result<SocketAddr, String> {
+    let bare_host = host
+        .strip_prefix('[')
+        .and_then(|value| value.strip_suffix(']'))
+        .unwrap_or(host);
+    let ip = bare_host
+        .parse::<IpAddr>()
+        .map_err(|_| "helper host must be an explicit loopback IP address".to_string())?;
+    if !ip.is_loopback() {
+        return Err("helper refuses non-loopback listen addresses".to_string());
+    }
+    Ok(SocketAddr::new(ip, port))
+}
+
+/// Read the per-process bearer token Electron main writes to our stdin (never argv/env).
+async fn read_auth_token_from_stdin() -> Result<String, String> {
+    let mut line = String::new();
+    let mut reader = BufReader::new(tokio::io::stdin());
+    let bytes = reader
+        .read_line(&mut line)
+        .await
+        .map_err(|e| format!("failed to read helper authentication bootstrap: {e}"))?;
+    if bytes == 0 {
+        return Err("missing helper authentication bootstrap".to_string());
+    }
+    if line.ends_with('\n') {
+        line.pop();
+        if line.ends_with('\r') {
+            line.pop();
+        }
+    }
+    if line.is_empty() || line.contains(['\r', '\n']) {
+        return Err("invalid helper authentication bootstrap".to_string());
+    }
+    Ok(line)
 }
 
 #[tokio::main]
@@ -45,12 +80,7 @@ async fn main() -> ExitCode {
 
     let cli = Cli::parse();
 
-    if !is_loopback_host(&cli.host) {
-        error!(host = %cli.host, "refusing to bind to a non-loopback host");
-        return ExitCode::from(1);
-    }
-
-    let addr: SocketAddr = match format!("{}:{}", cli.host, cli.port).parse() {
+    let addr = match loopback_socket_addr(&cli.host, cli.port) {
         Ok(addr) => addr,
         Err(e) => {
             error!(host = %cli.host, port = cli.port, error = %e, "invalid listen address");
@@ -58,8 +88,22 @@ async fn main() -> ExitCode {
         }
     };
 
+    let auth_token = match read_auth_token_from_stdin().await {
+        Ok(token) => token,
+        Err(e) => {
+            error!(error = %e, "helper authentication bootstrap failed");
+            return ExitCode::from(1);
+        }
+    };
+
     let gatt = gatt::create_gatt_manager().await;
-    let app = api::router(gatt);
+    let app = match api::router(gatt, auth_token) {
+        Ok(app) => app,
+        Err(e) => {
+            error!(error = %e, "helper authentication bootstrap rejected");
+            return ExitCode::from(1);
+        }
+    };
 
     info!(%addr, headless = cli.headless, "listening");
     let listener = match tokio::net::TcpListener::bind(addr).await {
@@ -81,11 +125,18 @@ mod tests {
     use super::*;
 
     #[test]
-    fn only_loopback_hosts_are_allowed() {
-        assert!(is_loopback_host("127.0.0.1"));
-        assert!(is_loopback_host("::1"));
-        assert!(!is_loopback_host("0.0.0.0"));
-        assert!(!is_loopback_host("192.168.1.10"));
+    fn listen_address_is_strictly_loopback() {
+        assert_eq!(
+            loopback_socket_addr("127.0.0.1", 19437).unwrap(),
+            "127.0.0.1:19437".parse().unwrap()
+        );
+        assert_eq!(
+            loopback_socket_addr("::1", 19437).unwrap(),
+            "[::1]:19437".parse().unwrap()
+        );
+        assert!(loopback_socket_addr("0.0.0.0", 19437).is_err());
+        assert!(loopback_socket_addr("192.168.1.10", 19437).is_err());
+        assert!(loopback_socket_addr("localhost", 19437).is_err());
     }
 
     #[test]

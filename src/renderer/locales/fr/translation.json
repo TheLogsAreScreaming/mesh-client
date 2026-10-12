@@ -34,7 +34,9 @@
     "takRemoteConnecting": "connexion à distance",
     "takRemoteError": "Erreur CSS à distance",
     "takRemoteOnly": "TAK {{remote}}",
-    "takWithRemote": "{{local}}, {{remote}}"
+    "takWithRemote": "{{local}}, {{remote}}",
+    "savedSettingsUnavailable": "Les paramètres enregistrés n'ont pas pu être chargés",
+    "savedSettingsRecovery": "Vos données enregistrées ont été conservées. Vérifiez que votre porte-clés système est disponible, ou attendez une minute et réessayez."
   },
   "appPanel": {
     "failedSaveRetention": "Impossible d'enregistrer le paramètre de rétention des messages.",
@@ -334,7 +336,7 @@
     "exportForGitHubDesc": "Inclut un instantané de débogage et des fichiers journaux dans un seul zip. Attachement sécurisé aux problèmes publics GitHub.",
     "exportForDeveloper": "Offre groupée de support à l'exportation pour les développeurs",
     "exportForDeveloperButton": "Exporter pour le développeur",
-    "exportForDeveloperWarning": "Inclut votre base de données complète, qui peut contenir des mots de passe enregistrés (identifiants de salle MeshCore, paramètres MQTT, etc.). Partagez ce bundle en privé avec les responsables uniquement – ​​jamais sur GitHub public.",
+    "exportForDeveloperWarning": "Inclut votre base de données complète et les journaux d’audit d’urgence MECP, qui peuvent contenir des mots de passe, le texte des messages, des identifiants d’expéditeur et de canal, ainsi que des données de localisation. Partagez ce bundle en privé avec les responsables uniquement – jamais sur GitHub public.",
     "exportSupportBundleFailed": "Impossible d'exporter le pack de support : {{message}}",
     "storeForwardHistoryProfileLabel": "Profil de rattrapage Store & Forward",
     "storeForwardHistoryProfileAria": "Agressivité de rattrapage de l’historique Store & Forward",
@@ -414,7 +416,11 @@
       "empty": "Aucun nœud bloqué.",
       "unblockAria": "Débloquer {{node}}",
       "unblockFailed": "Impossible de débloquer ce nœud."
-    }
+    },
+    "updatesSection": "Mises à jour",
+    "autoUpdateDownload": "Télécharger automatiquement les mises à jour",
+    "autoUpdateDownloadDesc": "Télécharge la dernière mise à jour en arrière-plan après chaque vérification. Lorsqu'elle est désactivée, les mises à jour sont toujours détectées, mais seulement téléchargées lorsque vous appuyez sur le bouton Télécharger — utile lorsqu'un gestionnaire de paquets gère l'installation.",
+    "autoUpdateDownloadSaveFailed": "Impossible d'enregistrer le paramètre de téléchargement de mise à jour automatique."
   },
   "aria": {
     "closeDialog": "Fermer la boîte de dialogue",
@@ -724,7 +730,66 @@
       "noise": "Bruit {{noise}} dBm",
       "path": "Chemin : {{path}}",
       "hops_one": "{{count}} hop",
-      "hops_other": "{{count}} sauts"
+      "hops_other": "{{count}} sauts",
+      "place": "De : {{place}}"
+    },
+    "firmwareBot": {
+      "label": "Réponse du robot",
+      "status": {
+        "title": "Statut {{name}}",
+        "uptime": "Jusqu'à {{uptime}}",
+        "battery": "Batterie {{mv}} mV ({{percent}}%)",
+        "storage": "Stockage {{used}}/{{total}} Ko",
+        "counters": "Vu {{seen}}, envoyé {{sent}}, échoué {{fail}}"
+      },
+      "air": {
+        "title": "Temps d'antenne",
+        "tx": "Émission {{seconds}} s",
+        "rx": "RX {{seconds}} s",
+        "rxPackets": "RX Flood {{flood}} / direct {{direct}}",
+        "txPackets": "TX Flood {{flood}} / direct {{direct}}"
+      },
+      "neighbors": {
+        "title_one": "{{count}} voisin",
+        "title_other": "{{count}} voisins",
+        "none": "Aucun entendu récemment",
+        "ago": "il y a {{ago}}"
+      },
+      "trace": {
+        "title": "Tracer",
+        "hop": "{{hash}} {{snr}} dB",
+        "tail": "Retour SNR {{snr}} dB",
+        "directLink": "Lien direct",
+        "timeout": "Délai expiré",
+        "sent": "Envoyé"
+      },
+      "lora": {
+        "title": "LoRa",
+        "freq": "{{freq}} MHz",
+        "sf": "SF{{sf}}",
+        "bw": "Bande passante {{bw}} kHz",
+        "cr": "CR {{cr}}",
+        "power": "{{power}} dBm"
+      },
+      "version": {
+        "title": "Micrologiciel",
+        "built": "Construit {{built}}"
+      },
+      "channels": {
+        "title": "Canaux de robots",
+        "bot": "Commandes {{name}}",
+        "testing": "Test {{name}}",
+        "emergency": "Urgence {{name}}",
+        "public": "Publique {{name}}"
+      },
+      "help": {
+        "title": "Commandes",
+        "diagTitle": "Commandes de diagnostic"
+      }
+    },
+    "healthCheck": {
+      "label": "MeshCore Code du bilan de santé",
+      "tooltip": "Code de test pour MeshCore Bilan de santé. Les observateurs sur le maillage de l'expéditeur signalent lequel d'entre eux l'a reçu."
     }
   },
   "common": {
@@ -760,7 +825,11 @@
     "emDash": "—",
     "saving": "Enregistrement en cours...",
     "delete": "Supprimer",
-    "copied": "Copié"
+    "copied": "Copié",
+    "botBadge": "Bot",
+    "botBadgeLabel": "Bot",
+    "botBadgeTooltip": "Détecté comme un bot à partir de ses réponses automatisées",
+    "retry": "Réessayer"
   },
   "configApplyNotice": {
     "persistNote": "Les paramètres appliqués sont enregistrés dans la mémoire flash de l'appareil et persistent lors des redémarrages.",
@@ -1093,7 +1162,8 @@
     "meshcoreBleWindowsInAppPairingHint": "Sous Windows, sélectionnez la radio ici et entrez le CODE PIN affiché sur son écran. Mesh Hub le couple pour vous, de sorte que vous n'avez pas besoin de le jumeler dans les paramètres Windows. Fermez d'abord l'application MeshCore sur votre téléphone ; la radio n'accepte qu'une seule connexion Bluetooth à la fois.",
     "stageEnterPinWindows": "Saisissez le CODE PIN affiché sur votre radio pour l'associer à Windows",
     "stagePairingWindows": "Jumelage avec Windows…",
-    "meshtasticSilentAfterConfigure": "Connecté à la radio, mais il a cessé d'envoyer du trafic maillé après la configuration. Se reconnecter automatiquement. Si cela continue, vérifiez la connexion réseau de la radio ou redémarrez-la."
+    "meshtasticSilentAfterConfigure": "Connecté à la radio, mais il a cessé d'envoyer du trafic maillé après la configuration. Se reconnecter automatiquement. Si cela continue, vérifiez la connexion réseau de la radio ou redémarrez-la.",
+    "mqttPacketTooLarge": "Le courtier a envoyé un paquet MQTT plus grand que la limite de sécurité de {{limit}} octets ; la reconnexion automatique est désactivée."
   },
   "contactGroupsModal": {
     "failedLoadMembers": "Échec du chargement des membres : {{message}}",
@@ -1570,7 +1640,7 @@
     "layerControlsAria": "Activer/désactiver les contrôles de calque de carte",
     "basemapHeading": "\"Carte de référence\"",
     "basemapSelectAria": "Sélectionner le fond de carte de la carte",
-    "basemapDark": "Sombre (Carto)",
+    "basemapDark": "Sombre (OpenStreetMap)",
     "basemapOsm": "OpenStreetMap (Light)",
     "layersHeading": "Superpositions",
     "layerNodes": "Marqueurs de nœud",
@@ -1605,7 +1675,8 @@
       "cacheStats": "Cache : {{count}} tuiles ({{size}})",
       "clear": "Effacer le cache de tuiles",
       "clearAria": "Effacer le cache de tuiles de carte hors ligne",
-      "cleared": "Cache vidé."
+      "cleared": "Cache vidé.",
+      "viewCacheOnly": "Les tuiles affichées sont automatiquement mises en cache. Le téléchargement de régions est disponible avec USGS Topo ; OpenStreetMap ne permet pas le préchargement."
     },
     "basemapUsgsTopo": "USGS Topo (États-Unis uniquement)",
     "layerIncidents": "Incidents d'urgence",
@@ -3321,7 +3392,12 @@
     "frequencyOffsetLabel": "Décalage de fréquence",
     "frequencyOffsetDesc": "Avancé : décalage en MHz ajouté à la fréquence centrale calculée pour corriger l'erreur d'étalonnage du cristal. Laisser à 0 sauf si vous avez du matériel de test.",
     "enumLicensedOnlySuffix": "(licencié uniquement)",
-    "unknownEnumValue": "Inconnu ({{value}})"
+    "unknownEnumValue": "Inconnu ({{value}})",
+    "floodScopePresetsTitle": "Régions enregistrées",
+    "floodScopePresetsHelp": "Ajoutez des régions ici, puis choisissez une portée pour chaque canal à côté de Envoyer ou dans les → canaux radio. L'enregistrement ou la suppression d'une région laisse les paramètres par défaut de la radio et les choix de canal inchangés.",
+    "floodScopeAddHashtag": "Hashtag de la région à enregistrer",
+    "floodScopeAddSaved": "Enregistrer la région",
+    "floodScopePresetsFull": "Vous pouvez enregistrer jusqu'à {{count}} régions. Supprimez-en un avant d'en ajouter un autre."
   },
   "rawPacketLog": {
     "filterPackets": "Filtrer les paquets",
@@ -3962,7 +4038,8 @@
       "enrollNoCert": "La réponse d'inscription n'a pas de certificat",
       "enrollTooLarge": "La réponse d'inscription est trop importante",
       "enrollKeyMismatch": "Le serveur a renvoyé un certificat pour une clé différente",
-      "enrollBusy": "Attendre la fin de l'importation du certificat actuel"
+      "enrollBusy": "Attendre la fin de l'importation du certificat actuel",
+      "frameTooLarge": "L'événement CoT dépasse {{max}} octets"
     },
     "remoteUseTls": "Utiliser TLS (recommandé)",
     "remotePlainTcpWarning": "Le TCP ordinaire n'est pas crypté : n'importe qui sur le chemin du réseau peut lire les positions relayées. Les certificats ne sont pas utilisés et la connexion au lancement reste désactivée.",
@@ -4012,15 +4089,30 @@
     "unitTypeSensor": "Capteur",
     "unitTypeAir": "Aéronefs",
     "channelRelayTitle": "MeshCore canaux vers TAK",
-    "channelRelayDesc": "Choisissez ce que les messages des canaux entendus alimentent dans TAK. Le tracker corrige les messages de position du tracker MeshCore (!MT1) en marqueurs de carte. Une salle de GeoChat reflète la chaîne dans cette salle de discussion TAK. Les deux ne vont que dans un sens : rien de TAK n'est envoyé sur le maillage.",
     "channelRelayTrackers": "Corrections du traceur",
     "channelRelayRoom": "Salle GeoChat pour {{channel}}",
     "channelRelayRoomPlaceholder": "Salle GeoChat (désactivée)",
     "channelRelayNoChannels": "Connectez une radio MeshCore pour répertorier ses chaînes.",
     "channelRelayUnnamed": "Canal {{n}}",
     "channelRelayTitleMeshtastic": "Meshtastic canaux vers TAK",
-    "channelRelayDescMeshtastic": "Choisissez quel canal de messages entendus alimentent TAK. Une salle de GeoChat reflète le canal, y compris les messages entendus sur MQTT, dans cette salle de discussion TAK. Cela ne va que dans un sens : rien de TAK n'est envoyé sur le maillage.",
-    "channelRelayNoChannelsMeshtastic": "Connectez une radio Meshtastic pour répertorier ses chaînes."
+    "channelRelayNoChannelsMeshtastic": "Connectez une radio Meshtastic pour répertorier ses chaînes.",
+    "unitStylesPreviewKind": "Type de nœud à tester",
+    "unitStylesPreviewProtocol": "Protocole à tester",
+    "unitFilterKind": "Type de nœud pour le filtre {{n}}",
+    "unitFilterAnyKind": "Tout type de nœud",
+    "unitFilterProtocol": "Protocole pour le filtre {{n}}",
+    "unitFilterAnyProtocol": "Tout protocole",
+    "unitKindCompanion": "Compagnons et clients",
+    "unitKindRepeater": "Répéteurs et routeurs",
+    "unitKindRoom": "Serveurs de salle",
+    "unitKindSensor": "Capteurs",
+    "unitKindTracker": "Trackers",
+    "unitStylesRelayIcon": "Icône pour répéteurs, routeurs et serveurs de salle",
+    "unitStylesRelayIconHint": "Facultatif. Chemin d'une icône dans un jeu d'icônes ATAK, comme défini UID/group/file name. Les appareils sans ce jeu d'icônes affichent le symbole d'installation.",
+    "channelRelayHelp": "Choisissez ce que les messages des canaux entendus alimentent dans TAK. Le tracker corrige les messages de position du tracker MeshCore (!MT1) en marqueurs de carte. Une salle de GeoChat reflète la chaîne dans cette salle de discussion TAK. Rien de TAK n'est envoyé sur le maillage à moins que vous ne cochiez TAK peut envoyer pour un canal : alors les messages que les appareils TAK connectés publient dans sa salle sont transmis sur ce canal à partir de cette radio, avec le préfixe de l'indicatif de l'expéditeur.",
+    "channelRelaySend": "TAK peut envoyer",
+    "channelRelaySendFor": "Laissez les appareils TAK envoyer à {{channel}}",
+    "channelRelayHelpMeshtastic": "Choisissez quel canal de messages entendus alimentent TAK. Une salle de GeoChat reflète le canal, y compris les messages entendus sur MQTT, dans cette salle de discussion TAK. Rien de TAK n'est envoyé sur le maillage à moins que vous ne cochiez TAK peut envoyer pour un canal : alors les messages que les appareils TAK connectés publient dans sa salle sont transmis sur ce canal à partir de cette radio, avec le préfixe de l'indicatif de l'expéditeur."
   },
   "telemetryPanel": {
     "title": "Télémétrie",
@@ -4173,7 +4265,6 @@
     "exportLog": "Exporter le journal MECP",
     "compose": {
       "title": "Composer le rapport MECP",
-      "open": "Ouvrir MECP compose",
       "severity": "Sévérité (%)",
       "category": "Catégorie",
       "codes": "Codes",
@@ -4184,7 +4275,12 @@
       "byteBudget": "{{used}} / {{max}} octets",
       "send": "Envoyer le MECP",
       "gpsFailed": "Impossible d'obtenir une solution GPS",
-      "sendFailed": "Échec de l\\'envoi du rapport"
+      "sendFailed": "Échec de l\\'envoi du rapport",
+      "openResponse": "Répondre avec le MECP",
+      "requestTitle": "Demande ou rapport MECP",
+      "responseTitle": "Réponse du MECP",
+      "showAllCodes": "Afficher tous les codes MECP",
+      "openRequest": "Demander ou signaler au MECP"
     },
     "rebroadcast": {
       "title": "Rediffusion MECP RF",
@@ -4206,10 +4302,10 @@
       "hint": "Protocole de communication d'urgence Mesh — composez des rapports à partir de Chat, créez un pont RF entre Meshtastic et MeshCore ici, et exportez le journal d'audit reçu durable.",
       "learnMore": "Fonctionnement du MECP",
       "protocolSource": "Source du protocole sur GitHub",
-      "showComposeButton": "Afficher le bouton MECP dans le chat",
-      "showComposeButtonHint": "Désactivé par défaut. Lorsqu'il est activé, Chat affiche un bouton MECP pour composer et envoyer des rapports d'urgence.",
       "standingAlert": "Poste de commandement des incidents (alerte permanente)",
-      "standingAlertHint": "Désactivé par défaut. Pour les EOC et les stations surveillées : maintient une bannière rouge et fait clignoter la barre des tâches ou fait rebondir le quai jusqu'à ce que quelqu'un regarde chaque nouveau MAYDAY ou URGENT. Tout le monde entend encore le ton d'alerte unique et voit le toast."
+      "standingAlertHint": "Désactivé par défaut. Pour les EOC et les stations surveillées : maintient une bannière rouge et fait clignoter la barre des tâches ou fait rebondir le quai jusqu'à ce que quelqu'un regarde chaque nouveau MAYDAY ou URGENT. Tout le monde entend encore le ton d'alerte unique et voit le toast.",
+      "showComposeButtons": "Afficher les boutons MECP dans le chat",
+      "showComposeButtonsHint": "Désactivé par défaut. Lorsqu'il est activé, Chat affiche un bouton de demande/rapport rouge et un bouton de réponse bleu."
     },
     "exportLogEmpty": "Aucun message MECP dans le journal reçu pour le moment",
     "block": {
@@ -4568,7 +4664,11 @@
     "pendingChanges_other": "{{count}} modifications",
     "read": "Paramètres lus",
     "radioConnected": "Radio connectée",
-    "radioDisconnected": "Radio déconnectée"
+    "radioDisconnected": "Radio déconnectée",
+    "scope": "Périmètre Flood par défaut",
+    "defaultScope": "Nom de la région (vide pour unscoped)",
+    "scopeSummary": "Région des paquets Flood émis par ce nœud",
+    "scopeHint": "Firmware v1.15+ : saisissez une région publique comme #us-tn-tri ; laissez vide pour ne pas limiter la région. Ce réglage concerne les annonces Flood et la livraison des messages de salle par Flood. Les routes directes et les droits d’accès à la salle sont indépendants. Les périmètres de la radio Companion et de ses canaux sont réglés séparément."
   },
   "chatTranslation": {
     "translate": "Traducir mensaje",
@@ -4599,7 +4699,7 @@
     "deletePack": "Supprimer {{pack}} pack",
     "downloadPack": "Télécharger {{pack}} pack",
     "delete": "Effacer",
-    "onlinePrivacy": "La traduction en ligne envoie le texte du message sélectionné à votre serveur LibreTranslate configuré uniquement lorsque vous choisissez Traduire en ligne. La traduction automatique reste toujours hors ligne.",
+    "onlinePrivacy": "La traduction en ligne envoie le texte du message sélectionné à votre serveur LibreTranslate configuré uniquement lorsque vous choisissez Traduire en ligne. La traduction automatique reste toujours hors ligne. HTTP est autorisé uniquement pour localhost et les adresses de bouclage ; tous les autres serveurs doivent utiliser HTTPS.",
     "serverUrl": "URL du serveur LibreTranslate",
     "apiKey": "Clé API (facultative)",
     "savedKey": "Une clé API est enregistrée en toute sécurité. Un champ vide le conserve uniquement pour la même URL de serveur.",
@@ -4631,6 +4731,158 @@
     "downloadSize": "Télécharger ({{size}})",
     "readLanguagesHint": "Les messages dans ces langues ne sont jamais traduits automatiquement. La langue sélectionnée sous Traduire en compte toujours comme une langue que vous lisez.",
     "pivotHint": "Un pack couvre une direction de traduction, telle que le français vers l'anglais. Les autres paires de langues passent par l'anglais : le français vers l'allemand nécessite les packs français → anglais et anglais → allemand. La traduction en anglais ne nécessite qu'un seul pack.",
-    "hideTranslation": "Masquer la traduction"
+    "hideTranslation": "Masquer la traduction",
+    "secureUrlRequired": "La traduction en ligne est en pause. Votre serveur et la clé enregistrée ont été conservés ; utilisez une URL HTTPS pour reprendre."
+  },
+  "liveTraffic": {
+    "controlPacket": "Paquet de contrôle",
+    "discoveryRequest": "Requête de découverte de nœuds",
+    "discoveryResponse": "Réponse de découverte de nœuds",
+    "directoryLimited": "Le répertoire de cette carte a atteint sa limite. Certains nœuds peuvent manquer.",
+    "directoryLimitedShort": "Répertoire partiel",
+    "sources": {
+      "CoreScope": "CoreScope",
+      "RF": "RF",
+      "MQTT": "MQTT",
+      "unknown": "Source inconnue",
+      "Beacon": "Beacon"
+    },
+    "corescope": {
+      "feed": "CoreScope régional",
+      "preset": "Carte CoreScope régionale",
+      "url": "URL de la carte CoreScope",
+      "waitingHint": "Connectez un flux CoreScope ci-dessus pour suivre les observations de ses nœuds. Aucune radio locale n’est nécessaire.",
+      "disconnected": "Choisissez l’URL d’une carte CoreScope pour vous connecter."
+    },
+    "trafficSource": "Source du trafic",
+    "estimatedRouteHint": "CoreScope a estimé certaines identités de nœuds. Ces liens ne sont pas vérifiés ; les sauts manquants restent inconnus.",
+    "cancelConnection": "Annuler la connexion",
+    "connectionActionFailed": "Impossible de mettre à jour la connexion du flux. Réessayez.",
+    "estimatedLinks": "Liaisons incluant des estimations du serveur",
+    "additionalLocations_one": "{{count}} position supplémentaire",
+    "additionalLocations_other": "{{count}} positions supplémentaires",
+    "mapOverview": "Vue d’ensemble",
+    "mapModes": "Mode de la carte",
+    "title": "Trafic en temps réel",
+    "pause": "Mettre en pause",
+    "resume": "Reprendre",
+    "region": "Zone de la carte",
+    "regions": {
+      "all": "Toutes les régions"
+    },
+    "transportScope": "Code transport",
+    "scopeHint": "Filtrez les codes de transport observés ou saisissez « scoped » (avec portée) ou « unscoped » (sans portée). Ces codes sont propres aux paquets et ne configurent pas la radio.",
+    "unscoped": "Sans portée",
+    "allScopes": "Toutes les portées",
+    "scoped": "Avec portée",
+    "packetType": "Type de paquet",
+    "kinds": {
+      "all": "Tous les paquets",
+      "message": "Messages",
+      "advert": "Annonces de nœud / position",
+      "telemetry": "Télémétrie",
+      "routing": "Routage",
+      "other": "Autre"
+    },
+    "speed": "Lecture",
+    "speedNormal": "1×",
+    "mapAria": "Carte de trafic de paquets en direct",
+    "speedFast": "2×",
+    "basemap": "Style de carte",
+    "darkMap": "Sombre",
+    "streetMap": "Rues",
+    "topographicMap": "USGS Topo",
+    "waiting": "En attente d'observations de paquets",
+    "waitingHint": "Connectez une radio pour voir le trafic en direct.",
+    "animationDisclaimer": "Le mouvement illustre l’ordre des paquets, pas la vitesse radio. Les sauts inconnus interrompent le trajet.",
+    "feed": "Flux de paquets",
+    "meshtasticDisclaimer": "Les liens de réception sont illustratifs. Les paquets ordinaires ne révèlent pas tous les relais.",
+    "noFilterMatches": "Aucun paquet récent ne correspond à ces filtres.",
+    "emptyFeed": "Les paquets apparaissent ici au fur et à mesure que ce client les reçoit. Les nœuds avec des positions connues peuvent être affichés sur la carte.",
+    "packetList": "Observations récentes sur les paquets",
+    "inspectPacket": "Inspecter le paquet {{kind}} à {{time}}",
+    "noSignal": "Aucune donnée de signal",
+    "closeInspector": "Fermer les détails du paquet",
+    "inspector": "Détails du paquet",
+    "route": "Informations de routage",
+    "signal": "RSSI / SNR",
+    "source": "Observé via",
+    "signalValues": "{{rssi}} dBm / {{snr}} dB",
+    "routeStatus": {
+      "resolved": "Chemin du paquet résolu",
+      "estimated": "Itinéraire estimé par le serveur",
+      "partial": "Liaison partielle / de réception",
+      "unlocated": "Aucun trajet à tracer",
+      "direct": "Observation directe",
+      "unparsed": "Paquet non analysé"
+    },
+    "meshtasticInspector": "Une relation de réception n'est pas une chaîne de relais confirmée. Les traces détaillées ne sont affichées que lorsque le paquet les contient.",
+    "meshcoreInspector": "Seuls les sauts adjacents identifiés sont reliés. Les hachages inconnus ou ambigus laissent des interruptions dans le trajet.",
+    "knownLocations": "Points localisés",
+    "filterHint": "Ces filtres concernent uniquement l’affichage. Les paramètres radio restent inchangés.",
+    "filters": "Filtres",
+    "observationCount_one": "{{count}} paquet",
+    "mappedCount": "{{count}} sur la carte",
+    "observationCount_other": "{{count}} paquets",
+    "nodeCount": "{{count}} nœuds affichés",
+    "toggleFeed": "Développer ou réduire le flux de paquets",
+    "expandFeed": "Agrandir la fenêtre du flux de paquets",
+    "shrinkFeed": "Réduire la fenêtre du flux de paquets",
+    "moveFeed": "Déplacer le flux de paquets",
+    "moveFeedHint": "Faites glisser pour déplacer. Les touches fléchées déplacent la fenêtre ; maintenez Maj pour des déplacements plus grands.",
+    "resetFeed": "Réinitialiser la position du flux de paquets",
+    "encryptedContent": "Message chiffré",
+    "contentUnavailable": "Contenu du message indisponible",
+    "beacon": {
+      "feed": "Beacon régional",
+      "url": "URL de la carte Beacon",
+      "region": "Région du flux",
+      "connect": "Connecter",
+      "disconnect": "Déconnecter",
+      "configure": "Configurer",
+      "readOnly": "Flux public · Aucune clé API requise",
+      "waitingHint": "Connectez un flux Beacon régional ci-dessus pour suivre les observations de ses nœuds. Aucune radio locale n’est nécessaire.",
+      "listeningHint": "Connecté. De nouvelles observations apparaîtront lorsque les observateurs régionaux recevront des paquets.",
+      "status": {
+        "live": "Flux régional en direct",
+        "connecting": "Connexion avec les observateurs régionaux…",
+        "reconnecting": "Reconnexion…",
+        "error": "Connexion impossible.",
+        "disconnected": "Choisissez une URL de carte Beacon pour vous connecter.",
+        "feedOpenFailed": "Impossible d'ouvrir le flux de la carte régionale.",
+        "refreshing": "Actualisation de la carte régionale après une interruption du flux.",
+        "connectionInterrupted": "Connexion à la carte régionale interrompue.",
+        "publicHttpsRejected": "Impossible d'ouvrir cette carte régionale HTTPS publique."
+      },
+      "preset": "Carte Beacon régionale",
+      "custom": "URL personnalisée"
+    },
+    "localRadio": "Radio locale",
+    "closeSource": "Fermer les paramètres du flux",
+    "zoomIn": "Zoom avant",
+    "packetColorHint": "Chaque paquet garde la même couleur sur tous ses trajets observés. Les rapports répétés sont regroupés.",
+    "aboutMap": "À propos de cette carte du trafic",
+    "zoomOut": "Zoom arrière",
+    "reports_one": "{{count}} rapport",
+    "reports_other": "{{count}} rapports",
+    "observedLinks": "Liaisons observées",
+    "additionalLinks_one": "{{count}} liaison supplémentaire",
+    "additionalLinks_other": "{{count}} liaisons supplémentaires",
+    "mapLinkLimit": "La carte trace les {{count}} dernières liaisons de ce paquet.",
+    "mixedCodes": "Codes de transport multiples",
+    "reportsLabel": "Rapports affichés",
+    "connectionState": {
+      "connecting": "Connexion en cours",
+      "live": "Direct",
+      "reconnecting": "Reconnexion",
+      "disconnected": "Déconnecté",
+      "error": "Erreur de connexion"
+    },
+    "zoomControls": "Commandes du zoom de la carte",
+    "areas": {
+      "all": "Tout le trafic",
+      "viewport": "Zone actuelle de la carte"
+    },
+    "fitTraffic": "Cadrer le trafic"
   }
 }

@@ -17,9 +17,13 @@ const candidates =
       ];
 
 for (const c of candidates) {
-  const res = spawnSync(c.cmd, [...c.args, 'install', '-r', requirementsPath], {
-    stdio: 'inherit',
-  });
+  const res = spawnSync(
+    c.cmd,
+    [...c.args, 'install', '--require-hashes', '--only-binary=:all:', '-r', requirementsPath],
+    {
+      stdio: 'inherit',
+    },
+  );
   if (res.status === 0) process.exit(0);
 }
 

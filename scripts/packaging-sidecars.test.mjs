@@ -72,7 +72,9 @@ describe('packaging sidecar workflow gates', () => {
     const workflow = read(`.github/workflows/${file}.yaml`);
     const job = workflow.split(`\n  ${file}:\n`)[1].split(/\n {2}[\w-]+:\n/)[0];
     expect(workflow).toContain('uses: ./.github/workflows/packaging-sidecars.yaml');
-    expect(job).toMatch(/needs: \[[^\]]*sidecars\]/);
+    // Stay inside the needs list. [\s\S] would match past its closing bracket.
+    expect(job).toMatch(/needs:\s*\[[^\]]*sidecars[^\]]*\]/);
+    expect('needs: [other]\n  sidecars:').not.toMatch(/needs:\s*\[[^\]]*sidecars[^\]]*\]/);
     if (file === 'release') expect(job).toContain("needs.sidecars.result == 'success'");
     expect(job).toContain('uses: ./.github/actions/download-packaging-sidecars');
     expect(job).toContain('platform: ${{ matrix.sidecar_platform }}');
@@ -87,12 +89,11 @@ describe('packaging sidecar workflow gates', () => {
     }
   });
 
-  it('keeps release platform filtering and same-commit sidecar builds', () => {
+  it('builds every release platform from the same protected tag commit', () => {
     const release = read('.github/workflows/release.yaml');
     const job = release.split('\n  sidecars:\n')[1].split('\n  release:\n')[0];
-    expect(job).toContain(
-      "platforms: ${{ github.event_name == 'workflow_dispatch' && inputs.platforms || 'all' }}",
-    );
+    expect(job).toContain('platforms: all');
+    expect(release).not.toContain('workflow_dispatch');
     expect(sidecars).toContain('RELEASE_PLATFORMS: ${{ inputs.platforms }}');
     expect(sidecars).toContain('node scripts/resolve-release-matrix.mjs --sidecars');
     expect(sidecars.match(/ref: \$\{\{ github.sha \}\}/g)).toHaveLength(2);
