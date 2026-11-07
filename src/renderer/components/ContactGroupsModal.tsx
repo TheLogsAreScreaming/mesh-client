@@ -7,7 +7,7 @@ import {
   Users,
   X,
 } from 'lucide-react-motion';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { errLikeToLogString } from '@/renderer/lib/errLikeToLogString';
@@ -18,6 +18,7 @@ import { isMeshcoreContactEligibleForUserGroup } from '../lib/meshcoreUtils';
 import { isMeshtasticContactEligibleForUserGroup } from '../lib/meshtasticContactGroupUtils';
 import type { MeshNode, MeshProtocol } from '../lib/types';
 import { useToast } from './Toast';
+import { DialogFrame } from './ui/DialogFrame';
 import { INPUT_BOX_CLASS } from './ui/formClasses';
 
 interface ContactGroupsModalProps {
@@ -49,7 +50,6 @@ export default function ContactGroupsModal({
   onLoadMembers,
   memberIds,
 }: ContactGroupsModalProps) {
-  const dialogRef = useRef<HTMLDivElement>(null);
   const { addToast } = useToast();
   const { t } = useTranslation();
   const parentIconTrigger = useParentIconTrigger();
@@ -63,51 +63,6 @@ export default function ContactGroupsModal({
 
   // Member management view
   const [managingGroup, setManagingGroup] = useState<ContactGroup | null>(null);
-
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (managingGroup) {
-          setManagingGroup(null);
-        } else {
-          onClose();
-        }
-      }
-    };
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      document.removeEventListener('keydown', handleKey);
-    };
-  }, [onClose, managingGroup]);
-
-  useEffect(() => {
-    const root = dialogRef.current;
-    if (!root) return;
-    const focusables = Array.from(
-      root.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])',
-      ),
-    ).filter((el) => el.offsetParent !== null || root.contains(el));
-    if (focusables.length > 0) focusables[0].focus();
-    const onTab = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab' || focusables.length === 0) return;
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      if (e.shiftKey) {
-        if (document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else if (document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    root.addEventListener('keydown', onTab);
-    return () => {
-      root.removeEventListener('keydown', onTab);
-    };
-  }, [managingGroup]);
 
   async function handleCreate() {
     const name = newGroupName.trim();
@@ -201,294 +156,284 @@ export default function ContactGroupsModal({
     .sort((a, b) => (a.long_name || '').localeCompare(b.long_name || ''));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <button
-        type="button"
-        aria-label={t('aria.closeDialog')}
-        className="absolute inset-0 cursor-pointer border-0 bg-black/50 p-0 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="groups-modal-title"
-        className="bg-deep-black rounded-modal shadow-level-3 border-ink-700 relative z-10 flex max-h-[80vh] w-full max-w-lg flex-col border"
-      >
-        {/* Header */}
-        <div className="border-ink-700 flex shrink-0 items-center justify-between border-b px-5 py-4">
-          {managingGroup ? (
-            <div className="flex min-w-0 items-center gap-2">
+    <DialogFrame
+      labelledBy="groups-modal-title"
+      onClose={onClose}
+      onEscape={() => {
+        // Escape steps back from a group's member list before it closes the dialog.
+        if (managingGroup) setManagingGroup(null);
+        else onClose();
+      }}
+      backdropLabel={t('aria.closeDialog')}
+      panelClassName="max-h-[80vh] w-full max-w-lg"
+      focusKey={managingGroup?.group_id ?? null}
+    >
+      {/* Header */}
+      <div className="border-ink-700 flex shrink-0 items-center justify-between border-b px-5 py-4">
+        {managingGroup ? (
+          <div className="flex min-w-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setManagingGroup(null);
+              }}
+              aria-label={t('contactGroupsModal.backToGroups')}
+              {...{ [PARENT_HOVER_ATTR]: '' }}
+              className="hover:bg-secondary-dark text-muted hover:text-ink-200 shrink-0 rounded p-1 transition-colors"
+            >
+              <ChevronLeft aria-hidden className="h-4 w-4" trigger={parentIconTrigger} size={16} />
+            </button>
+            <h2
+              id="groups-modal-title"
+              className="text-ink-100 text-heading truncate font-semibold"
+            >
+              {managingGroup.name}
+            </h2>
+          </div>
+        ) : (
+          <h2 id="groups-modal-title" className="text-ink-100 text-heading font-semibold">
+            {t('contactGroupsModal.title')}
+          </h2>
+        )}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={t('aria.closeDialog')}
+          {...{ [PARENT_HOVER_ATTR]: '' }}
+          className="hover:bg-secondary-dark text-muted hover:text-ink-200 rounded-card shrink-0 p-1.5 transition-colors"
+        >
+          <X aria-hidden className="h-5 w-5" trigger={parentIconTrigger} size={20} />
+        </button>
+      </div>
+
+      {/* Body */}
+      <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-5 py-4">
+        {managingGroup ? (
+          /* Member management view */
+          <>
+            <p className="text-muted text-label">
+              <p className="text-muted text-label">
+                {t('contactGroupsModal.memberCount', { count: memberIds.size })}
+              </p>
+            </p>
+            {sortedContacts.length === 0 ? (
+              <p className="text-muted text-body-lg">{t('contactGroupsModal.noContactsYet')}</p>
+            ) : (
+              <ul className="flex flex-col gap-1">
+                {sortedContacts.map((contact) => (
+                  <li key={contact.node_id}>
+                    <label className="hover:bg-secondary-dark/50 rounded-card flex cursor-pointer items-center gap-3 px-3 py-2">
+                      <input
+                        type="checkbox"
+                        checked={memberIds.has(contact.node_id)}
+                        onChange={() => void handleToggleMember(contact.node_id)}
+                        disabled={busy}
+                        className="accent-brand-green"
+                      />
+                      <span className="text-ink-200 text-body-lg truncate">
+                        {contact.long_name || t('common.unknown')}
+                      </span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        ) : (
+          /* Group list view */
+          <>
+            {/* Create new group */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newGroupName}
+                onChange={(e) => {
+                  setNewGroupName(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') void handleCreate();
+                }}
+                placeholder={t('contactGroupsModal.newGroupNamePlaceholder')}
+                maxLength={100}
+                disabled={busy}
+                className={`${INPUT_BOX_CLASS} flex-1`}
+              />
               <button
                 type="button"
-                onClick={() => {
-                  setManagingGroup(null);
-                }}
-                aria-label={t('contactGroupsModal.backToGroups')}
-                {...{ [PARENT_HOVER_ATTR]: '' }}
-                className="hover:bg-secondary-dark text-muted hover:text-ink-200 shrink-0 rounded p-1 transition-colors"
+                onClick={() => void handleCreate()}
+                disabled={!newGroupName.trim() || busy || selfNodeId == null || selfNodeId <= 0}
+                aria-label={t('contactGroupsModal.addButton')}
+                className="bg-brand-green/20 text-brand-green hover:bg-brand-green/30 rounded-card text-body-lg px-3 py-1.5 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <ChevronLeft
-                  aria-hidden
-                  className="h-4 w-4"
-                  trigger={parentIconTrigger}
-                  size={16}
-                />
+                {t('contactGroupsModal.addButton')}
               </button>
-              <h2
-                id="groups-modal-title"
-                className="text-ink-100 text-heading truncate font-semibold"
-              >
-                {managingGroup.name}
-              </h2>
             </div>
-          ) : (
-            <h2 id="groups-modal-title" className="text-ink-100 text-heading font-semibold">
-              {t('contactGroupsModal.title')}
-            </h2>
-          )}
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t('aria.closeDialog')}
-            {...{ [PARENT_HOVER_ATTR]: '' }}
-            className="hover:bg-secondary-dark text-muted hover:text-ink-200 rounded-card shrink-0 p-1.5 transition-colors"
-          >
-            <X aria-hidden className="h-5 w-5" trigger={parentIconTrigger} size={20} />
-          </button>
-        </div>
 
-        {/* Body */}
-        <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-5 py-4">
-          {managingGroup ? (
-            /* Member management view */
-            <>
-              <p className="text-muted text-label">
-                <p className="text-muted text-label">
-                  {t('contactGroupsModal.memberCount', { count: memberIds.size })}
-                </p>
-              </p>
-              {sortedContacts.length === 0 ? (
-                <p className="text-muted text-body-lg">{t('contactGroupsModal.noContactsYet')}</p>
-              ) : (
-                <ul className="flex flex-col gap-1">
-                  {sortedContacts.map((contact) => (
-                    <li key={contact.node_id}>
-                      <label className="hover:bg-secondary-dark/50 rounded-card flex cursor-pointer items-center gap-3 px-3 py-2">
-                        <input
-                          type="checkbox"
-                          checked={memberIds.has(contact.node_id)}
-                          onChange={() => void handleToggleMember(contact.node_id)}
-                          disabled={busy}
-                          className="accent-brand-green"
-                        />
-                        <span className="text-ink-200 text-body-lg truncate">
-                          {contact.long_name || t('common.unknown')}
-                        </span>
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </>
-          ) : (
-            /* Group list view */
-            <>
-              {/* Create new group */}
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newGroupName}
-                  onChange={(e) => {
-                    setNewGroupName(e.target.value);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') void handleCreate();
-                  }}
-                  placeholder={t('contactGroupsModal.newGroupNamePlaceholder')}
-                  maxLength={100}
-                  disabled={busy}
-                  className={`${INPUT_BOX_CLASS} flex-1`}
-                />
-                <button
-                  type="button"
-                  onClick={() => void handleCreate()}
-                  disabled={!newGroupName.trim() || busy || selfNodeId == null || selfNodeId <= 0}
-                  aria-label={t('contactGroupsModal.addButton')}
-                  className="bg-brand-green/20 text-brand-green hover:bg-brand-green/30 rounded-card text-body-lg px-3 py-1.5 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  {t('contactGroupsModal.addButton')}
-                </button>
-              </div>
+            {/* Group list */}
+            {groups.length === 0 ? (
+              <p className="text-muted text-body-lg">{t('contactGroupsModal.noGroupsYet')}</p>
+            ) : (
+              <ul className="flex flex-col gap-1">
+                {groups.map((group) => (
+                  <li
+                    key={group.group_id}
+                    className="hover:bg-secondary-dark/30 rounded-card flex items-center gap-2 px-3 py-2"
+                  >
+                    {editingGroupId === group.group_id ? (
+                      <input
+                        type="text"
+                        value={editingName}
+                        onChange={(e) => {
+                          setEditingName(e.target.value);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') void handleRenameSubmit(group.group_id);
+                          if (e.key === 'Escape') setEditingGroupId(null);
+                        }}
+                        maxLength={100}
+                        // eslint-disable-next-line jsx-a11y/no-autofocus
+                        autoFocus
+                        disabled={busy}
+                        className={`${INPUT_BOX_CLASS} flex-1`}
+                      />
+                    ) : (
+                      <span className="text-ink-200 text-body-lg flex-1 truncate">
+                        {group.name}
+                        <span className="text-muted text-label ml-1.5">({group.member_count})</span>
+                      </span>
+                    )}
 
-              {/* Group list */}
-              {groups.length === 0 ? (
-                <p className="text-muted text-body-lg">{t('contactGroupsModal.noGroupsYet')}</p>
-              ) : (
-                <ul className="flex flex-col gap-1">
-                  {groups.map((group) => (
-                    <li
-                      key={group.group_id}
-                      className="hover:bg-secondary-dark/30 rounded-card flex items-center gap-2 px-3 py-2"
-                    >
-                      {editingGroupId === group.group_id ? (
-                        <input
-                          type="text"
-                          value={editingName}
-                          onChange={(e) => {
-                            setEditingName(e.target.value);
+                    {editingGroupId === group.group_id ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => void handleRenameSubmit(group.group_id)}
+                          disabled={!editingName.trim() || busy}
+                          aria-label={t('contactGroupsModal.saveName')}
+                          {...{ [PARENT_HOVER_ATTR]: '' }}
+                          className="hover:bg-secondary-dark text-brand-green rounded p-1 transition-colors disabled:opacity-40"
+                        >
+                          <Check
+                            aria-hidden
+                            className="h-4 w-4"
+                            trigger={parentIconTrigger}
+                            size={16}
+                          />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingGroupId(null);
                           }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') void handleRenameSubmit(group.group_id);
-                            if (e.key === 'Escape') setEditingGroupId(null);
+                          aria-label={t('contactGroupsModal.cancelRename')}
+                          {...{ [PARENT_HOVER_ATTR]: '' }}
+                          className="hover:bg-secondary-dark text-muted hover:text-ink-200 rounded p-1 transition-colors"
+                        >
+                          <X
+                            aria-hidden
+                            className="h-4 w-4"
+                            trigger={parentIconTrigger}
+                            size={16}
+                          />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => void handleOpenMembers(group)}
+                          aria-label={t('contactGroupsModal.manageMembersOf', {
+                            name: group.name,
+                          })}
+                          title={t('contactGroupsModal.manageMembers')}
+                          {...{ [PARENT_HOVER_ATTR]: '' }}
+                          className="hover:bg-secondary-dark text-muted hover:text-ink-200 rounded p-1 transition-colors"
+                        >
+                          <Users
+                            aria-hidden
+                            className="h-4 w-4"
+                            trigger={parentIconTrigger}
+                            size={16}
+                          />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingGroupId(group.group_id);
+                            setEditingName(group.name);
                           }}
-                          maxLength={100}
-                          // eslint-disable-next-line jsx-a11y/no-autofocus
-                          autoFocus
-                          disabled={busy}
-                          className={`${INPUT_BOX_CLASS} flex-1`}
-                        />
-                      ) : (
-                        <span className="text-ink-200 text-body-lg flex-1 truncate">
-                          {group.name}
-                          <span className="text-muted text-label ml-1.5">
-                            ({group.member_count})
-                          </span>
-                        </span>
-                      )}
-
-                      {editingGroupId === group.group_id ? (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => void handleRenameSubmit(group.group_id)}
-                            disabled={!editingName.trim() || busy}
-                            aria-label={t('contactGroupsModal.saveName')}
-                            {...{ [PARENT_HOVER_ATTR]: '' }}
-                            className="hover:bg-secondary-dark text-brand-green rounded p-1 transition-colors disabled:opacity-40"
-                          >
-                            <Check
-                              aria-hidden
-                              className="h-4 w-4"
-                              trigger={parentIconTrigger}
-                              size={16}
-                            />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingGroupId(null);
-                            }}
-                            aria-label={t('contactGroupsModal.cancelRename')}
-                            {...{ [PARENT_HOVER_ATTR]: '' }}
-                            className="hover:bg-secondary-dark text-muted hover:text-ink-200 rounded p-1 transition-colors"
-                          >
-                            <X
-                              aria-hidden
-                              className="h-4 w-4"
-                              trigger={parentIconTrigger}
-                              size={16}
-                            />
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => void handleOpenMembers(group)}
-                            aria-label={t('contactGroupsModal.manageMembersOf', {
-                              name: group.name,
-                            })}
-                            title={t('contactGroupsModal.manageMembers')}
-                            {...{ [PARENT_HOVER_ATTR]: '' }}
-                            className="hover:bg-secondary-dark text-muted hover:text-ink-200 rounded p-1 transition-colors"
-                          >
-                            <Users
-                              aria-hidden
-                              className="h-4 w-4"
-                              trigger={parentIconTrigger}
-                              size={16}
-                            />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingGroupId(group.group_id);
-                              setEditingName(group.name);
-                            }}
-                            aria-label={t('contactGroupsModal.renameGroupNamed', {
-                              name: group.name,
-                            })}
-                            title={t('contactGroupsModal.rename')}
-                            {...{ [PARENT_HOVER_ATTR]: '' }}
-                            className="hover:bg-secondary-dark text-muted hover:text-ink-200 rounded p-1 transition-colors"
-                          >
-                            <Pencil
-                              aria-hidden
-                              className="h-4 w-4"
-                              trigger={parentIconTrigger}
-                              size={16}
-                            />
-                          </button>
-                          {deleteConfirmId === group.group_id ? (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => void handleDelete(group.group_id)}
-                                disabled={busy}
-                                aria-label={t('contactGroupsModal.confirmDelete')}
-                                className="bg-danger-600/30 text-label text-danger-400 hover:bg-danger-600/50 rounded px-2 py-0.5 transition-colors disabled:opacity-40"
-                              >
-                                {t('contactGroupsModal.confirmDeleteButton')}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setDeleteConfirmId(null);
-                                }}
-                                aria-label={t('contactGroupsModal.cancelDelete')}
-                                {...{ [PARENT_HOVER_ATTR]: '' }}
-                                className="hover:bg-secondary-dark text-muted hover:text-ink-200 rounded p-1 transition-colors"
-                              >
-                                <X
-                                  aria-hidden
-                                  className="h-4 w-4"
-                                  trigger={parentIconTrigger}
-                                  size={16}
-                                />
-                              </button>
-                            </>
-                          ) : (
+                          aria-label={t('contactGroupsModal.renameGroupNamed', {
+                            name: group.name,
+                          })}
+                          title={t('contactGroupsModal.rename')}
+                          {...{ [PARENT_HOVER_ATTR]: '' }}
+                          className="hover:bg-secondary-dark text-muted hover:text-ink-200 rounded p-1 transition-colors"
+                        >
+                          <Pencil
+                            aria-hidden
+                            className="h-4 w-4"
+                            trigger={parentIconTrigger}
+                            size={16}
+                          />
+                        </button>
+                        {deleteConfirmId === group.group_id ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => void handleDelete(group.group_id)}
+                              disabled={busy}
+                              aria-label={t('contactGroupsModal.confirmDelete')}
+                              className="bg-danger-600/30 text-label text-danger-400 hover:bg-danger-600/50 rounded px-2 py-0.5 transition-colors disabled:opacity-40"
+                            >
+                              {t('contactGroupsModal.confirmDeleteButton')}
+                            </button>
                             <button
                               type="button"
                               onClick={() => {
-                                setDeleteConfirmId(group.group_id);
+                                setDeleteConfirmId(null);
                               }}
-                              aria-label={t('contactGroupsModal.deleteGroupNamed', {
-                                name: group.name,
-                              })}
-                              title={t('contactGroupsModal.deleteGroup')}
+                              aria-label={t('contactGroupsModal.cancelDelete')}
                               {...{ [PARENT_HOVER_ATTR]: '' }}
-                              className="hover:bg-secondary-dark text-muted hover:text-danger-400 rounded p-1 transition-colors"
+                              className="hover:bg-secondary-dark text-muted hover:text-ink-200 rounded p-1 transition-colors"
                             >
-                              <Trash2
+                              <X
                                 aria-hidden
                                 className="h-4 w-4"
                                 trigger={parentIconTrigger}
                                 size={16}
                               />
                             </button>
-                          )}
-                        </>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </>
-          )}
-        </div>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDeleteConfirmId(group.group_id);
+                            }}
+                            aria-label={t('contactGroupsModal.deleteGroupNamed', {
+                              name: group.name,
+                            })}
+                            title={t('contactGroupsModal.deleteGroup')}
+                            {...{ [PARENT_HOVER_ATTR]: '' }}
+                            className="hover:bg-secondary-dark text-muted hover:text-danger-400 rounded p-1 transition-colors"
+                          >
+                            <Trash2
+                              aria-hidden
+                              className="h-4 w-4"
+                              trigger={parentIconTrigger}
+                              size={16}
+                            />
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
       </div>
-    </div>
+    </DialogFrame>
   );
 }
