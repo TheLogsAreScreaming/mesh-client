@@ -12,6 +12,7 @@ import {
   YAxis,
 } from 'recharts';
 
+import { useChartPalette } from '@/renderer/lib/chartPalette';
 import { formatDisplayTime } from '@/renderer/lib/formatDisplayTime';
 import { useParentIconTrigger } from '@/renderer/lib/icons/iconMotionContext';
 
@@ -21,6 +22,7 @@ import type { EnvironmentTelemetryPoint, MeshCoreLocalStats, TelemetryPoint } fr
 import { useTimeFormatStore } from '../stores/timeFormatStore';
 import RefreshButton from './RefreshButton';
 import SignalMeter from './SignalMeter';
+import { buttonClassName } from './ui/Button';
 
 const SIGNAL_SNR_COLOR = 'var(--color-warning-400)';
 const SIGNAL_RSSI_COLOR = 'var(--color-blue-400)';
@@ -76,6 +78,7 @@ export default function TelemetryPanel({
   capabilities,
   meshcorePacketStats,
 }: Props) {
+  const chart = useChartPalette();
   const { t } = useTranslation();
   const parentIconTrigger = useParentIconTrigger();
   const use24HourTime = useTimeFormatStore((s) => s.use24HourTime);
@@ -280,7 +283,7 @@ export default function TelemetryPanel({
               onClick={onToggleFahrenheit}
               data-setting-anchor="telemetry.display.temperatureUnit"
               title={t('telemetryPanel.toggleTempUnit')}
-              className="bg-ink-700 text-ink-300 hover:bg-ink-600 text-label rounded px-2 py-1"
+              className={buttonClassName('secondary', 'sm')}
             >
               {useFahrenheit ? t('telemetryPanel.tempUnitF') : t('telemetryPanel.tempUnitC')}
             </button>
@@ -293,7 +296,7 @@ export default function TelemetryPanel({
               onClick={handleExportCsv}
               data-setting-anchor="telemetry.data.exportCsv"
               {...{ [PARENT_HOVER_ATTR]: '' }}
-              className="bg-ink-700 text-ink-300 hover:bg-ink-600 rounded-card text-body-lg flex items-center gap-1.5 px-3 py-1.5 font-medium transition-colors"
+              className={buttonClassName('secondary', 'md')}
               title={t('telemetryPanel.exportCsv')}
             >
               <Download aria-hidden className="h-4 w-4" trigger={parentIconTrigger} size={16} />
@@ -324,37 +327,37 @@ export default function TelemetryPanel({
               <div role="img" aria-label={batteryChartAria}>
                 <ResponsiveContainer width="100%" height={250}>
                   <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#424242" />
-                    <XAxis dataKey="time" stroke="#808080" tick={{ fontSize: 11 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+                    <XAxis dataKey="time" stroke={chart.axis} tick={{ fontSize: 11 }} />
                     <YAxis
                       yAxisId="battery"
                       domain={[0, 100]}
-                      stroke="#3b82f6"
+                      stroke={chart.blue500}
                       tick={{ fontSize: 11 }}
                       label={{
                         value: '%',
                         angle: -90,
                         position: 'insideLeft',
-                        style: { fill: '#3b82f6' },
+                        style: { fill: chart.blue500 },
                       }}
                     />
                     <YAxis
                       yAxisId="voltage"
                       orientation="right"
                       domain={[3.0, 4.5]}
-                      stroke="#8b5cf6"
+                      stroke={chart.violet500}
                       tick={{ fontSize: 11 }}
                       label={{
                         value: 'V',
                         angle: 90,
                         position: 'insideRight',
-                        style: { fill: '#8b5cf6' },
+                        style: { fill: chart.violet500 },
                       }}
                     />
                     <Tooltip
                       contentStyle={{
-                        background: '#292929',
-                        border: '1px solid #424242',
+                        background: chart.tooltipBg,
+                        border: `1px solid ${chart.tooltipBorder}`,
                         borderRadius: '8px',
                       }}
                     />
@@ -364,7 +367,7 @@ export default function TelemetryPanel({
                       type="monotone"
                       dataKey="battery"
                       name={t('telemetryPanel.seriesBatteryPct')}
-                      stroke="#3b82f6"
+                      stroke={chart.blue500}
                       strokeWidth={2}
                       dot={false}
                       connectNulls
@@ -374,7 +377,7 @@ export default function TelemetryPanel({
                       type="monotone"
                       dataKey="voltage"
                       name={t('telemetryPanel.seriesVoltage')}
-                      stroke="#8b5cf6"
+                      stroke={chart.violet500}
                       strokeWidth={2}
                       dot={false}
                       connectNulls
@@ -394,8 +397,8 @@ export default function TelemetryPanel({
               <div role="img" aria-label={signalChartAria}>
                 <ResponsiveContainer width="100%" height={250}>
                   <LineChart data={signalChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#424242" />
-                    <XAxis dataKey="time" stroke="#808080" tick={{ fontSize: 11 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+                    <XAxis dataKey="time" stroke={chart.axis} tick={{ fontSize: 11 }} />
                     <YAxis
                       yAxisId="snr"
                       stroke={SIGNAL_SNR_COLOR}
@@ -421,8 +424,8 @@ export default function TelemetryPanel({
                     />
                     <Tooltip
                       contentStyle={{
-                        background: '#292929',
-                        border: '1px solid #424242',
+                        background: chart.tooltipBg,
+                        border: `1px solid ${chart.tooltipBorder}`,
                         borderRadius: '8px',
                       }}
                     />
@@ -462,18 +465,18 @@ export default function TelemetryPanel({
               <div role="img" aria-label={tempHumidityChartAria}>
                 <ResponsiveContainer width="100%" height={250}>
                   <LineChart data={envChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#424242" />
-                    <XAxis dataKey="time" stroke="#808080" tick={{ fontSize: 11 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+                    <XAxis dataKey="time" stroke={chart.axis} tick={{ fontSize: 11 }} />
                     {(hasTemp || hasMcuTemp) && (
                       <YAxis
                         yAxisId="temp"
-                        stroke="#f59e0b"
+                        stroke={chart.amber500}
                         tick={{ fontSize: 11 }}
                         label={{
                           value: useFahrenheit ? '°F' : '°C',
                           angle: -90,
                           position: 'insideLeft',
-                          style: { fill: '#f59e0b' },
+                          style: { fill: chart.amber500 },
                         }}
                       />
                     )}
@@ -482,20 +485,20 @@ export default function TelemetryPanel({
                         yAxisId="humidity"
                         orientation="right"
                         domain={[0, 100]}
-                        stroke="#06b6d4"
+                        stroke={chart.cyan500}
                         tick={{ fontSize: 11 }}
                         label={{
                           value: '%',
                           angle: 90,
                           position: 'insideRight',
-                          style: { fill: '#06b6d4' },
+                          style: { fill: chart.cyan500 },
                         }}
                       />
                     )}
                     <Tooltip
                       contentStyle={{
-                        background: '#292929',
-                        border: '1px solid #424242',
+                        background: chart.tooltipBg,
+                        border: `1px solid ${chart.tooltipBorder}`,
                         borderRadius: '8px',
                       }}
                     />
@@ -510,7 +513,7 @@ export default function TelemetryPanel({
                             ? t('telemetryPanel.seriesTempF')
                             : t('telemetryPanel.seriesTempC')
                         }
-                        stroke="#f59e0b"
+                        stroke={chart.amber500}
                         strokeWidth={2}
                         dot={false}
                         connectNulls
@@ -526,7 +529,7 @@ export default function TelemetryPanel({
                             ? t('telemetryPanel.seriesMcuTempF')
                             : t('telemetryPanel.seriesMcuTempC')
                         }
-                        stroke="#fb923c"
+                        stroke={chart.orange400}
                         strokeWidth={2}
                         dot={false}
                         connectNulls
@@ -538,7 +541,7 @@ export default function TelemetryPanel({
                         type="monotone"
                         dataKey="humidity"
                         name={t('telemetryPanel.seriesHumidityPct')}
-                        stroke="#06b6d4"
+                        stroke={chart.cyan500}
                         strokeWidth={2}
                         dot={false}
                         connectNulls
@@ -559,23 +562,23 @@ export default function TelemetryPanel({
               <div role="img" aria-label={pressureChartAria}>
                 <ResponsiveContainer width="100%" height={250}>
                   <LineChart data={envChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#424242" />
-                    <XAxis dataKey="time" stroke="#808080" tick={{ fontSize: 11 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+                    <XAxis dataKey="time" stroke={chart.axis} tick={{ fontSize: 11 }} />
                     <YAxis
                       yAxisId="pressure"
-                      stroke="#a78bfa"
+                      stroke={chart.violet400}
                       tick={{ fontSize: 11 }}
                       label={{
                         value: 'hPa',
                         angle: -90,
                         position: 'insideLeft',
-                        style: { fill: '#a78bfa' },
+                        style: { fill: chart.violet400 },
                       }}
                     />
                     <Tooltip
                       contentStyle={{
-                        background: '#292929',
-                        border: '1px solid #424242',
+                        background: chart.tooltipBg,
+                        border: `1px solid ${chart.tooltipBorder}`,
                         borderRadius: '8px',
                       }}
                     />
@@ -585,7 +588,7 @@ export default function TelemetryPanel({
                       type="monotone"
                       dataKey="pressure"
                       name={t('telemetryPanel.seriesPressureHpa')}
-                      stroke="#a78bfa"
+                      stroke={chart.violet400}
                       strokeWidth={2}
                       dot={false}
                       connectNulls
@@ -605,24 +608,24 @@ export default function TelemetryPanel({
               <div role="img" aria-label={iaqChartAria}>
                 <ResponsiveContainer width="100%" height={250}>
                   <LineChart data={envChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#424242" />
-                    <XAxis dataKey="time" stroke="#808080" tick={{ fontSize: 11 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+                    <XAxis dataKey="time" stroke={chart.axis} tick={{ fontSize: 11 }} />
                     <YAxis
                       yAxisId="iaq"
                       domain={[0, 500]}
-                      stroke="#34d399"
+                      stroke={chart.emerald400}
                       tick={{ fontSize: 11 }}
                       label={{
                         value: 'IAQ',
                         angle: -90,
                         position: 'insideLeft',
-                        style: { fill: '#34d399' },
+                        style: { fill: chart.emerald400 },
                       }}
                     />
                     <Tooltip
                       contentStyle={{
-                        background: '#292929',
-                        border: '1px solid #424242',
+                        background: chart.tooltipBg,
+                        border: `1px solid ${chart.tooltipBorder}`,
                         borderRadius: '8px',
                       }}
                     />
@@ -632,7 +635,7 @@ export default function TelemetryPanel({
                       type="monotone"
                       dataKey="iaq"
                       name={t('telemetryPanel.seriesIaq')}
-                      stroke="#34d399"
+                      stroke={chart.emerald400}
                       strokeWidth={2}
                       dot={false}
                       connectNulls
@@ -652,29 +655,29 @@ export default function TelemetryPanel({
               <div role="img" aria-label={particulateChartAria}>
                 <ResponsiveContainer width="100%" height={250}>
                   <LineChart data={envChartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#424242" />
-                    <XAxis dataKey="time" stroke="#808080" tick={{ fontSize: 11 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
+                    <XAxis dataKey="time" stroke={chart.axis} tick={{ fontSize: 11 }} />
                     <YAxis
                       yAxisId="pm"
-                      stroke="#a78bfa"
+                      stroke={chart.violet400}
                       tick={{ fontSize: 11 }}
                       label={{
                         value: t('telemetryPanel.axisParticulates'),
                         angle: -90,
                         position: 'insideLeft',
-                        style: { fill: '#a78bfa' },
+                        style: { fill: chart.violet400 },
                       }}
                     />
                     <YAxis
                       yAxisId="co2"
                       orientation="right"
-                      stroke="#fbbf24"
+                      stroke={chart.amber400}
                       tick={{ fontSize: 11 }}
                       label={{
                         value: t('telemetryPanel.axisCo2'),
                         angle: 90,
                         position: 'insideRight',
-                        style: { fill: '#fbbf24' },
+                        style: { fill: chart.amber400 },
                       }}
                     />
                     {/* Strike counts are unitless and would be squashed flat by the
@@ -682,8 +685,8 @@ export default function TelemetryPanel({
                     <YAxis yAxisId="strikes" orientation="right" hide />
                     <Tooltip
                       contentStyle={{
-                        background: '#292929',
-                        border: '1px solid #424242',
+                        background: chart.tooltipBg,
+                        border: `1px solid ${chart.tooltipBorder}`,
                         borderRadius: '8px',
                       }}
                     />
@@ -693,7 +696,7 @@ export default function TelemetryPanel({
                       type="monotone"
                       dataKey="pm25"
                       name={t('telemetryPanel.seriesPm25')}
-                      stroke="#a78bfa"
+                      stroke={chart.violet400}
                       strokeWidth={2}
                       dot={false}
                       connectNulls
@@ -703,7 +706,7 @@ export default function TelemetryPanel({
                       type="monotone"
                       dataKey="co2"
                       name={t('telemetryPanel.seriesCo2')}
-                      stroke="#fbbf24"
+                      stroke={chart.amber400}
                       strokeWidth={2}
                       dot={false}
                       connectNulls
@@ -713,7 +716,7 @@ export default function TelemetryPanel({
                       type="monotone"
                       dataKey="lightningStrikes"
                       name={t('telemetryPanel.seriesLightningStrikes')}
-                      stroke="#f87171"
+                      stroke={chart.red400}
                       strokeWidth={2}
                       dot={false}
                       connectNulls

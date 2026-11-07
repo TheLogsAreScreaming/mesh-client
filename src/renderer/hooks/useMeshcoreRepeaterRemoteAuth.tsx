@@ -11,6 +11,7 @@ import { getMeshcoreRoomCredential } from '@/renderer/lib/meshcoreRoomCredential
 import { Z_NESTED_AUTH_OVERLAY } from '@/renderer/lib/modalZIndex';
 
 import { useToast } from '../components/Toast';
+import { buttonClassName } from '../components/ui/Button';
 import { INPUT_BOX_CLASS } from '../components/ui/formClasses';
 
 /** Firmware/admin passwords are short; cap input to avoid accidental paste floods. */
@@ -271,7 +272,7 @@ function ModalAuthBody({
         <button
           type="button"
           onClick={onCancel}
-          className="border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700 text-label rounded border px-3 py-1.5 font-medium"
+          className={buttonClassName('ghost', 'md')}
           aria-label={cancelLabel}
         >
           {cancelLabel}
@@ -279,7 +280,7 @@ function ModalAuthBody({
         <button
           type="button"
           onClick={onSkip}
-          className="border-ink-600 bg-ink-700 text-ink-200 hover:bg-ink-600 text-label rounded border px-3 py-1.5 font-medium"
+          className={buttonClassName('secondary', 'md')}
           aria-label={skipLabel}
         >
           {skipLabel}
@@ -287,7 +288,7 @@ function ModalAuthBody({
         <button
           type="button"
           onClick={submitPassword}
-          className="bg-brand-green/20 text-brand-green border-brand-green/40 hover:bg-brand-green/30 text-label rounded border px-3 py-1.5 font-medium"
+          className={buttonClassName('primary', 'md')}
           aria-label={continueLabel}
         >
           {continueLabel}

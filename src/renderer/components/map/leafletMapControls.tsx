@@ -42,7 +42,7 @@ export function ensureMapStyles(): void {
   document.head.appendChild(style);
 }
 
-/** LoRa map panel styles (anomaly halos, dark node popups) — Meshtastic/MeshCore MapPanel only. */
+/** LoRa map panel styles (anomaly halos, node popups on the theme surface) — Meshtastic/MeshCore MapPanel only. */
 export function ensureLoRaMapPanelStyles(): void {
   ensureMapStyles();
   if (document.getElementById(LORA_MAP_STYLE_ID)) return;
@@ -67,12 +67,12 @@ export function ensureLoRaMapPanelStyles(): void {
       opacity: 0.75 !important;
     }
     .leaflet-popup.map-node-popup .leaflet-popup-content-wrapper {
-      background: #292929;
-      border: 1px solid #424242;
-      color: #e0e0e0;
+      background: var(--color-ink-900);
+      border: 1px solid var(--color-ink-700);
+      color: var(--color-ink-200);
       border-radius: 0.75rem;
       padding: 0;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+      box-shadow: var(--shadow-level-3);
     }
     .leaflet-popup.map-node-popup .leaflet-popup-content {
       margin: 0;
@@ -86,13 +86,13 @@ export function ensureLoRaMapPanelStyles(): void {
       overflow-y: auto;
     }
     .leaflet-popup.map-node-popup .leaflet-popup-tip {
-      background: #292929;
+      background: var(--color-ink-900);
     }
     .leaflet-popup.map-node-popup .leaflet-popup-close-button {
-      color: #a3a3a3 !important;
+      color: var(--color-ink-400) !important;
     }
     .leaflet-popup.map-node-popup .leaflet-popup-close-button:hover {
-      color: #e0e0e0 !important;
+      color: var(--color-ink-200) !important;
     }
   `;
   document.head.appendChild(style);

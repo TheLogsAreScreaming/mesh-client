@@ -12,6 +12,7 @@ import {
   YAxis,
 } from 'recharts';
 
+import { useChartPalette } from '@/renderer/lib/chartPalette';
 import { errLikeToLogString } from '@/renderer/lib/errLikeToLogString';
 import { formatDisplayTime } from '@/renderer/lib/formatDisplayTime';
 import { formatRelativeOrIsoDate } from '@/renderer/lib/formatRelativeOrIsoDate';
@@ -185,6 +186,7 @@ export default function DiagnosticsPanel({
   meshcoreNodes = new Map(),
   onLocationChanged,
 }: Props) {
+  const chart = useChartPalette();
   const { t } = useTranslation();
   const locationTrust = useLocationTrust(ourPosition);
   const use24HourTime = useTimeFormatStore((s) => s.use24HourTime);
@@ -979,34 +981,34 @@ export default function DiagnosticsPanel({
                   </h3>
                   <ResponsiveContainer height={140} width="100%">
                     <LineChart data={chartData} margin={{ top: 2, right: 8, left: -20, bottom: 0 }}>
-                      <CartesianGrid stroke="#424242" strokeDasharray="3 3" vertical={false} />
+                      <CartesianGrid stroke={chart.grid} strokeDasharray="3 3" vertical={false} />
                       <XAxis
                         dataKey="time"
                         interval="preserveStartEnd"
-                        tick={{ fill: '#a3a3a3', fontSize: 10 }}
+                        tick={{ fill: chart.label, fontSize: 10 }}
                         tickLine={false}
                       />
                       <YAxis
                         domain={[0, 100]}
-                        tick={{ fill: '#a3a3a3', fontSize: 10 }}
+                        tick={{ fill: chart.label, fontSize: 10 }}
                         tickLine={false}
                         unit="%"
                       />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: '#333333',
-                          border: '1px solid #424242',
+                          backgroundColor: chart.gridSubtle,
+                          border: `1px solid ${chart.tooltipBorder}`,
                           borderRadius: '6px',
                           fontSize: '12px',
                         }}
                         formatter={(v) => [`${v}%`, t('diagnosticsPanel.cuHistoryTooltipLabel')]}
-                        labelStyle={{ color: '#a3a3a3' }}
+                        labelStyle={{ color: chart.label }}
                       />
                       <Line
                         dataKey="cu"
                         dot={false}
                         isAnimationActive={false}
-                        stroke="#34d399"
+                        stroke={chart.emerald400}
                         strokeWidth={1.5}
                         type="monotone"
                       />
