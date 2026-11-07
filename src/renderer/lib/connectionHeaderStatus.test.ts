@@ -79,20 +79,20 @@ describe('connectionHeaderStatus', () => {
 
     it('mqtt connecting uses yellow text without pulse (dot pulses)', () => {
       expect(mqttHeaderVariant('connecting', false)).toBe('warn');
-      expect(headerTextClass('warn')).toContain('text-orange-400');
+      expect(headerTextClass('warn')).toContain('text-warning-400');
       expect(headerTextClass('warn')).not.toContain('animate-pulse');
       expect(headerDotClass('warn')).toContain('animate-pulse');
     });
 
     it('device connecting uses yellow text without pulse (dot pulses)', () => {
       expect(deviceHeaderVariant('connecting', false)).toBe('warn');
-      expect(headerTextClass('warn')).toContain('text-orange-400');
+      expect(headerTextClass('warn')).toContain('text-warning-400');
       expect(headerTextClass('warn')).not.toContain('animate-pulse');
     });
 
     it('device configured uses green', () => {
       expect(deviceHeaderVariant('configured', false)).toBe('ok');
-      expect(headerDotClass('ok')).toContain('bg-green-500');
+      expect(headerDotClass('ok')).toContain('bg-success-500');
     });
 
     it('device connected without configure uses muted connected variant', () => {
@@ -112,7 +112,7 @@ describe('connectionHeaderStatus', () => {
 
     it('tak running ok is green', () => {
       expect(takHeaderVariant(true, false, false)).toBe('ok');
-      expect(headerTextClass('ok')).toContain('text-green-400');
+      expect(headerTextClass('ok')).toContain('text-success-400');
     });
 
     it.each<[boolean, TAKRemoteStatus['state'], string | undefined, string]>([

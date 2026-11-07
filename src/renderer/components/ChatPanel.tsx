@@ -17,7 +17,9 @@ import {
   ExternalLink,
   ListFilter,
   Mail,
+  MessageSquare,
   PARENT_HOVER_ATTR,
+  RadioTower,
   RotateCcw,
   Search,
   ShieldCheck,
@@ -197,6 +199,7 @@ import MeshcoreChatChannelManager from './MeshcoreChatChannelManager';
 import { MessageStatusBadge } from './MessageStatusBadge';
 import { RelayCoverageLine, relayCoverageMessageKey } from './RelayCoverageLine';
 import { useToast } from './Toast';
+import { EmptyState } from './ui/EmptyState';
 import { chipClass } from './ui/formClasses';
 import { Menu } from './ui/Menu';
 import { ScrollStrip } from './ui/ScrollStrip';
@@ -210,10 +213,10 @@ const STARRED_READ_KEY_PREFIX = 'star:';
 
 /** Toolbar icon button with Electron-friendly HelpTooltip (native `title` does not show). */
 const CHAT_TOOLBAR_BUTTON_BASE =
-  'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors';
+  'flex h-7 w-7 shrink-0 items-center justify-center rounded-card transition-colors';
 /** Same as the base, but grows to fit an inline count next to the icon. */
 const CHAT_TOOLBAR_BUTTON_WITH_COUNT_BASE =
-  'flex h-7 min-w-7 shrink-0 items-center justify-center gap-1 rounded-lg px-1.5 transition-colors';
+  'flex h-7 min-w-7 shrink-0 items-center justify-center gap-1 rounded-card px-1.5 transition-colors';
 
 /** Icon buttons in the chat header: idle, toggled on, or a warning state (muted). */
 function chatToolbarButtonClass(
@@ -225,9 +228,9 @@ function chatToolbarButtonClass(
     case 'active':
       return `${base} bg-sidebar-active-bg text-bright-green`;
     case 'starred':
-      return `${base} bg-sidebar-active-bg text-orange-400`;
+      return `${base} bg-sidebar-active-bg text-warning-400`;
     case 'warn':
-      return `${base} text-orange-400 hover:bg-sidebar-active-bg hover:text-orange-300`;
+      return `${base} text-warning-400 hover:bg-sidebar-active-bg hover:text-warning-300`;
     default:
       return `${base} text-muted hover:bg-sidebar-active-bg hover:text-ink-200`;
   }
@@ -239,7 +242,7 @@ function ChipUnreadBadge({ count }: { count: number }) {
     <span
       aria-hidden="true"
       data-chip-unread
-      className="text-2xs flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-red-600 px-1 leading-none font-semibold text-white"
+      className="text-2xs bg-danger-600 flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 leading-none font-semibold text-white"
     >
       {count > 99 ? '99+' : count}
     </span>
@@ -295,7 +298,7 @@ declare module 'react' {
 
 /** Non-interactive DM header status chip (peer battery, last heard, signal). */
 const DM_HEADER_STATUS_CLASS =
-  'inline-flex items-center gap-1.5 rounded-lg bg-ink-800/60 px-2.5 py-1 text-xs';
+  'inline-flex items-center gap-1.5 rounded-card bg-ink-800/60 px-2.5 py-1 text-label';
 
 function DmPeerInfoBar({ dmNode, nowMs, t }: { dmNode: MeshNode; nowMs: number; t: TFunction }) {
   const parts: string[] = [];
@@ -351,20 +354,20 @@ function OutboxBubble({
       : row.status === 'sending'
         ? 'text-muted'
         : row.status === 'blocked'
-          ? 'text-orange-400'
-          : 'text-red-400';
+          ? 'text-warning-400'
+          : 'text-danger-400';
   const displayError = row.error ? translateChatSendError(t, row.error) : null;
   const isEmergency = isEmergencyOutboxPriority(row);
   return (
     <div className="mb-1 flex justify-end px-4">
       <div
-        className={`bg-ink-700 max-w-[75%] rounded-xl px-3 py-2 ${
-          isEmergency ? 'border border-red-500' : 'opacity-80'
+        className={`bg-ink-700 rounded-container max-w-[75%] px-3 py-2 ${
+          isEmergency ? 'border-danger-500 border' : 'opacity-80'
         }`}
       >
         {isEmergency && (
           <div className="text-label mb-1 flex items-center gap-2">
-            <span className="rounded bg-red-600 px-1.5 py-0.5 font-semibold text-white">
+            <span className="bg-danger-600 rounded px-1.5 py-0.5 font-semibold text-white">
               {t('chatPanel.outboxEmergencyBadge')}
             </span>
             {row.status !== 'blocked' && (
@@ -372,7 +375,7 @@ function OutboxBubble({
             )}
           </div>
         )}
-        <div className="text-sm text-white">{row.payload}</div>
+        <div className="text-body-lg text-ink-50">{row.payload}</div>
         <div className={`text-label mt-1 flex items-center gap-2 ${statusColor}`}>
           <span>{statusLabel}</span>
           {isEmergency && row.attemptCount > 0 && (
@@ -399,7 +402,7 @@ function OutboxBubble({
               onClick={() => {
                 onRetry(row.id);
               }}
-              className="text-2xs bg-ink-600 hover:bg-ink-500 rounded px-1.5 py-0.5 text-white"
+              className="text-2xs bg-ink-600 hover:bg-ink-500 text-ink-50 rounded px-1.5 py-0.5"
             >
               {t('chatPanel.retryOutbox')}
             </button>
@@ -417,7 +420,7 @@ function OutboxBubble({
               }
               onCancel(row.id);
             }}
-            className="text-2xs bg-ink-600 hover:bg-ink-500 rounded px-1.5 py-0.5 text-white"
+            className="text-2xs bg-ink-600 hover:bg-ink-500 text-ink-50 rounded px-1.5 py-0.5"
           >
             {isEmergency ? t('chatPanel.outboxStopRetrying') : t('common.cancel')}
           </button>
@@ -457,7 +460,7 @@ function AutoResendStatus({ protocol, msg }: { protocol: MeshProtocol; msg: Chat
           e.stopPropagation();
           cancelAutoResend(protocol, messageId);
         }}
-        className="text-2xs bg-ink-600 hover:bg-ink-500 rounded px-1.5 py-0.5 text-white"
+        className="text-2xs bg-ink-600 hover:bg-ink-500 text-ink-50 rounded px-1.5 py-0.5"
       >
         {t('chatPanel.cancelAutoResend')}
       </button>
@@ -517,7 +520,7 @@ function StoreForwardBadge() {
   const label = t('chatPanel.receivedViaStoreForward');
   return (
     <span role="img" title={label} aria-label={label}>
-      <Archive aria-hidden className="h-3 w-3 text-orange-400" trigger={trigger} size={12} />
+      <Archive aria-hidden className="text-warning-400 h-3 w-3" trigger={trigger} size={12} />
     </span>
   );
 }
@@ -537,11 +540,11 @@ function UnreadDivider() {
   const { t } = useTranslation();
   return (
     <div className="flex items-center gap-3 py-2">
-      <div className="flex-1 border-t border-red-500/50" />
-      <span className="text-2xs shrink-0 rounded-full border border-red-500/30 bg-red-500/10 px-2.5 py-0.5 font-semibold text-red-400">
+      <div className="border-danger-500/50 flex-1 border-t" />
+      <span className="text-2xs border-danger-500/30 bg-danger-500/10 text-danger-400 shrink-0 rounded-full border px-2.5 py-0.5 font-semibold">
         {t('chatPanel.newMessagesDivider')}
       </span>
-      <div className="flex-1 border-t border-red-500/50" />
+      <div className="border-danger-500/50 flex-1 border-t" />
     </div>
   );
 }
@@ -2371,7 +2374,7 @@ function ChatPanel({
   /** DM pills strip (Row 2). */
   const dmTabPills = (
     <>
-      <span className="text-muted shrink-0 text-xs font-medium">{t('chatPanel.dms')}</span>
+      <span className="text-muted text-label shrink-0 font-medium">{t('chatPanel.dms')}</span>
       {visibleDmTabs.length > 0 && (
         <ChatChannelSwitcher
           kind="dms"
@@ -2383,7 +2386,7 @@ function ChatPanel({
         />
       )}
       {visibleDmTabs.length === 0 ? (
-        <span className="text-muted text-xs">{t('chatPanel.noDmConversations')}</span>
+        <span className="text-muted text-label">{t('chatPanel.noDmConversations')}</span>
       ) : (
         renderDmTabList(
           visibleDmTabs.map((nodeNum) => {
@@ -2396,7 +2399,7 @@ function ChatPanel({
               <div
                 key={`dm-${protocol}-${nodeNum}`}
                 data-strip-active={isActiveDm ? 'true' : undefined}
-                className={`${chipClass(isActiveDm)} flex shrink-0 items-center gap-1 rounded-lg! pr-1! pl-2!`}
+                className={`${chipClass(isActiveDm)} rounded-card! flex shrink-0 items-center gap-1 pr-1! pl-2!`}
               >
                 <button
                   type="button"
@@ -2429,7 +2432,7 @@ function ChatPanel({
                   }
                   className={`flex h-5 w-5 shrink-0 items-center justify-center rounded transition-colors ${
                     dmMuted
-                      ? 'text-orange-400 hover:text-orange-300'
+                      ? 'text-warning-400 hover:text-warning-300'
                       : 'text-muted hover:text-ink-100'
                   }`}
                   title={
@@ -2637,7 +2640,7 @@ function ChatPanel({
         <div
           role="group"
           aria-label={t('chatPanel.toolbarLabel')}
-          className="border-secondary-dark bg-deep-black flex shrink-0 items-center gap-0.5 justify-self-end rounded-lg border p-0.5"
+          className="border-secondary-dark bg-deep-black rounded-card flex shrink-0 items-center gap-0.5 justify-self-end border p-0.5"
         >
           <ChatToolbarTooltipButton
             tooltip={t('chatPanel.jumpToDate')}
@@ -2808,7 +2811,7 @@ function ChatPanel({
               placeholder={t('chatPanel.searchMessagesPlaceholder')}
               aria-label={t('chatPanel.searchMessagesPlaceholder')}
               spellCheck={false}
-              className="bg-app-bg border-secondary-dark placeholder:text-muted focus:border-brand-green text-body text-ink-200 h-8 min-w-0 flex-1 rounded-lg border px-2.5 focus:outline-none"
+              className="bg-app-bg border-secondary-dark placeholder:text-muted focus:border-brand-green text-body text-ink-200 rounded-card h-8 min-w-0 flex-1 border px-2.5 focus:outline-none"
             />
             {searchQuery && (
               <button
@@ -2816,7 +2819,7 @@ function ChatPanel({
                 onClick={() => {
                   setSearchQuery('');
                 }}
-                className="text-muted hover:text-ink-300 shrink-0 px-1 text-lg leading-none"
+                className="text-muted hover:text-ink-300 text-heading shrink-0 px-1 leading-none"
                 aria-label={t('common.clear')}
               >
                 ×
@@ -2824,7 +2827,7 @@ function ChatPanel({
             )}
           </div>
           {searchQuery && (
-            <div className="text-muted mt-1 text-xs">
+            <div className="text-muted text-label mt-1">
               {t('chatPanel.searchResults', { count: filteredMessages.length })}
             </div>
           )}
@@ -2842,7 +2845,7 @@ function ChatPanel({
               setJumpDate(e.target.value);
               handleJumpToDate(e.target.value);
             }}
-            className="bg-app-bg border-secondary-dark focus:border-brand-green text-body text-ink-200 h-8 rounded-lg border px-2.5 focus:outline-none"
+            className="bg-app-bg border-secondary-dark focus:border-brand-green text-body text-ink-200 rounded-card h-8 border px-2.5 focus:outline-none"
           />
           {jumpDate && (
             <button
@@ -2850,7 +2853,7 @@ function ChatPanel({
               onClick={() => {
                 setJumpDate('');
               }}
-              className="text-muted hover:text-ink-300 text-xs"
+              className="text-muted hover:text-ink-300 text-label"
               aria-label={t('chatPanel.clearDateAria')}
             >
               ×
@@ -2861,7 +2864,7 @@ function ChatPanel({
 
       {/* Sender filter banner */}
       {filterSender != null && (
-        <div className="mb-2 flex items-center justify-between rounded-lg border border-indigo-600/40 bg-indigo-900/20 px-3 py-1.5 text-xs text-indigo-300">
+        <div className="rounded-card border-info-600/40 bg-info-900/20 text-label text-info-300 mb-2 flex items-center justify-between border px-3 py-1.5">
           <span>
             {t('chatPanel.filteringBySender', {
               name: nodes.get(filterSender)
@@ -2875,7 +2878,7 @@ function ChatPanel({
               setFilterSender(null);
             }}
             aria-label={t('chatPanel.clearSenderFilter')}
-            className="ml-2 hover:text-white"
+            className="hover:text-ink-50 ml-2"
           >
             ×
           </button>
@@ -2884,8 +2887,8 @@ function ChatPanel({
 
       {/* Disconnected overlay */}
       {!isConnected && (
-        <div className="bg-deep-black border-ink-800 mb-2 rounded-xl border p-4 text-center">
-          <p className="text-muted text-sm">{t('chatPanel.readOnlyDisconnected')}</p>
+        <div className="bg-deep-black border-ink-800 rounded-container mb-2 border p-4 text-center">
+          <p className="text-muted text-body-lg">{t('chatPanel.readOnlyDisconnected')}</p>
         </div>
       )}
 
@@ -2904,9 +2907,9 @@ function ChatPanel({
 
       {/* Starred messages view */}
       {viewMode === 'starred' && (
-        <div className="bg-deep-black/50 min-h-0 flex-1 overflow-y-auto rounded-xl p-3">
+        <div className="bg-deep-black/50 rounded-container min-h-0 flex-1 overflow-y-auto p-3">
           {starred.length === 0 ? (
-            <div className="text-muted py-12 text-center text-sm">
+            <div className="text-muted text-body-lg py-12 text-center">
               {t('chatPanel.noStarredMessages')}
             </div>
           ) : (
@@ -2923,11 +2926,11 @@ function ChatPanel({
                   return (
                     <div
                       key={s.starId}
-                      className="border-border/30 bg-ink-800/40 flex items-start gap-2 rounded-lg border p-2.5"
+                      className="border-border/30 bg-ink-800/40 rounded-card flex items-start gap-2 border p-2.5"
                     >
                       <div className="min-w-0 flex-1">
                         <div className="mb-0.5 flex items-center gap-2">
-                          <span className="text-ink-300 text-xs font-medium">
+                          <span className="text-ink-300 text-label font-medium">
                             {s.sender_name || String(s.sender_id)}
                           </span>
                           <span className="text-muted text-2xs">
@@ -2937,7 +2940,7 @@ function ChatPanel({
                             {sourceLabel}
                           </span>
                         </div>
-                        <p className="text-ink-200 text-sm break-words">{s.payload}</p>
+                        <p className="text-ink-200 text-body-lg break-words">{s.payload}</p>
                       </div>
                       <div className="flex shrink-0 flex-col gap-1">
                         <button
@@ -2952,7 +2955,7 @@ function ChatPanel({
                             }
                           }}
                           {...{ [PARENT_HOVER_ATTR]: '' }}
-                          className="text-2xs text-ink-400 rounded p-1 hover:text-indigo-400"
+                          className="text-2xs text-ink-400 hover:text-info-400 rounded p-1"
                           title={t('chatPanel.goToMessage')}
                           aria-label={t('chatPanel.goToMessage')}
                         >
@@ -2969,7 +2972,7 @@ function ChatPanel({
                             setStarred((prev) => prev.filter((x) => x.starId !== s.starId));
                           }}
                           {...{ [PARENT_HOVER_ATTR]: '' }}
-                          className="text-2xs rounded p-1 text-orange-500 hover:text-orange-300"
+                          className="text-2xs text-warning-500 hover:text-warning-300 rounded p-1"
                           title={t('chatPanel.unstarMessage')}
                           aria-label={t('chatPanel.unstarMessage')}
                         >
@@ -2995,18 +2998,29 @@ function ChatPanel({
           ref={scrollContainerRef}
           data-chat-scroll-root
           onScroll={handleScroll}
-          className="bg-deep-black/50 h-full overflow-y-auto overscroll-contain rounded-xl p-3 [overflow-anchor:none]"
+          className="bg-deep-black/50 rounded-container h-full overflow-y-auto overscroll-contain p-3 [overflow-anchor:none]"
         >
           {filteredMessages.length === 0 ? (
-            <div className="text-muted py-12 text-center">
-              {searchQuery
-                ? t('chatPanel.emptyNoSearchMatches')
-                : isDmMode
-                  ? t('chatPanel.emptyNoDmMessages', { name: dmNodeName })
-                  : isConnected
-                    ? t('chatPanel.emptyNoMessagesYet')
-                    : t('chatPanel.emptyConnectFirst')}
-            </div>
+            <EmptyState
+              icon={
+                searchQuery ? (
+                  <Search aria-hidden className="h-5 w-5" />
+                ) : isConnected || isDmMode ? (
+                  <MessageSquare aria-hidden className="h-5 w-5" />
+                ) : (
+                  <RadioTower aria-hidden className="h-5 w-5" />
+                )
+              }
+              title={
+                searchQuery
+                  ? t('chatPanel.emptyNoSearchMatches')
+                  : isDmMode
+                    ? t('chatPanel.emptyNoDmMessages', { name: dmNodeName })
+                    : isConnected
+                      ? t('chatPanel.emptyNoMessagesYet')
+                      : t('chatPanel.emptyConnectFirst')
+              }
+            />
           ) : (
             <div
               ref={messageVirtualizer.containerRef}
@@ -3055,7 +3069,7 @@ function ChatPanel({
                 const daySeparator = daySeparatorIndices.has(i) ? (
                   <div className="flex items-center gap-3 py-2">
                     <div className="border-ink-800 flex-1 border-t" />
-                    <span className="text-muted shrink-0 text-xs font-medium">
+                    <span className="text-muted text-label shrink-0 font-medium">
                       {formatDayLabel(msg.timestamp, t)}
                     </span>
                     <div className="border-ink-800 flex-1 border-t" />
@@ -3137,7 +3151,7 @@ function ChatPanel({
                           )}
                           {/* Message bubble */}
                           <div
-                            className={`min-w-0 rounded-xl border px-3 ${compactMode ? 'py-1' : 'py-1.5'} ${(() => {
+                            className={`rounded-container min-w-0 border px-3 ${compactMode ? 'py-1' : 'py-1.5'} ${(() => {
                               const mecp = tryParseMecp(msg.payload);
                               if (mecp?.severity != null) {
                                 return mecpChatBubbleToneClasses(mecp.severity, isOwn);
@@ -3165,7 +3179,7 @@ function ChatPanel({
                                       onClick={() => {
                                         onNodeClick(msg.sender_id);
                                       }}
-                                      className={`min-w-0 cursor-pointer truncate text-xs font-semibold hover:underline ${
+                                      className={`text-label min-w-0 cursor-pointer truncate font-semibold hover:underline ${
                                         isOwn
                                           ? 'text-ink-200'
                                           : filterSender === msg.sender_id
@@ -3321,7 +3335,7 @@ function ChatPanel({
                                 const canJumpToParent = !!orig && msg.replyId != null;
                                 if (!quoteSnippet && !quotedLabel) return null;
                                 const quoteClassName =
-                                  'bg-app-bg mb-1.5 flex w-full items-start gap-2 rounded-lg px-2 py-1.5 text-left';
+                                  'bg-app-bg mb-1.5 flex w-full items-start gap-2 rounded-card px-2 py-1.5 text-left';
                                 const quoteBody = (
                                   <>
                                     <CornerUpLeft
@@ -3376,7 +3390,7 @@ function ChatPanel({
                               })()}
 
                             {/* Message text with optional search highlight (div: ChatPayloadText may render block link previews) */}
-                            <div className="text-ink-200 text-sm leading-relaxed break-words whitespace-pre-wrap">
+                            <div className="text-ink-200 text-body-lg leading-relaxed break-words whitespace-pre-wrap">
                               {
                                 <ChatPayloadText
                                   text={msg.payload}
@@ -3396,7 +3410,7 @@ function ChatPanel({
                                       severity={mecp.severity}
                                       pulse={!isOwn && mecp.severity <= 1 && !mecp.isDrill}
                                     />
-                                    <p className="text-2xs font-normal text-red-200/90">
+                                    <p className="text-2xs text-danger-200/90 font-normal">
                                       {localizeMecpCodes(mecp, mecpLang, { includeGps: false })}
                                     </p>
                                   </div>
@@ -3512,7 +3526,7 @@ function ChatPanel({
                                 });
                               }}
                               {...{ [PARENT_HOVER_ATTR]: '' }}
-                              className="message-action text-muted rounded p-1 text-xs"
+                              className="message-action text-muted text-label rounded p-1"
                               aria-label={t('chatPanel.copyMessage')}
                               title={t('chatPanel.copyMessage')}
                             >
@@ -3536,7 +3550,7 @@ function ChatPanel({
                                     composerInputRef.current?.focus();
                                   }}
                                   {...{ [PARENT_HOVER_ATTR]: '' }}
-                                  className="message-action text-muted rounded p-1 text-xs"
+                                  className="message-action text-muted text-label rounded p-1"
                                   aria-label={t('chatPanel.replyToMessage')}
                                   title={t('chatPanel.replyButton')}
                                 >
@@ -3600,7 +3614,7 @@ function ChatPanel({
                                         }
                                       }}
                                       {...{ [PARENT_HOVER_ATTR]: '' }}
-                                      className="message-action text-muted rounded p-1 text-xs disabled:cursor-not-allowed disabled:opacity-40"
+                                      className="message-action text-muted text-label rounded p-1 disabled:cursor-not-allowed disabled:opacity-40"
                                       aria-label={reactLabel}
                                       title={reactTitle}
                                     >
@@ -3625,7 +3639,7 @@ function ChatPanel({
                                         openDmTo(msg.sender_id);
                                       }}
                                       {...{ [PARENT_HOVER_ATTR]: '' }}
-                                      className="message-action text-muted rounded p-1 text-xs"
+                                      className="message-action text-muted text-label rounded p-1"
                                       aria-label={t('chatPanel.directMessage', {
                                         name: msg.sender_name,
                                       })}
@@ -3652,7 +3666,7 @@ function ChatPanel({
                                         toggleStar(msg);
                                       }}
                                       {...{ [PARENT_HOVER_ATTR]: '' }}
-                                      className={`message-action-star rounded p-1 text-xs ${
+                                      className={`message-action-star text-label rounded p-1 ${
                                         isStarred ? 'starred' : 'text-muted'
                                       }`}
                                       aria-label={
@@ -3722,7 +3736,7 @@ function ChatPanel({
                                       ? `r-${r.id}`
                                       : `r-${r.sender_id}-${r.emoji}-${rIdx}`
                                   }
-                                  className="bg-deep-black border-ink-800 inline-flex max-w-[min(100%,14rem)] cursor-default items-center gap-1 rounded-full border px-1.5 py-0.5 text-xs"
+                                  className="bg-deep-black border-ink-800 text-label inline-flex max-w-[min(100%,14rem)] cursor-default items-center gap-1 rounded-full border px-1.5 py-0.5"
                                   title={titleText}
                                   aria-label={ariaLabel}
                                 >
@@ -3757,7 +3771,7 @@ function ChatPanel({
             onClick={() => {
               scrollToUnreadOrBottom();
             }}
-            className="bg-sidebar-active-bg border-secondary-dark hover:bg-secondary-dark shadow-level-3 text-ink-200 absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all"
+            className="bg-sidebar-active-bg border-secondary-dark hover:bg-secondary-dark shadow-level-3 text-ink-200 text-label absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border px-3 py-1.5 font-medium transition-all"
           >
             <ArrowDown aria-hidden className="h-3.5 w-3.5" trigger={parentIconTrigger} size={14} />
             {hasUnreadDivider ? t('chatPanel.jumpToUnread') : t('chatPanel.jumpToLatest')}
@@ -3849,7 +3863,7 @@ function ChatPanel({
                 <ChatToolbarTooltipButton
                   tooltip={t('mecp.compose.openRequest')}
                   aria-label={t('mecp.compose.openRequest')}
-                  className="flex h-[2.625rem] min-w-[2.625rem] shrink-0 items-center justify-center rounded-lg border border-red-600/70 bg-red-950/50 px-2.5 text-red-300 transition-colors hover:bg-red-900/60 hover:text-red-200 disabled:opacity-50"
+                  className="rounded-card border-danger-600/70 bg-danger-950/50 text-danger-300 hover:bg-danger-900/60 hover:text-danger-200 flex h-[2.625rem] min-w-[2.625rem] shrink-0 items-center justify-center border px-2.5 transition-colors disabled:opacity-50"
                   onClick={() => {
                     setMecpComposeMode('request');
                     setMecpComposeSession((n) => n + 1);
@@ -3861,7 +3875,7 @@ function ChatPanel({
                 <ChatToolbarTooltipButton
                   tooltip={t('mecp.compose.openResponse')}
                   aria-label={t('mecp.compose.openResponse')}
-                  className="flex h-[2.625rem] min-w-[2.625rem] shrink-0 items-center justify-center rounded-lg border border-blue-600/70 bg-blue-950/50 px-2.5 text-blue-300 transition-colors hover:bg-blue-900/60 hover:text-blue-200 disabled:opacity-50"
+                  className="rounded-card flex h-[2.625rem] min-w-[2.625rem] shrink-0 items-center justify-center border border-blue-600/70 bg-blue-950/50 px-2.5 text-blue-300 transition-colors hover:bg-blue-900/60 hover:text-blue-200 disabled:opacity-50"
                   onClick={() => {
                     setMecpComposeMode('response');
                     setMecpComposeSession((n) => n + 1);
@@ -3882,7 +3896,7 @@ function ChatPanel({
       ) : null}
 
       {chatActionError?.viewKey === viewKey && (
-        <div role="alert" className="mt-2 px-1 text-sm text-red-400">
+        <div role="alert" className="text-body-lg text-danger-400 mt-2 px-1">
           {chatActionError.message}
         </div>
       )}

@@ -54,7 +54,7 @@ export function Stepper({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={inputId} className="text-muted text-xs">
+      <label htmlFor={inputId} className="text-muted text-label">
         {label}
       </label>
       <div className="border-secondary-dark bg-app-bg rounded-control inline-flex w-fit items-center overflow-hidden border">
@@ -107,7 +107,7 @@ export function Stepper({
         </button>
       </div>
       {hint && (
-        <p id={hintId} className="text-muted text-xs">
+        <p id={hintId} className="text-muted text-label">
           {hint}
         </p>
       )}

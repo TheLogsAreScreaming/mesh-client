@@ -38,7 +38,7 @@ const PRESET_LABELS = {
   alert: 'notificationSounds.alert',
 } as const;
 const buttonClass =
-  'rounded border border-ink-600 px-2 py-1 text-xs text-ink-300 hover:bg-ink-700 disabled:opacity-40';
+  'rounded border border-ink-600 px-2 py-1 text-label text-ink-300 hover:bg-ink-700 disabled:opacity-40';
 
 export default function NotificationSoundSettings() {
   const { t } = useTranslation();
@@ -131,12 +131,12 @@ export default function NotificationSoundSettings() {
   }
 
   return (
-    <details className="border-ink-700 rounded-lg border p-3">
-      <summary className="text-ink-300 cursor-pointer text-sm">
+    <details className="border-ink-700 rounded-card border p-3">
+      <summary className="text-ink-300 text-body-lg cursor-pointer">
         {t('notificationSounds.title')}
       </summary>
-      <p className="text-muted mt-3 text-xs leading-relaxed">{t('notificationSounds.hint')}</p>
-      <p className="text-muted mt-2 text-xs leading-relaxed">
+      <p className="text-muted text-label mt-3 leading-relaxed">{t('notificationSounds.hint')}</p>
+      <p className="text-muted text-label mt-2 leading-relaxed">
         {t('notificationSounds.emergencyHint')}
       </p>
       <div className="divide-ink-700 mt-3 divide-y">
@@ -145,7 +145,7 @@ export default function NotificationSoundSettings() {
           const label = t(EVENT_LABELS[event]);
           return (
             <fieldset key={event} aria-busy={busy} className="py-3">
-              <legend className="text-ink-300 text-sm font-medium">{label}</legend>
+              <legend className="text-ink-300 text-body-lg font-medium">{label}</legend>
               <div className="flex flex-wrap items-center gap-2">
                 <select
                   value={typeof setting.sound === 'string' ? setting.sound : 'custom'}
@@ -208,7 +208,7 @@ export default function NotificationSoundSettings() {
                   {t('notificationSounds.reset')}
                 </button>
               </div>
-              <label className="text-muted mt-2 flex items-center gap-2 text-xs">
+              <label className="text-muted text-label mt-2 flex items-center gap-2">
                 {t('notificationSounds.volume')}
                 <input
                   type="range"
@@ -245,12 +245,12 @@ export default function NotificationSoundSettings() {
         })}
       </div>
       {busy && (
-        <p role="status" className="text-muted text-xs">
+        <p role="status" className="text-muted text-label">
           {t('notificationSounds.saving')}
         </p>
       )}
       {error && (
-        <p role="alert" className="mt-2 text-sm text-red-300">
+        <p role="alert" className="text-body-lg text-danger-300 mt-2">
           {error}
         </p>
       )}

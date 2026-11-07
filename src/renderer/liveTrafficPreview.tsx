@@ -26,7 +26,7 @@ function TrafficPreview() {
     <main className="bg-app-bg text-ink-200 flex h-dvh min-h-0 flex-col p-3 md:p-5">
       <header className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div className="flex items-baseline gap-3">
-          <span className="text-base font-semibold">Mesh Client</span>
+          <span className="text-title font-semibold">Mesh Client</span>
           <span className="text-muted text-label">{t('liveTraffic.title')}</span>
         </div>
         <div className="flex gap-1">

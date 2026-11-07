@@ -4,7 +4,7 @@ import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
 import L from 'leaflet';
-import { Download } from 'lucide-react-motion';
+import { Download, MapPin } from 'lucide-react-motion';
 import {
   Fragment,
   lazy,
@@ -1053,7 +1053,7 @@ function OverviewMapPanel({
       controlsBefore={
         <div className={MAP_CHIP_CLASS}>
           <span className="flex items-center gap-1">
-            <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+            <span className="bg-success-500 inline-block h-2 w-2 rounded-full" />
             {statusCounts.online}
           </span>
           <span className="flex items-center gap-1">
@@ -1093,8 +1093,13 @@ function OverviewMapPanel({
       beforeTiles={<DiagnosticPanes />}
       overlay={
         nodesToRender.length === 0 ? (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <div className="bg-deep-black/80 text-muted rounded-lg px-4 py-2 text-sm">
+          // Top-center, not dead-center: the home marker and the user's area sit in the middle.
+          <div className="pointer-events-none absolute inset-x-0 top-3 flex justify-center px-24">
+            <div
+              role="status"
+              className="bg-deep-black/90 border-ink-700 text-ink-300 rounded-card shadow-level-2 text-body flex items-center gap-2 border px-3 py-1.5"
+            >
+              <MapPin aria-hidden className="text-ink-400 h-3.5 w-3.5 shrink-0" />
               {t('mapPanel.noGpsNodes')}
             </div>
           </div>
@@ -1154,11 +1159,11 @@ function OverviewMapPanel({
           <Marker key={wp.id} position={[wp.latitude, wp.longitude]} icon={WAYPOINT_MARKER_ICON}>
             <Popup>
               <div className="space-y-1 p-2">
-                <div className="text-ink-100 text-sm font-medium">
+                <div className="text-ink-100 text-body-lg font-medium">
                   {wp.name || t('mapPanel.waypointDefaultName')}
                 </div>
-                {wp.description && <div className="text-ink-400 text-xs">{wp.description}</div>}
-                <div className="text-muted font-mono text-xs">
+                {wp.description && <div className="text-ink-400 text-label">{wp.description}</div>}
+                <div className="text-muted text-label font-mono">
                   {formatCoordPair(wp.latitude, wp.longitude, coordinateFormat)}
                 </div>
                 {onDeleteWaypoint && (

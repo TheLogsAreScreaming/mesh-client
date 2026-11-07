@@ -392,7 +392,8 @@
       "deepSea": "深海",
       "dusk": "黄昏",
       "evergreen": "常青",
-      "highContrast": "高对比度"
+      "highContrast": "高对比度",
+      "daylight": "日光"
     },
     "themeAccents": {
       "heading": "强调色",

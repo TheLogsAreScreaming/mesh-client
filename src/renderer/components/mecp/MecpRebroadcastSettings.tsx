@@ -56,13 +56,13 @@ export function MecpRebroadcastSettings() {
 
   return (
     <div className="space-y-2" aria-label={t('mecp.rebroadcast.title')}>
-      <h4 className="text-ink-200 text-sm font-semibold">{t('mecp.rebroadcast.title')}</h4>
-      <p className="text-ink-400 text-xs">{t('mecp.rebroadcast.hint')}</p>
+      <h4 className="text-ink-200 text-body-lg font-semibold">{t('mecp.rebroadcast.title')}</h4>
+      <p className="text-ink-400 text-label">{t('mecp.rebroadcast.hint')}</p>
       <ul className="flex flex-col gap-3">
         {rules.map((rule) => (
           <li
             key={rule.id}
-            className="border-ink-700/50 bg-ink-900/40 text-ink-300 rounded border p-2 text-xs"
+            className="border-ink-700/50 bg-ink-900/40 text-ink-300 text-label rounded border p-2"
           >
             <div className="mb-2 flex flex-wrap items-center gap-3">
               <label className="flex items-center gap-1">
@@ -89,7 +89,7 @@ export function MecpRebroadcastSettings() {
               </label>
               <button
                 type="button"
-                className="ml-auto text-red-400 hover:text-red-300"
+                className="text-danger-400 hover:text-danger-300 ml-auto"
                 onClick={() => {
                   removeRule(rule.id);
                 }}
@@ -135,7 +135,7 @@ export function MecpRebroadcastSettings() {
       </ul>
       <button
         type="button"
-        className="border-ink-600 text-ink-200 mt-2 rounded border px-2 py-1 text-xs"
+        className="border-ink-600 text-ink-200 text-label mt-2 rounded border px-2 py-1"
         onClick={addRule}
         aria-label={t('mecp.rebroadcast.add')}
       >

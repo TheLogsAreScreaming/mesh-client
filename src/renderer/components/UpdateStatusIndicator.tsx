@@ -57,13 +57,13 @@ export default function UpdateStatusIndicator({
       {phase === 'available' && (
         <span className="inline-flex min-w-0 items-center gap-1.5">
           <span className="relative flex h-3.5 w-3.5 shrink-0">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-50" />
-            <IconUpdateAvailable className="h-3.5 w-3.5 shrink-0 text-orange-400" />
+            <span className="bg-warning-400 absolute inline-flex h-full w-full animate-ping rounded-full opacity-50" />
+            <IconUpdateAvailable className="text-warning-400 h-3.5 w-3.5 shrink-0" />
           </span>
           {version != null ? (
-            <span className="text-orange-300 tabular-nums">v{version}</span>
+            <span className="text-warning-300 tabular-nums">v{version}</span>
           ) : (
-            <span className="text-orange-300">{t('updateStatus.update')}</span>
+            <span className="text-warning-300">{t('updateStatus.update')}</span>
           )}
           <button
             type="button"
@@ -71,7 +71,7 @@ export default function UpdateStatusIndicator({
             title={
               useReleasePage ? t('updateStatus.viewReleaseTitle') : t('updateStatus.downloadTitle')
             }
-            className="text-2xs rounded border border-orange-600 bg-orange-900/60 px-1.5 py-0.5 font-medium text-orange-200 transition-colors hover:border-orange-500 hover:text-orange-100"
+            className="text-2xs border-warning-600 bg-warning-900/60 text-warning-200 hover:border-warning-500 hover:text-warning-100 rounded border px-1.5 py-0.5 font-medium transition-colors"
           >
             {useReleasePage ? t('updateStatus.viewRelease') : t('updateStatus.download')}
           </button>
@@ -95,7 +95,7 @@ export default function UpdateStatusIndicator({
         <button
           type="button"
           onClick={onInstall}
-          className="text-bright-green inline-flex min-w-0 cursor-pointer items-center gap-1 rounded border border-green-500/70 bg-green-950/70 px-2 py-1 shadow-[0_0_10px_rgba(34,197,94,0.2)] transition-colors hover:bg-green-900/70"
+          className="text-bright-green border-success-500/70 bg-success-950/70 hover:bg-success-900/70 inline-flex min-w-0 cursor-pointer items-center gap-1 rounded border px-2 py-1 shadow-[0_0_10px_rgba(34,197,94,0.2)] transition-colors"
           title={t('updateStatus.restartTitle')}
         >
           <IconRestart className="text-bright-green h-3.5 w-3.5 shrink-0" />
@@ -110,8 +110,8 @@ export default function UpdateStatusIndicator({
           className="font-inherit text-ink-300 hover:text-ink-100 inline-flex min-w-0 cursor-pointer items-center gap-1 border-0 bg-transparent p-0 transition-colors"
           title={errorMessage?.trim() ? errorMessage : t('updateStatus.retryCheck')}
         >
-          <IconWarning className="h-3.5 w-3.5 shrink-0 text-orange-500" />
-          <span className="text-orange-500/90">{t('updateStatus.updateError')}</span>
+          <IconWarning className="text-warning-500 h-3.5 w-3.5 shrink-0" />
+          <span className="text-warning-500/90">{t('updateStatus.updateError')}</span>
         </button>
       )}
 

@@ -1004,7 +1004,7 @@ describe('RoomsPanel', () => {
     renderRoomsPanel(nodes);
 
     const marker = screen.getByLabelText('roomsPanel.autoLoginFailedAria');
-    expect(marker.className).toContain('ring-red-500');
+    expect(marker.className).toContain('ring-danger-500');
   });
 
   it('translates serialized auto-login failure in the sidebar marker', () => {

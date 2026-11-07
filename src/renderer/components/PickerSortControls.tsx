@@ -42,7 +42,7 @@ export function PickerSortControls({
     <div
       role="toolbar"
       aria-label={t('connectionPanel.sortToolbar')}
-      className="flex items-center gap-1 text-xs"
+      className="text-label flex items-center gap-1"
     >
       {keys.map((key) => {
         const active = sortKey === key;

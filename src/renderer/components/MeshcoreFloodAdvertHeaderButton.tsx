@@ -17,7 +17,7 @@ interface Props {
 }
 
 const HEADER_BUTTON_CLASS =
-  'text-muted hover:border-brand-green hover:text-bright-green border-ink-700 inline-flex shrink-0 items-center gap-1.5 rounded border px-2 py-1 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-40';
+  'text-muted hover:border-brand-green hover:text-bright-green border-ink-700 inline-flex shrink-0 items-center gap-1.5 rounded border px-2 py-1 text-label transition-colors disabled:cursor-not-allowed disabled:opacity-40';
 
 export function MeshcoreFloodAdvertHeaderButton({ disabled, onSend, onSendZeroHop }: Props) {
   const { t } = useTranslation();

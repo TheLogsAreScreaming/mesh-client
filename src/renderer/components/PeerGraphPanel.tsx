@@ -223,7 +223,7 @@ export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGra
 
   return (
     <div className="flex h-full flex-col">
-      <div className="text-ink-400 flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 text-xs">
+      <div className="text-ink-400 text-label flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2">
         <span className="text-ink-300 font-medium">{t('peerGraph.title')}</span>
         <TopologyHopFilterControls
           includeDistantPeers={includeDistantPeers}
@@ -276,7 +276,7 @@ export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGra
         </span>
       </div>
       {!hasGraph ? (
-        <div className="text-muted flex flex-1 items-center justify-center text-xs">
+        <div className="text-muted text-label flex flex-1 items-center justify-center">
           {t('peerGraph.noConnectedNodes')}
         </div>
       ) : (
@@ -459,17 +459,17 @@ export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGra
           </svg>
         </div>
       )}
-      <div className="text-muted flex flex-wrap gap-x-4 gap-y-1 px-4 py-2 text-xs">
+      <div className="text-muted text-label flex flex-wrap gap-x-4 gap-y-1 px-4 py-2">
         <span className="flex items-center gap-1">
           <span className="inline-block h-2 w-2 rounded-full bg-violet-500" />
           {t('peerGraph.me')}
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-2 w-2 rounded-sm bg-green-500" />
+          <span className="rounded-control bg-success-500 inline-block h-2 w-2" />
           {t('peerGraph.relayHub')}
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+          <span className="bg-success-500 inline-block h-2 w-2 rounded-full" />
           {t('peerGraph.good')}
         </span>
         <span className="flex items-center gap-1">
@@ -477,7 +477,7 @@ export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGra
           {t('peerGraph.warn')}
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
+          <span className="bg-danger-500 inline-block h-2 w-2 rounded-full" />
           {t('peerGraph.poor')}
         </span>
         <span className="flex items-center gap-1.5">

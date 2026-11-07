@@ -38,25 +38,25 @@ export function EmergencyIncidentRow({
     <li className="border-ink-700 bg-ink-800 flex flex-col gap-1 rounded border p-2">
       <div className="flex flex-wrap items-center gap-2">
         <MecpSeverityBadge severity={incident.severity} />
-        <span className="text-ink-100 text-sm font-semibold">{incident.senderName}</span>
-        <span className="text-ink-300 font-mono text-xs">{incident.codes.join(' ')}</span>
+        <span className="text-ink-100 text-body-lg font-semibold">{incident.senderName}</span>
+        <span className="text-ink-300 text-label font-mono">{incident.codes.join(' ')}</span>
         {incident.isDrill ? (
-          <span className="text-ink-300 text-xs">{t('incidentPanel.drill')}</span>
+          <span className="text-ink-300 text-label">{t('incidentPanel.drill')}</span>
         ) : null}
         {incident.beaconActive ? (
-          <span className="text-xs text-orange-300">{t('incidentPanel.beaconActive')}</span>
+          <span className="text-label text-warning-300">{t('incidentPanel.beaconActive')}</span>
         ) : null}
         {pendingAckRows.length > 0 ? (
-          <span className="text-xs text-sky-300">{t('incidentPanel.ackQueuedBadge')}</span>
+          <span className="text-label text-sky-300">{t('incidentPanel.ackQueuedBadge')}</span>
         ) : null}
       </div>
-      {incident.freetext ? <p className="text-ink-200 text-xs">{incident.freetext}</p> : null}
+      {incident.freetext ? <p className="text-ink-200 text-label">{incident.freetext}</p> : null}
       {pendingAckRows.length > 0 ? (
         <ul className="flex flex-col gap-1" aria-label={t('incidentPanel.pendingAckListAria')}>
           {pendingAckRows.map((row) => (
             <li
               key={row.id}
-              className="border-ink-600 bg-ink-900/60 text-ink-300 flex flex-wrap items-center gap-2 rounded border px-2 py-1 text-xs"
+              className="border-ink-600 bg-ink-900/60 text-ink-300 text-label flex flex-wrap items-center gap-2 rounded border px-2 py-1"
             >
               <span className="truncate font-mono">{row.payload}</span>
               <span className="text-ink-400">{row.status}</span>
@@ -78,7 +78,7 @@ export function EmergencyIncidentRow({
           ))}
         </ul>
       ) : null}
-      <div className="text-ink-300 flex flex-wrap items-center gap-2 text-xs">
+      <div className="text-ink-300 text-label flex flex-wrap items-center gap-2">
         <span>{t('incidentPanel.ackCount', { count: incident.ackCount })}</span>
         <span>
           {t('incidentPanel.protocolsSeen', { protocols: incident.protocolsSeen.join(', ') })}

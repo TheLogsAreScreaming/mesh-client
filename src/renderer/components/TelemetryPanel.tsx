@@ -22,7 +22,7 @@ import { useTimeFormatStore } from '../stores/timeFormatStore';
 import RefreshButton from './RefreshButton';
 import SignalMeter from './SignalMeter';
 
-const SIGNAL_SNR_COLOR = 'var(--color-orange-400)';
+const SIGNAL_SNR_COLOR = 'var(--color-warning-400)';
 const SIGNAL_RSSI_COLOR = 'var(--color-blue-400)';
 
 function toF(c: number) {
@@ -270,7 +270,7 @@ export default function TelemetryPanel({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <h2 className="text-ink-200 text-xl font-semibold">{t('telemetryPanel.title')}</h2>
+          <h2 className="text-ink-200 text-display font-semibold">{t('telemetryPanel.title')}</h2>
           {showLiveSignalMeter && <SignalMeter rssi={latestSignal?.rssi} snr={latestSignal?.snr} />}
         </div>
         <div className="flex items-center gap-2">
@@ -280,7 +280,7 @@ export default function TelemetryPanel({
               onClick={onToggleFahrenheit}
               data-setting-anchor="telemetry.display.temperatureUnit"
               title={t('telemetryPanel.toggleTempUnit')}
-              className="bg-ink-700 text-ink-300 hover:bg-ink-600 rounded px-2 py-1 text-xs"
+              className="bg-ink-700 text-ink-300 hover:bg-ink-600 text-label rounded px-2 py-1"
             >
               {useFahrenheit ? t('telemetryPanel.tempUnitF') : t('telemetryPanel.tempUnitC')}
             </button>
@@ -293,7 +293,7 @@ export default function TelemetryPanel({
               onClick={handleExportCsv}
               data-setting-anchor="telemetry.data.exportCsv"
               {...{ [PARENT_HOVER_ATTR]: '' }}
-              className="bg-ink-700 text-ink-300 hover:bg-ink-600 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
+              className="bg-ink-700 text-ink-300 hover:bg-ink-600 rounded-card text-body-lg flex items-center gap-1.5 px-3 py-1.5 font-medium transition-colors"
               title={t('telemetryPanel.exportCsv')}
             >
               <Download aria-hidden className="h-4 w-4" trigger={parentIconTrigger} size={16} />
@@ -317,8 +317,8 @@ export default function TelemetryPanel({
         <>
           {/* Battery / Voltage Chart */}
           {hasBatteryData && (
-            <div className="bg-deep-black rounded-lg p-4">
-              <h3 className="text-muted mb-3 text-sm font-medium">
+            <div className="bg-deep-black rounded-card p-4">
+              <h3 className="text-muted text-body-lg mb-3 font-medium">
                 {t('telemetryPanel.sectionBatteryVoltage')}
               </h3>
               <div role="img" aria-label={batteryChartAria}>
@@ -387,8 +387,8 @@ export default function TelemetryPanel({
 
           {/* Signal Quality Chart */}
           {hasSignalData && (
-            <div className="bg-deep-black rounded-lg p-4">
-              <h3 className="text-muted mb-3 text-sm font-medium">
+            <div className="bg-deep-black rounded-card p-4">
+              <h3 className="text-muted text-body-lg mb-3 font-medium">
                 {t('telemetryPanel.sectionSignalQuality')}
               </h3>
               <div role="img" aria-label={signalChartAria}>
@@ -455,8 +455,8 @@ export default function TelemetryPanel({
 
           {/* Temperature & Humidity Chart */}
           {showEnvironment && (hasTemp || hasMcuTemp || hasHumidity) && (
-            <div className="bg-deep-black rounded-lg p-4">
-              <h3 className="text-muted mb-3 text-sm font-medium">
+            <div className="bg-deep-black rounded-card p-4">
+              <h3 className="text-muted text-body-lg mb-3 font-medium">
                 {t('telemetryPanel.sectionTemperatureHumidity')}
               </h3>
               <div role="img" aria-label={tempHumidityChartAria}>
@@ -552,8 +552,8 @@ export default function TelemetryPanel({
 
           {/* Barometric Pressure Chart */}
           {showEnvironment && hasPressure && (
-            <div className="bg-deep-black rounded-lg p-4">
-              <h3 className="text-muted mb-3 text-sm font-medium">
+            <div className="bg-deep-black rounded-card p-4">
+              <h3 className="text-muted text-body-lg mb-3 font-medium">
                 {t('telemetryPanel.sectionBarometricPressure')}
               </h3>
               <div role="img" aria-label={pressureChartAria}>
@@ -598,8 +598,8 @@ export default function TelemetryPanel({
 
           {/* Air Quality (IAQ) Chart */}
           {showEnvironment && hasIaq && (
-            <div className="bg-deep-black rounded-lg p-4">
-              <h3 className="text-muted mb-3 text-sm font-medium">
+            <div className="bg-deep-black rounded-card p-4">
+              <h3 className="text-muted text-body-lg mb-3 font-medium">
                 {t('telemetryPanel.sectionAirQuality')}
               </h3>
               <div role="img" aria-label={iaqChartAria}>
@@ -645,8 +645,8 @@ export default function TelemetryPanel({
 
           {/* Particulates / CO2 / lightning (SEN5X, SEN6X, SCD4X, AS3935) */}
           {showEnvironment && hasParticulates && (
-            <div className="bg-deep-black rounded-lg p-4">
-              <h3 className="text-muted mb-3 text-sm font-medium">
+            <div className="bg-deep-black rounded-card p-4">
+              <h3 className="text-muted text-body-lg mb-3 font-medium">
                 {t('telemetryPanel.sectionParticulates')}
               </h3>
               <div role="img" aria-label={particulateChartAria}>
@@ -726,52 +726,52 @@ export default function TelemetryPanel({
 
           {/* MeshCore Packet Stats Chart */}
           {showPacketStats && (
-            <div className="bg-deep-black rounded-lg p-4">
-              <h3 className="text-muted mb-3 text-sm font-medium">
+            <div className="bg-deep-black rounded-card p-4">
+              <h3 className="text-muted text-body-lg mb-3 font-medium">
                 {t('telemetryPanel.sectionPacketsMeshCore')}
               </h3>
               <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                 <div className="text-center">
-                  <div className="text-2xl font-semibold text-cyan-400">
+                  <div className="text-display-lg font-semibold text-cyan-400">
                     {meshcorePacketStats.sent}
                   </div>
-                  <div className="text-muted text-xs">{t('telemetryPanel.statSent')}</div>
+                  <div className="text-muted text-label">{t('telemetryPanel.statSent')}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-semibold text-purple-400">
+                  <div className="text-display-lg font-semibold text-purple-400">
                     {meshcorePacketStats.recv}
                   </div>
-                  <div className="text-muted text-xs">{t('telemetryPanel.statReceived')}</div>
+                  <div className="text-muted text-label">{t('telemetryPanel.statReceived')}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-semibold text-cyan-600">
+                  <div className="text-heading font-semibold text-cyan-600">
                     {meshcorePacketStats.nSentFlood}
                   </div>
-                  <div className="text-muted text-xs">{t('telemetryPanel.statFlood')}</div>
+                  <div className="text-muted text-label">{t('telemetryPanel.statFlood')}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-semibold text-cyan-600">
+                  <div className="text-heading font-semibold text-cyan-600">
                     {meshcorePacketStats.nSentDirect}
                   </div>
-                  <div className="text-muted text-xs">{t('telemetryPanel.statDirect')}</div>
+                  <div className="text-muted text-label">{t('telemetryPanel.statDirect')}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-semibold text-purple-600">
+                  <div className="text-heading font-semibold text-purple-600">
                     {meshcorePacketStats.nRecvFlood}
                   </div>
-                  <div className="text-muted text-xs">{t('telemetryPanel.statFlood')}</div>
+                  <div className="text-muted text-label">{t('telemetryPanel.statFlood')}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-semibold text-purple-600">
+                  <div className="text-heading font-semibold text-purple-600">
                     {meshcorePacketStats.nRecvDirect}
                   </div>
-                  <div className="text-muted text-xs">{t('telemetryPanel.statDirect')}</div>
+                  <div className="text-muted text-label">{t('telemetryPanel.statDirect')}</div>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="text-ink-600 text-center text-xs">
+          <div className="text-ink-600 text-label text-center">
             {t('telemetryPanel.footerBattery', { count: telemetry.length })} &nbsp;·&nbsp;{' '}
             {t('telemetryPanel.footerSignal', { count: signalTelemetry.length })}
             {environmentTelemetry.length > 0 && (

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { DEFAULT_THEME_COLORS } from './themeColors';
 import {
+  accentThemeColors,
   applyThemeSurface,
   DEFAULT_THEME_ACCENT_ID,
   DEFAULT_THEME_SURFACE_ID,
@@ -36,8 +37,15 @@ describe('theme surfaces and accents', () => {
     (_id, surface) => {
       const values = INK_STEPS.map((step) => surface.scale[step]);
       for (const hex of values) expect(hex).toMatch(/^#[0-9a-f]{6}$/);
-      for (let i = 1; i < values.length; i += 1) {
-        expect(relativeLuminance(values[i])).toBeLessThanOrEqual(relativeLuminance(values[i - 1]));
+      // Dark families run light to dark (50 is body text); light families run dark to light, except
+      // that the light window (950) sits one shade under the white panels (900).
+      const light = surface.tone === 'light';
+      const dir = light ? -1 : 1;
+      const end = light ? values.length - 1 : values.length;
+      for (let i = 1; i < end; i += 1) {
+        expect(dir * relativeLuminance(values[i])).toBeLessThanOrEqual(
+          dir * relativeLuminance(values[i - 1]),
+        );
       }
     },
   );
@@ -120,5 +128,31 @@ describe('surface storage', () => {
     const root = document.documentElement;
     expect(root.style.getPropertyValue('--color-ink-800')).toBe('#27272a');
     expect(root.style.getPropertyValue('--color-ink-50')).toBe('#fafafa');
+  });
+
+  it('marks the document tone so styles.css can flip status and categorical scales', () => {
+    const root = document.documentElement;
+    applyThemeSurface('daylight');
+    expect(root.dataset.tone).toBe('light');
+    expect(root.style.colorScheme).toBe('light');
+    applyThemeSurface('charcoal');
+    expect(root.dataset.tone).toBe('dark');
+    expect(root.style.colorScheme).toBe('dark');
+  });
+});
+
+describe('accents per tone', () => {
+  it('uses the bright base on dark surfaces and the light step on Daylight', () => {
+    const signature = THEME_ACCENTS.find((a) => a.id === 'signature')!;
+    expect(accentThemeColors(signature, 'dark').brandGreen).toBe('#ffa31a');
+    expect(accentThemeColors(signature, 'light').brandGreen).toBe(signature.light);
+    // White-text fills do not change with the tone.
+    expect(accentThemeColors(signature, 'light').readableGreen).toBe(signature.fill);
+  });
+
+  it('recognises a preset accent in either tone', () => {
+    const meshcore = THEME_ACCENTS.find((a) => a.id === 'meshcore')!;
+    const daylight = themeSurface('daylight');
+    expect(matchThemeAccent(themeColorsFor(daylight, meshcore))).toBe('meshcore');
   });
 });

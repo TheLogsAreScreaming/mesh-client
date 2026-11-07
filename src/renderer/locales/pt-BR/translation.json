@@ -392,7 +392,8 @@
       "deepSea": "Mar profundo",
       "dusk": "Crepúsculo",
       "evergreen": "Sempre-verde",
-      "highContrast": "Alto contraste"
+      "highContrast": "Alto contraste",
+      "daylight": "Daylight"
     },
     "themeAccents": {
       "heading": "Destaque",

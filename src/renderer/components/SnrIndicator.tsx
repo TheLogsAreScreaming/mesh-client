@@ -2,9 +2,9 @@ const BAR_HEIGHTS = [3, 6, 9];
 const UNFILLED_COLOR = '#424242';
 
 function snrLevel(snr: number): { level: number; color: string; textClass: string } {
-  if (snr >= 5) return { level: 3, color: '#4ade80', textClass: 'text-green-400' };
+  if (snr >= 5) return { level: 3, color: '#4ade80', textClass: 'text-success-400' };
   if (snr >= 0) return { level: 2, color: '#facc15', textClass: 'text-yellow-400' };
-  return { level: 1, color: '#f87171', textClass: 'text-red-400' };
+  return { level: 1, color: '#f87171', textClass: 'text-danger-400' };
 }
 
 interface Props {

@@ -184,7 +184,7 @@ function NodeBlockButton({
   return (
     <button
       type="button"
-      className={`hover:bg-secondary-dark shrink-0 rounded-lg px-2 py-1 text-xs font-medium transition-colors ${isBlocked ? 'text-red-400' : 'text-muted hover:text-red-400'}`}
+      className={`hover:bg-secondary-dark rounded-card text-label shrink-0 px-2 py-1 font-medium transition-colors ${isBlocked ? 'text-danger-400' : 'text-muted hover:text-danger-400'}`}
       aria-label={
         isBlocked ? t('nodeDetailModal.unblockContact') : t('nodeDetailModal.blockContact')
       }
@@ -208,7 +208,7 @@ function WatchToggleButton({ nodeId }: { nodeId: number }) {
       type="button"
       aria-label={isWatched ? t('nodeDetailModal.unwatchNode') : t('nodeDetailModal.watchNode')}
       aria-pressed={isWatched}
-      className={`hover:bg-secondary-dark shrink-0 rounded-lg px-2 py-1 text-xs font-medium transition-colors ${isWatched ? 'text-indigo-400' : 'text-muted hover:text-indigo-400'}`}
+      className={`hover:bg-secondary-dark rounded-card text-label shrink-0 px-2 py-1 font-medium transition-colors ${isWatched ? 'text-info-400' : 'text-muted hover:text-info-400'}`}
       onClick={() => {
         toggleWatch(nodeId);
       }}
@@ -705,7 +705,7 @@ export default function NodeDetailModal({
               type="button"
               onClick={handleTraceRoute}
               disabled
-              className="bg-secondary-dark text-ink-200 min-w-[8rem] flex-1 cursor-not-allowed rounded-lg px-3 py-2 text-sm font-medium opacity-40"
+              className={buttonClassName('secondary', 'md', 'min-w-[8rem] flex-1')}
             >
               {traceRoutePending
                 ? t('nodeDetailModal.tracingEllipsis')
@@ -1032,18 +1032,18 @@ export default function NodeDetailModal({
       <div className="border-ink-800 flex shrink-0 items-start justify-between border-b px-5 py-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h3 id="node-modal-title" className="text-ink-100 truncate text-lg font-semibold">
+            <h3 id="node-modal-title" className="text-ink-100 text-heading truncate font-semibold">
               {displayName}
             </h3>
             {nodeIsBot && <BotBadge />}
             {mqttIgnoredNodes.has(node.node_id) && (
-              <span className="text-2xs shrink-0 rounded border border-orange-500/30 bg-orange-500/20 px-1.5 py-0.5 font-medium text-orange-300">
+              <span className="text-2xs border-warning-500/30 bg-warning-500/20 text-warning-300 shrink-0 rounded border px-1.5 py-0.5 font-medium">
                 {t('nodeDetailModal.mqttIgnoredBadge')}
               </span>
             )}
             {awaitingNodeInfo && (
               <span
-                className="text-2xs shrink-0 rounded border border-indigo-500/30 bg-indigo-500/20 px-1.5 py-0.5 font-medium text-indigo-300"
+                className="text-2xs border-info-500/30 bg-info-500/20 text-info-300 shrink-0 rounded border px-1.5 py-0.5 font-medium"
                 title={t('nodeDetailModal.nodeIncomplete')}
               >
                 {t('nodeDetailModal.loadingBadge')}
@@ -1052,11 +1052,11 @@ export default function NodeDetailModal({
           </div>
           <div className="mt-0.5 flex items-center gap-2">
             {protocol !== 'meshcore' && (
-              <span className="text-muted font-mono text-xs">{hexId}</span>
+              <span className="text-muted text-label font-mono">{hexId}</span>
             )}
             {headerHopsDisplay != null && (
               <span
-                className={`text-xs ${headerHopsDisplay === 0 ? 'text-bright-green' : 'text-ink-400'}`}
+                className={`text-label ${headerHopsDisplay === 0 ? 'text-bright-green' : 'text-ink-400'}`}
                 title={
                   protocol === 'meshcore' && meshcoreTraceResult != null
                     ? t('nodeDetailModal.hopsFromTraceTitle')
@@ -1067,12 +1067,12 @@ export default function NodeDetailModal({
               </span>
             )}
             {headerHardwareSubtitle != null && (
-              <span className="text-muted text-xs">{headerHardwareSubtitle}</span>
+              <span className="text-muted text-label">{headerHardwareSubtitle}</span>
             )}
             {/* MeshCore contact status badges */}
             {protocol === 'meshcore' && contactPubkey && (
               <span
-                className="text-2xs shrink-0 rounded border border-green-500/30 bg-green-500/20 px-1.5 py-0.5 font-medium text-green-300"
+                className="text-2xs border-success-500/30 bg-success-500/20 text-success-300 shrink-0 rounded border px-1.5 py-0.5 font-medium"
                 title={
                   isMeshcoreDmExcludedHwModel(node.hw_model)
                     ? t('nodeDetailModal.hasPublicKeyNoDm')
@@ -1091,7 +1091,7 @@ export default function NodeDetailModal({
               node.node_id >= MESHCORE_CHAT_STUB_ID_MIN &&
               node.node_id <= MESHCORE_CHAT_STUB_ID_MAX && (
                 <span
-                  className="text-2xs shrink-0 rounded border border-indigo-500/30 bg-indigo-500/20 px-1.5 py-0.5 font-medium text-indigo-300"
+                  className="text-2xs border-info-500/30 bg-info-500/20 text-info-300 shrink-0 rounded border px-1.5 py-0.5 font-medium"
                   title={t('nodeDetailModal.chatOnlyNode')}
                 >
                   {t('nodeDetailModal.chatBadge')}
@@ -1099,7 +1099,7 @@ export default function NodeDetailModal({
               )}
             {protocol === 'meshcore' && contactOnRadio === false && contactPubkey && (
               <span
-                className="text-2xs shrink-0 rounded border border-orange-500/30 bg-orange-500/20 px-1.5 py-0.5 font-medium text-orange-300"
+                className="text-2xs border-warning-500/30 bg-warning-500/20 text-warning-300 shrink-0 rounded border px-1.5 py-0.5 font-medium"
                 title={t('nodeDetailModal.dbOnlyContact')}
               >
                 {t('nodeDetailModal.onlyInDbBadge')}
@@ -1107,7 +1107,7 @@ export default function NodeDetailModal({
             )}
             {protocol === 'meshcore' && contactOnRadio === true && contactPubkey && (
               <span
-                className="text-2xs shrink-0 rounded border border-green-500/30 bg-green-500/20 px-1.5 py-0.5 font-medium text-green-300"
+                className="text-2xs border-success-500/30 bg-success-500/20 text-success-300 shrink-0 rounded border px-1.5 py-0.5 font-medium"
                 title={t('nodeDetailModal.syncedContact')}
               >
                 {t('nodeDetailModal.syncedBadge')}
@@ -1115,7 +1115,7 @@ export default function NodeDetailModal({
             )}
             {protocol === 'meshcore' && contactOnRadio === true && !contactPubkey && (
               <span
-                className="text-2xs shrink-0 rounded border border-indigo-500/30 bg-indigo-500/20 px-1.5 py-0.5 font-medium text-indigo-300"
+                className="text-2xs border-info-500/30 bg-info-500/20 text-info-300 shrink-0 rounded border px-1.5 py-0.5 font-medium"
                 title={t('nodeDetailModal.radioOnlyContact')}
               >
                 {t('nodeDetailModal.onRadioBadge')}
@@ -1125,7 +1125,7 @@ export default function NodeDetailModal({
               radioContactCount !== null &&
               radioContactCount >= radioContactThresholds.critical && (
                 <span
-                  className="text-2xs shrink-0 rounded border border-red-500/30 bg-red-500/20 px-1.5 py-0.5 font-medium text-red-300"
+                  className="text-2xs border-danger-500/30 bg-danger-500/20 text-danger-300 shrink-0 rounded border px-1.5 py-0.5 font-medium"
                   title={t('nodeDetailModal.radioCapacityTitle', {
                     current: radioContactCount,
                     max: radioContactThresholds.max,
@@ -1140,7 +1140,7 @@ export default function NodeDetailModal({
           </div>
           {bearingRange && (
             <div
-              className="text-ink-200 mt-0.5 font-mono text-xs"
+              className="text-ink-200 text-label mt-0.5 font-mono"
               title={t('nodeDetailModal.bearingRangeTitle')}
               data-testid="node-bearing-range"
             >
@@ -1192,7 +1192,7 @@ export default function NodeDetailModal({
               onClick={() => {
                 onToggleFavorite(node.node_id, !node.favorited);
               }}
-              className="hover:bg-secondary-dark shrink-0 rounded-lg p-1.5 transition-colors"
+              className="hover:bg-secondary-dark rounded-card shrink-0 p-1.5 transition-colors"
               aria-label={
                 node.favorited
                   ? t('nodeDetailModal.removeFromFavorites')
@@ -1213,7 +1213,7 @@ export default function NodeDetailModal({
               aria-label={closeLabel}
               title={closeLabel}
               {...{ [PARENT_HOVER_ATTR]: '' }}
-              className="hover:bg-secondary-dark text-muted hover:text-ink-200 shrink-0 rounded-lg p-1.5 transition-colors"
+              className="hover:bg-secondary-dark text-muted hover:text-ink-200 rounded-card shrink-0 p-1.5 transition-colors"
             >
               <X aria-hidden className="h-5 w-5" trigger={parentIconTrigger} size={20} />
             </button>
@@ -1292,23 +1292,23 @@ export default function NodeDetailModal({
           {/* MeshCore: best-ranked saved path (not necessarily the current radio route) */}
           {protocol === 'meshcore' && !isOurNode && currentRoute && !traceMatchesCurrentRoute && (
             <div className="mt-3 space-y-1">
-              <h4 className="text-ink-300 text-xs font-semibold">
+              <h4 className="text-ink-300 text-label font-semibold">
                 {t('nodeDetailModal.savedPathHeading')}
               </h4>
               <div className="bg-secondary-dark rounded p-2">
                 <MeshcoreRouteChain segments={currentRouteSegments} destLabel={node.long_name} />
               </div>
-              <p className="text-muted text-xs">{t('nodeDetailModal.savedPathHint')}</p>
+              <p className="text-muted text-label">{t('nodeDetailModal.savedPathHint')}</p>
             </div>
           )}
 
           {/* MeshCore: trace path result */}
           {protocol === 'meshcore' && !isOurNode && meshcoreTraceResult && (
             <div className="mt-3 space-y-1">
-              <h4 className="text-ink-300 text-xs font-semibold">
+              <h4 className="text-ink-300 text-label font-semibold">
                 {t('nodeDetailModal.pathTraceHeading')}
               </h4>
-              <div className="text-ink-400 text-xs">
+              <div className="text-ink-400 text-label">
                 {t('nodeDetailModal.hopsLabel')}{' '}
                 <span className="text-ink-200 font-mono">
                   {meshcoreTracePathLenToHops(meshcoreTraceResult.pathLen)}
@@ -1316,7 +1316,7 @@ export default function NodeDetailModal({
               </div>
               <div className="bg-secondary-dark space-y-1 rounded p-2">
                 {traceHopRows.map((hop, i) => (
-                  <div key={i} className="flex items-center gap-2 text-xs">
+                  <div key={i} className="text-label flex items-center gap-2">
                     <span
                       className="text-muted max-w-[10rem] min-w-10 truncate"
                       title={meshcoreHopSegmentTooltip(t, hop)}
@@ -1328,7 +1328,7 @@ export default function NodeDetailModal({
                     <SnrIndicator snr={hop.snr} />
                   </div>
                 ))}
-                <div className="border-ink-700 flex items-center gap-2 border-t pt-1 text-xs">
+                <div className="border-ink-700 text-label flex items-center gap-2 border-t pt-1">
                   <span
                     className="text-muted max-w-[10rem] min-w-10 truncate"
                     title={node.long_name}
@@ -1350,11 +1350,11 @@ export default function NodeDetailModal({
           {protocol === 'meshcore' && !isOurNode && meshcoreNodeTelemetry && showTelemetry && (
             <div className="mt-3 space-y-1">
               <div className="flex items-center justify-between">
-                <h4 className="text-ink-300 text-xs font-semibold">
+                <h4 className="text-ink-300 text-label font-semibold">
                   {t('nodeDetailModal.sensorTelemetryHeading')}
                 </h4>
                 <div className="flex items-center gap-2">
-                  <span className="text-muted text-xs">
+                  <span className="text-muted text-label">
                     {formatDisplayTime(meshcoreNodeTelemetry.fetchedAt, {
                       use24Hour: use24HourTime,
                     })}
@@ -1364,13 +1364,13 @@ export default function NodeDetailModal({
                     onClick={() => {
                       setShowTelemetry(false);
                     }}
-                    className="text-muted hover:text-ink-300 text-xs"
+                    className="text-muted hover:text-ink-300 text-label"
                   >
                     {t('common.hide')}
                   </button>
                 </div>
               </div>
-              <div className="bg-secondary-dark grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2 text-xs">
+              <div className="bg-secondary-dark text-label grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2">
                 {meshcoreNodeTelemetry.temperature !== undefined && (
                   <>
                     <div className="text-muted">{t('nodeDetailModal.temperatureLabel')}</div>
@@ -1421,7 +1421,7 @@ export default function NodeDetailModal({
                       {t('nodeDetailModal.noLppSensorData')}
                     </div>
                     {node.latitude != null && node.longitude != null ? (
-                      <div className="text-muted col-span-2 text-xs">
+                      <div className="text-muted text-label col-span-2">
                         {t('nodeDetailModal.mapPositionFromAdvertNotRequest')}
                       </div>
                     ) : null}
@@ -1435,7 +1435,7 @@ export default function NodeDetailModal({
           {protocol === 'meshcore' && !isOurNode && meshcoreNeighbors && showMeshcoreNeighbors && (
             <div className="mt-3 space-y-1">
               <div className="flex items-center justify-between">
-                <h4 className="text-ink-300 text-xs font-semibold">
+                <h4 className="text-ink-300 text-label font-semibold">
                   {t('nodeDetailModal.neighborsHeading', {
                     count: meshcoreNeighbors.totalNeighboursCount,
                   })}
@@ -1445,7 +1445,7 @@ export default function NodeDetailModal({
                   onClick={() => {
                     setShowMeshcoreNeighbors(false);
                   }}
-                  className="text-muted hover:text-ink-300 text-xs"
+                  className="text-muted hover:text-ink-300 text-label"
                 >
                   {t('common.hide')}
                 </button>
@@ -1460,7 +1460,7 @@ export default function NodeDetailModal({
                   return (
                     <div
                       key={i}
-                      className="bg-secondary-dark flex items-center justify-between rounded px-2 py-1 text-xs"
+                      className="bg-secondary-dark text-label flex items-center justify-between rounded px-2 py-1"
                     >
                       <div>
                         <span className="text-ink-300">{label}</span>
@@ -1473,7 +1473,7 @@ export default function NodeDetailModal({
                   );
                 })}
                 {meshcoreNeighbors.neighbours.length === 0 && (
-                  <div className="text-muted px-2 text-xs italic">
+                  <div className="text-muted text-label px-2 italic">
                     {t('nodeDetailModal.noNeighborsReported')}
                   </div>
                 )}
@@ -1540,7 +1540,7 @@ export default function NodeDetailModal({
                               total: meshcoreNeighbors.totalNeighboursCount,
                             })
                       }
-                      className="mt-1 rounded border border-purple-700 bg-purple-900/40 px-2 py-0.5 text-xs font-medium text-purple-300 transition-colors hover:bg-purple-800/60 disabled:cursor-not-allowed disabled:opacity-40"
+                      className="text-label mt-1 rounded border border-purple-700 bg-purple-900/40 px-2 py-0.5 font-medium text-purple-300 transition-colors hover:bg-purple-800/60 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       {neighborsPending
                         ? t('repeatersPanel.neighborsLoadingMore')
@@ -1561,7 +1561,7 @@ export default function NodeDetailModal({
               if (list.length === 0) return null;
               return (
                 <div className="mt-3 space-y-2">
-                  <h4 className="flex items-center gap-1.5 text-xs font-medium text-orange-400">
+                  <h4 className="text-label text-warning-400 flex items-center gap-1.5 font-medium">
                     <TriangleAlert aria-hidden className="h-3.5 w-3.5 shrink-0" />
                     {t('diagnosticsPanel.foreignLoraHeading')}
                   </h4>
@@ -1576,7 +1576,7 @@ export default function NodeDetailModal({
                     return (
                       <div
                         key={`${detection.packetClass}-${detection.lastSenderId ?? 'na'}-${detection.detectedAt}-${i}`}
-                        className="bg-secondary-dark grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2 text-xs"
+                        className="bg-secondary-dark text-label grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2"
                       >
                         <div className="text-muted">{t('diagnosticsPanel.foreignClassColumn')}</div>
                         <div className="text-ink-200">
@@ -1646,7 +1646,7 @@ export default function NodeDetailModal({
           {protocol === 'meshcore' && !isOurNode && meshcoreRepeaterStatus && showRepeaterStats && (
             <div className="mt-3 space-y-1">
               <div className="flex items-center justify-between">
-                <h4 className="text-ink-300 text-xs font-semibold">
+                <h4 className="text-ink-300 text-label font-semibold">
                   {t('nodeDetailModal.repeaterStatusHeading')}
                 </h4>
                 <button
@@ -1654,12 +1654,12 @@ export default function NodeDetailModal({
                   onClick={() => {
                     setShowRepeaterStats(false);
                   }}
-                  className="text-muted hover:text-ink-300 text-xs"
+                  className="text-muted hover:text-ink-300 text-label"
                 >
                   {t('common.hide')}
                 </button>
               </div>
-              <div className="bg-secondary-dark grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2 text-xs">
+              <div className="bg-secondary-dark text-label grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2">
                 <div className="text-muted">{t('nodeDetailModal.batteryLabel')}</div>
                 <div className="text-ink-200 font-mono">
                   {(meshcoreRepeaterStatus.battMilliVolts / 1000).toFixed(2)} V
@@ -1715,7 +1715,7 @@ export default function NodeDetailModal({
               if (!record || record.neighbors.length === 0) return null;
               return (
                 <div className="space-y-2 pb-2">
-                  <h4 className="text-ink-300 text-xs font-semibold">
+                  <h4 className="text-ink-300 text-label font-semibold">
                     {t('nodeDetailModal.neighborsHeading', { count: record.neighbors.length })}
                   </h4>
                   <div className="space-y-1">
@@ -1725,10 +1725,10 @@ export default function NodeDetailModal({
                       return (
                         <div
                           key={nb.nodeId}
-                          className="bg-secondary-dark flex items-center justify-between rounded px-2 py-1 text-xs"
+                          className="bg-secondary-dark text-label flex items-center justify-between rounded px-2 py-1"
                         >
                           <span className="text-ink-300">{label}</span>
-                          <span className="text-muted text-xs">
+                          <span className="text-muted text-label">
                             {formatSecondsAgo(
                               Math.max(0, Math.floor(Date.now() / 1000 - nb.lastRxTime)),
                               t,
@@ -1746,10 +1746,10 @@ export default function NodeDetailModal({
           {/* MeshCore Local Stats section (for connected node only) */}
           {protocol === 'meshcore' && meshcoreLocalStats && (
             <div className="space-y-2 pb-2">
-              <h4 className="text-ink-300 text-xs font-semibold">
+              <h4 className="text-ink-300 text-label font-semibold">
                 {t('nodeDetailModal.radioStatsLocalHeading')}
               </h4>
-              <div className="bg-secondary-dark grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2 text-xs">
+              <div className="bg-secondary-dark text-label grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2">
                 <div className="text-muted">{t('nodeDetailModal.noiseFloorLabel')}</div>
                 <div className="text-ink-200 font-mono">{meshcoreLocalStats.noiseFloor} dBm</div>
                 <div className="text-muted">{t('nodeDetailModal.lastRssiLabel')}</div>
@@ -1769,10 +1769,10 @@ export default function NodeDetailModal({
                 </div>
               </div>
 
-              <h4 className="text-ink-300 text-xs font-semibold">
+              <h4 className="text-ink-300 text-label font-semibold">
                 {t('nodeDetailModal.packetsLocalHeading')}
               </h4>
-              <div className="bg-secondary-dark grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2 text-xs">
+              <div className="bg-secondary-dark text-label grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2">
                 <div className="text-muted">{t('nodeDetailModal.sentFloodDirectLabel')}</div>
                 <div className="text-ink-200 font-mono">
                   {meshcoreLocalStats.nSentFlood} / {meshcoreLocalStats.nSentDirect}
@@ -1807,10 +1807,10 @@ export default function NodeDetailModal({
               const maxCount = Math.max(...recent.map((p) => p.count), 1);
               return (
                 <div className="space-y-2 px-5 pb-2">
-                  <h4 className="text-ink-300 text-xs font-semibold">
+                  <h4 className="text-ink-300 text-label font-semibold">
                     {t('nodeDetailModal.paxCounter.heading')}
                   </h4>
-                  <div className="bg-secondary-dark grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2 text-xs">
+                  <div className="bg-secondary-dark text-label grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2">
                     <div className="text-muted">
                       {t('nodeDetailModal.paxCounter.detectedCount')}
                     </div>
@@ -1833,7 +1833,7 @@ export default function NodeDetailModal({
                     {recent.map((point) => (
                       <div
                         key={point.timestamp}
-                        className="bg-brand-green min-w-0 flex-1 rounded-sm"
+                        className="bg-brand-green rounded-control min-w-0 flex-1"
                         style={{
                           height: `${Math.max(8, Math.round((point.count / maxCount) * 100))}%`,
                         }}
@@ -1855,12 +1855,12 @@ export default function NodeDetailModal({
               const list = [...sensorEvents].reverse().slice(0, 20);
               return (
                 <div className="space-y-2 px-5 pb-2">
-                  <h4 className="text-ink-300 text-xs font-semibold">
+                  <h4 className="text-ink-300 text-label font-semibold">
                     {t('nodeDetailModal.detectionSensor.heading', {
                       count: sensorEvents.length,
                     })}
                   </h4>
-                  <div className="bg-secondary-dark grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2 text-xs">
+                  <div className="bg-secondary-dark text-label grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2">
                     <div className="text-muted">
                       {t('nodeDetailModal.detectionSensor.lastDetection')}
                     </div>
@@ -1880,7 +1880,7 @@ export default function NodeDetailModal({
                     </div>
                   </div>
                   <ul
-                    className="bg-secondary-dark max-h-40 space-y-1 overflow-y-auto rounded p-2 text-xs"
+                    className="bg-secondary-dark text-label max-h-40 space-y-1 overflow-y-auto rounded p-2"
                     aria-label={t('nodeDetailModal.detectionSensor.eventLogAria')}
                   >
                     {list.map((ev) => (
@@ -1913,10 +1913,10 @@ export default function NodeDetailModal({
               const list = [...packets].reverse().slice(0, 20);
               return (
                 <div className="space-y-2 px-5 pb-2">
-                  <h4 className="text-ink-300 text-xs font-semibold">
+                  <h4 className="text-ink-300 text-label font-semibold">
                     {t('nodeDetailModal.rangeTest.heading', { count: packets.length })}
                   </h4>
-                  <div className="bg-secondary-dark grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2 text-xs">
+                  <div className="bg-secondary-dark text-label grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2">
                     <div className="text-muted">{t('nodeDetailModal.rangeTest.lastPacket')}</div>
                     <div className="text-ink-200 font-mono">
                       {formatSecondsAgo(
@@ -1954,7 +1954,7 @@ export default function NodeDetailModal({
                     )}
                   </div>
                   <ul
-                    className="bg-secondary-dark max-h-40 space-y-1 overflow-y-auto rounded p-2 text-xs"
+                    className="bg-secondary-dark text-label max-h-40 space-y-1 overflow-y-auto rounded p-2"
                     aria-label={t('nodeDetailModal.rangeTest.packetLogAria')}
                   >
                     {list.map((ev) => {
@@ -1981,18 +1981,20 @@ export default function NodeDetailModal({
           {/* Map Report section (Meshtastic only) */}
           {protocol === 'meshtastic' && mapReports && (
             <div className="space-y-2 pb-2">
-              <h4 className="text-muted text-sm font-medium">
+              <h4 className="text-muted text-body-lg font-medium">
                 {t('nodeDetailModal.mapReportHeading')}
               </h4>
               {(() => {
                 const mapReport = mapReports.get(node.node_id);
                 if (!mapReport) {
                   return (
-                    <p className="text-muted text-xs">{t('nodeDetailModal.noMapReportReceived')}</p>
+                    <p className="text-muted text-label">
+                      {t('nodeDetailModal.noMapReportReceived')}
+                    </p>
                   );
                 }
                 return (
-                  <div className="bg-secondary-dark grid grid-cols-2 gap-x-4 gap-y-1 rounded py-2 text-xs">
+                  <div className="bg-secondary-dark text-label grid grid-cols-2 gap-x-4 gap-y-1 rounded py-2">
                     <div className="text-muted">{t('nodeDetailModal.mapReportLastReport')}</div>
                     <div className="text-ink-200 font-mono">
                       {formatSecondsAgo(
@@ -2015,14 +2017,14 @@ export default function NodeDetailModal({
           {/* Position History (GPS tracking path) */}
           {positionHistory && (
             <div className="space-y-2 pb-2">
-              <h4 className="text-muted text-sm font-medium">
+              <h4 className="text-muted text-body-lg font-medium">
                 {t('nodeDetailModal.positionHistoryHeading')}
               </h4>
               {(() => {
                 const points = positionHistory.get(node.node_id);
                 if (!points || points.length === 0) {
                   return (
-                    <p className="text-muted text-xs">
+                    <p className="text-muted text-label">
                       {t('nodeDetailModal.noPositionHistoryRecorded')}
                     </p>
                   );
@@ -2034,7 +2036,7 @@ export default function NodeDetailModal({
                 const recentPoints = [...sorted].reverse().slice(0, POSITION_HISTORY_MAX_ROWS);
                 return (
                   <>
-                    <div className="bg-secondary-dark grid grid-cols-2 gap-x-4 gap-y-1 rounded py-2 text-xs">
+                    <div className="bg-secondary-dark text-label grid grid-cols-2 gap-x-4 gap-y-1 rounded py-2">
                       <div className="text-muted">
                         {t('nodeDetailModal.positionHistoryRecordedPoints')}
                       </div>
@@ -2093,10 +2095,10 @@ export default function NodeDetailModal({
 
           {protocol === 'meshtastic' &&
             (node.has_xeddsa_signed === true || node.key_manually_verified === true) && (
-              <div className="mt-4 flex flex-wrap gap-2 text-xs">
+              <div className="text-label mt-4 flex flex-wrap gap-2">
                 {node.has_xeddsa_signed === true && (
                   <span
-                    className="rounded bg-green-900/40 px-2 py-1 text-green-300"
+                    className="bg-success-900/40 text-success-300 rounded px-2 py-1"
                     title={t('nodeDetailModal.xeddsaSignedHint')}
                   >
                     {t('nodeDetailModal.xeddsaSigned')}
@@ -2104,7 +2106,7 @@ export default function NodeDetailModal({
                 )}
                 {node.key_manually_verified === true && (
                   <span
-                    className="rounded bg-green-900/40 px-2 py-1 text-green-300"
+                    className="bg-success-900/40 text-success-300 rounded px-2 py-1"
                     title={t('nodeDetailModal.keyManuallyVerifiedHint')}
                   >
                     {t('nodeDetailModal.keyManuallyVerified')}
@@ -2114,17 +2116,17 @@ export default function NodeDetailModal({
             )}
 
           {protocol === 'meshtastic' && onSaveRemoteAdminKey && !isOurNode && (
-            <div className="mt-4 space-y-2 rounded-lg border border-indigo-700/40 bg-indigo-900/20 px-3 py-2 text-sm text-indigo-100">
-              <p className="text-xs font-medium text-indigo-300">
+            <div className="rounded-card border-info-700/40 bg-info-900/20 text-body-lg text-info-100 mt-4 space-y-2 border px-3 py-2">
+              <p className="text-label text-info-300 font-medium">
                 {t('nodeDetailModal.remoteAdminKeyTitle')}
               </p>
-              <p className="text-muted text-xs">{t('nodeDetailModal.remoteAdminKeyHint')}</p>
+              <p className="text-muted text-label">{t('nodeDetailModal.remoteAdminKeyHint')}</p>
               {node.public_key_hex?.length !== 64 && (
-                <p className="text-xs text-orange-300">
+                <p className="text-label text-warning-300">
                   {t('nodeDetailModal.remoteAdminNoPkiKey')}
                 </p>
               )}
-              <label htmlFor="node-detail-admin-key" className="text-muted text-xs">
+              <label htmlFor="node-detail-admin-key" className="text-muted text-label">
                 {t('nodeDetailModal.remoteAdminKeyLabel')}
               </label>
               <input
@@ -2140,13 +2142,13 @@ export default function NodeDetailModal({
                 aria-label={t('nodeDetailModal.remoteAdminKeyLabel')}
                 className={`${INPUT_BOX_SM_CLASS} w-full font-mono`}
               />
-              {adminKeyError && <p className="text-xs text-red-400">{adminKeyError}</p>}
+              {adminKeyError && <p className="text-label text-danger-400">{adminKeyError}</p>}
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   disabled={!isConnected}
                   aria-label={t('nodeDetailModal.saveRemoteAdminKey')}
-                  className="bg-secondary-dark hover:bg-ink-600 rounded-lg px-3 py-1.5 text-xs font-medium text-indigo-200 transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                  className="bg-secondary-dark hover:bg-ink-600 rounded-card text-label text-info-200 px-3 py-1.5 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                   onClick={() => {
                     void (async () => {
                       const trimmed = adminKeyDraft.trim();
@@ -2182,7 +2184,7 @@ export default function NodeDetailModal({
                   <button
                     type="button"
                     aria-label={t('nodeDetailModal.clearRemoteAdminKey')}
-                    className="bg-secondary-dark text-ink-300 hover:bg-ink-600 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                    className={buttonClassName('secondary', 'sm')}
                     onClick={() => {
                       void (async () => {
                         try {
@@ -2207,7 +2209,7 @@ export default function NodeDetailModal({
                 )}
               </div>
               {adminKeyStatus && (
-                <p className="text-xs text-green-400" role="status">
+                <p className="text-label text-success-400" role="status">
                   {adminKeyStatus}
                 </p>
               )}
@@ -2216,14 +2218,14 @@ export default function NodeDetailModal({
                   <button
                     type="button"
                     aria-label={t('nodeDetailModal.configureRemotely')}
-                    className="bg-brand-green/20 text-brand-green hover:bg-brand-green/30 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
+                    className="bg-brand-green/20 text-brand-green hover:bg-brand-green/30 rounded-card text-label px-3 py-1.5 font-medium transition-colors"
                     onClick={() => {
                       onConfigureRemotely(node.node_id);
                     }}
                   >
                     {t('nodeDetailModal.configureRemotely')}
                   </button>
-                  <p className="text-muted mt-1 text-xs">
+                  <p className="text-muted text-label mt-1">
                     {t('nodeDetailModal.configureRemotelyHint')}
                   </p>
                 </div>
@@ -2251,8 +2253,8 @@ export default function NodeDetailModal({
         {actionStatus && (
           <div className="shrink-0 px-5 pb-3">
             <div
-              className={`text-center text-xs ${
-                actionStatusIsDeleteMqttError ? 'text-red-300' : 'text-muted'
+              className={`text-label text-center ${
+                actionStatusIsDeleteMqttError ? 'text-danger-300' : 'text-muted'
               }`}
             >
               {actionStatus}
@@ -2262,7 +2264,7 @@ export default function NodeDetailModal({
 
         {/* Node notes */}
         <div className="shrink-0 px-5 pb-2">
-          <label className="text-ink-400 mb-1 block text-xs font-medium">
+          <label className="text-ink-400 text-label mb-1 block font-medium">
             {t('nodeDetailModal.notesLabel')}
           </label>
           <textarea
@@ -2348,7 +2350,7 @@ export default function NodeDetailModal({
       <>
         <aside
           aria-labelledby="node-modal-title"
-          className="bg-deep-black border-ink-800 flex h-full min-h-0 flex-col overflow-hidden rounded-xl border"
+          className="bg-deep-black border-ink-800 rounded-container flex h-full min-h-0 flex-col overflow-hidden border"
         >
           {detailContent}
         </aside>

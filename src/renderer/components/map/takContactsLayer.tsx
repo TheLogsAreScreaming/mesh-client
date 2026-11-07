@@ -52,27 +52,27 @@ function TakContactPopup({ contact, symbol }: { contact: TAKContact; symbol: Tak
       <Tooltip direction="top">{contact.callsign}</Tooltip>
       <Popup>
         <div className="space-y-1 p-2">
-          <div className="text-ink-100 text-sm font-medium">{contact.callsign}</div>
-          <div className="text-ink-400 text-xs">
+          <div className="text-ink-100 text-body-lg font-medium">{contact.callsign}</div>
+          <div className="text-ink-400 text-label">
             {t(TAK_AFFILIATION_LABEL_KEYS[symbol.affiliation])} · {contact.type}
           </div>
-          <div className="text-ink-400 text-xs">
+          <div className="text-ink-400 text-label">
             {t(
               contact.source === 'remote' ? 'takContacts.sourceRemote' : 'takContacts.sourceLocal',
             )}
             {contact.group ? ` · ${contact.group}` : ''}
             {contact.role ? ` · ${contact.role}` : ''}
           </div>
-          <div className="text-muted font-mono text-xs">
+          <div className="text-muted text-label font-mono">
             {formatCoordPair(contact.lat, contact.lon, coordinateFormat)}
           </div>
-          <div className="text-muted text-xs">
+          <div className="text-muted text-label">
             {t('takContacts.lastSeen', {
               time: new Date(contact.receivedAt).toLocaleTimeString(),
             })}
           </div>
           {contact.remarks ? (
-            <div className="text-ink-300 text-xs whitespace-pre-wrap">{contact.remarks}</div>
+            <div className="text-ink-300 text-label whitespace-pre-wrap">{contact.remarks}</div>
           ) : null}
         </div>
       </Popup>

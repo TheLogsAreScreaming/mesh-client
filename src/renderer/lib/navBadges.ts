@@ -20,9 +20,9 @@ const SLOT_TONE: Partial<Record<TabSlotId, NavBadgeTone>> = {
 
 /** Badge fills; white text on each passes 4.5:1 (see navBadges.test.ts). */
 export const NAV_BADGE_FILL_CLASS: Record<NavBadgeTone, string> = {
-  unread: 'bg-red-600',
-  pending: 'bg-orange-800',
-  incident: 'bg-red-600',
+  unread: 'bg-danger-600',
+  pending: 'bg-warning-800',
+  incident: 'bg-danger-600',
 };
 
 export function slotBadge(slot: TabSlotId, counts: NavBadgeCounts): NavBadge | null {

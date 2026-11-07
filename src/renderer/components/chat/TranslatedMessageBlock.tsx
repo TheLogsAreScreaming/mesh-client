@@ -27,7 +27,7 @@ export function TranslatedMessageBlock({
   const result = state.result;
   const buttonClass = 'text-bright-green rounded-control underline underline-offset-2';
   return (
-    <div className="border-ink-700 mt-2 border-t pt-2 text-sm" aria-live="polite">
+    <div className="border-ink-700 text-body-lg mt-2 border-t pt-2" aria-live="polite">
       {state.loading ? (
         <p className="text-muted">{t('chatTranslation.loading')}</p>
       ) : result?.ok ? (
@@ -35,7 +35,7 @@ export function TranslatedMessageBlock({
           {state.showTranslation && (
             <p className="text-ink-100 break-words whitespace-pre-wrap">{result.text}</p>
           )}
-          <p className="text-muted mt-1 text-xs">
+          <p className="text-muted text-label mt-1">
             {t('chatTranslation.attribution', {
               language:
                 result.detectedLang === 'auto'
@@ -66,7 +66,7 @@ export function TranslatedMessageBlock({
         </>
       ) : (
         <>
-          <p className="text-orange-300">
+          <p className="text-warning-300">
             {t(
               result?.reason === 'uncertain'
                 ? 'chatTranslation.uncertain'

@@ -235,12 +235,15 @@ export default function ContactGroupsModal({
                   size={16}
                 />
               </button>
-              <h2 id="groups-modal-title" className="text-ink-100 truncate text-lg font-semibold">
+              <h2
+                id="groups-modal-title"
+                className="text-ink-100 text-heading truncate font-semibold"
+              >
                 {managingGroup.name}
               </h2>
             </div>
           ) : (
-            <h2 id="groups-modal-title" className="text-ink-100 text-lg font-semibold">
+            <h2 id="groups-modal-title" className="text-ink-100 text-heading font-semibold">
               {t('contactGroupsModal.title')}
             </h2>
           )}
@@ -249,7 +252,7 @@ export default function ContactGroupsModal({
             onClick={onClose}
             aria-label={t('aria.closeDialog')}
             {...{ [PARENT_HOVER_ATTR]: '' }}
-            className="hover:bg-secondary-dark text-muted hover:text-ink-200 shrink-0 rounded-lg p-1.5 transition-colors"
+            className="hover:bg-secondary-dark text-muted hover:text-ink-200 rounded-card shrink-0 p-1.5 transition-colors"
           >
             <X aria-hidden className="h-5 w-5" trigger={parentIconTrigger} size={20} />
           </button>
@@ -260,18 +263,18 @@ export default function ContactGroupsModal({
           {managingGroup ? (
             /* Member management view */
             <>
-              <p className="text-muted text-xs">
-                <p className="text-muted text-xs">
+              <p className="text-muted text-label">
+                <p className="text-muted text-label">
                   {t('contactGroupsModal.memberCount', { count: memberIds.size })}
                 </p>
               </p>
               {sortedContacts.length === 0 ? (
-                <p className="text-muted text-sm">{t('contactGroupsModal.noContactsYet')}</p>
+                <p className="text-muted text-body-lg">{t('contactGroupsModal.noContactsYet')}</p>
               ) : (
                 <ul className="flex flex-col gap-1">
                   {sortedContacts.map((contact) => (
                     <li key={contact.node_id}>
-                      <label className="hover:bg-secondary-dark/50 flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2">
+                      <label className="hover:bg-secondary-dark/50 rounded-card flex cursor-pointer items-center gap-3 px-3 py-2">
                         <input
                           type="checkbox"
                           checked={memberIds.has(contact.node_id)}
@@ -279,7 +282,7 @@ export default function ContactGroupsModal({
                           disabled={busy}
                           className="accent-brand-green"
                         />
-                        <span className="text-ink-200 truncate text-sm">
+                        <span className="text-ink-200 text-body-lg truncate">
                           {contact.long_name || t('common.unknown')}
                         </span>
                       </label>
@@ -312,7 +315,7 @@ export default function ContactGroupsModal({
                   onClick={() => void handleCreate()}
                   disabled={!newGroupName.trim() || busy || selfNodeId == null || selfNodeId <= 0}
                   aria-label={t('contactGroupsModal.addButton')}
-                  className="bg-brand-green/20 text-brand-green hover:bg-brand-green/30 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                  className="bg-brand-green/20 text-brand-green hover:bg-brand-green/30 rounded-card text-body-lg px-3 py-1.5 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {t('contactGroupsModal.addButton')}
                 </button>
@@ -320,13 +323,13 @@ export default function ContactGroupsModal({
 
               {/* Group list */}
               {groups.length === 0 ? (
-                <p className="text-muted text-sm">{t('contactGroupsModal.noGroupsYet')}</p>
+                <p className="text-muted text-body-lg">{t('contactGroupsModal.noGroupsYet')}</p>
               ) : (
                 <ul className="flex flex-col gap-1">
                   {groups.map((group) => (
                     <li
                       key={group.group_id}
-                      className="hover:bg-secondary-dark/30 flex items-center gap-2 rounded-lg px-3 py-2"
+                      className="hover:bg-secondary-dark/30 rounded-card flex items-center gap-2 px-3 py-2"
                     >
                       {editingGroupId === group.group_id ? (
                         <input
@@ -346,9 +349,11 @@ export default function ContactGroupsModal({
                           className={`${INPUT_BOX_CLASS} flex-1`}
                         />
                       ) : (
-                        <span className="text-ink-200 flex-1 truncate text-sm">
+                        <span className="text-ink-200 text-body-lg flex-1 truncate">
                           {group.name}
-                          <span className="text-muted ml-1.5 text-xs">({group.member_count})</span>
+                          <span className="text-muted text-label ml-1.5">
+                            ({group.member_count})
+                          </span>
                         </span>
                       )}
 
@@ -432,7 +437,7 @@ export default function ContactGroupsModal({
                                 onClick={() => void handleDelete(group.group_id)}
                                 disabled={busy}
                                 aria-label={t('contactGroupsModal.confirmDelete')}
-                                className="rounded bg-red-600/30 px-2 py-0.5 text-xs text-red-400 transition-colors hover:bg-red-600/50 disabled:opacity-40"
+                                className="bg-danger-600/30 text-label text-danger-400 hover:bg-danger-600/50 rounded px-2 py-0.5 transition-colors disabled:opacity-40"
                               >
                                 {t('contactGroupsModal.confirmDeleteButton')}
                               </button>
@@ -464,7 +469,7 @@ export default function ContactGroupsModal({
                               })}
                               title={t('contactGroupsModal.deleteGroup')}
                               {...{ [PARENT_HOVER_ATTR]: '' }}
-                              className="hover:bg-secondary-dark text-muted rounded p-1 transition-colors hover:text-red-400"
+                              className="hover:bg-secondary-dark text-muted hover:text-danger-400 rounded p-1 transition-colors"
                             >
                               <Trash2
                                 aria-hidden

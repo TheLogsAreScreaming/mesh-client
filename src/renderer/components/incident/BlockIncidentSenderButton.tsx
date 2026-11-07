@@ -25,7 +25,7 @@ export function BlockIncidentSenderButton({ incident }: { incident: EmergencyInc
     <>
       <button
         type="button"
-        className="border-ink-600 text-ink-300 rounded border px-2 py-0.5 text-xs hover:border-red-700 hover:text-red-300"
+        className="border-ink-600 text-ink-300 text-label hover:border-danger-700 hover:text-danger-300 rounded border px-2 py-0.5"
         aria-label={t('mecp.block.blockActionAria', { sender: incident.senderName })}
         onClick={() => {
           setConfirming(true);

@@ -31,9 +31,9 @@ export function RadioXmodemSection({
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-indigo-300/80">{t('radioPanel.xmodemSectionHint')}</p>
+      <p className="text-label text-info-300/80">{t('radioPanel.xmodemSectionHint')}</p>
       <div className="space-y-1">
-        <label htmlFor="radio-xmodem-filename" className="text-muted text-sm">
+        <label htmlFor="radio-xmodem-filename" className="text-muted text-body-lg">
           {t('radioPanel.xmodemFilenameLabel')}
         </label>
         <input
@@ -71,7 +71,7 @@ export function RadioXmodemSection({
                   setXmodemBusy(false);
                 });
             }}
-            className="rounded-lg border border-indigo-800/60 bg-indigo-900/30 px-4 py-2 text-sm font-medium text-indigo-200 hover:bg-indigo-900/50 disabled:opacity-50"
+            className="rounded-card border-info-800/60 bg-info-900/30 text-body-lg text-info-200 hover:bg-info-900/50 border px-4 py-2 font-medium disabled:opacity-50"
             aria-label={t('radioPanel.xmodemUpload')}
           >
             {t('radioPanel.xmodemUpload')}
@@ -104,7 +104,7 @@ export function RadioXmodemSection({
                   setXmodemBusy(false);
                 });
             }}
-            className="rounded-lg border border-indigo-800/60 bg-indigo-900/30 px-4 py-2 text-sm font-medium text-indigo-200 hover:bg-indigo-900/50 disabled:opacity-50"
+            className="rounded-card border-info-800/60 bg-info-900/30 text-body-lg text-info-200 hover:bg-info-900/50 border px-4 py-2 font-medium disabled:opacity-50"
             aria-label={t('radioPanel.xmodemDownload')}
           >
             {t('radioPanel.xmodemDownload')}

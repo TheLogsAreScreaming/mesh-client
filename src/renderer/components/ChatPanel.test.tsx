@@ -1255,7 +1255,7 @@ describe('ChatPanel scroll pinning', () => {
       configurable: true,
     });
 
-    const divider = container.querySelector('[class*="border-red-500"]')?.parentElement;
+    const divider = container.querySelector('[class*="border-danger-500"]')?.parentElement;
     expect(divider).toBeTruthy();
     vi.spyOn(scrollContainer, 'getBoundingClientRect').mockReturnValue({
       top: 100,
@@ -2050,14 +2050,14 @@ describe('ChatPanel unread watermarks', () => {
 
     expect(screen.getByRole('button', { name: 'Alice' })).toBeInTheDocument();
     const aliceTab = screen.getByRole('button', { name: 'Alice' }).parentElement;
-    expect(aliceTab?.querySelector('.bg-red-600')?.textContent).toBe('1');
+    expect(aliceTab?.querySelector('.bg-danger-600')?.textContent).toBe('1');
 
     await user.click(screen.getByRole('button', { name: 'Alice' }));
     expect(screen.getByText('orphan DM')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'General' }));
 
     await waitFor(() => {
-      expect(aliceTab?.querySelector('.bg-red-600')).toBeNull();
+      expect(aliceTab?.querySelector('.bg-danger-600')).toBeNull();
     });
   });
 
@@ -2811,7 +2811,7 @@ describe('ChatPanel MECP compose button', () => {
       );
       const request = screen.getByRole('button', { name: 'Request or report with MECP' });
       const response = screen.getByRole('button', { name: 'Respond with MECP' });
-      expect(request.className).toContain('bg-red-950');
+      expect(request.className).toContain('bg-danger-950');
       expect(response.className).toContain('bg-blue-950');
       hydrateAxeThemeColors(container);
       expect(await axe(container)).toHaveNoViolations();
@@ -4410,8 +4410,8 @@ describe('ChatPanel — Option B bubbles and toolbar', () => {
         />
       </ToastProvider>,
     );
-    const incoming = (await screen.findByText('from alice')).closest('.rounded-xl');
-    const outgoing = screen.getByText('from me').closest('.rounded-xl');
+    const incoming = (await screen.findByText('from alice')).closest('.rounded-container');
+    const outgoing = screen.getByText('from me').closest('.rounded-container');
     expect(incoming?.className).toContain('bg-chat-incoming-bg');
     expect(incoming?.className).toContain('rounded-tl-sm');
     expect(outgoing?.className).toContain('bg-chat-outgoing-bg');
@@ -4539,7 +4539,7 @@ describe('ChatPanel — Option B bubbles and toolbar', () => {
       </ToastProvider>,
     );
     await waitFor(() => {
-      expect(container.querySelector('.rounded-xl.bg-red-900\\/30')).not.toBeNull();
+      expect(container.querySelector('.rounded-container.bg-danger-900\\/30')).not.toBeNull();
     });
     expect(container.querySelector('.bg-chat-outgoing-bg')).toBeNull();
   });

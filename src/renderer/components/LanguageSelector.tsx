@@ -121,7 +121,7 @@ export default function LanguageSelector() {
               top: menuPos.top,
               right: menuPos.right,
             }}
-            className="bg-deep-black shadow-level-4 border-ink-700 z-50 max-h-72 w-44 overflow-y-auto rounded-lg border py-1"
+            className="bg-deep-black shadow-level-4 border-ink-700 rounded-card z-50 max-h-72 w-44 overflow-y-auto border py-1"
           >
             {SUPPORTED_LANGUAGES.map(({ code, label }) => (
               <li key={code} role="option" aria-selected={i18n.language === code}>
@@ -130,7 +130,7 @@ export default function LanguageSelector() {
                   onClick={() => {
                     handleSelect(code);
                   }}
-                  className={`w-full px-3 py-1.5 text-left text-xs transition-colors ${
+                  className={`text-label w-full px-3 py-1.5 text-left transition-colors ${
                     i18n.language === code
                       ? 'text-brand-green bg-ink-800'
                       : 'text-ink-300 hover:bg-ink-800 hover:text-ink-100'
@@ -164,7 +164,7 @@ export default function LanguageSelector() {
           }
           setIsOpen(true);
         }}
-        className={`flex items-center gap-1 rounded-lg p-1.5 text-xs transition-all ${
+        className={`rounded-card text-label flex items-center gap-1 p-1.5 transition-all ${
           isOpen
             ? 'bg-secondary-dark text-ink-100 ring-1 ring-cyan-400/50'
             : 'text-muted hover:bg-secondary-dark hover:text-ink-200'

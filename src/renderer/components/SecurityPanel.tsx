@@ -74,7 +74,9 @@ function isValidBase64Key(b64: string): boolean {
 
 function SectionHeader({ title }: { title: string }) {
   return (
-    <h3 className="border-ink-700 text-ink-200 border-b pb-2 text-sm font-semibold">{title}</h3>
+    <h3 className="border-ink-700 text-ink-200 text-body-lg border-b pb-2 font-semibold">
+      {title}
+    </h3>
   );
 }
 
@@ -96,7 +98,7 @@ function ConfigToggle({
   return (
     <div data-setting-anchor={anchorId} className="space-y-1">
       <div className="flex items-center justify-between">
-        <span className="text-ink-300 text-sm">{label}</span>
+        <span className="text-ink-300 text-body-lg">{label}</span>
         <button
           type="button"
           role="switch"
@@ -116,7 +118,7 @@ function ConfigToggle({
           />
         </button>
       </div>
-      {description && <p className="text-muted text-xs">{description}</p>}
+      {description && <p className="text-muted text-label">{description}</p>}
     </div>
   );
 }
@@ -460,15 +462,17 @@ export default function SecurityPanel({
   return (
     <div className="w-full max-w-5xl space-y-6 p-4">
       {!isConnected && (
-        <p className="text-muted py-4 text-center text-sm">{t('securityPanel.connectToManage')}</p>
+        <p className="text-muted text-body-lg py-4 text-center">
+          {t('securityPanel.connectToManage')}
+        </p>
       )}
 
       {configTarget?.mode === 'remote' && configTarget.isLoading && (
-        <p className="text-muted text-sm">{t('configureNode.loading')}</p>
+        <p className="text-muted text-body-lg">{t('configureNode.loading')}</p>
       )}
 
       {configTarget?.mode === 'remote' && configTarget.error && (
-        <p className="text-sm text-red-400">{t(configTarget.error)}</p>
+        <p className="text-body-lg text-danger-400">{t(configTarget.error)}</p>
       )}
 
       {!isMeshcore && <ConfigApplyNotice />}
@@ -477,7 +481,7 @@ export default function SecurityPanel({
       <section className="space-y-4">
         <SectionHeader title={t('securityPanel.sectionDmKeys')} />
         <div data-setting-anchor="security.dmKeys.publicKey" className="space-y-1">
-          <label htmlFor="security-public-key" className="text-muted text-sm">
+          <label htmlFor="security-public-key" className="text-muted text-body-lg">
             {t('securityPanel.publicKeyLabel')}
           </label>
           <div className="flex items-center gap-2">
@@ -492,7 +496,7 @@ export default function SecurityPanel({
               type="button"
               disabled={disabled || !publicKeyB64}
               aria-label={t('securityPanel.copyPublicKey')}
-              className="text-muted border-ink-600 hover:text-ink-200 shrink-0 rounded-lg border px-3 py-2 text-xs disabled:opacity-50"
+              className="text-muted border-ink-600 hover:text-ink-200 rounded-card text-label shrink-0 border px-3 py-2 disabled:opacity-50"
               onClick={() => {
                 void writeClipboardText(publicKeyB64)
                   .then(() => {
@@ -510,13 +514,13 @@ export default function SecurityPanel({
             </button>
           </div>
           {!isRemoteTarget && !isMeshcore && (
-            <p className="text-muted text-xs">{t('securityPanel.remoteAdminSetupHint')}</p>
+            <p className="text-muted text-label">{t('securityPanel.remoteAdminSetupHint')}</p>
           )}
         </div>
         {!isRemoteTarget && !isMeshcore && (
           <>
             <div data-setting-anchor="security.dmKeys.privateKey" className="space-y-1">
-              <label htmlFor="security-private-key" className="text-muted text-sm">
+              <label htmlFor="security-private-key" className="text-muted text-body-lg">
                 {t('securityPanel.privateKeyLabel')}
               </label>
               <div className="flex items-center gap-2">
@@ -533,12 +537,12 @@ export default function SecurityPanel({
                     setShowPrivateKey((s) => !s);
                   }}
                   disabled={disabled}
-                  className="text-muted hover:text-ink-300 px-3 py-2 text-xs disabled:opacity-50"
+                  className="text-muted hover:text-ink-300 text-label px-3 py-2 disabled:opacity-50"
                 >
                   {showPrivateKey ? t('common.hide') : t('common.show')}
                 </button>
               </div>
-              <p className="text-muted text-xs">{t('securityPanel.privateKeyHint')}</p>
+              <p className="text-muted text-label">{t('securityPanel.privateKeyHint')}</p>
             </div>
             <button
               data-setting-anchor="security.dmKeys.regenerateKeys"
@@ -547,7 +551,7 @@ export default function SecurityPanel({
                 setPendingRegenerate(true);
               }}
               disabled={disabled || applyingRegen || !securityConfig}
-              className="w-full rounded-lg border border-orange-700/60 bg-orange-700/40 px-4 py-2 text-sm font-medium text-orange-300 transition-colors hover:bg-orange-700/60 disabled:opacity-50"
+              className="rounded-card border-warning-700/60 bg-warning-700/40 text-body-lg text-warning-300 hover:bg-warning-700/60 w-full border px-4 py-2 font-medium transition-colors disabled:opacity-50"
             >
               {applyingRegen
                 ? t('securityPanel.regeneratingKeys')
@@ -556,7 +560,7 @@ export default function SecurityPanel({
           </>
         )}
         {isMeshcore && !isRemoteTarget && (
-          <p className="text-muted text-xs">{t('securityPanel.meshcorePrivateKeyHint')}</p>
+          <p className="text-muted text-label">{t('securityPanel.meshcorePrivateKeyHint')}</p>
         )}
       </section>
 
@@ -565,7 +569,7 @@ export default function SecurityPanel({
           {/* ── Admin Keys ──────────────────────────────────────────── */}
           <section data-setting-anchor="security.adminKeys.keys" className="space-y-4">
             <SectionHeader title={t('securityPanel.sectionAdminKeys')} />
-            <p className="text-muted text-xs">
+            <p className="text-muted text-label">
               {t('securityPanel.adminKeysIntro', { max: MAX_ADMIN_KEYS })}
             </p>
             <div className="space-y-3">
@@ -595,13 +599,15 @@ export default function SecurityPanel({
                         setAdminKeyErrors(adminKeyErrors.filter((_, j) => j !== i));
                       }}
                       disabled={disabled}
-                      className="px-2 py-2 text-xs text-red-400 hover:text-red-300 disabled:opacity-50"
+                      className="text-label text-danger-400 hover:text-danger-300 px-2 py-2 disabled:opacity-50"
                       aria-label={t('securityPanel.removeAdminKey', { number: i + 1 })}
                     >
                       {t('securityPanel.removeAdminKeyButton')}
                     </button>
                   </div>
-                  {adminKeyErrors[i] && <p className="text-xs text-red-400">{adminKeyErrors[i]}</p>}
+                  {adminKeyErrors[i] && (
+                    <p className="text-label text-danger-400">{adminKeyErrors[i]}</p>
+                  )}
                 </div>
               ))}
             </div>
@@ -613,7 +619,7 @@ export default function SecurityPanel({
                   setAdminKeyErrors([...adminKeyErrors, null]);
                 }}
                 disabled={disabled}
-                className="text-muted border-ink-600 hover:border-ink-500 hover:text-ink-300 w-full rounded-lg border border-dashed px-4 py-2 text-sm transition-colors disabled:opacity-50"
+                className="text-muted border-ink-600 hover:border-ink-500 hover:text-ink-300 rounded-card text-body-lg w-full border border-dashed px-4 py-2 transition-colors disabled:opacity-50"
               >
                 {t('securityPanel.addAdminKey')}
               </button>
@@ -699,12 +705,12 @@ export default function SecurityPanel({
       {protocol === 'meshcore' && (onSignData || onExportPrivateKey || onImportPrivateKey) && (
         <section className="space-y-4">
           <SectionHeader title={t('securityPanel.sectionMeshcoreCrypto')} />
-          <p className="text-muted text-xs">{t('securityPanel.meshcoreCryptoDesc')}</p>
+          <p className="text-muted text-label">{t('securityPanel.meshcoreCryptoDesc')}</p>
 
           {/* Sign Data */}
           {onSignData && (
             <div data-setting-anchor="security.crypto.signData" className="space-y-2">
-              <label htmlFor="meshcore-sign-input" className="text-muted text-sm">
+              <label htmlFor="meshcore-sign-input" className="text-muted text-body-lg">
                 {t('securityPanel.signDataLabel')}
               </label>
               <textarea
@@ -724,16 +730,16 @@ export default function SecurityPanel({
                   void handleSignData();
                 }}
                 disabled={disabled || signInProgress || !signDataInput.trim()}
-                className="bg-secondary-dark border-ink-600 text-ink-200 hover:bg-ink-700 w-full rounded-lg border px-4 py-2 text-sm transition-colors disabled:opacity-50"
+                className={buttonClassName('secondary', 'md', 'w-full')}
               >
                 {signInProgress ? t('securityPanel.signing') : t('securityPanel.signDataButton')}
               </button>
               {signDataResult && (
                 <div className="space-y-1">
-                  <span className="text-muted text-xs">
+                  <span className="text-muted text-label">
                     {t('securityPanel.signatureBase64Label')}
                   </span>
-                  <div className="bg-secondary-dark border-ink-600 text-ink-200 rounded border p-2 font-mono text-xs break-all">
+                  <div className="bg-secondary-dark border-ink-600 text-ink-200 text-label rounded border p-2 font-mono break-all">
                     {signDataResult}
                   </div>
                 </div>
@@ -750,7 +756,7 @@ export default function SecurityPanel({
                   void handleExportPrivateKey();
                 }}
                 disabled={disabled || exportInProgress}
-                className="bg-secondary-dark border-ink-600 text-ink-200 hover:bg-ink-700 w-full rounded-lg border px-4 py-2 text-sm transition-colors disabled:opacity-50"
+                className={buttonClassName('secondary', 'md', 'w-full')}
               >
                 {exportInProgress
                   ? t('securityPanel.exportingPrivateKey')
@@ -758,13 +764,15 @@ export default function SecurityPanel({
               </button>
               {exportedPrivateKey && (
                 <div className="space-y-1">
-                  <span className="text-muted text-xs">
+                  <span className="text-muted text-label">
                     {t('securityPanel.privateKeyBase64Label')}
                   </span>
-                  <div className="bg-secondary-dark border-ink-600 text-ink-200 rounded border p-2 font-mono text-xs break-all">
+                  <div className="bg-secondary-dark border-ink-600 text-ink-200 text-label rounded border p-2 font-mono break-all">
                     {exportedPrivateKey}
                   </div>
-                  <p className="text-xs text-orange-400">{t('securityPanel.exportKeyWarning')}</p>
+                  <p className="text-label text-warning-400">
+                    {t('securityPanel.exportKeyWarning')}
+                  </p>
                 </div>
               )}
             </div>
@@ -773,7 +781,7 @@ export default function SecurityPanel({
           {/* Import Private Key */}
           {onImportPrivateKey && (
             <div data-setting-anchor="security.crypto.importPrivateKey" className="space-y-2">
-              <label htmlFor="meshcore-import-key" className="text-muted text-sm">
+              <label htmlFor="meshcore-import-key" className="text-muted text-body-lg">
                 {t('securityPanel.importPrivateKeyLabel')}
               </label>
               <textarea
@@ -793,7 +801,7 @@ export default function SecurityPanel({
                   void handleImportPrivateKey();
                 }}
                 disabled={disabled || importInProgress || !importKeyInput.trim()}
-                className="bg-secondary-dark border-ink-600 text-ink-200 hover:bg-ink-700 w-full rounded-lg border px-4 py-2 text-sm transition-colors disabled:opacity-50"
+                className={buttonClassName('secondary', 'md', 'w-full')}
               >
                 {importInProgress
                   ? t('securityPanel.importingPrivateKey')

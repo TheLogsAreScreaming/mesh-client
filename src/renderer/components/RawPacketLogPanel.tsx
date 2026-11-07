@@ -61,15 +61,15 @@ const ROUTE_LABEL: Record<string, string> = {
 const RAW_PACKET_NAME_COL = 'min-w-0 flex-1 max-w-[min(28rem,50vw)]';
 
 const MESHCORE_ROUTE_BAR: Record<string, string> = {
-  FLOOD: 'border-l-indigo-500',
-  TRANSPORT_FLOOD: 'border-l-indigo-400',
-  DIRECT: 'border-l-green-500',
-  TRANSPORT_DIRECT: 'border-l-green-400',
+  FLOOD: 'border-l-info-500',
+  TRANSPORT_FLOOD: 'border-l-info-400',
+  DIRECT: 'border-l-success-500',
+  TRANSPORT_DIRECT: 'border-l-success-400',
 };
 
 const MESHCORE_PAYLOAD_BADGE: Record<string, string> = {
-  ADVERT: 'bg-green-900/60 text-green-300',
-  TXT_MSG: 'bg-orange-900/50 text-orange-200',
+  ADVERT: 'bg-success-900/60 text-success-300',
+  TXT_MSG: 'bg-warning-900/50 text-warning-200',
   GRP_TXT: 'bg-yellow-900/50 text-yellow-200',
   REQ_RESP: 'bg-purple-900/50 text-purple-200',
   TRACE: 'bg-cyan-900/50 text-cyan-200',
@@ -96,9 +96,9 @@ function meshcorePayloadBadgeClass(payload: string | null): string {
 }
 
 function meshtasticPortBadgeClass(portLabel: string): string {
-  if (portLabel.includes('TEXT')) return 'bg-orange-900/50 text-orange-200';
+  if (portLabel.includes('TEXT')) return 'bg-warning-900/50 text-warning-200';
   if (portLabel.includes('TELEMETRY')) return 'bg-cyan-900/50 text-cyan-200';
-  if (portLabel.includes('POSITION')) return 'bg-green-900/50 text-green-300';
+  if (portLabel.includes('POSITION')) return 'bg-success-900/50 text-success-300';
   return 'bg-ink-700 text-ink-200';
 }
 
@@ -387,7 +387,7 @@ function MeshcoreExpandedDetails({
           )}
           {regionMatchDisplay === false && (
             <span
-              className="ml-1 text-orange-400"
+              className="text-warning-400 ml-1"
               title={t('rawPacketLog.transportRegionMismatch')}
             >
               ≠
@@ -878,7 +878,7 @@ export default function RawPacketLogPanel(props: Props) {
         />
         <span className="text-muted text-2xs shrink-0">{filtered.length}</span>
         {isPaused && pendingWhilePaused > 0 ? (
-          <span className="text-2xs shrink-0 text-orange-300/90">
+          <span className="text-2xs text-warning-300/90 shrink-0">
             {t('rawPacketLog.pausedPending', { count: pendingWhilePaused })}
           </span>
         ) : null}
@@ -888,9 +888,9 @@ export default function RawPacketLogPanel(props: Props) {
           disabled={packets.length === 0}
           aria-pressed={isPaused}
           aria-label={isPaused ? t('rawPacketLog.resumeCapture') : t('rawPacketLog.pauseCapture')}
-          className={`shrink-0 rounded border px-2 py-1 text-xs ${
+          className={`text-label shrink-0 rounded border px-2 py-1 ${
             isPaused
-              ? 'border-orange-600/70 bg-orange-950/50 text-orange-200 hover:bg-orange-900/50'
+              ? 'border-warning-600/70 bg-warning-950/50 text-warning-200 hover:bg-warning-900/50'
               : 'border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700'
           } disabled:opacity-40`}
         >
@@ -905,7 +905,7 @@ export default function RawPacketLogPanel(props: Props) {
           onClick={handleClear}
           disabled={packets.length === 0}
           aria-label={t('rawPacketLog.clearPacketLog')}
-          className="border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700 shrink-0 rounded border px-2 py-1 text-xs disabled:opacity-40"
+          className="border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700 text-label shrink-0 rounded border px-2 py-1 disabled:opacity-40"
         >
           {t('common.clear')}
         </button>
@@ -1005,11 +1005,11 @@ export default function RawPacketLogPanel(props: Props) {
       ) : null}
 
       {packets.length === 0 ? (
-        <div className="text-muted flex flex-1 items-center justify-center text-xs">
+        <div className="text-muted text-label flex flex-1 items-center justify-center">
           {t('rawPacketLog.emptyWaiting')}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-muted flex flex-1 items-center justify-center text-xs">
+        <div className="text-muted text-label flex flex-1 items-center justify-center">
           {t('rawPacketLog.noPacketsMatchFilter')}
         </div>
       ) : (
@@ -1072,7 +1072,7 @@ export default function RawPacketLogPanel(props: Props) {
                         (filtered as RxPacketEntry[])[vi.index]?.fromNodeId != null ? (
                           <button
                             type="button"
-                            className="hover:bg-ink-700 rounded p-0.5 text-indigo-300/80 hover:text-indigo-200"
+                            className="hover:bg-ink-700 text-info-300/80 hover:text-info-200 rounded p-0.5"
                             aria-label={t('rawPacketLog.pingTraceNode', {
                               name: meshcoreRawPacketSenderColumnText(
                                 (filtered as RxPacketEntry[])[vi.index].fromNodeId!,
@@ -1173,7 +1173,7 @@ export default function RawPacketLogPanel(props: Props) {
             <button
               type="button"
               onClick={scrollToLatest}
-              className="bg-secondary-dark shadow-level-3 border-ink-600 text-ink-300 hover:bg-ink-600 absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all"
+              className="bg-secondary-dark shadow-level-3 border-ink-600 text-ink-300 hover:bg-ink-600 text-label absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border px-3 py-1.5 font-medium transition-all"
             >
               <ArrowDown aria-hidden className="h-3.5 w-3.5" size={14} />
               {t('rawPacketLog.jumpToLatest')}
@@ -1266,9 +1266,9 @@ function MeshcoreRow({
       <span
         className={`text-2xs hidden w-13 shrink-0 rounded px-1 font-semibold sm:inline ${
           p.routeTypeString === 'FLOOD' || p.routeTypeString === 'TRANSPORT_FLOOD'
-            ? 'bg-indigo-900/50 text-indigo-300'
+            ? 'bg-info-900/50 text-info-300'
             : p.routeTypeString === 'DIRECT' || p.routeTypeString === 'TRANSPORT_DIRECT'
-              ? 'bg-green-900/50 text-green-300'
+              ? 'bg-success-900/50 text-success-300'
               : 'bg-ink-700 text-ink-400'
         }`}
         title={t('rawPacketLog.routeBadgeTooltip', { route: routeLabel })}
@@ -1364,7 +1364,7 @@ function MeshtasticRow({
       <span
         className={`text-2xs w-13 shrink-0 rounded px-1 text-center font-semibold ${
           p.isLocal
-            ? 'bg-indigo-900/50 text-indigo-300'
+            ? 'bg-info-900/50 text-info-300'
             : p.viaMqtt
               ? 'bg-purple-900/50 text-purple-200'
               : 'bg-ink-700 text-ink-200'

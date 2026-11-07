@@ -20,6 +20,7 @@ import {
 import { matchTakUnitFilter } from '@/shared/takUnitFilterMatch';
 
 import { useTakStyleSettings } from '../hooks/useTakStyleSettings';
+import { buttonClassName } from './ui/Button';
 import {
   CHECKBOX_CLASS,
   INPUT_BOX_SM_CLASS,
@@ -149,7 +150,7 @@ function FilterRow({ index, draft, disabled, onChange, onRemove }: RowProps) {
   const stripApplies = draft.op === 'startsWith' || draft.op === 'endsWith';
 
   return (
-    <li className="border-ink-800 space-y-2 rounded-lg border p-3">
+    <li className="border-ink-800 rounded-card space-y-2 border p-3">
       <div className="flex flex-wrap items-center gap-2">
         <input
           id={`${id}-enabled`}
@@ -162,7 +163,7 @@ function FilterRow({ index, draft, disabled, onChange, onRemove }: RowProps) {
           aria-label={t('takServerPanel.unitFilterEnabled', { n })}
           className={CHECKBOX_CLASS}
         />
-        <span className="text-ink-300 text-xs font-medium">
+        <span className="text-ink-300 text-label font-medium">
           {t('takServerPanel.unitFilterHeading', { n })}
         </span>
         <select
@@ -230,7 +231,7 @@ function FilterRow({ index, draft, disabled, onChange, onRemove }: RowProps) {
           onClick={onRemove}
           disabled={disabled}
           aria-label={t('takServerPanel.unitFilterRemove', { n })}
-          className="text-ink-400 rounded-control px-2 py-1 text-xs hover:text-red-300 disabled:opacity-50"
+          className="text-ink-400 rounded-control text-label hover:text-danger-300 px-2 py-1 disabled:opacity-50"
         >
           {t('takServerPanel.unitFilterRemoveShort')}
         </button>
@@ -283,7 +284,10 @@ function FilterRow({ index, draft, disabled, onChange, onRemove }: RowProps) {
             </option>
           ))}
         </select>
-        <label htmlFor={`${id}-color-on`} className="text-ink-300 flex items-center gap-1 text-xs">
+        <label
+          htmlFor={`${id}-color-on`}
+          className="text-ink-300 text-label flex items-center gap-1"
+        >
           <input
             id={`${id}-color-on`}
             type="checkbox"
@@ -309,7 +313,10 @@ function FilterRow({ index, draft, disabled, onChange, onRemove }: RowProps) {
           />
         )}
         {stripApplies && (
-          <label htmlFor={`${id}-strip`} className="text-ink-300 flex items-center gap-1 text-xs">
+          <label
+            htmlFor={`${id}-strip`}
+            className="text-ink-300 text-label flex items-center gap-1"
+          >
             <input
               id={`${id}-strip`}
               type="checkbox"
@@ -392,13 +399,13 @@ function UnitFiltersForm({ initial, isSaving, onSave }: FormProps) {
           disabled={isSaving}
           className={CHECKBOX_CLASS}
         />
-        <label htmlFor={`${id}-unmatched`} className="text-ink-300 cursor-pointer text-sm">
+        <label htmlFor={`${id}-unmatched`} className="text-ink-300 text-body-lg cursor-pointer">
           {t('takServerPanel.unitStylesSendUnmatched')}
         </label>
       </div>
 
       <div data-setting-anchor="tak.styles.relayIcon">
-        <label htmlFor={`${id}-relay-icon`} className="text-ink-400 mb-1 block text-xs">
+        <label htmlFor={`${id}-relay-icon`} className="text-ink-400 text-label mb-1 block">
           {t('takServerPanel.unitStylesRelayIcon')}
         </label>
         <input
@@ -416,7 +423,7 @@ function UnitFiltersForm({ initial, isSaving, onSave }: FormProps) {
           aria-describedby={`${id}-relay-icon-hint`}
           className={`${INPUT_BOX_SM_CLASS} w-full`}
         />
-        <p id={`${id}-relay-icon-hint`} className="text-ink-400 mt-1 text-xs">
+        <p id={`${id}-relay-icon-hint`} className="text-ink-400 text-label mt-1">
           {t('takServerPanel.unitStylesRelayIconHint')}
         </p>
       </div>
@@ -451,7 +458,7 @@ function UnitFiltersForm({ initial, isSaving, onSave }: FormProps) {
           }}
           disabled={isSaving || drafts.length >= TAK_UNIT_FILTERS_MAX}
           aria-label={t('takServerPanel.unitStylesAddFilter')}
-          className="bg-secondary-dark border-ink-600 text-ink-200 hover:border-ink-500 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50"
+          className="bg-secondary-dark border-ink-600 text-ink-200 hover:border-ink-500 rounded-card text-body-lg border px-3 py-1.5 font-medium transition-colors disabled:opacity-50"
         >
           {t('takServerPanel.unitStylesAddFilter')}
         </button>
@@ -460,17 +467,17 @@ function UnitFiltersForm({ initial, isSaving, onSave }: FormProps) {
           onClick={handleSave}
           disabled={isSaving}
           aria-label={t('takServerPanel.unitStylesSave')}
-          className="bg-brand-green hover:bg-brand-green/90 text-app-bg rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50"
+          className={buttonClassName('primary', 'sm')}
         >
           {t('takServerPanel.unitStylesSave')}
         </button>
         {saved && (
-          <span className="text-xs text-green-400">{t('takServerPanel.unitStylesSaved')}</span>
+          <span className="text-label text-success-400">{t('takServerPanel.unitStylesSaved')}</span>
         )}
       </div>
 
       <div>
-        <label htmlFor={`${id}-preview`} className="text-ink-400 mb-1 block text-xs">
+        <label htmlFor={`${id}-preview`} className="text-ink-400 text-label mb-1 block">
           {t('takServerPanel.unitStylesPreviewLabel')}
         </label>
         <input
@@ -515,7 +522,7 @@ function UnitFiltersForm({ initial, isSaving, onSave }: FormProps) {
           </select>
         </div>
         {preview && (
-          <p className="text-ink-400 mt-1 text-xs" aria-live="polite">
+          <p className="text-ink-400 text-label mt-1" aria-live="polite">
             {preview}
           </p>
         )}
@@ -529,9 +536,11 @@ export default function TakUnitFiltersSection() {
   const { t } = useTranslation();
   const { settings, isSaving, error, save } = useTakStyleSettings();
   return (
-    <div className="bg-deep-black border-ink-800 space-y-3 rounded-xl border p-4">
-      <h3 className="text-ink-300 text-sm font-medium">{t('takServerPanel.unitStylesTitle')}</h3>
-      <p className="text-ink-400 text-xs">{t('takServerPanel.unitStylesDesc')}</p>
+    <div className="bg-deep-black border-ink-800 rounded-container space-y-3 border p-4">
+      <h3 className="text-ink-300 text-body-lg font-medium">
+        {t('takServerPanel.unitStylesTitle')}
+      </h3>
+      <p className="text-ink-400 text-label">{t('takServerPanel.unitStylesDesc')}</p>
       {error && <div className={NOTICE_CLASS.error}>{error}</div>}
       {settings !== undefined && (
         <UnitFiltersForm initial={settings} isSaving={isSaving} onSave={save} />

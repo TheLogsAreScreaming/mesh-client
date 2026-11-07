@@ -236,7 +236,7 @@ export default function QrIngestControl({
         <button
           type="button"
           disabled={disabled}
-          className="border-ink-600 text-ink-300 hover:bg-ink-800 rounded border px-2 py-1 text-xs disabled:opacity-40"
+          className="border-ink-600 text-ink-300 hover:bg-ink-800 text-label rounded border px-2 py-1 disabled:opacity-40"
           aria-label={t('qrIngest.chooseImageAria')}
           onClick={() => fileInputRef.current?.click()}
         >
@@ -245,7 +245,7 @@ export default function QrIngestControl({
         <button
           type="button"
           disabled={disabled || scanning || starting}
-          className="border-ink-600 text-ink-300 hover:bg-ink-800 rounded border px-2 py-1 text-xs disabled:opacity-40"
+          className="border-ink-600 text-ink-300 hover:bg-ink-800 text-label rounded border px-2 py-1 disabled:opacity-40"
           aria-label={t('qrIngest.scanCameraAria')}
           onClick={() => {
             void startCamera();
@@ -256,7 +256,7 @@ export default function QrIngestControl({
         {scanning ? (
           <button
             type="button"
-            className="border-ink-600 text-ink-300 hover:bg-ink-800 rounded border px-2 py-1 text-xs"
+            className="border-ink-600 text-ink-300 hover:bg-ink-800 text-label rounded border px-2 py-1"
             aria-label={t('qrIngest.stopCameraAria')}
             onClick={stopCamera}
           >
@@ -290,7 +290,7 @@ export default function QrIngestControl({
         <video ref={videoRef} className="hidden" muted playsInline tabIndex={-1} aria-hidden />
       )}
       {status ? (
-        <p className="text-xs text-orange-400" role="status">
+        <p className="text-label text-warning-400" role="status">
           {status}
         </p>
       ) : null}

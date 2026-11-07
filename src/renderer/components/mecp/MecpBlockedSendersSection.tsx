@@ -16,10 +16,10 @@ export function MecpBlockedSendersSection() {
 
   return (
     <div className="space-y-2">
-      <h4 className="text-ink-300 text-sm font-medium">{t('mecp.block.listTitle')}</h4>
-      <p className="text-muted text-xs leading-relaxed">{t('mecp.block.listHint')}</p>
+      <h4 className="text-ink-300 text-body-lg font-medium">{t('mecp.block.listTitle')}</h4>
+      <p className="text-muted text-label leading-relaxed">{t('mecp.block.listHint')}</p>
       {entries.length === 0 ? (
-        <p className="text-muted text-xs italic">{t('mecp.block.listEmpty')}</p>
+        <p className="text-muted text-label italic">{t('mecp.block.listEmpty')}</p>
       ) : (
         <ul className="space-y-1" aria-label={t('mecp.block.listTitle')}>
           {entries.map((entry) => (
@@ -27,9 +27,9 @@ export function MecpBlockedSendersSection() {
               key={mecpBlockKey(entry.protocol, entry.senderId)}
               className="border-ink-700/70 bg-ink-900/40 flex items-center justify-between gap-2 rounded border px-2 py-1"
             >
-              <span className="text-ink-200 min-w-0 truncate text-xs">{entry.label}</span>
-              <span className="text-muted shrink-0 font-mono text-xs">{entry.senderId}</span>
-              <span className="text-muted shrink-0 text-xs">
+              <span className="text-ink-200 text-label min-w-0 truncate">{entry.label}</span>
+              <span className="text-muted text-label shrink-0 font-mono">{entry.senderId}</span>
+              <span className="text-muted text-label shrink-0">
                 {PROTOCOL_THEME[entry.protocol].displayName}
               </span>
               <button
@@ -38,7 +38,7 @@ export function MecpBlockedSendersSection() {
                 onClick={() => {
                   unblock(entry.protocol, entry.senderId);
                 }}
-                className="border-ink-600 text-ink-300 hover:bg-ink-700 ml-auto shrink-0 rounded border px-2 py-0.5 text-xs"
+                className="border-ink-600 text-ink-300 hover:bg-ink-700 text-label ml-auto shrink-0 rounded border px-2 py-0.5"
               >
                 {t('mecp.block.unblock')}
               </button>

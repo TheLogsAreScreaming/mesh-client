@@ -392,7 +392,8 @@
       "deepSea": "Derin deniz",
       "dusk": "Alacakaranlık",
       "evergreen": "Her dem yeşil",
-      "highContrast": "Yüksek kontrast"
+      "highContrast": "Yüksek kontrast",
+      "daylight": "Gün Işığı"
     },
     "themeAccents": {
       "heading": "Vurgu",

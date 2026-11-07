@@ -44,7 +44,7 @@ export function Panel({
     >
       <div className="border-ink-800 flex min-h-14 shrink-0 flex-wrap items-center gap-x-2.5 gap-y-2 border-b py-2 pr-3 pl-4.5">
         {icon && <span className="text-ink-300 flex shrink-0">{icon}</span>}
-        <Heading id={titleId} className="text-ink-200 text-sm font-semibold">
+        <Heading id={titleId} className="text-ink-200 text-body-lg font-semibold">
           {title}
         </Heading>
         {status && (

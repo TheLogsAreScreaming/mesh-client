@@ -109,7 +109,7 @@ function SectionHeading({
       </span>
       <span className="min-w-0 wrap-anywhere">
         <span className="block font-medium">{title}</span>
-        <span className="text-muted mt-0.5 block text-xs">{description}</span>
+        <span className="text-muted text-label mt-0.5 block">{description}</span>
       </span>
       {badge && (
         <span className="col-start-2 row-start-2 justify-self-start sm:col-start-3 sm:row-start-1">
@@ -154,7 +154,7 @@ function ConfigField({
       <span className={`${FIELD_LABEL_CLASS} flex items-center justify-between gap-2`}>
         <span>{label}</span>
         {changed && (
-          <span className="inline-flex items-center gap-1 text-xs text-orange-300">
+          <span className="text-label text-warning-300 inline-flex items-center gap-1">
             <SlidersHorizontal aria-hidden size={12} />
             {t('infraConfig.edited')}
           </span>
@@ -205,7 +205,7 @@ function ConfigField({
         />
       )}
       {unavailable && (
-        <span className="text-muted block text-xs">{t('infraConfig.unsupported')}</span>
+        <span className="text-muted text-label block">{t('infraConfig.unsupported')}</span>
       )}
     </label>
   );
@@ -321,11 +321,11 @@ function ConfigSection({
         icon={<SectionIcon aria-hidden size={20} />}
         badge={
           dirty ? (
-            <span className="rounded-badge border border-orange-700/50 bg-orange-950/40 px-2 py-1 text-xs text-orange-200">
+            <span className="rounded-badge border-warning-700/50 bg-warning-950/40 text-label text-warning-200 border px-2 py-1">
               {t('infraConfig.pendingChanges', { count: changedCount })}
             </span>
           ) : snapshot ? (
-            <span className="text-muted hidden items-center gap-1 text-xs sm:inline-flex">
+            <span className="text-muted text-label hidden items-center gap-1 sm:inline-flex">
               <Check aria-hidden size={14} />
               {t('infraConfig.read')}
             </span>
@@ -350,10 +350,14 @@ function ConfigSection({
           ))}
         </div>
         {section === 'routing' && (
-          <p className="text-muted text-xs">{t('infraConfig.advertHint')}</p>
+          <p className="text-muted text-label">{t('infraConfig.advertHint')}</p>
         )}
-        {section === 'room' && <p className="text-muted text-xs">{t('infraConfig.guestHint')}</p>}
-        {section === 'scope' && <p className="text-muted text-xs">{t('infraConfig.scopeHint')}</p>}
+        {section === 'room' && (
+          <p className="text-muted text-label">{t('infraConfig.guestHint')}</p>
+        )}
+        {section === 'scope' && (
+          <p className="text-muted text-label">{t('infraConfig.scopeHint')}</p>
+        )}
         <div className="border-ink-800 flex flex-wrap items-center gap-2 border-t pt-4">
           <Button
             variant="primary"
@@ -472,7 +476,7 @@ function RoomPermissions({
               ))}
             </ul>
           ) : (
-            <p className="text-muted text-xs">{t('roomsPanel.membersAclRemoteHint')}</p>
+            <p className="text-muted text-label">{t('roomsPanel.membersAclRemoteHint')}</p>
           ))}
         <MeshcoreRoomAclControls
           disabled={!connected || busy}
@@ -559,14 +563,14 @@ export function MeshcoreInfraConfigPanel({ node, isConnected, onSend, onBack, on
             {t('infraConfig.back')}
           </Button>
           <div className="min-w-0 flex-1 basis-full sm:basis-0">
-            <h2 className="text-ink-200 text-lg font-semibold wrap-anywhere">
+            <h2 className="text-ink-200 text-heading font-semibold wrap-anywhere">
               {t('infraConfig.title', { name: node.long_name ?? node.node_id.toString(16) })}
             </h2>
-            <p className="text-muted font-mono text-xs break-all">
+            <p className="text-muted text-label font-mono break-all">
               {node.node_id.toString(16).toUpperCase()}
             </p>
           </div>
-          <span className="border-ink-700 rounded-badge text-ink-300 inline-flex items-center gap-2 border px-2.5 py-1.5 text-xs">
+          <span className="border-ink-700 rounded-badge text-ink-300 text-label inline-flex items-center gap-2 border px-2.5 py-1.5">
             <StatusDot tone={isConnected ? 'ok' : 'off'} />
             {t(isConnected ? 'infraConfig.radioConnected' : 'infraConfig.radioDisconnected')}
           </span>

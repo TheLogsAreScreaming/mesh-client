@@ -115,15 +115,15 @@ export default function LogAnalyzeModal({
   if (!isOpen) return null;
 
   const severityColor = (sev: 'error' | 'warning' | 'info') => {
-    if (sev === 'error') return 'text-red-400';
-    if (sev === 'warning') return 'text-orange-400';
-    return 'text-indigo-400';
+    if (sev === 'error') return 'text-danger-400';
+    if (sev === 'warning') return 'text-warning-400';
+    return 'text-info-400';
   };
 
   const severityBadge = (sev: 'error' | 'warning' | 'info') => {
-    if (sev === 'error') return 'bg-red-400/20 text-red-400';
-    if (sev === 'warning') return 'bg-orange-400/20 text-orange-400';
-    return 'bg-indigo-400/20 text-indigo-400';
+    if (sev === 'error') return 'bg-danger-400/20 text-danger-400';
+    if (sev === 'warning') return 'bg-warning-400/20 text-warning-400';
+    return 'bg-info-400/20 text-info-400';
   };
 
   const severityLabel = (sev: 'error' | 'warning' | 'info') => {
@@ -148,7 +148,7 @@ export default function LogAnalyzeModal({
         className="bg-deep-black rounded-modal shadow-level-3 border-ink-700 relative z-10 flex max-h-[80vh] w-full max-w-2xl flex-col border"
       >
         <div className="border-ink-700 flex shrink-0 items-center justify-between border-b px-5 py-4">
-          <h2 id="log-analyze-title" className="text-ink-100 text-lg font-semibold">
+          <h2 id="log-analyze-title" className="text-ink-100 text-heading font-semibold">
             {t('logAnalyzeModal.title')}
           </h2>
           <button
@@ -156,14 +156,14 @@ export default function LogAnalyzeModal({
             onClick={onClose}
             aria-label={t('aria.closeDialog')}
             {...{ [PARENT_HOVER_ATTR]: '' }}
-            className="hover:bg-secondary-dark text-muted hover:text-ink-200 rounded-lg p-1.5 transition-colors"
+            className="hover:bg-secondary-dark text-muted hover:text-ink-200 rounded-card p-1.5 transition-colors"
           >
             <X aria-hidden className="h-5 w-5" trigger={parentIconTrigger} size={20} />
           </button>
         </div>
 
         <div className="border-ink-700 shrink-0 border-b px-5 py-3">
-          <div className="flex items-center justify-between text-xs">
+          <div className="text-label flex items-center justify-between">
             <span className="text-ink-400">
               {t('logAnalyzeModal.totalEntries', {
                 count: result.totalEntries.toLocaleString(),
@@ -183,10 +183,10 @@ export default function LogAnalyzeModal({
             </span>
             <span className="text-muted">{timeRange}</span>
           </div>
-          <p className="text-muted mt-2 text-xs leading-snug">
+          <p className="text-muted text-label mt-2 leading-snug">
             {t('logAnalyzeModal.protocolNote')}
           </p>
-          <p className="text-muted mt-1 text-xs">{t('logAnalyzeModal.historyNote')}</p>
+          <p className="text-muted text-label mt-1">{t('logAnalyzeModal.historyNote')}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -195,22 +195,22 @@ export default function LogAnalyzeModal({
               onClick={() => {
                 void copyReport();
               }}
-              className="border-ink-600 bg-ink-800 text-ink-200 hover:bg-ink-700 rounded border px-3 py-1.5 text-xs disabled:opacity-50"
+              className="border-ink-600 bg-ink-800 text-ink-200 hover:bg-ink-700 text-label rounded border px-3 py-1.5 disabled:opacity-50"
             >
               {t('logAnalyzeModal.copyReport')}
             </button>
             {copyStatus === 'copied' && (
-              <span role="status" className="text-ink-300 text-xs">
+              <span role="status" className="text-ink-300 text-label">
                 {t('logAnalyzeModal.copySuccess')}
               </span>
             )}
             {copyStatus === 'failed' && (
-              <span role="alert" className="text-xs text-red-400">
+              <span role="alert" className="text-label text-danger-400">
                 {t('logAnalyzeModal.copyFailure')}
               </span>
             )}
           </div>
-          <p className="text-muted mt-1 text-xs">{t('logAnalyzeModal.copyHint')}</p>
+          <p className="text-muted text-label mt-1">{t('logAnalyzeModal.copyHint')}</p>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
@@ -219,32 +219,34 @@ export default function LogAnalyzeModal({
           ) : (
             <div className="space-y-2">
               {result.categories.map((cat) => (
-                <div key={cat.id} className="bg-secondary-dark/50 space-y-1 rounded-lg px-3 py-2">
+                <div key={cat.id} className="bg-secondary-dark/50 rounded-card space-y-1 px-3 py-2">
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
-                      <span className="text-ink-200 text-sm">
+                      <span className="text-ink-200 text-body-lg">
                         {t(LOG_ANALYZER_CATEGORY_LABEL_KEYS[cat.id])}
                       </span>
                       <span
-                        className={`shrink-0 rounded px-1.5 py-0.5 text-xs ${severityBadge(cat.severity)}`}
+                        className={`text-label shrink-0 rounded px-1.5 py-0.5 ${severityBadge(cat.severity)}`}
                       >
                         {severityLabel(cat.severity)}
                       </span>
                     </div>
                     <div className="flex shrink-0 items-center gap-3">
-                      <span className="text-ink-300 font-mono text-sm">{cat.count}</span>
-                      <span className="text-muted text-xs">{formatLogTimeAgo(cat.lastTs, t)}</span>
+                      <span className="text-ink-300 text-body-lg font-mono">{cat.count}</span>
+                      <span className="text-muted text-label">
+                        {formatLogTimeAgo(cat.lastTs, t)}
+                      </span>
                     </div>
                   </div>
                   {cat.lastMessage ? (
                     <p
-                      className="text-muted pl-0.5 font-mono text-xs break-all"
+                      className="text-muted text-label pl-0.5 font-mono break-all"
                       title={cat.lastMessage}
                     >
                       {t('logAnalyzeModal.lastMessagePrefix')} {cat.lastMessage}
                     </p>
                   ) : null}
-                  <details className="pt-1 text-xs">
+                  <details className="text-label pt-1">
                     <summary className="text-ink-200 cursor-pointer rounded py-1 focus-visible:outline-2 focus-visible:outline-offset-2">
                       {t('logAnalyzeModal.evidence', {
                         category: t(LOG_ANALYZER_CATEGORY_LABEL_KEYS[cat.id]),
@@ -290,20 +292,20 @@ export default function LogAnalyzeModal({
 
           {result.categories.length > 0 && (
             <div className="border-ink-700 mt-4 border-t pt-4">
-              <h3 className="text-muted mb-2 text-xs">
+              <h3 className="text-muted text-label mb-2">
                 {t('logAnalyzeModal.recommendationsHeading')}
               </h3>
               <ul className="space-y-1.5">
                 {dedupedRecs.map((row) => (
                   <li
                     key={row.recommendationGroup}
-                    className="text-ink-300 flex items-start gap-2 text-sm"
+                    className="text-ink-300 text-body-lg flex items-start gap-2"
                   >
                     <span className={`${severityColor(row.severity)} mt-0.5`}>•</span>
                     <span>
                       {t(resolveLogAnalyzerRecommendationKey(row.recommendationGroup))}
                       {row.categoryIds.length > 1 ? (
-                        <span className="text-muted mt-0.5 block text-xs">
+                        <span className="text-muted text-label mt-0.5 block">
                           {t('logAnalyzeModal.appliesToCategories', {
                             labels: row.categoryIds
                               .map((id) => t(LOG_ANALYZER_CATEGORY_LABEL_KEYS[id]))

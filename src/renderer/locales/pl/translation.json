@@ -406,7 +406,8 @@
       "deepSea": "Głębia",
       "dusk": "Zmierzch",
       "evergreen": "Wiecznie zielony",
-      "highContrast": "Wysoki kontrast"
+      "highContrast": "Wysoki kontrast",
+      "daylight": "Światło dzienne"
     },
     "themeAccents": {
       "heading": "Akcent",

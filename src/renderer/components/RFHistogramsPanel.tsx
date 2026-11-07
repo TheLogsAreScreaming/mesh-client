@@ -130,22 +130,26 @@ export default function RFHistogramsPanel({ nodes }: RFHistogramsPanelProps) {
   return (
     <div className="flex flex-col gap-6 p-4">
       <div>
-        <h2 className="text-ink-200 text-base font-semibold">{t('rfHistograms.title')}</h2>
-        <p className="text-ink-400 text-xs">{t('rfHistograms.subtitle', { count: nodeCount })}</p>
+        <h2 className="text-ink-200 text-title font-semibold">{t('rfHistograms.title')}</h2>
+        <p className="text-ink-400 text-label">
+          {t('rfHistograms.subtitle', { count: nodeCount })}
+        </p>
       </div>
 
       <section>
-        <h3 className="text-ink-300 mb-1 text-sm font-medium">{t('rfHistograms.snrTitle')}</h3>
+        <h3 className="text-ink-300 text-body-lg mb-1 font-medium">{t('rfHistograms.snrTitle')}</h3>
         <HistogramChart data={snrData} xlabel={t('rfHistograms.snrAxis')} color="#22c55e" />
       </section>
 
       <section>
-        <h3 className="text-ink-300 mb-1 text-sm font-medium">{t('rfHistograms.rssiTitle')}</h3>
+        <h3 className="text-ink-300 text-body-lg mb-1 font-medium">
+          {t('rfHistograms.rssiTitle')}
+        </h3>
         <HistogramChart data={rssiData} xlabel={t('rfHistograms.rssiAxis')} color="#3b82f6" />
       </section>
 
       <section>
-        <h3 className="text-ink-300 mb-1 text-sm font-medium">{t('rfHistograms.hopTitle')}</h3>
+        <h3 className="text-ink-300 text-body-lg mb-1 font-medium">{t('rfHistograms.hopTitle')}</h3>
         <HistogramChart data={hopData} xlabel={t('rfHistograms.hopAxis')} color="#f59e0b" />
       </section>
     </div>
