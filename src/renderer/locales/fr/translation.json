@@ -194,7 +194,6 @@
     "meshcorePathHashDeviceReported": "Rapports radio connectés : {{mode}}",
     "meshcorePathHashModeHint": "Nécessite un microprogramme compagnon v1.14.0+ et des répéteurs sur v1.14+ le long du chemin. Les répéteurs pré-1,14 déposent silencieusement des paquets de plusieurs octets. Les serveurs de répéteur et de salle peuvent également utiliser CLI : set path.hash.mode {0|1|2}.",
     "meshcorePathHashApplyFailed": "Échec du mode de hachage du chemin : {{message}}",
-    "logPanelHelp": "Lorsqu'il est activé, un flux de journaux en direct apparaît sur la droite. Dans l’onglet Reticulum, les lignes de périphériques incluent la sortie side-car et l’état de l’interface locale. Les lignes de débogage nécessitent la case à cocher dans le panneau de journal.",
     "autoPruneUnheardContactsDaysAria": "Élague automatiquement les contacts non entendus au démarrage, datant de plus de {{days}} jours",
     "capTotalContactsCountAria": "Limiter le nombre total de contacts, conserver les contacts {{count}} les plus récemment vus",
     "unknownError": "Erreur inconnue",
@@ -364,7 +363,6 @@
     "messageActionsBarBgVisible": "Afficher l'arrière-plan",
     "shareMyLocation": "Partager mon emplacement",
     "shareMyLocationOffInfo": "Le partage de localisation est désactivé — l'actualisation du GPS de l'hôte et l'envoi de maillage sont désactivés. Activez Partager ma position ci-dessus pour utiliser l'actualisation automatique ou envoyer votre position.",
-    "shareMyLocationHint": "Lorsqu'elle est activée, cette application peut rechercher votre position sur cet ordinateur et l'envoyer via Meshtastic, MeshCore ou Reticulum (partage de chat, push radio, RMAP). Lorsqu'elles sont désactivées, les recherches GPS de l'hôte et l'envoi d'applications sont désactivés ; les coordonnées statiques ne fonctionnent toujours que pour votre carte locale. Une radio avec son propre GPS peut toujours afficher votre position localement. Le micrologiciel de l'appareil peut continuer à diffuser jusqu'à ce que vous régliez les paramètres Radio ou Modules.",
     "fontSize": "Taille de police",
     "fontSizeDesc": "Ajustez la taille du texte dans l'application. Les cartes, les graphiques et le terminal ne sont pas affectés.",
     "decreaseFontSize": "Réduire la taille de la police",
@@ -421,7 +419,9 @@
     "updatesSection": "Mises à jour",
     "autoUpdateDownload": "Télécharger automatiquement les mises à jour",
     "autoUpdateDownloadDesc": "Télécharge la dernière mise à jour en arrière-plan après chaque vérification. Lorsqu'elle est désactivée, les mises à jour sont toujours détectées, mais seulement téléchargées lorsque vous appuyez sur le bouton Télécharger — utile lorsqu'un gestionnaire de paquets gère l'installation.",
-    "autoUpdateDownloadSaveFailed": "Impossible d'enregistrer le paramètre de téléchargement de mise à jour automatique."
+    "autoUpdateDownloadSaveFailed": "Impossible d'enregistrer le paramètre de téléchargement de mise à jour automatique.",
+    "shareMyLocationHint": "Lorsqu'elle est activée, cette application peut rechercher votre position sur cet ordinateur et l'envoyer sur Meshtastic ou MeshCore (partage de chat, push radio). Lorsqu'elles sont désactivées, les recherches GPS de l'hôte et l'envoi d'applications sont désactivés ; les coordonnées statiques ne fonctionnent toujours que pour votre carte locale. Une radio avec son propre GPS peut toujours afficher votre position localement. Le micrologiciel de l'appareil peut continuer à diffuser jusqu'à ce que vous régliez les paramètres Radio ou Modules.",
+    "logPanelHelp": "Lorsqu'il est activé, un flux de journaux en direct apparaît à droite. Les lignes de débogage nécessitent la case à cocher à l'intérieur du panneau de journal."
   },
   "aria": {
     "closeDialog": "Fermer la boîte de dialogue",

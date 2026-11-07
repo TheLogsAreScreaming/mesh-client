@@ -194,7 +194,6 @@
     "meshcorePathHashDeviceReported": "Angeschlossene Funkberichte: {{mode}}",
     "meshcorePathHashModeHint": "Benötigt Begleit-Firmware v1.14.0+ und Repeater auf v1.14+ entlang des Pfades. Pre-1.14 Repeater legen Multibyte-Pakete stillschweigend ab. Repeater- und Raumserver können auch CLI: set path.hash.mode {0|1|2} verwenden.",
     "meshcorePathHashApplyFailed": "Pfad-Hash-Modus fehlgeschlagen: {{message}}",
-    "logPanelHelp": "Wenn diese Option aktiviert ist, wird rechts ein Live-Protokollstream angezeigt. Auf der Registerkarte „Reticulum“ umfassen die Gerätezeilen die Sidecar-Ausgabe und den Zustand der lokalen Schnittstelle. Für Debugzeilen ist das Kontrollkästchen im Protokollbereich erforderlich.",
     "autoPruneUnheardContactsDaysAria": "Ungehörte Kontakte, die älter als {{days}} Tage sind, werden beim Start automatisch bereinigt",
     "capTotalContactsCountAria": "Begrenzen Sie die Gesamtzahl der Kontakte und behalten Sie die zuletzt gesehenen {{count}}-Kontakte bei",
     "unknownError": "Unbekannter Fehler",
@@ -364,7 +363,6 @@
     "messageActionsBarBgVisible": "Zeige Hintergrund",
     "shareMyLocation": "Meinen Standort teilen",
     "shareMyLocationOffInfo": "Die Standortfreigabe ist deaktiviert — Host-GPS-Aktualisierung und Mesh-Versand sind deaktiviert. Aktivieren Sie Meinen Standort oben teilen, um die automatische Aktualisierung zu verwenden oder Ihre Position zu senden.",
-    "shareMyLocationHint": "Wenn diese App aktiviert ist, kann sie Ihren Standort auf diesem Computer nachschlagen und ihn über Meshtastic, MeshCore oder Reticulum (Chatfreigabe, Radio-Push, RMAP) senden. Wenn diese Option deaktiviert ist, sind Host-GPS-Suchvorgänge und das Senden von Apps deaktiviert. Statische Koordinaten funktionieren immer noch nur für deine lokale Karte. Ein Radio mit eigenem GPS kann immer noch Ihre Position vor Ort anzeigen. Die Geräte-Firmware kann weiterhin senden, bis Sie die Radio- oder Moduleinstellungen anpassen.",
     "fontSize": "Schriftgrösse",
     "fontSizeDesc": "Passen Sie die Textgröße in der App an. Karten, Diagramme und das Terminal sind nicht betroffen.",
     "decreaseFontSize": "Schrift verkleinern",
@@ -421,7 +419,9 @@
     "updatesSection": "Updates",
     "autoUpdateDownload": "App-Updates automatisch downloaden",
     "autoUpdateDownloadDesc": "Lädt nach jeder Prüfung das neueste Update im Hintergrund herunter. Wenn diese Option deaktiviert ist, werden Updates immer noch erkannt, aber nur heruntergeladen, wenn Sie auf die Schaltfläche Download klicken — nützlich, wenn ein Paketmanager die Installation übernimmt.",
-    "autoUpdateDownloadSaveFailed": "Die automatische Update-Download-Einstellung konnte nicht gespeichert werden."
+    "autoUpdateDownloadSaveFailed": "Die automatische Update-Download-Einstellung konnte nicht gespeichert werden.",
+    "shareMyLocationHint": "Wenn diese App aktiviert ist, sucht sie möglicherweise deinen Standort auf diesem Computer und sendet ihn über Meshtastic oder MeshCore (Chat-Share, Radio-Push). Wenn diese Option deaktiviert ist, sind Host-GPS-Suchvorgänge und das Senden von Apps deaktiviert. Statische Koordinaten funktionieren immer noch nur für deine lokale Karte. Ein Radio mit eigenem GPS kann immer noch Ihre Position vor Ort anzeigen. Die Geräte-Firmware kann weiterhin senden, bis Sie die Radio- oder Moduleinstellungen anpassen.",
+    "logPanelHelp": "Wenn diese Option aktiviert ist, wird rechts ein Live-Log-Stream angezeigt. Debug-Zeilen erfordern das Kontrollkästchen im Protokollfenster."
   },
   "aria": {
     "closeDialog": "Schließen Dialog",

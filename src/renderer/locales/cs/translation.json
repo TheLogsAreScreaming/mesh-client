@@ -194,7 +194,6 @@
     "meshcorePathHashDeviceReported": "Připojené rádiové zprávy: {{mode}}",
     "meshcorePathHashModeHint": "Vyžaduje doprovodný firmware v1.14.0+ a opakovače na v1.14+ podél cesty. Pre-1.14 opakovače tiše upouštějí vícebajtové pakety. Servery opakovače a místnosti mohou také používat CLI: set path.hash.mode {0|1|2}.",
     "meshcorePathHashApplyFailed": "Režim hash cesty se nezdařil: {{message}}",
-    "logPanelHelp": "Je-li povoleno, na pravé straně se zobrazí živý záznam protokolu. Na kartě Reticulum řádky zařízení zahrnují výstup postranního vozíku a stav místního rozhraní. Řádky ladění vyžadují zaškrtávací políčko na panelu protokolu.",
     "autoPruneUnheardContactsDaysAria": "Automaticky oříznout neslyšené kontakty při spuštění, starší než {{days}} dnů",
     "capTotalContactsCountAria": "Omezit celkový počet kontaktů, ponechat naposledy zobrazené {{count}} kontakty",
     "unknownError": "Neznámá chyba",
@@ -364,7 +363,6 @@
     "messageActionsBarBgVisible": "Zobrazit pozadí",
     "shareMyLocation": "Sdílet mé umístění",
     "shareMyLocationOffInfo": "Sdílení polohy je vypnuto — aktualizace GPS hostitele a odesílání sítě jsou zakázány. Povolte možnost Sdílet moji polohu výše a použijte automatické obnovení nebo odešlete svou pozici.",
-    "shareMyLocationHint": "Pokud je tato aplikace povolena, může vyhledat vaši polohu v tomto počítači a odeslat ji přes Meshtastic, MeshCore nebo Reticulum (sdílení chatu, rádio push, RMAP). Po vypnutí jsou vyhledávání GPS hostitele a odesílání aplikací vypnuté; statické souřadnice stále fungují pouze pro vaši místní mapu. Rádio s vlastní GPS může stále zobrazovat vaši polohu lokálně. Firmware zařízení se může vysílat, dokud neupravíte nastavení rádia nebo modulů.",
     "deleteOldNodesConfirm_few": "Tímto trvale smažete všechny uzly, které nebyly za poslední {{days}} dny slyšet. Budou znovu objeveny, až budou znovu vysílat.",
     "pruneDistantDeleteConfirm_few": "Smazat {{count}} uzly",
     "pruneDistantNodesConfirm_few": "Touto akcí trvale smažete ze zařízení {{count}} uzly za {{distance}} {{unit}}. Toto nelze vrátit zpět.",
@@ -428,7 +426,9 @@
     "updatesSection": "Aktualizace",
     "autoUpdateDownload": "Automaticky stahovat aktualizace",
     "autoUpdateDownloadDesc": "Po každém šeku stáhne nejnovější aktualizaci na pozadí. Když je vypnuto, aktualizace jsou stále detekovány, ale stahovány pouze po stisknutí tlačítka Stáhnout — užitečné, když správce balíčků zpracovává instalaci.",
-    "autoUpdateDownloadSaveFailed": "Nelze uložit nastavení automatické aktualizace stahování."
+    "autoUpdateDownloadSaveFailed": "Nelze uložit nastavení automatické aktualizace stahování.",
+    "shareMyLocationHint": "Pokud je tato aplikace povolena, může vyhledat tvoji polohu v tomto počítači a odeslat ji přes Meshtastic nebo MeshCore (sdílení chatu, rádiový signál). Po vypnutí jsou vyhledávání GPS hostitele a odesílání aplikací vypnuté; statické souřadnice stále fungují pouze pro vaši místní mapu. Rádio s vlastní GPS může stále zobrazovat vaši polohu lokálně. Firmware zařízení se může vysílat, dokud neupravíte nastavení rádia nebo modulů.",
+    "logPanelHelp": "Pokud je povoleno, na pravé straně se zobrazí živý záznamový proud. Ladicí řádky vyžadují zaškrtávací políčko uvnitř panelu protokolu."
   },
   "aria": {
     "closeDialog": "Zavřít dialog",

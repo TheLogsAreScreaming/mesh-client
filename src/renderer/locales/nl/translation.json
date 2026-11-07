@@ -194,7 +194,6 @@
     "meshcorePathHashDeviceReported": "Verbonden radioreportages: {{mode}}",
     "meshcorePathHashModeHint": "Vereist begeleidende firmware v1.14.0+ en repeaters op v1.14+ langs het pad. Pre-1.14 repeaters laten geruisloos multibyte-pakketten vallen. Repeater- en roomservers kunnen ook CLI: set path.hash.mode {0|1|2} gebruiken.",
     "meshcorePathHashApplyFailed": "Pad hash-modus mislukt: {{message}}",
-    "logPanelHelp": "Indien ingeschakeld, verschijnt er aan de rechterkant een live logstream. Op het tabblad Reticulum omvatten apparaatregels zijspanuitvoer en lokale interfacestatus. Voor foutopsporingsregels is het selectievakje in het logpaneel vereist.",
     "autoPruneUnheardContactsDaysAria": "Ongehoorde contacten automatisch opschonen bij het opstarten, ouder dan {{days}} dagen",
     "capTotalContactsCountAria": "Beperk het totale aantal contacten, bewaar de meest recent geziene {{count}} contacten",
     "unknownError": "Onbekende fout",
@@ -364,7 +363,6 @@
     "messageActionsBarBgVisible": "Achtergrond tonen",
     "shareMyLocation": "Deel mijn locatie",
     "shareMyLocationOffInfo": "Locatie delen is uitgeschakeld — host GPS verversen en mesh verzenden zijn uitgeschakeld. Schakel Mijn locatie hierboven delen in om automatisch vernieuwen te gebruiken of uw positie te verzenden.",
-    "shareMyLocationHint": "Indien ingeschakeld, kan deze app uw locatie op deze computer opzoeken en deze via Meshtastic, MeshCore of Reticulum verzenden (chat share, radio push, RMAP). Wanneer uitgeschakeld, zijn de GPS-zoekopdrachten van de host en het verzenden van de app uitgeschakeld; statische coördinaten werken nog steeds alleen voor je lokale kaart. Een radio met een eigen GPS kan uw positie nog steeds lokaal weergeven. Apparaatfirmware kan nog steeds uitzenden totdat u de radio- of module-instellingen aanpast.",
     "fontSize": "Lettertypegrootte",
     "fontSizeDesc": "Pas de tekstgrootte in de app aan. Kaarten, grafieken en de terminal worden niet beïnvloed.",
     "decreaseFontSize": "Lettertype verkleinen",
@@ -421,7 +419,9 @@
     "updatesSection": "Updates",
     "autoUpdateDownload": "Updates automatisch downloaden",
     "autoUpdateDownloadDesc": "Download de laatste update op de achtergrond na elke controle. Wanneer uitgeschakeld, worden updates nog steeds gedetecteerd, maar alleen gedownload wanneer u op de knop Downloaden drukt — handig wanneer een pakketbeheerder de installatie afhandelt.",
-    "autoUpdateDownloadSaveFailed": "Kon de instelling voor het automatisch downloaden van updates niet opslaan."
+    "autoUpdateDownloadSaveFailed": "Kon de instelling voor het automatisch downloaden van updates niet opslaan.",
+    "shareMyLocationHint": "Indien ingeschakeld, kan deze app je locatie op deze computer opzoeken en deze via Meshtastic of MeshCore verzenden (chat share, radio push). Wanneer uitgeschakeld, zijn de GPS-zoekopdrachten van de host en het verzenden van de app uitgeschakeld; statische coördinaten werken nog steeds alleen voor je lokale kaart. Een radio met een eigen GPS kan uw positie nog steeds lokaal weergeven. Apparaatfirmware kan nog steeds uitzenden totdat u de radio- of module-instellingen aanpast.",
+    "logPanelHelp": "Wanneer ingeschakeld, verschijnt er een live logstream aan de rechterkant. Debugregels vereisen het selectievakje in het logpaneel."
   },
   "aria": {
     "closeDialog": "Dialoogvenster sluiten",
