@@ -78,10 +78,10 @@ describe('Flatpak builder provenance', () => {
     ).toEqual({
       builder: { image: FLATPAK_BUILDER_IMAGE, privileged: true },
       source: {
-        repository: 'https://github.com/charlottemeshtastic/mesh-client',
+        repository: 'https://github.com/TheLogsAreScreaming/mesh-client',
         commit: SOURCE_SHA,
       },
-      workflow: 'charlottemeshtastic/mesh-client/.github/workflows/flatpak.yaml',
+      workflow: 'TheLogsAreScreaming/mesh-client/.github/workflows/flatpak.yaml',
       architectures: ['aarch64', 'x86_64'],
       generator: { requirementsSha256: flatpakGeneratorRequirementsSha256() },
     });
@@ -189,20 +189,20 @@ describe('Flatpak builder provenance', () => {
         attestationBundle,
         sourceSha: SOURCE_SHA,
         sourceRef: 'refs/tags/v1.2.3',
-        repository: 'charlottemeshtastic/mesh-client',
+        repository: 'TheLogsAreScreaming/mesh-client',
       }),
     ).toEqual([
       'attestation',
       'verify',
       path.join(bundleDir, FLATPAK_RELEASE_BUNDLES[1]),
       '--repo',
-      'charlottemeshtastic/mesh-client',
+      'TheLogsAreScreaming/mesh-client',
       '--bundle',
       attestationBundle,
       '--predicate-type',
       FLATPAK_ATTESTATION_PREDICATE_TYPE,
       '--signer-workflow',
-      'charlottemeshtastic/mesh-client/.github/workflows/flatpak.yaml',
+      'TheLogsAreScreaming/mesh-client/.github/workflows/flatpak.yaml',
       '--source-digest',
       SOURCE_SHA,
       '--source-ref',
@@ -219,7 +219,7 @@ describe('Flatpak builder provenance', () => {
       attestationBundle: '/tmp/flatpak-attestation.json',
       sourceSha: SOURCE_SHA,
       sourceRef: 'refs/tags/v1.2.3',
-      repository: 'charlottemeshtastic/mesh-client',
+      repository: 'TheLogsAreScreaming/mesh-client',
     };
     expect(() =>
       buildGithubAttestationVerifyArgs({ ...base, repository: 'attacker/repository' }),
@@ -243,7 +243,7 @@ describe('Flatpak builder provenance', () => {
         sourceSha: SOURCE_SHA,
         sourceRef: 'refs/tags/v1.2.3',
         builderImage: FLATPAK_BUILDER_IMAGE,
-        repository: 'charlottemeshtastic/mesh-client',
+        repository: 'TheLogsAreScreaming/mesh-client',
         runGh(args) {
           capturedArgs = args;
           return { status: 0, stdout: JSON.stringify(verifiedResult()) };
@@ -256,7 +256,7 @@ describe('Flatpak builder provenance', () => {
         attestationBundle: releaseAttestation,
         sourceSha: SOURCE_SHA,
         sourceRef: 'refs/tags/v1.2.3',
-        repository: 'charlottemeshtastic/mesh-client',
+        repository: 'TheLogsAreScreaming/mesh-client',
       }),
     );
     expect(readFileSync(releaseAttestation, 'utf8')).toBe('signed-bundle');
@@ -274,7 +274,7 @@ describe('Flatpak builder provenance', () => {
       sourceSha: SOURCE_SHA,
       sourceRef: 'refs/tags/v1.2.3',
       builderImage: FLATPAK_BUILDER_IMAGE,
-      repository: 'charlottemeshtastic/mesh-client',
+      repository: 'TheLogsAreScreaming/mesh-client',
     };
     await expect(
       verifyGithubFlatpakAttestation({

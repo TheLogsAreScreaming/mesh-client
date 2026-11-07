@@ -27,12 +27,12 @@ import { isDeepStrictEqual } from 'node:util';
 export const FLATPAK_BUILDER_IMAGE =
   'ghcr.io/flathub-infra/flatpak-github-actions:freedesktop-24.08@sha256:66eb59fd5d923833e8e4142f60e542156aad4b8b1d5db38149d814c659e274bc';
 export const FLATPAK_ATTESTATION_PREDICATE_TYPE =
-  'https://github.com/charlottemeshtastic/mesh-client/attestations/flatpak-builder/v1';
+  'https://github.com/TheLogsAreScreaming/mesh-client/attestations/flatpak-builder/v1';
 export const FLATPAK_ATTEST_ACTION = 'actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6';
 export const FLATPAK_SIGNER_WORKFLOW =
-  'charlottemeshtastic/mesh-client/.github/workflows/flatpak.yaml';
-export const FLATPAK_SOURCE_REPOSITORY = 'https://github.com/charlottemeshtastic/mesh-client';
-export const FLATPAK_GITHUB_REPOSITORY = 'charlottemeshtastic/mesh-client';
+  'TheLogsAreScreaming/mesh-client/.github/workflows/flatpak.yaml';
+export const FLATPAK_SOURCE_REPOSITORY = 'https://github.com/TheLogsAreScreaming/mesh-client';
+export const FLATPAK_GITHUB_REPOSITORY = 'TheLogsAreScreaming/mesh-client';
 export const FLATPAK_RELEASE_BUNDLES = Object.freeze([
   'org.coloradomesh.MeshClient.flatpak-aarch64.flatpak',
   'org.coloradomesh.MeshClient.flatpak-x86_64.flatpak',

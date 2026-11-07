@@ -360,7 +360,7 @@ jobs:
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
         with:
           subject-path: flatpak-dist/*.flatpak
-          predicate-type: https://github.com/charlottemeshtastic/mesh-client/attestations/flatpak-builder/v1
+          predicate-type: https://github.com/TheLogsAreScreaming/mesh-client/attestations/flatpak-builder/v1
           predicate-path: flatpak-builder-predicate.json
 
       - name: Verify signed Flatpak provenance and bundle digests
