@@ -528,6 +528,10 @@ export default function ConnectionPanel({
     },
   );
   const [mqttProfiles, setMqttProfiles] = useState<MqttProfile[]>(loadMqttProfiles);
+  const mqttProfilesRef = useRef(mqttProfiles);
+  mqttProfilesRef.current = mqttProfiles;
+  const persistedMqttProfilesRef = useRef(mqttProfiles);
+  const mqttProfileSaveRequestRef = useRef(0);
   // Profile chosen while connected whose broker/credentials differ; applied once MQTT disconnects
   // so the live session's settings and matched profile stay accurate.
   const [pendingMqttProfile, setPendingMqttProfile] = useState<MqttProfile | null>(null);
@@ -536,8 +540,21 @@ export default function ConnectionPanel({
     [mqttProfiles, mqttSettings],
   );
   const updateMqttProfiles = (next: MqttProfile[]) => {
+    const requestId = ++mqttProfileSaveRequestRef.current;
+    mqttProfilesRef.current = next;
     setMqttProfiles(next);
-    saveMqttProfiles(next);
+    void saveMqttProfiles(next)
+      .then(() => {
+        persistedMqttProfilesRef.current = next;
+      })
+      .catch((e: unknown) => {
+        console.warn('[ConnectionPanel] MQTT profile persistence failed ' + errLikeToLogString(e));
+        if (mqttProfileSaveRequestRef.current === requestId) {
+          const persisted = persistedMqttProfilesRef.current;
+          mqttProfilesRef.current = persisted;
+          setMqttProfiles(persisted);
+        }
+      });
   };
   // Async topic updates apply only if they are still the latest selection on a live session.
   const mqttProfileRequestRef = useRef(0);
@@ -677,7 +694,7 @@ export default function ConnectionPanel({
       setMqttError(
         protocol === 'meshcore'
           ? translateMeshcoreUserMessage(t, meshcoreMqttUserFacingHint(error))
-          : meshtasticMqttErrorUserHint(error),
+          : meshtasticMqttErrorUserHint(error, t),
       );
     });
   }, [protocol, t]);

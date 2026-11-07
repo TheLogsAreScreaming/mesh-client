@@ -34,7 +34,9 @@
     "takRemoteConnecting": "verbinding op afstand",
     "takRemoteError": "Fout op afstand",
     "takRemoteOnly": "TAK {{remote}}",
-    "takWithRemote": "{{local}}, {{remote}}"
+    "takWithRemote": "{{local}}, {{remote}}",
+    "savedSettingsUnavailable": "Opgeslagen instellingen konden niet worden geladen",
+    "savedSettingsRecovery": "Uw opgeslagen gegevens zijn bewaard gebleven. Controleer of uw systeemsleutelbos beschikbaar is, of wacht even en probeer het opnieuw."
   },
   "appPanel": {
     "failedSaveRetention": "Kan de instelling voor het bewaren van berichten niet opslaan.",
@@ -334,7 +336,7 @@
     "exportForGitHubDesc": "Inclusief debug-snapshot en logbestanden in één zip. Veilig om toe te voegen aan openbare GitHub-problemen.",
     "exportForDeveloper": "Ondersteuningsbundel exporteren voor ontwikkelaar",
     "exportForDeveloperButton": "Exporteren voor ontwikkelaar",
-    "exportForDeveloperWarning": "Omvat uw volledige database, die mogelijk opgeslagen wachtwoorden bevat (MeshCore-ruimtegegevens, MQTT-instellingen, enz.). Deel deze bundel alleen privé met beheerders, nooit op openbare GitHub.",
+    "exportForDeveloperWarning": "Bevat uw volledige database en MECP-noodlogboeken, die opgeslagen wachtwoorden, berichttekst, afzender- en kanaal-ID’s en locatiegegevens kunnen bevatten. Deel deze bundel alleen privé met beheerders, nooit op openbare GitHub.",
     "exportSupportBundleFailed": "Kan ondersteuningsbundel niet exporteren: {{message}}",
     "storeForwardHistoryProfileLabel": "Store & Forward inhaalprofiel",
     "storeForwardHistoryProfileAria": "Store & Forward-geschiedenis inhaal-agressiviteit",
@@ -414,7 +416,11 @@
       "empty": "Geen geblokkeerde knooppunten.",
       "unblockAria": "Deblokkeer {{node}}",
       "unblockFailed": "Kon dat knooppunt niet deblokkeren."
-    }
+    },
+    "updatesSection": "Updates",
+    "autoUpdateDownload": "Updates automatisch downloaden",
+    "autoUpdateDownloadDesc": "Download de laatste update op de achtergrond na elke controle. Wanneer uitgeschakeld, worden updates nog steeds gedetecteerd, maar alleen gedownload wanneer u op de knop Downloaden drukt — handig wanneer een pakketbeheerder de installatie afhandelt.",
+    "autoUpdateDownloadSaveFailed": "Kon de instelling voor het automatisch downloaden van updates niet opslaan."
   },
   "aria": {
     "closeDialog": "Dialoogvenster sluiten",
@@ -724,7 +730,66 @@
       "noise": "Ruis {{noise}} dBm",
       "path": "Pad: {{path}}",
       "hops_one": "{{count}} hop",
-      "hops_other": "{{count}} hops"
+      "hops_other": "{{count}} hops",
+      "place": "Vanaf: {{place}}"
+    },
+    "firmwareBot": {
+      "label": "Bot-antwoord",
+      "status": {
+        "title": "Status {{name}}",
+        "uptime": "Omhoog {{uptime}}",
+        "battery": "Batterij {{mv}} mV ({{percent}}%)",
+        "storage": "Opslag {{used}}/{{total}} KB",
+        "counters": "{{seen}} gezien, {{sent}} verzonden, mislukt {{fail}}"
+      },
+      "air": {
+        "title": "Zendtijd",
+        "tx": "TX {{seconds}} sec",
+        "rx": "RX {{seconds}} s",
+        "rxPackets": "RX Flood {{flood}} / direct {{direct}}",
+        "txPackets": "TX Flood {{flood}} / direct {{direct}}"
+      },
+      "neighbors": {
+        "title_one": "{{count}} buurman",
+        "title_other": "{{count}} buren",
+        "none": "Niets onlangs gehoord",
+        "ago": "{{ago}} geleden"
+      },
+      "trace": {
+        "title": "Spoor",
+        "hop": "{{hash}} {{snr}} dB",
+        "tail": "Retour SNR {{snr}} dB",
+        "directLink": "Directe link",
+        "timeout": "Time-out",
+        "sent": "Verstuurd"
+      },
+      "lora": {
+        "title": "LoRa",
+        "freq": "{{freq}} MHz",
+        "sf": "SF{{sf}}",
+        "bw": "BW {{bw}} kHz",
+        "cr": "CR {{cr}}",
+        "power": "{{power}} dBm"
+      },
+      "version": {
+        "title": "Firmware",
+        "built": "Gebouwd {{built}}"
+      },
+      "channels": {
+        "title": "Bot-kanalen",
+        "bot": "Commando's {{name}}",
+        "testing": "Testen {{name}}",
+        "emergency": "Noodgeval {{name}}",
+        "public": "Openbaar {{name}}"
+      },
+      "help": {
+        "title": "Commando's",
+        "diagTitle": "Diagnostische opdrachten"
+      }
+    },
+    "healthCheck": {
+      "label": "MeshCore Health Check-code",
+      "tooltip": "Testcode voor MeshCore Health Check. Waarnemers op het mesh van de afzender melden wie van hen het heeft ontvangen."
     }
   },
   "common": {
@@ -760,7 +825,11 @@
     "emDash": "—",
     "saving": "Opslaan...",
     "delete": "Verwijderen",
-    "copied": "Gekopieerd"
+    "copied": "Gekopieerd",
+    "botBadge": "Bot",
+    "botBadgeLabel": "Bot",
+    "botBadgeTooltip": "Gedetecteerd als een bot uit de geautomatiseerde antwoorden",
+    "retry": "Opnieuw proberen"
   },
   "configApplyNotice": {
     "persistNote": "Toegepaste instellingen worden opgeslagen in het flashgeheugen van het apparaat en blijven bestaan tijdens het opnieuw opstarten.",
@@ -1093,7 +1162,8 @@
     "meshcoreBleWindowsInAppPairingHint": "Op Windows selecteert u hier de radio en voert u de PINCODE in die op het scherm wordt weergegeven. Mesh Hub koppelt deze voor u, zodat u deze niet hoeft te koppelen in Windows-instellingen. Sluit eerst de MeshCore-app op je telefoon; de radio accepteert slechts één Bluetooth-verbinding tegelijk.",
     "stageEnterPinWindows": "Voer de PINCODE in die op uw radio wordt weergegeven om deze met Windows te koppelen",
     "stagePairingWindows": "Koppelen met Windows...",
-    "meshtasticSilentAfterConfigure": "Verbonden met de radio, maar het stopte met het verzenden van mesh-verkeer na de installatie. Automatisch opnieuw verbinding maken. Als dit blijft gebeuren, controleer dan de netwerkverbinding van de radio of start deze opnieuw op."
+    "meshtasticSilentAfterConfigure": "Verbonden met de radio, maar het stopte met het verzenden van mesh-verkeer na de installatie. Automatisch opnieuw verbinding maken. Als dit blijft gebeuren, controleer dan de netwerkverbinding van de radio of start deze opnieuw op.",
+    "mqttPacketTooLarge": "De broker stuurde een MQTT-pakket groter dan de veiligheidsgrens van {{limit}} bytes; automatisch opnieuw verbinden is uitgeschakeld."
   },
   "contactGroupsModal": {
     "failedLoadMembers": "Kan leden niet laden: {{message}}",
@@ -1570,7 +1640,7 @@
     "layerControlsAria": "Kaartlaagbesturingselementen in-/uitschakelen",
     "basemapHeading": "\"Basiskaart\"",
     "basemapSelectAria": "Selecteer kaart basiskaart",
-    "basemapDark": "Donker (Carto)",
+    "basemapDark": "Donker (OpenStreetMap)",
     "basemapOsm": "OpenStreetMap (licht)",
     "layersHeading": "Overlays",
     "layerNodes": "Knooppuntmarkeringen",
@@ -1605,7 +1675,8 @@
       "cacheStats": "Cache: {{count}} tegels ({{size}})",
       "clear": "Tegelcache wissen",
       "clearAria": "Offline kaarttegelcache wissen",
-      "cleared": "Cache gewist"
+      "cleared": "Cache gewist",
+      "viewCacheOnly": "Bekeken kaarttegels worden automatisch opgeslagen in de cache. Regiodownloads zijn beschikbaar met USGS Topo; OpenStreetMap staat vooraf downloaden niet toe."
     },
     "basemapUsgsTopo": "USGS Topo (alleen VS)",
     "layerIncidents": "Calamiteiten",
@@ -3321,7 +3392,12 @@
     "frequencyOffsetLabel": "Frequentie-afwijking",
     "frequencyOffsetDesc": "Geavanceerd: offset in MHz toegevoegd aan de berekende centrumfrequentie om kristalkalibratiefout te corrigeren. Laat op 0 staan, tenzij je testapparatuur hebt.",
     "enumLicensedOnlySuffix": "(alleen met licentie)",
-    "unknownEnumValue": "Onbekend ({{value}})"
+    "unknownEnumValue": "Onbekend ({{value}})",
+    "floodScopePresetsTitle": "Opgeslagen regio's",
+    "floodScopePresetsHelp": "Voeg hier regio's toe en kies vervolgens een bereik voor elk kanaal naast Verzenden of in → Radiokanalen. Als u een regio opslaat of verwijdert, blijven de standaardradio- en kanaalkeuzes ongewijzigd.",
+    "floodScopeAddHashtag": "Regio-hashtag om op te slaan",
+    "floodScopeAddSaved": "Regio opslaan",
+    "floodScopePresetsFull": "Je kunt tot {{count}} regio's besparen. Verwijder er een voordat je een andere toevoegt."
   },
   "rawPacketLog": {
     "filterPackets": "Pakketten filteren",
@@ -3962,7 +4038,8 @@
       "enrollNoCert": "Het inschrijvingsantwoord heeft geen certificaat",
       "enrollTooLarge": "De inschrijvingsreactie is te groot",
       "enrollKeyMismatch": "De server heeft een certificaat geretourneerd voor een andere sleutel",
-      "enrollBusy": "Wacht tot de huidige certificaatimport is voltooid"
+      "enrollBusy": "Wacht tot de huidige certificaatimport is voltooid",
+      "frameTooLarge": "CoT-gebeurtenis overschrijdt {{max}} bytes"
     },
     "remoteUseTls": "Gebruik TLS (aanbevolen)",
     "remotePlainTcpWarning": "Gewone TCP is onversleuteld: iedereen op het netwerkpad kan de doorgegeven posities lezen. Certificaten worden niet gebruikt en de verbinding bij de lancering blijft uit.",
@@ -4012,15 +4089,30 @@
     "unitTypeSensor": "Sensor",
     "unitTypeAir": "Vliegtuig",
     "channelRelayTitle": "MeshCore kanalen naar TAK",
-    "channelRelayDesc": "Kies welke gehoorde kanaalberichten naar TAK gaan. Trackerposities zet MeshCore-trackerpositieberichten (!MT1) om in kaartmarkeringen. Een GeoChat-ruimte spiegelt het kanaal naar die TAK-chatruimte. Beide gaan maar één kant op: er wordt niets van TAK over de mesh verzonden.",
     "channelRelayTrackers": "Trackerfixes",
     "channelRelayRoom": "GeoChat-ruimte voor {{channel}}",
     "channelRelayRoomPlaceholder": "GeoChat-ruimte (uit)",
     "channelRelayNoChannels": "Sluit een MeshCore -radio aan om de kanalen te vermelden.",
     "channelRelayUnnamed": "Kanaal {{n}}",
     "channelRelayTitleMeshtastic": "Meshtastic kanalen naar TAK",
-    "channelRelayDescMeshtastic": "Kies welke gehoorde kanaalberichten worden ingevoerd in TAK. Een GeoChat-ruimte weerspiegelt het kanaal, inclusief berichten die via MQTT worden gehoord, naar die TAK-chatruimte. Dit kan maar één kant op: er wordt niets van TAK over de mesh verzonden.",
-    "channelRelayNoChannelsMeshtastic": "Sluit een Meshtastic radio aan om de kanalen weer te geven."
+    "channelRelayNoChannelsMeshtastic": "Sluit een Meshtastic radio aan om de kanalen weer te geven.",
+    "unitStylesPreviewKind": "Knooppunttype om te testen",
+    "unitStylesPreviewProtocol": "Te testen protocol",
+    "unitFilterKind": "Knooppunttype voor filter {{n}}",
+    "unitFilterAnyKind": "Elk knooppunttype",
+    "unitFilterProtocol": "Protocol voor filter {{n}}",
+    "unitFilterAnyProtocol": "Elk protocol",
+    "unitKindCompanion": "Begeleiders en klanten",
+    "unitKindRepeater": "Repeaters en routers",
+    "unitKindRoom": "Roomservers",
+    "unitKindSensor": "Sensoren",
+    "unitKindTracker": "Trackers",
+    "unitStylesRelayIcon": "Pictogram voor repeaters, routers en roomservers",
+    "unitStylesRelayIconHint": "Optioneel. Pad van een pictogram in een ATAK-pictogramset, als ingestelde UID/groep/bestandsnaam. Apparaten zonder die pictogramset tonen het installatiesymbool.",
+    "channelRelayHelp": "Kies welke gehoorde kanaalberichten in TAK terechtkomen. Tracker reparaties draaien MeshCore tracker positie berichten (!MT1) in kaartmarkeringen. Een GeoChat-ruimte weerspiegelt het kanaal in die TAK -chatroom. Er wordt niets van TAK via het netwerk verzonden, tenzij je TAK aankruist om een kanaal te verzenden: dan worden berichten die TAK -apparaten in de ruimte hebben aangesloten, vanaf deze radio op dat kanaal verzonden, voorafgegaan door de roepnaam van de afzender.",
+    "channelRelaySend": "TAK kan verzenden",
+    "channelRelaySendFor": "Laat TAK apparaten naar {{channel}} sturen",
+    "channelRelayHelpMeshtastic": "Kies welke gehoorde kanaalberichten in TAK terechtkomen. Een GeoChat-ruimte weerspiegelt het kanaal, inclusief berichten die via MQTT zijn gehoord, in die TAK -chatroom. Er wordt niets van TAK via het netwerk verzonden, tenzij je TAK aankruist om een kanaal te verzenden: dan worden berichten die TAK -apparaten in de ruimte hebben aangesloten, vanaf deze radio op dat kanaal verzonden, voorafgegaan door de roepnaam van de afzender."
   },
   "telemetryPanel": {
     "title": "Telemetrie",
@@ -4173,7 +4265,6 @@
     "exportLog": "Export MECP log",
     "compose": {
       "title": "Compose MECP report",
-      "open": "Open MECP compose",
       "severity": "Severity",
       "category": "Category",
       "codes": "Codes",
@@ -4184,7 +4275,12 @@
       "byteBudget": "{{used}} / {{max}} bytes",
       "send": "Send MECP",
       "gpsFailed": "Kon geen GPS-fix krijgen",
-      "sendFailed": "Kan MECP-rapport niet verzenden"
+      "sendFailed": "Kan MECP-rapport niet verzenden",
+      "openResponse": "Reageren met MECP",
+      "requestTitle": "MECP-aanvraag of -rapport",
+      "responseTitle": "MECP-respons",
+      "showAllCodes": "Alle MECP-codes weergeven",
+      "openRequest": "Aanvragen of melden bij MECP"
     },
     "rebroadcast": {
       "title": "MECP RF rebroadcast",
@@ -4206,10 +4302,10 @@
       "hint": "Mesh Emergency Communication Protocol — stel hier rapporten op van Chat, overbrug RF tussen Meshtastic en MeshCore en exporteer het duurzaam ontvangen auditlogboek.",
       "learnMore": "Hoe MECP werkt",
       "protocolSource": "Protocolbron op GitHub",
-      "showComposeButton": "Toon de MECP-knop in de chat",
-      "showComposeButtonHint": "Standaard uitgeschakeld. Indien ingeschakeld, toont Chat een MECP-knop om noodrapporten samen te stellen en te verzenden.",
       "standingAlert": "Incident Commandostation (staand alarm)",
-      "standingAlertHint": "Standaard uitgeschakeld. Voor EOC's en bewaakte stations: houdt een rode banner omhoog en knippert de taakbalk of stuitert het dock totdat iemand naar elke nieuwe MAYDAY of URGENT kijkt. Iedereen hoort nog steeds de eenmalige alarmtoon en ziet de toost."
+      "standingAlertHint": "Standaard uitgeschakeld. Voor EOC's en bewaakte stations: houdt een rode banner omhoog en knippert de taakbalk of stuitert het dock totdat iemand naar elke nieuwe MAYDAY of URGENT kijkt. Iedereen hoort nog steeds de eenmalige alarmtoon en ziet de toost.",
+      "showComposeButtons": "Toon MECP-knoppen in de chat",
+      "showComposeButtonsHint": "Standaard uitgeschakeld. Indien ingeschakeld, toont Chat een rode aanvraag-/rapportknop en een blauwe antwoordknop."
     },
     "exportLogEmpty": "Nog geen MECP-berichten in het ontvangen logboek",
     "block": {
@@ -4568,7 +4664,11 @@
     "pendingChanges_other": "{{count}} wijzigingen",
     "read": "Instellingen gelezen",
     "radioConnected": "Radio verbonden",
-    "radioDisconnected": "Radio niet verbonden"
+    "radioDisconnected": "Radio niet verbonden",
+    "scope": "Standaard Flood-scope",
+    "defaultScope": "Naam regio (leeg voor unscoped)",
+    "scopeSummary": "Regio voor uitgaande Flood-pakketten van deze node",
+    "scopeHint": "Firmware v1.15+: voer een publieke regio zoals #us-tn-tri in; laat leeg voor geen regiobeperking. Geldt voor Flood-adverts en bezorging van ruimteberichten via Flood. Directe routes en toegang tot de ruimte staan hier los van. Scopes van de Companion-radio en zijn kanalen worden apart ingesteld."
   },
   "chatTranslation": {
     "translate": "Bericht vertalen",
@@ -4599,7 +4699,7 @@
     "deletePack": "Verwijder het {{pack}} -pakket",
     "downloadPack": "Download het {{pack}} -pakket",
     "delete": "Verwijderen",
-    "onlinePrivacy": "Online vertaling verzendt de geselecteerde berichttekst alleen naar uw geconfigureerde LibreTranslate-server wanneer u Online vertalen kiest. Automatische vertaling blijft altijd offline.",
+    "onlinePrivacy": "Online vertaling verzendt de geselecteerde berichttekst alleen naar uw geconfigureerde LibreTranslate-server wanneer u Online vertalen kiest. Automatische vertaling blijft altijd offline. HTTP is alleen toegestaan voor localhost en loopback-adressen; alle andere servers moeten HTTPS gebruiken.",
     "serverUrl": "LibreTranslate server-URL",
     "apiKey": "API-sleutel (optioneel)",
     "savedKey": "Een API-sleutel wordt veilig opgeslagen. Een leeg veld bewaart het alleen voor dezelfde server-URL.",
@@ -4631,6 +4731,158 @@
     "downloadSize": "Download ({{size}})",
     "readLanguagesHint": "Berichten in deze talen worden nooit automatisch vertaald. De taal die is geselecteerd onder Vertalen naar telt altijd als een taal die u leest.",
     "pivotHint": "Een pakket beslaat één vertaalrichting, zoals Frans naar Engels. Andere talenparen worden vertaald via het Engels: Frans naar Duits heeft de → Frans-Engels en → Engels-Duitse pakketten nodig. Vertalen naar het Engels heeft slechts één pakket nodig.",
-    "hideTranslation": "Vertaling verbergen"
+    "hideTranslation": "Vertaling verbergen",
+    "secureUrlRequired": "Online vertaling is gepauzeerd. Uw server en opgeslagen sleutel zijn bewaard gebleven; gebruik een HTTPS-URL om te hervatten."
+  },
+  "liveTraffic": {
+    "controlPacket": "Besturingspakket",
+    "discoveryRequest": "Verzoek om nodes te ontdekken",
+    "discoveryResponse": "Antwoord op node-ontdekking",
+    "directoryLimited": "De knooppuntenlijst van deze kaart heeft de limiet bereikt. Sommige knooppunten kunnen ontbreken.",
+    "directoryLimitedShort": "Onvolledige lijst",
+    "sources": {
+      "CoreScope": "CoreScope",
+      "RF": "RF",
+      "MQTT": "MQTT",
+      "unknown": "Onbekende bron",
+      "Beacon": "Beacon"
+    },
+    "corescope": {
+      "feed": "Regionale CoreScope",
+      "preset": "Regionale CoreScope-kaart",
+      "url": "URL van CoreScope-kaart",
+      "waitingHint": "Verbind hierboven een CoreScope-feed om de meldingen van zijn waarnemers te zien. Een lokale radio is niet nodig.",
+      "disconnected": "Kies de URL van een CoreScope-kaart om te verbinden."
+    },
+    "trafficSource": "Verkeersbron",
+    "cancelConnection": "Verbinding annuleren",
+    "connectionActionFailed": "Kan de feedverbinding niet bijwerken. Probeer het opnieuw.",
+    "estimatedRouteHint": "CoreScope heeft sommige knooppuntidentiteiten geschat. Deze verbindingen zijn niet bevestigd; ontbrekende hops blijven onbekend.",
+    "estimatedLinks": "Verbindingen inclusief serverschattingen",
+    "title": "Live verkeer",
+    "additionalLocations_other": "{{count}} extra locaties",
+    "additionalLocations_one": "{{count}} extra locatie",
+    "mapOverview": "Overzicht",
+    "mapModes": "Kaartmodus",
+    "pause": "Pauzeren",
+    "resume": "Hervatten",
+    "region": "Kaartgebied",
+    "regions": {
+      "all": "Alle regio’s"
+    },
+    "scopeHint": "Filter op waargenomen transportcodes van pakketten of voer scoped of unscoped in. De codes gelden per pakket en wijzigen de radio-instellingen niet.",
+    "transportScope": "Transportcode",
+    "allScopes": "Alle scopes",
+    "scoped": "Met scope",
+    "packetType": "Pakkettype",
+    "unscoped": "Zonder scope",
+    "kinds": {
+      "message": "Berichten",
+      "telemetry": "Telemetrie",
+      "routing": "Routering",
+      "all": "Alle pakketten",
+      "advert": "Adverts / positie",
+      "other": "Overige"
+    },
+    "speed": "Afspelen",
+    "speedFast": "2×",
+    "mapAria": "Live pakketverkeerskaart",
+    "speedNormal": "1×",
+    "darkMap": "Donker",
+    "streetMap": "Straten",
+    "basemap": "Kaartstijl",
+    "waitingHint": "Verbind een radio om live verkeer te zien.",
+    "topographicMap": "USGS topo",
+    "waiting": "Wachten op pakketwaarnemingen",
+    "feed": "Pakketfeed",
+    "meshtasticDisclaimer": "Ontvangstverbindingen dienen ter illustratie. Gewone pakketten tonen niet elke tussenliggende repeater.",
+    "animationDisclaimer": "Beweging toont de pakketvolgorde, niet de radiosnelheid. Onbekende hops onderbreken het pad.",
+    "emptyFeed": "Pakketten verschijnen hier zodra deze client ze ontvangt. Knooppunten met een bekende locatie kunnen op de kaart worden getoond.",
+    "noFilterMatches": "Er zijn geen recente pakketten die overeenkomen met deze filters.",
+    "inspectPacket": "Bekijk pakket van type {{kind}} om {{time}}",
+    "packetList": "Recente pakketwaarnemingen",
+    "inspector": "Pakketdetails",
+    "closeInspector": "Pakketdetails sluiten",
+    "noSignal": "Geen signaalgegevens",
+    "signal": "RSSI / SNR",
+    "source": "Waargenomen via",
+    "route": "Routebewijs",
+    "signalValues": "{{rssi}} dBm / {{snr}} dB",
+    "routeStatus": {
+      "resolved": "Vastgesteld pakketpad",
+      "estimated": "Door de server geschatte route",
+      "direct": "Directe waarneming",
+      "unlocated": "Geen route om weer te geven",
+      "partial": "Gedeeltelijke route / ontvangstverbinding",
+      "unparsed": "Niet-geanalyseerd pakket"
+    },
+    "meshtasticInspector": "Een ontvangstverbinding bevestigt geen volledige keten van repeaters. Gedetailleerde routes worden alleen getoond als het pakket ze bevat.",
+    "meshcoreInspector": "Alleen aangrenzende hops met bekende identiteit worden verbonden. Onbekende of dubbelzinnige hashes laten gaten in de route.",
+    "filters": "Filters",
+    "observationCount_one": "{{count}} pakket",
+    "filterHint": "De filters gelden alleen voor de weergave. Radio-instellingen blijven ongewijzigd.",
+    "knownLocations": "Punten met locatie",
+    "nodeCount": "Getoonde knooppunten: {{count}}",
+    "mappedCount": "{{count}} in kaart gebracht",
+    "observationCount_other": "{{count}} pakketten",
+    "toggleFeed": "Pakketfeed uit- of inklappen",
+    "expandFeed": "Pakketfeedvenster vergroten",
+    "shrinkFeed": "Pakketfeedvenster verkleinen",
+    "moveFeed": "Pakketfeed verplaatsen",
+    "resetFeed": "Pakketfeedpositie opnieuw instellen",
+    "moveFeedHint": "Sleep om te verplaatsen. Pijltjestoetsen verplaatsen het venster; houd Shift ingedrukt voor grotere stappen.",
+    "encryptedContent": "Versleuteld bericht",
+    "contentUnavailable": "Berichtinhoud niet beschikbaar",
+    "beacon": {
+      "feed": "Regionale Beacon",
+      "connect": "Verbinden",
+      "disconnect": "Verbinding verbreken",
+      "url": "URL van Beacon-kaart",
+      "region": "Feedregio",
+      "readOnly": "Openbare feed · Geen API-sleutel nodig",
+      "configure": "Instellen",
+      "waitingHint": "Verbind hierboven een regionale Beacon-feed om de meldingen van zijn waarnemers te zien. Een lokale radio is niet nodig.",
+      "listeningHint": "Verbonden. Nieuwe waarnemingen verschijnen wanneer regionale waarnemers pakketten ontvangen.",
+      "status": {
+        "connecting": "Verbinding maken met regionale waarnemers…",
+        "live": "Live regionale feed",
+        "reconnecting": "Opnieuw verbinding maken…",
+        "disconnected": "Kies de URL van een Beacon-kaart om te verbinden.",
+        "error": "Kan geen verbinding maken.",
+        "feedOpenFailed": "De regionale kaartfeed kon niet worden geopend.",
+        "refreshing": "De regionale kaart wordt vernieuwd na een onderbreking van de feed.",
+        "connectionInterrupted": "Verbinding met de regionale kaart onderbroken.",
+        "publicHttpsRejected": "Deze openbare HTTPS-regionale kaart kon niet worden geopend."
+      },
+      "custom": "Eigen URL",
+      "preset": "Regionale Beacon-kaart"
+    },
+    "localRadio": "Lokale radio",
+    "packetColorHint": "Een pakket behoudt dezelfde kleur op alle gemelde paden. Herhaalde meldingen worden gegroepeerd.",
+    "aboutMap": "Over deze pakketverkeerskaart",
+    "closeSource": "Feedinstellingen sluiten",
+    "zoomIn": "Inzoomen",
+    "zoomOut": "Uitzoomen",
+    "reports_one": "{{count}} melding",
+    "observedLinks": "Waargenomen verbindingen",
+    "reports_other": "{{count}} meldingen",
+    "additionalLinks_one": "{{count}} extra verbinding",
+    "additionalLinks_other": "{{count}} extra verbindingen",
+    "mapLinkLimit": "De kaart toont de nieuwste {{count}} verbindingen voor dit pakket.",
+    "zoomControls": "Zoombediening op de kaart",
+    "reportsLabel": "Meldingen in beeld",
+    "mixedCodes": "Meerdere transportcodes",
+    "connectionState": {
+      "live": "Live",
+      "connecting": "Verbinden",
+      "reconnecting": "Opnieuw verbinding maken",
+      "disconnected": "Verbinding verbroken",
+      "error": "Verbindingsfout"
+    },
+    "areas": {
+      "all": "Al het verkeer",
+      "viewport": "Huidig kaartgebied"
+    },
+    "fitTraffic": "Verkeer in beeld brengen"
   }
 }

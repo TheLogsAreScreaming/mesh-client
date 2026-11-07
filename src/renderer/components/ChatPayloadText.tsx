@@ -6,11 +6,19 @@ import { useTranslation } from 'react-i18next';
 import { ChatInlineImage } from '@/renderer/components/chat/ChatInlineImage';
 import {
   DroneReportCard,
+  FirmwareBotReplyCard,
+  HealthCheckCodeChip,
   SignalReportChip,
 } from '@/renderer/components/chat/ChatStructuredPayloads';
 import { buildStaticTileUrl, parseLocationMessage } from '@/renderer/lib/chatLocationUtils';
 import { isSafeChatUrl, parseChatMentionSegments } from '@/renderer/lib/chatMentionSegments';
 import { parseDroneReport } from '@/renderer/lib/droneReportParse';
+import {
+  parseFirmwareBotReply,
+  stripFirmwareBotRequestToken,
+} from '@/renderer/lib/firmwareBotReplyParse';
+import { parseHealthCheckCode } from '@/renderer/lib/healthCheckCode';
+import { isHumanSignalSource, parseHopReport } from '@/renderer/lib/hopReportParse';
 import { meshTilesAvailable } from '@/renderer/lib/mapBasemapUtils';
 import {
   meshcoreGiphyMediaUrl,
@@ -109,6 +117,10 @@ function LinkPreview({
   const [preview, setPreview] = useState<LinkPreviewData | null>(null);
 
   useEffect(() => {
+    // Automatic remote content is intentional: previews, GIFs and map tiles must
+    // work without a consent button. Disclosure of viewer IP, request timing and
+    // tile coordinates is an accepted privacy risk. Link previews retain their
+    // fetch limits; GIF and map-tile requests use separate paths.
     let cancelled = false;
     fetchLinkPreviewDeduped(url)
       .then((result: LinkPreviewData | null) => {
@@ -171,6 +183,21 @@ function LinkPreview({
   );
 }
 
+function HttpsLinkPreview({
+  url,
+  onContentResize,
+}: Readonly<{ url: string; onContentResize?: () => void }>) {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:') return null;
+  } catch {
+    // catch-no-log-ok invalid URL segments do not receive previews
+    return null;
+  }
+
+  return <LinkPreview url={url} onContentResize={onContentResize} />;
+}
+
 function MeshcoreGifEmbed({
   gifId,
   query,
@@ -187,6 +214,7 @@ function MeshcoreGifEmbed({
 
   return (
     <ChatInlineImage
+      key={src}
       src={src}
       alt={t('chatPayload.meshcoreGif')}
       href={pageUrl}
@@ -224,6 +252,7 @@ function LocationCard({
     <div className="space-y-1 rounded-lg border border-cyan-500/30 bg-cyan-500/10 p-2">
       {!tileFailed && (
         <img
+          key={tileUrl}
           src={tileUrl}
           alt={t('chatPayload.locationCard.alt')}
           className="h-32 w-full rounded object-cover"
@@ -254,10 +283,10 @@ function LocationCard({
 export interface ChatPayloadTextProps {
   text: string;
   query: string;
-  /** When false, skip async link-preview fetches (avoids layout shift while reading history). */
-  loadLinkPreviews?: boolean;
   /** Fired when async link-preview content mounts and row height may have grown. */
   onContentResize?: () => void;
+  /** Sender is a detected bot; hides its `[1a2b] ` request token even on unrecognized replies. */
+  senderIsBot?: boolean;
 }
 
 /**
@@ -268,8 +297,8 @@ export interface ChatPayloadTextProps {
 export function ChatPayloadText({
   text,
   query,
-  loadLinkPreviews = true,
   onContentResize,
+  senderIsBot = false,
 }: ChatPayloadTextProps) {
   const { t } = useTranslation();
   const gifId = parseMeshcoreGifId(text);
@@ -302,8 +331,15 @@ export function ChatPayloadText({
       </div>
     );
   }
-  const signalReport = parseSignalReport(text);
-  const segments = parseChatMentionSegments(text);
+  const signalReport = parseSignalReport(text) ?? parseHopReport(text);
+  const botSignalReport = signalReport && !isHumanSignalSource(signalReport.source);
+  const firmwareBotReply = parseFirmwareBotReply(text);
+  const healthCheckCode = parseHealthCheckCode(text);
+  let displayText = text;
+  if (senderIsBot || botSignalReport || firmwareBotReply) {
+    displayText = stripFirmwareBotRequestToken(displayText).body;
+  }
+  const segments = parseChatMentionSegments(displayText);
   const urlSegments = segments.filter((seg) => seg.kind === 'url');
 
   return (
@@ -346,10 +382,12 @@ export function ChatPayloadText({
         )}
       </div>
       {signalReport && <SignalReportChip report={signalReport} />}
-      {loadLinkPreviews && urlSegments.length > 0 && (
+      {firmwareBotReply && <FirmwareBotReplyCard reply={firmwareBotReply} />}
+      {healthCheckCode && <HealthCheckCodeChip code={healthCheckCode} />}
+      {urlSegments.length > 0 && (
         <div className="space-y-2">
           {urlSegments.map((seg) => (
-            <LinkPreview key={seg.url} url={seg.url} onContentResize={onContentResize} />
+            <HttpsLinkPreview key={seg.url} url={seg.url} onContentResize={onContentResize} />
           ))}
         </div>
       )}

@@ -2,6 +2,7 @@ import type { BrowserWindow, IpcMainInvokeEvent } from 'electron';
 import { app, ipcMain, net, shell } from 'electron';
 import type { AppUpdater } from 'electron-updater';
 
+import { autoUpdateDownloadEnabledFromStored } from '@/shared/autoUpdateDownload';
 import { fetchAllGithubReleases } from '@/shared/fetchGithubReleases';
 import {
   type GithubReleaseRow,
@@ -10,6 +11,7 @@ import {
 } from '@/shared/githubReleaseVersion';
 import { isNetworkClassFailure } from '@/shared/networkFailure';
 
+import { getDatabase } from './database';
 import { sanitizeLogMessage } from './log-service';
 import { assertIpcSender } from './validate-ipc-sender';
 
@@ -32,7 +34,30 @@ export function getCheckNowFromMenu(): (() => void) | null {
 const REPO = 'charlottemeshtastic/mesh-client';
 const RELEASES_URL = `https://github.com/${REPO}/releases`;
 
+/** `app_settings` key backing the App → Updates "download automatically" toggle. */
+export const AUTO_UPDATE_DOWNLOAD_SETTING_KEY = 'autoUpdateDownloadEnabled';
+
 type SendFn = (channel: string, payload?: unknown) => void;
+
+/**
+ * Whether packaged builds may auto-download update artifacts after a check. Persisted by the
+ * renderer so package-manager deployments can keep the app quiet; manual "Download" still works.
+ */
+function readAutoUpdateDownloadEnabled(): boolean {
+  try {
+    const row = getDatabase()
+      .prepareOnce('SELECT value FROM app_settings WHERE key = ?')
+      .get(AUTO_UPDATE_DOWNLOAD_SETTING_KEY) as { value: string } | undefined;
+    return autoUpdateDownloadEnabledFromStored(row?.value);
+  } catch (e) {
+    // A read error is not a stored "on" value; leave auto-download off.
+    console.debug(
+      '[updater] auto-download flag read failed:',
+      sanitizeLogMessage(e instanceof Error ? e.message : String(e)),
+    );
+    return false;
+  }
+}
 
 function releaseUrlForVersion(version: string): string {
   return `${RELEASES_URL}/tag/v${version}`;
@@ -157,8 +182,9 @@ function registerElectronUpdaterHandlers(send: SendFn): boolean {
   }
 
   // Download in the background after every startup/periodic check. Installation
-  // stays user-controlled so active radio sessions are never interrupted.
-  updater.autoDownload = true;
+  // stays user-controlled so active radio sessions are never interrupted. The
+  // App → Updates toggle can disable the auto-download for package-manager users.
+  updater.autoDownload = readAutoUpdateDownloadEnabled();
   updater.autoInstallOnAppQuit = false;
 
   updater.on('update-available', (info: { version: string }) => {
@@ -218,6 +244,8 @@ function registerElectronUpdaterHandlers(send: SendFn): boolean {
       emitOffline(send, 'net.isOnline()===false');
       return;
     }
+    // Re-read each time so an App → Updates toggle change applies without an app restart.
+    updater.autoDownload = readAutoUpdateDownloadEnabled();
     try {
       const result: unknown = await updater.checkForUpdates();
       const download =

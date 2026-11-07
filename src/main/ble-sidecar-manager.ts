@@ -1,4 +1,5 @@
 import { type ChildProcess, spawn } from 'child_process';
+import { randomBytes } from 'crypto';
 import { app } from 'electron';
 import { EventEmitter } from 'events';
 import fs from 'fs';
@@ -15,6 +16,7 @@ const HEALTH_POLL_TIMEOUT_MS = 30 * MS_PER_SECOND;
 const STOP_GRACE_MS = 5 * MS_PER_SECOND;
 /** App is exiting: SIGKILL quickly so quit stays responsive. */
 const QUIT_STOP_GRACE_MS = 750;
+const HELPER_AUTH_TOKEN_BYTES = 32;
 /** Default RUST_LOG: warnings plus GATT triage INFO. */
 const SIDECAR_DEFAULT_RUST_LOG = 'warn,mesh_hub_ble::gatt=info';
 
@@ -38,6 +40,11 @@ export function resolveSidecarRustLog(env: NodeJS.ProcessEnv = process.env): str
   const fromRust = env.RUST_LOG?.trim();
   if (fromRust) return fromRust;
   return SIDECAR_DEFAULT_RUST_LOG;
+}
+
+/** Generate the per-process bearer credential delivered through the helper's private stdin. */
+export function createBleSidecarAuthToken(): string {
+  return randomBytes(HELPER_AUTH_TOKEN_BYTES).toString('base64url');
 }
 
 /** Minimal env for the sidecar child process. */
@@ -81,14 +88,17 @@ async function findFreePort(host = '127.0.0.1'): Promise<number> {
   });
 }
 
-async function pollSidecarHealth(port: number): Promise<void> {
+async function pollSidecarHealth(port: number, authToken: string): Promise<void> {
   const url = `http://127.0.0.1:${port}/api/v1/status`;
   const deadline = Date.now() + HEALTH_POLL_TIMEOUT_MS;
   let lastError = 'health poll timeout';
 
   while (Date.now() < deadline) {
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(2_000) });
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${authToken}` },
+        signal: AbortSignal.timeout(2_000),
+      });
       if (!res.ok) {
         lastError = `status ${res.status}`;
       } else {
@@ -112,11 +122,21 @@ async function pollSidecarHealth(port: number): Promise<void> {
  */
 export class BleSidecarManager extends EventEmitter {
   private proc: ChildProcess | null = null;
+  /** Bearer token for the running helper; rotated on every spawn, never logged or exposed. */
+  private authToken: string | null = null;
   private startPromise: Promise<BleSidecarStatus> | null = null;
   private stopPromise: Promise<void> | null = null;
   private quitFastRequested = false;
   private watchdogStop: (() => void) | null = null;
   private _status: BleSidecarStatus = { running: false, port: 0, pid: null, healthy: true };
+
+  /** Main-process-only credential handoff for the GATT proxy talking to this helper. */
+  getAuthTokenForLocalProxy(): string {
+    if (!this.authToken) {
+      throw new Error('Bluetooth helper authentication is unavailable');
+    }
+    return this.authToken;
+  }
 
   getStatus(): BleSidecarStatus {
     return { ...this._status };
@@ -163,7 +183,25 @@ export class BleSidecarManager extends EventEmitter {
     const port = await findFreePort();
     const args = ['--headless', '--host', '127.0.0.1', '--port', String(port)];
     args.push('--storage-dir', storageDir);
-    const proc = spawn(binary, args, { stdio: ['ignore', 'pipe', 'pipe'], env: sidecarChildEnv() });
+    // The bearer token goes over the child's private stdin — never argv, env, URLs, or logs.
+    const authToken = createBleSidecarAuthToken();
+    this.authToken = authToken;
+    let proc: ChildProcess;
+    try {
+      proc = spawn(binary, args, { stdio: ['pipe', 'pipe', 'pipe'], env: sidecarChildEnv() });
+    } catch (error) {
+      this.authToken = null;
+      throw error;
+    }
+    if (!proc.stdin) {
+      this.authToken = null;
+      proc.kill('SIGKILL');
+      throw new Error('Bluetooth helper authentication pipe is unavailable');
+    }
+    proc.stdin.on('error', () => {
+      // catch-no-log-ok: an early child exit may close stdin before end() flushes.
+    });
+    proc.stdin.end(`${authToken}\n`);
     this.proc = proc;
 
     const processOutputLine = (line: string): void => {
@@ -200,6 +238,7 @@ export class BleSidecarManager extends EventEmitter {
       if (this.proc !== proc) return;
       this.stopWatchdog();
       this.proc = null;
+      this.authToken = null;
       this._status = {
         running: false,
         port: this._status.port,
@@ -210,7 +249,7 @@ export class BleSidecarManager extends EventEmitter {
     });
 
     try {
-      await pollSidecarHealth(port);
+      await pollSidecarHealth(port, authToken);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       await this.stopProc();
@@ -232,6 +271,7 @@ export class BleSidecarManager extends EventEmitter {
     this.watchdogStop = startSidecarWatchdog({
       getPort: () => (this._status.running ? this._status.port : undefined),
       isProcessAlive: () => this.proc != null,
+      getAuthorizationHeader: () => `Bearer ${this.getAuthTokenForLocalProxy()}`,
       onHealthChange: (healthy) => {
         const wasHealthy = this._status.healthy !== false;
         if (healthy === wasHealthy) return;
@@ -294,6 +334,7 @@ export class BleSidecarManager extends EventEmitter {
         }
       });
     }
+    this.authToken = null;
     this._status = { running: false, port: 0, pid: null, healthy: true };
     this.emit('status', this.getStatus());
   }

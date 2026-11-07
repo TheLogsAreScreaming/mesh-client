@@ -7,21 +7,42 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
-    inputs:
-      platforms:
-        description: 'Platforms to build (all, mac, linux, win, or comma-separated)'
-        required: false
-        default: all
-        type: string
 
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  authorize-release:
+    name: Authorize protected release tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Require exact semver release tag
+        env:
+          RELEASE_REF: ${{ github.ref }}
+          RELEASE_REF_PROTECTED: ${{ github.ref_protected }}
+          # Set repo variable REQUIRE_PROTECTED_RELEASE_TAGS=true once a tag ruleset protects
+          # v* tags (see .github/rulesets/release-tags.json); until then this only warns.
+          REQUIRE_PROTECTED: ${{ vars.REQUIRE_PROTECTED_RELEASE_TAGS == 'true' }}
+        run: |
+          if [[ ! "${RELEASE_REF}" =~ ^refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Official releases require an exact vX.Y.Z tag."
+            exit 1
+          fi
+          if [ "${RELEASE_REF_PROTECTED}" != 'true' ]; then
+            if [ "${REQUIRE_PROTECTED}" = 'true' ]; then
+              echo "::error::Official releases require a protected tag."
+              exit 1
+            fi
+            echo "::warning::Release tag is not protected by a ruleset."
+            echo 'Set repo variable REQUIRE_PROTECTED_RELEASE_TAGS=true to enforce it.'
+          fi
+
   schema-release-compare:
     name: Schema vs last official release
+    needs: authorize-release
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -32,7 +53,8 @@ jobs:
       prev_tag: ${{ steps.compare.outputs.prev_tag }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        # actions/checkout v6.1.0
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
@@ -51,7 +73,8 @@ jobs:
           --write-readme READ-ME-FIRST-schema.md
 
       - name: Upload schema compare readme
-        uses: actions/upload-artifact@v7
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: READ-ME-FIRST-schema-${{ github.sha }}
           path: READ-ME-FIRST-schema.md
@@ -60,6 +83,7 @@ jobs:
   prepare-github-release:
     needs: schema-release-compare
     runs-on: ubuntu-latest
+    environment: release
     permissions:
       contents: write
     outputs:
@@ -67,7 +91,8 @@ jobs:
       release_id: ${{ steps.ensure.outputs.release_id }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        # actions/checkout v6.1.0
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           ref: ${{ github.sha }}
 
@@ -80,7 +105,6 @@ jobs:
         id: ensure
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_PUSH_TOKEN: ${{ secrets.RELEASE_PUSH_TOKEN }}
           GITHUB_SHA: ${{ github.sha }}
           RELEASE_TAG: ${{ steps.release_tag.outputs.value }}
           MESH_CLIENT_ALLOW_DRAFT_CREATE: '1'
@@ -100,8 +124,8 @@ jobs:
         run: node scripts/ci-patch-draft-release-schema-note.mjs
 
   resolve-release-matrix:
-    needs: prepare-github-release
-    if: ${{ !cancelled() && needs.prepare-github-release.result != 'failure' }}
+    needs: [authorize-release, prepare-github-release]
+    if: ${{ needs.authorize-release.result == 'success' && needs.prepare-github-release.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -109,31 +133,47 @@ jobs:
       include: ${{ steps.matrix.outputs.include }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        # actions/checkout v6.1.0
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           ref: ${{ github.sha }}
 
       - name: Resolve release matrix
         id: matrix
         env:
-          RELEASE_PLATFORMS: ${{ github.event_name == 'workflow_dispatch' && inputs.platforms || 'all' }}
+          RELEASE_PLATFORMS: all
         run: |
           include="$(node scripts/resolve-release-matrix.mjs)"
           echo "include=$include" >> "$GITHUB_OUTPUT"
 
   sidecars:
     name: Stage Bluetooth helper
-    needs: resolve-release-matrix
+    needs: [authorize-release, prepare-github-release, resolve-release-matrix]
+    if: >-
+      ${{ needs.authorize-release.result == 'success'
+      && needs.prepare-github-release.result == 'success'
+      && needs.resolve-release-matrix.result == 'success' }}
     permissions:
       contents: read
     uses: ./.github/workflows/packaging-sidecars.yaml
     with:
-      platforms: ${{ github.event_name == 'workflow_dispatch' && inputs.platforms || 'all' }}
+      platforms: all
 
   release:
-    needs: [schema-release-compare, prepare-github-release, resolve-release-matrix, sidecars]
-    if: ${{ !cancelled() && needs.prepare-github-release.result != 'failure' && needs.sidecars.result == 'success' }}
+    needs:
+      [
+        authorize-release,
+        schema-release-compare,
+        prepare-github-release,
+        resolve-release-matrix,
+        sidecars,
+      ]
+    if: >-
+      ${{ needs.authorize-release.result == 'success'
+      && needs.prepare-github-release.result == 'success'
+      && needs.sidecars.result == 'success' }}
     runs-on: ${{ matrix.os }}
+    environment: release
     defaults:
       run:
         working-directory: ${{ github.workspace }}
@@ -145,7 +185,8 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        # actions/checkout v6.1.0
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           ref: ${{ github.sha }}
 
@@ -158,7 +199,8 @@ jobs:
         run: node scripts/ci-prefer-windows-pnpm-exe.mjs
 
       - name: Install Node.js
-        uses: actions/setup-node@v6
+        # actions/setup-node v6.5.0
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
           node-version: '22'
           cache: 'pnpm'
@@ -204,7 +246,7 @@ jobs:
         run: node scripts/write-schema-upgrade-notice.mjs
 
       - name: Validate macOS signing secrets
-        if: matrix.os == 'macos-latest' && github.event_name == 'release'
+        if: matrix.os == 'macos-latest'
         env:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
@@ -212,17 +254,14 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          if [ -z "$CSC_LINK" ]; then
-            echo "CSC_LINK not set — skipping notarization secret validation (unsigned/fork build)."
-            exit 0
-          fi
           missing=""
+          [ -z "$CSC_LINK" ] && missing="$missing CSC_LINK"
           [ -z "$CSC_KEY_PASSWORD" ] && missing="$missing CSC_KEY_PASSWORD"
           [ -z "$APPLE_ID" ] && missing="$missing APPLE_ID"
           [ -z "$APPLE_APP_SPECIFIC_PASSWORD" ] && missing="$missing APPLE_APP_SPECIFIC_PASSWORD"
           [ -z "$APPLE_TEAM_ID" ] && missing="$missing APPLE_TEAM_ID"
           if [ -n "$missing" ]; then
-            echo "CSC_LINK is set but missing required notarization secrets:$missing"
+            echo "Missing required macOS release signing/notarization secrets:$missing"
             exit 1
           fi
 
@@ -247,6 +286,11 @@ jobs:
           APPLE_ID: ${{ matrix.os == 'macos-latest' && secrets.APPLE_ID || '' }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ matrix.os == 'macos-latest' && secrets.APPLE_APP_SPECIFIC_PASSWORD || '' }}
           APPLE_TEAM_ID: ${{ matrix.os == 'macos-latest' && secrets.APPLE_TEAM_ID || '' }}
+          # Unsigned forks (no CSC_LINK secret) build optional-signature releases.
+          MESH_CLIENT_MAC_SIGNATURE_POLICY: >-
+            ${{ matrix.os == 'macos-latest' && secrets.CSC_LINK != ''
+            && 'required' || 'optional' }}
+          MESH_CLIENT_EXPECTED_MAC_TEAM_ID: ${{ matrix.os == 'macos-latest' && secrets.APPLE_TEAM_ID || '' }}
         # dist:* uses --publish never so electron-builder never POSTs a draft release.
         # electron-builder resolves an *empty* CSC_LINK as a file path (the repo root) and fails,
         # so drop empty signing/notarization vars for unsigned (fork / no-secret) builds.
@@ -280,7 +324,8 @@ jobs:
       # symlinks (~3× Electron Framework size). DMG/ZIP preserve correct layout.
       - name: Upload macOS Artifact
         if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v7
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: mesh-client-macos-${{ github.sha }}
           path: |
@@ -299,7 +344,8 @@ jobs:
 
       - name: Upload Linux Artifact
         if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v7
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: mesh-client-linux-${{ github.sha }}
           path: |
@@ -316,7 +362,8 @@ jobs:
 
       - name: Upload Windows Artifact
         if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v7
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: mesh-client-windows-${{ github.sha }}
           path: |
@@ -335,11 +382,13 @@ jobs:
     # Require a successful build matrix — skipped/cancelled release must not consolidate.
     if: ${{ !cancelled() && needs.release.result == 'success' }}
     runs-on: ubuntu-latest
+    environment: release
     permissions:
       contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        # actions/checkout v6.1.0
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           ref: ${{ github.sha }}
 
@@ -350,7 +399,6 @@ jobs:
       - name: Consolidate duplicate draft releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_PUSH_TOKEN: ${{ secrets.RELEASE_PUSH_TOKEN }}
           GITHUB_SHA: ${{ github.sha }}
           RELEASE_TAG: ${{ steps.release_tag.outputs.value }}
         run: node scripts/ci-ensure-github-draft-release.mjs
@@ -358,7 +406,6 @@ jobs:
       - name: Verify draft release tag_name
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_PUSH_TOKEN: ${{ secrets.RELEASE_PUSH_TOKEN }}
           RELEASE_TAG: ${{ steps.release_tag.outputs.value }}
           RELEASE_ID: ${{ needs.prepare-github-release.outputs.release_id }}
         run: node scripts/ci-verify-github-draft-release.mjs
@@ -366,7 +413,6 @@ jobs:
       - name: Verify updater channel yml urls match GitHub assets
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_PUSH_TOKEN: ${{ secrets.RELEASE_PUSH_TOKEN }}
           RELEASE_TAG: ${{ steps.release_tag.outputs.value }}
           RELEASE_ID: ${{ needs.prepare-github-release.outputs.release_id }}
         run: node scripts/assert-github-release-update-yml.mjs
@@ -375,6 +421,7 @@ jobs:
     name: Smoke test ${{ matrix.label }}
     needs: [release, finalize-github-release]
     runs-on: ${{ matrix.os }}
+    environment: release
     permissions:
       contents: read
     strategy:
@@ -407,14 +454,16 @@ jobs:
               && node scripts/test-win-nsis-install.mjs --arch arm64 --probe-7z
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        # actions/checkout v6.1.0
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           # Pin to workflow SHA — tag ref may move mid-run (e.g. recovery retag) and
-          # actions/checkout@v6 fails integrity check against github.sha.
+          # The checkout action fails its integrity check if the tag moves away from github.sha.
           ref: ${{ github.sha }}
 
       - name: Download build artifact
-        uses: actions/download-artifact@v7
+        # actions/download-artifact v7.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
         with:
           name: ${{ matrix.artifact }}
           path: release
@@ -424,6 +473,12 @@ jobs:
         run: bash scripts/ci-install-linux-appimage-smoke-deps.sh
 
       - name: Run packaging smoke test
+        env:
+          # Unsigned forks (no CSC_LINK secret) build optional-signature releases.
+          MESH_CLIENT_MAC_SIGNATURE_POLICY: >-
+            ${{ matrix.os == 'macos-latest' && secrets.CSC_LINK != ''
+            && 'required' || 'optional' }}
+          MESH_CLIENT_EXPECTED_MAC_TEAM_ID: ${{ matrix.os == 'macos-latest' && secrets.APPLE_TEAM_ID || '' }}
         run: ${{ matrix.smoke_run }}
 
       # Proves the packaged AppImage actually boots (native arch), not just that its
@@ -435,7 +490,8 @@ jobs:
 
       - name: Upload Windows x64 install failure logs
         if: failure() && matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v7
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: mesh-client-win-x64-install-logs-${{ github.sha }}
           path: |
@@ -445,7 +501,8 @@ jobs:
 
       - name: Upload Windows arm64 install failure logs
         if: failure() && matrix.os == 'windows-11-vs2026-arm'
-        uses: actions/upload-artifact@v7
+        # actions/upload-artifact v7.0.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: mesh-client-win-arm64-install-logs-${{ github.sha }}
           path: |

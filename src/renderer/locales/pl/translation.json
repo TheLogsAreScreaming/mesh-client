@@ -34,7 +34,9 @@
     "takRemoteConnecting": "zdalne łączenie",
     "takRemoteError": "Błąd interfejsu API zdalnego.",
     "takRemoteOnly": "TAK {{remote}}",
-    "takWithRemote": "{{local}}, {{remote}}"
+    "takWithRemote": "{{local}}, {{remote}}",
+    "savedSettingsUnavailable": "Nie można załadować zapisanych ustawień",
+    "savedSettingsRecovery": "Twoje zapisane dane zostały zachowane. Sprawdź, czy Twój brelok systemowy jest dostępny, lub poczekaj chwilę i spróbuj ponownie."
   },
   "appPanel": {
     "failedSaveRetention": "Nie udało się zapisać ustawienia przechowywania wiadomości.",
@@ -334,7 +336,7 @@
     "exportForGitHubDesc": "Zawiera migawkę debugowania i pliki dziennika w jednym zip. Bezpieczne dołączanie do publicznych problemów GitHub.",
     "exportForDeveloper": "Eksportuj pakiet wsparcia dla programisty",
     "exportForDeveloperButton": "Eksport dla programisty",
-    "exportForDeveloperWarning": "Obejmuje pełną bazę danych, która może zawierać zapisane hasła (dane logowania do pokoju MeshCore, ustawienia MQTT itp.). Udostępnij ten pakiet prywatnie tylko opiekunom — nigdy w publicznym GitHub.",
+    "exportForDeveloperWarning": "Obejmuje pełną bazę danych i dzienniki audytu alarmów MECP, które mogą zawierać zapisane hasła, treść wiadomości, identyfikatory nadawcy i kanału oraz dane lokalizacji. Udostępnij ten pakiet prywatnie tylko opiekunom — nigdy w publicznym GitHub.",
     "exportSupportBundleFailed": "Nie można wyeksportować pakietu wsparcia: {{message}}",
     "storeForwardHistoryProfileLabel": "Zachowaj i przekaż profil nadrabiania zaległości",
     "storeForwardHistoryProfileAria": "Agresywność nadrabiania zaległości w historii przechowywania i przesyłania dalej",
@@ -428,7 +430,11 @@
       "empty": "Brak zablokowanych węzłów.",
       "unblockAria": "Odblokuj {{node}}",
       "unblockFailed": "Nie można odblokować tego węzła."
-    }
+    },
+    "updatesSection": "Aktualizacje",
+    "autoUpdateDownload": "Pobieraj aktualizacje automatycznie",
+    "autoUpdateDownloadDesc": "Pobiera najnowszą aktualizację w tle po każdej kontroli. Gdy wyłączone, aktualizacje są nadal wykrywane, ale pobierane tylko po naciśnięciu przycisku Pobierz — przydatne, gdy menedżer pakietów obsługuje instalację.",
+    "autoUpdateDownloadSaveFailed": "Nie można zapisać ustawienia automatycznego pobierania aktualizacji."
   },
   "aria": {
     "closeDialog": "Zamknij okno dialogowe",
@@ -754,7 +760,68 @@
       "hops_one": "{{count}} przeskok",
       "hops_few": "{{count}} przeskoki",
       "hops_many": "{{count}} przeskoków",
-      "hops_other": "{{count}} przeskoku"
+      "hops_other": "{{count}} przeskoku",
+      "place": "Od: {{place}}"
+    },
+    "firmwareBot": {
+      "label": "Odpowiedź bota",
+      "status": {
+        "title": "Stan {{name}}",
+        "uptime": "W górę {{uptime}}",
+        "battery": "Bateria {{mv}} mV ({{percent}}%)",
+        "storage": "Pamięć {{used}}/{{total}} KB",
+        "counters": "Zobaczono {{seen}}, wysłano {{sent}}, nie udało się {{fail}}"
+      },
+      "air": {
+        "title": "Czas antenowy",
+        "tx": "TX {{seconds}} s",
+        "rx": "RX {{seconds}} s",
+        "rxPackets": "RX Flood {{flood}} / bezpośrednie {{direct}}",
+        "txPackets": "TX Flood {{flood}} / bezpośrednie {{direct}}"
+      },
+      "neighbors": {
+        "title_one": "{{count}} sąsiad",
+        "title_few": "{{count}} sąsiedzi",
+        "title_many": "{{count}} sąsiadów",
+        "title_other": "{{count}} sąsiada",
+        "none": "Ostatnio nikt nie słyszał",
+        "ago": "{{ago}} temu"
+      },
+      "trace": {
+        "title": "Namierzać",
+        "hop": "{{hash}} {{snr}} dB",
+        "tail": "Sygnał zwrotny SNR {{snr}} dB",
+        "directLink": "Bezpośredni link",
+        "timeout": "Upłynął limit czasu",
+        "sent": "Wysłano"
+      },
+      "lora": {
+        "title": "LoRa",
+        "freq": "{{freq}} MHz",
+        "sf": "SF{{sf}}",
+        "bw": "BW {{bw}} kHz",
+        "cr": "CR {{cr}}",
+        "power": "{{power}} dBm"
+      },
+      "version": {
+        "title": "Oprogramowanie sprzętowe",
+        "built": "Zbudowany {{built}}"
+      },
+      "channels": {
+        "title": "Kanały botów",
+        "bot": "Polecenia {{name}}",
+        "testing": "Testowanie {{name}}",
+        "emergency": "Awaryjne {{name}}",
+        "public": "Publiczne {{name}}"
+      },
+      "help": {
+        "title": "Polecenia",
+        "diagTitle": "Polecenia diagnostyczne"
+      }
+    },
+    "healthCheck": {
+      "label": "MeshCore Kod kontroli stanu zdrowia",
+      "tooltip": "Kod testowy do kontroli zdrowia MeshCore. Obserwatorzy na siatce nadawcy zgłaszają, który z nich ją otrzymał."
     }
   },
   "common": {
@@ -790,7 +857,11 @@
     "emDash": "—",
     "saving": "Zapisywanie...",
     "delete": "Usuwać",
-    "copied": "Skopiowano"
+    "copied": "Skopiowano",
+    "botBadge": "Nerw",
+    "botBadgeLabel": "Nerw",
+    "botBadgeTooltip": "Wykryty jako bot na podstawie automatycznych odpowiedzi",
+    "retry": "Jeszcze raz"
   },
   "configApplyNotice": {
     "persistNote": "Zastosowane ustawienia są zapisywane w pamięci flash urządzenia i utrzymują się po ponownym uruchomieniu.",
@@ -1123,7 +1194,8 @@
     "meshcoreBleWindowsInAppPairingHint": "W systemie Windows wybierz tutaj radio i wprowadź KOD PIN pokazany na jego ekranie. Mesh Hub sparuje je za Ciebie, więc nie musisz parować go w ustawieniach systemu Windows. Najpierw zamknij aplikację MeshCore w telefonie; radio akceptuje tylko jedno połączenie Bluetooth na raz.",
     "stageEnterPinWindows": "Wprowadź KOD PIN widoczny w radiu, aby sparować je z systemem Windows",
     "stagePairingWindows": "Parowanie z Windows…",
-    "meshtasticSilentAfterConfigure": "Podłączony do radia, ale po skonfigurowaniu przestał wysyłać ruch siatki. Automatyczne ponowne łączenie. Jeśli to się powtarza, sprawdź połączenie sieciowe radia lub uruchom je ponownie."
+    "meshtasticSilentAfterConfigure": "Podłączony do radia, ale po skonfigurowaniu przestał wysyłać ruch siatki. Automatyczne ponowne łączenie. Jeśli to się powtarza, sprawdź połączenie sieciowe radia lub uruchom je ponownie.",
+    "mqttPacketTooLarge": "Broker wysłał pakiet MQTT większy niż limit bezpieczeństwa {{limit}} bajtów; automatyczne ponowne łączenie jest wyłączone."
   },
   "contactGroupsModal": {
     "failedLoadMembers": "Nie udało się załadować członków: {{message}}",
@@ -1614,7 +1686,7 @@
     "layerControlsAria": "Przełącz kontrolki warstwy mapy",
     "basemapHeading": "\"Mapa bazowa\"",
     "basemapSelectAria": "Wybierz mapę bazową mapy",
-    "basemapDark": "Ciemny (Carto)",
+    "basemapDark": "Ciemny (OpenStreetMap)",
     "basemapOsm": "OpenStreetMap (light)",
     "layersHeading": "Nakładki",
     "layerNodes": "Znaczniki węzłów",
@@ -1649,7 +1721,8 @@
       "cacheStats": "Pamięć podręczna: kafle {{count}} ({{size}})",
       "clear": "Wyczyść pamięć podręczną kafli",
       "clearAria": "Wyczyść pamięć podręczną offline",
-      "cleared": "Pamieć podręczna opróżniona"
+      "cleared": "Pamieć podręczna opróżniona",
+      "viewCacheOnly": "Wyświetlone kafelki mapy są automatycznie zapisywane w pamięci podręcznej. Pobieranie regionów jest dostępne dla USGS Topo; OpenStreetMap nie zezwala na pobieranie z wyprzedzeniem."
     },
     "basemapUsgsTopo": "USGS Topo (tylko USA)",
     "layerIncidents": "Zdarzenia awaryjne",
@@ -3383,7 +3456,12 @@
     "frequencyOffsetLabel": "Przesunięcie częstotliwości",
     "frequencyOffsetDesc": "Zaawansowane: przesunięcie w MHz dodane do obliczonej częstotliwości środkowej w celu skorygowania błędu kalibracji kryształu. Pozostawić w pozycji 0, chyba że masz sprzęt testowy.",
     "enumLicensedOnlySuffix": "(tylko licencjonowane)",
-    "unknownEnumValue": "Nieznane ({{value}})"
+    "unknownEnumValue": "Nieznane ({{value}})",
+    "floodScopePresetsTitle": "Zapisane regiony",
+    "floodScopePresetsHelp": "Dodaj regiony tutaj, a następnie wybierz zakres dla każdego kanału obok Wyślij lub w → kanałach radiowych. Zapisanie lub usunięcie regionu pozostawia ustawienia domyślne radia i wybór kanału bez zmian.",
+    "floodScopeAddHashtag": "Hasztag regionu do zapisania",
+    "floodScopeAddSaved": "Zapisz region",
+    "floodScopePresetsFull": "Możesz zaoszczędzić do {{count}} regionów. Usuń jeden przed dodaniem kolejnego."
   },
   "rawPacketLog": {
     "filterPackets": "Filtruj pakiety",
@@ -4026,7 +4104,8 @@
       "enrollNoCert": "Odpowiedź rejestracyjna nie ma certyfikatu",
       "enrollTooLarge": "Odpowiedź na rejestrację jest zbyt duża",
       "enrollKeyMismatch": "Serwer zwrócił certyfikat dla innego klucza",
-      "enrollBusy": "Poczekaj, aż zakończy się import bieżącego certyfikatu"
+      "enrollBusy": "Poczekaj, aż zakończy się import bieżącego certyfikatu",
+      "frameTooLarge": "Zdarzenie CoT przekracza {{max}} bajtów"
     },
     "remoteUseTls": "Użyj TLS (zalecane)",
     "remotePlainTcpWarning": "Zwykły TCP jest niezaszyfrowany: każdy na ścieżce sieciowej może odczytać przekazywane pozycje. Certyfikaty nie są używane, a łączenie przy uruchomieniu jest wyłączone.",
@@ -4076,15 +4155,30 @@
     "unitTypeSensor": "Czujnik",
     "unitTypeAir": "Dron",
     "channelRelayTitle": "MeshCore kanały do TAK",
-    "channelRelayDesc": "Wybierz, co słyszane wiadomości na kanale przekazują do: TAK. Tracker naprawia komunikaty o pozycji trackera MeshCore (!MT1) do znaczników mapy. Pokój GeoChat odzwierciedla kanał w tym pokoju czatu TAK. Oba idą tylko w jedną stronę: nic z TAK nie jest wysyłane przez siatkę.",
     "channelRelayTrackers": "Poprawki trackera",
     "channelRelayRoom": "Pokój GeoChat dla {{channel}}",
     "channelRelayRoomPlaceholder": "Pokój GeoChat (wyłączony)",
     "channelRelayNoChannels": "Podłącz radio MeshCore, aby wyświetlić listę jego kanałów.",
     "channelRelayUnnamed": "Kanał {{n}}",
     "channelRelayTitleMeshtastic": "Meshtastic kanały do TAK",
-    "channelRelayDescMeshtastic": "Wybierz, które usłyszane wiadomości kanałowe mają być przesyłane do TAK. Pokój GeoChat odzwierciedla kanał, w tym wiadomości słyszane przez MQTT, w tym pokoju czatu TAK. To działa tylko w jeden sposób: nic z TAK nie jest wysyłane przez siatkę.",
-    "channelRelayNoChannelsMeshtastic": "Podłącz radio Meshtastic, aby wyświetlić listę jego kanałów."
+    "channelRelayNoChannelsMeshtastic": "Podłącz radio Meshtastic, aby wyświetlić listę jego kanałów.",
+    "unitStylesPreviewKind": "Typ węzła do przetestowania",
+    "unitStylesPreviewProtocol": "Protokół badania",
+    "unitFilterKind": "Typ węzła dla filtra {{n}}",
+    "unitFilterAnyKind": "Dowolny typ węzła",
+    "unitFilterProtocol": "Protokół dla filtra {{n}}",
+    "unitFilterAnyProtocol": "Dowolny protokół",
+    "unitKindCompanion": "Osoby towarzyszące i klienci",
+    "unitKindRepeater": "Powtarzacze i routery",
+    "unitKindRoom": "Serwery pokojowe",
+    "unitKindSensor": "Czujniki",
+    "unitKindTracker": "Trackery",
+    "unitStylesRelayIcon": "Ikona dla wtórników, routerów i serwerów pokojowych",
+    "unitStylesRelayIconHint": "Opcjonalnie. Ścieżka ikony w zestawie ikon atak, jako ustawiony uid/nazwa grupy/pliku. Urządzenia bez tego zestawu ikon pokazują symbol instalacji.",
+    "channelRelayHelp": "Wybierz, co słyszane wiadomości na kanale przekazują do: TAK. Tracker naprawia komunikaty o pozycji trackera MeshCore (!MT1) do znaczników mapy. Pokój GeoChat odzwierciedla kanał w tym pokoju czatu TAK. Nic z TAK nie jest wysyłane przez siatkę, chyba że zaznaczysz, że TAK może wysłać do kanału: następnie wiadomości, które połączyły się z TAK urządzeniami w jego pokoju, są przesyłane na tym kanale z tego radia, poprzedzone znakiem wywoławczym nadawcy.",
+    "channelRelaySend": "TAK może wysyłać",
+    "channelRelaySendFor": "Niech urządzenia TAK wyślą do {{channel}}",
+    "channelRelayHelpMeshtastic": "Wybierz, które usłyszane wiadomości kanałowe mają być przesyłane do TAK. Pokój GeoChat odzwierciedla kanał, w tym wiadomości słyszane przez MQTT, w tym pokoju czatu TAK. Nic z TAK nie jest wysyłane przez siatkę, chyba że zaznaczysz, że TAK może wysłać do kanału: następnie wiadomości, które połączyły się z TAK urządzeniami w jego pokoju, są przesyłane na tym kanale z tego radia, poprzedzone znakiem wywoławczym nadawcy."
   },
   "telemetryPanel": {
     "title": "Telemetria",
@@ -4241,7 +4335,6 @@
     "exportLog": "Export MECP log",
     "compose": {
       "title": "Compose MECP report",
-      "open": "Open MECP compose",
       "severity": "Severity",
       "category": "Category",
       "codes": "Codes",
@@ -4252,7 +4345,12 @@
       "byteBudget": "{{used}} / {{max}} bytes",
       "send": "Send MECP",
       "gpsFailed": "Nie można uzyskać poprawki GPS",
-      "sendFailed": "Nie udało się wysłać raportu MECP"
+      "sendFailed": "Nie udało się wysłać raportu MECP",
+      "openResponse": "Odpowiedz za pomocą MECP",
+      "requestTitle": "Żądanie lub raport MECP",
+      "responseTitle": "Odpowiedź MECP",
+      "showAllCodes": "Pokaż wszystkie kody MECP",
+      "openRequest": "Wniosek lub raport z MECP"
     },
     "rebroadcast": {
       "title": "MECP RF rebroadcast",
@@ -4274,10 +4372,10 @@
       "hint": "Protokół Siatkowej Komunikacji Awaryjnej — twórz raporty z Czatu, łącz tutaj RF między Meshtastic i MeshCore i eksportuj trwały otrzymany dziennik audytu.",
       "learnMore": "Jak działa MECP",
       "protocolSource": "Źródło protokołu na GitHub",
-      "showComposeButton": "Pokaż przycisk MECP na czacie",
-      "showComposeButtonHint": "Domyślnie wyłączone. Po włączeniu Czat pokazuje przycisk MECP do tworzenia i wysyłania raportów awaryjnych.",
       "standingAlert": "Stanowisko kierowania incydentami (stan gotowości)",
-      "standingAlertHint": "Domyślnie wyłączone. W przypadku EOC i monitorowanych stacji: trzyma podniesiony czerwony baner i miga na pasku zadań lub odbija się od doku, dopóki ktoś nie spojrzy na każdy nowy MAYDAY lub PILNY. Wszyscy wciąż słyszą jednorazowy sygnał ostrzegawczy i widzą grzankę."
+      "standingAlertHint": "Domyślnie wyłączone. W przypadku EOC i monitorowanych stacji: trzyma podniesiony czerwony baner i miga na pasku zadań lub odbija się od doku, dopóki ktoś nie spojrzy na każdy nowy MAYDAY lub PILNY. Wszyscy wciąż słyszą jednorazowy sygnał ostrzegawczy i widzą grzankę.",
+      "showComposeButtons": "Pokaż przyciski MECP na czacie",
+      "showComposeButtonsHint": "Domyślnie wyłączone. Po włączeniu Czat pokazuje czerwony przycisk żądania/raportu i niebieski przycisk odpowiedzi."
     },
     "exportLogEmpty": "Brak komunikatów MECP w otrzymanym dzienniku",
     "block": {
@@ -4644,7 +4742,11 @@
     "radioConnected": "Radio połączone",
     "radioDisconnected": "Radio rozłączone",
     "pendingChanges_few": "{{count}} zmiany",
-    "pendingChanges_many": "{{count}} zmian"
+    "pendingChanges_many": "{{count}} zmian",
+    "scope": "Domyślny zakres Flood",
+    "defaultScope": "Nazwa regionu (pusta dla obszaru nieobjętego zakresem)",
+    "scopeSummary": "Region dla wychodzących pakietów Flood tego węzła",
+    "scopeHint": "Firmware v1.15+: wpisz publiczną nazwę regionu, np. #us-tn-tri; puste pole oznacza brak ograniczenia regionu. Dotyczy ogłoszeń Flood i dostarczania wiadomości pokoju przez Flood. Trasy bezpośrednie i uprawnienia dostępu do pokoju są niezależne. Zakresy radia Companion i jego kanałów ustawia się osobno."
   },
   "chatTranslation": {
     "translate": "Translate message",
@@ -4675,7 +4777,7 @@
     "deletePack": "Usuń pakiet {{pack}}",
     "downloadPack": "Pobierz pakiet {{pack}}",
     "delete": "Delete",
-    "onlinePrivacy": "Tłumaczenie online wysyła wybrany tekst wiadomości na skonfigurowany serwer LibreTranslate tylko wtedy, gdy wybierzesz opcję Tłumacz online. Tłumaczenie automatyczne zawsze pozostaje offline.",
+    "onlinePrivacy": "Tłumaczenie online wysyła wybrany tekst wiadomości na skonfigurowany serwer LibreTranslate tylko wtedy, gdy wybierzesz opcję Tłumacz online. Tłumaczenie automatyczne zawsze pozostaje offline. Protokół HTTP jest dozwolony tylko dla hosta localhost i adresów pętli zwrotnej; pozostałe serwery muszą używać protokołu HTTPS.",
     "serverUrl": "Adres URL serwera LibreTranslate",
     "apiKey": "Klucz API (opcjonalnie)",
     "savedKey": "Klucz API jest bezpiecznie zapisywany. Puste pole zachowuje go tylko dla tego samego adresu URL serwera.",
@@ -4707,6 +4809,166 @@
     "downloadSize": "Pobierz ({{size}})",
     "readLanguagesHint": "Wiadomości w tych językach nigdy nie są tłumaczone automatycznie. Język wybrany w sekcji Tłumacz na zawsze liczy się jako język, który czytasz.",
     "pivotHint": "Pakiet obejmuje jeden kierunek tłumaczenia, na przykład z francuskiego na angielski. Inne pary językowe są tłumaczone na język angielski: francuski na niemiecki potrzebuje pakietów francuskiego → angielskiego i angielskiego → niemieckiego. Tłumaczenie na język angielski wymaga tylko jednego opakowania.",
-    "hideTranslation": "Ukryj tłumaczenie"
+    "hideTranslation": "Ukryj tłumaczenie",
+    "secureUrlRequired": "Tłumaczenie online jest wstrzymane. Twój serwer i zapisany klucz zostały zachowane; użyj adresu URL HTTPS, aby wznowić."
+  },
+  "liveTraffic": {
+    "controlPacket": "Pakiet sterujący",
+    "discoveryRequest": "Żądanie wykrywania węzłów",
+    "discoveryResponse": "Odpowiedź na wykrywanie węzłów",
+    "directoryLimited": "Lista węzłów tej mapy osiągnęła limit. Niektóre węzły mogą być pominięte.",
+    "directoryLimitedShort": "Niepełna lista węzłów",
+    "sources": {
+      "CoreScope": "CoreScope",
+      "RF": "RF",
+      "MQTT": "MQTT",
+      "unknown": "Nieznane źródło",
+      "Beacon": "Beacon"
+    },
+    "corescope": {
+      "feed": "Regionalny CoreScope",
+      "preset": "Regionalna mapa CoreScope",
+      "url": "Adres URL mapy CoreScope",
+      "waitingHint": "Połącz źródło CoreScope powyżej, aby zobaczyć raporty jego obserwatorów. Lokalne radio nie jest wymagane.",
+      "disconnected": "Wybierz adres URL mapy CoreScope, aby się połączyć."
+    },
+    "trafficSource": "Źródło ruchu",
+    "estimatedRouteHint": "CoreScope oszacował tożsamość niektórych węzłów. Te połączenia nie są potwierdzone; brakujące przeskoki pozostają nieznane.",
+    "cancelConnection": "Anuluj połączenie",
+    "connectionActionFailed": "Nie można zaktualizować połączenia ze źródłem danych. Spróbuj ponownie.",
+    "estimatedLinks": "Połączenia z uwzględnieniem szacunków serwera",
+    "additionalLocations_other": "{{count}} dodatkowej lokalizacji",
+    "additionalLocations_one": "{{count}} dodatkowa lokalizacja",
+    "mapOverview": "Przegląd",
+    "title": "Ruch na żywo",
+    "mapModes": "Tryb mapy",
+    "pause": "Wstrzymaj",
+    "resume": "Wznów",
+    "region": "Obszar mapy",
+    "regions": {
+      "all": "Wszystkie regiony"
+    },
+    "transportScope": "Kod transportowy",
+    "scopeHint": "Filtruj według zaobserwowanych kodów transportowych pakietów lub wpisz scoped albo unscoped. Kody dotyczą poszczególnych pakietów i nie zmieniają ustawień radia.",
+    "unscoped": "Bez zakresu",
+    "allScopes": "Wszystkie zakresy",
+    "packetType": "Typ pakietu",
+    "kinds": {
+      "all": "Wszystkie pakiety",
+      "message": "Wiadomości",
+      "advert": "Adverty / pozycja",
+      "telemetry": "Telemetria",
+      "routing": "Routing",
+      "other": "Inne"
+    },
+    "scoped": "Z zakresem",
+    "speed": "Odtwarzanie",
+    "mapAria": "Mapa ruchu pakietów na żywo",
+    "speedNormal": "1×",
+    "speedFast": "2×",
+    "basemap": "Styl mapy",
+    "darkMap": "Ciemny",
+    "streetMap": "Ulice",
+    "topographicMap": "USGS topo",
+    "waiting": "Oczekiwanie na obserwacje pakietów",
+    "waitingHint": "Podłącz radio, aby zobaczyć ruch na żywo.",
+    "animationDisclaimer": "Ruch pokazuje kolejność pakietów, a nie prędkość transmisji radiowej. Nieznane przeskoki przerywają trasę.",
+    "meshtasticDisclaimer": "Połączenia pokazujące odbiór są poglądowe. Zwykłe pakiety nie ujawniają każdego węzła pośredniczącego.",
+    "feed": "Lista pakietów",
+    "noFilterMatches": "Żadne ostatnie pakiety nie pasują do tych filtrów.",
+    "emptyFeed": "Pakiety pojawiają się tutaj, gdy ten klient je otrzymuje. Węzły o znanych pozycjach mogą być pokazane na mapie.",
+    "packetList": "Ostatnie obserwacje pakietów",
+    "inspectPacket": "Sprawdź pakiet typu {{kind}} z {{time}}",
+    "noSignal": "Brak danych o sygnale",
+    "closeInspector": "Zamknij szczegóły pakietu",
+    "inspector": "Szczegóły pakietu",
+    "route": "Dane potwierdzające trasę",
+    "source": "Źródło obserwacji",
+    "signal": "RSSI / SNR",
+    "signalValues": "{{rssi}} dBm / {{snr}} dB",
+    "routeStatus": {
+      "resolved": "Ustalona trasa pakietu",
+      "estimated": "Trasa oszacowana przez serwer",
+      "unlocated": "Brak trasy do wyświetlenia",
+      "direct": "Obserwacja bezpośrednia",
+      "partial": "Trasa częściowa / połączenie odbiorcze",
+      "unparsed": "Nieprzeanalizowany pakiet"
+    },
+    "meshtasticInspector": "Połączenie pokazujące odbiór nie potwierdza całego łańcucha węzłów pośredniczących. Szczegółowe trasy są wyświetlane tylko wtedy, gdy pakiet je zawiera.",
+    "meshcoreInspector": "Łączone są tylko sąsiednie przeskoki o ustalonej tożsamości węzłów. Nieznane lub niejednoznaczne skróty pozostawiają luki w trasie.",
+    "knownLocations": "Zlokalizowane punkty",
+    "filterHint": "Filtry dotyczą tylko widoku. Ustawienia radia pozostają bez zmian.",
+    "filters": "Filtry",
+    "observationCount_other": "{{count}} pakietu",
+    "observationCount_one": "{{count}} pakiet",
+    "mappedCount": "Na mapie: {{count}}",
+    "nodeCount": "Wyświetlane węzły: {{count}}",
+    "toggleFeed": "Rozwiń lub zwiń listę pakietów",
+    "expandFeed": "Powiększ okno listy pakietów",
+    "moveFeed": "Przesuń listę pakietów",
+    "shrinkFeed": "Zmniejsz okno listy pakietów",
+    "resetFeed": "Przywróć pozycję listy pakietów",
+    "moveFeedHint": "Przeciągnij, aby przenieść. Klawisze strzałek przesuwają okno; przytrzymaj Shift, aby wykonać większe kroki.",
+    "encryptedContent": "Wiadomość zaszyfrowana",
+    "contentUnavailable": "Treść wiadomości jest niedostępna",
+    "beacon": {
+      "feed": "Regionalny Beacon",
+      "url": "Adres URL mapy Beacon",
+      "connect": "Połącz",
+      "disconnect": "Rozłącz",
+      "region": "Region źródła",
+      "configure": "Konfiguruj",
+      "readOnly": "Źródło publiczne · Klucz API nie jest wymagany",
+      "waitingHint": "Połącz regionalne źródło Beacon powyżej, aby zobaczyć raporty jego obserwatorów. Lokalne radio nie jest wymagane.",
+      "listeningHint": "Połączono. Nowe obserwacje pojawią się, gdy regionalni obserwatorzy odbiorą pakiety.",
+      "status": {
+        "connecting": "Łączenie z regionalnymi obserwatorami…",
+        "live": "Regionalne źródło na żywo",
+        "reconnecting": "Ponowne łączenie…",
+        "disconnected": "Wybierz adres URL mapy Beacon, aby się połączyć.",
+        "error": "Nie można się połączyć.",
+        "feedOpenFailed": "Nie udało się otworzyć kanału mapy regionalnej.",
+        "refreshing": "Odświeżanie mapy regionalnej po przerwaniu kanału.",
+        "connectionInterrupted": "Połączenie z mapą regionalną przerwane.",
+        "publicHttpsRejected": "Nie udało się otworzyć tej publicznej mapy regionalnej HTTPS."
+      },
+      "preset": "Regionalna mapa Beacon",
+      "custom": "Własny adres URL"
+    },
+    "localRadio": "Radio lokalne",
+    "closeSource": "Zamknij ustawienia źródła",
+    "aboutMap": "O tej mapie ruchu pakietów",
+    "packetColorHint": "Pakiet zachowuje ten sam kolor na wszystkich zgłoszonych trasach. Powtarzające się raporty są grupowane.",
+    "zoomIn": "Powiększ",
+    "zoomOut": "Pomniejsz",
+    "reports_one": "{{count}} raport",
+    "reports_other": "{{count}} raportu",
+    "observedLinks": "Zaobserwowane połączenia",
+    "additionalLinks_one": "{{count}} dodatkowe połączenie",
+    "additionalLinks_other": "{{count}} dodatkowego połączenia",
+    "mapLinkLimit": "Mapa pokazuje najnowsze połączenia dla tego pakietu, maksymalnie {{count}}.",
+    "reportsLabel": "Raporty w widoku",
+    "mixedCodes": "Wiele kodów transportowych",
+    "zoomControls": "Sterowanie powiększeniem mapy",
+    "connectionState": {
+      "live": "Na żywo",
+      "connecting": "Łączenie",
+      "reconnecting": "Ponowne łączenie",
+      "disconnected": "Rozłączono",
+      "error": "Błąd połączenia"
+    },
+    "additionalLocations_few": "{{count}} dodatkowe lokalizacje",
+    "additionalLocations_many": "{{count}} dodatkowych lokalizacji",
+    "observationCount_few": "{{count}} pakiety",
+    "observationCount_many": "{{count}} pakietów",
+    "reports_few": "{{count}} raporty",
+    "reports_many": "{{count}} raportów",
+    "additionalLinks_few": "{{count}} dodatkowe połączenia",
+    "additionalLinks_many": "{{count}} dodatkowych połączeń",
+    "areas": {
+      "all": "Cały ruch",
+      "viewport": "Bieżący obszar mapy"
+    },
+    "fitTraffic": "Dopasuj widok do ruchu"
   }
 }

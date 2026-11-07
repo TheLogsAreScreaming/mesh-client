@@ -108,3 +108,121 @@ describe('resolveTakStyle', () => {
     expect(resolveTakStyle(s, node({ long_name: 'K9 Rex' }), 'meshcore')?.matched).toBe(true);
   });
 });
+
+describe('resolveTakStyle relay icon', () => {
+  const ICON = 'geoops/WildFire/Repeater.png';
+  const withIcon = (filters: TakUnitFilter[] = []): TakStyleSettings => ({
+    ...settings(filters),
+    relayIconsetPath: ICON,
+  });
+
+  it('adds the configured icon to advertised relays of any protocol', () => {
+    const repeater = node({ long_name: 'Ridge', hw_model: 'Repeater' });
+    expect(resolveTakStyle(withIcon(), repeater, 'meshcore')?.style).toEqual({
+      ...TAK_RELAY_STYLE,
+      iconsetPath: ICON,
+    });
+    const room = node({ long_name: 'Lobby', hw_model: 'Room' });
+    expect(resolveTakStyle(withIcon(), room, 'meshcore')?.style.iconsetPath).toBe(ICON);
+    const router = node({ long_name: 'Tower', role: 2 });
+    expect(resolveTakStyle(withIcon(), router, 'meshtastic')?.style.iconsetPath).toBe(ICON);
+  });
+
+  it('leaves the shared relay style untouched', () => {
+    resolveTakStyle(withIcon(), node({ hw_model: 'Repeater' }), 'meshcore');
+    expect(TAK_RELAY_STYLE).not.toHaveProperty('iconsetPath');
+  });
+
+  it('does not add it to companions, filter matches, or when unset', () => {
+    const companion = node({ long_name: 'Ridge', hw_model: 'Chat' });
+    expect(resolveTakStyle(withIcon(), companion, 'meshcore')?.style).toBe(TAK_PERSON_STYLE);
+    const matched = node({ long_name: 'Medic 12', hw_model: 'Repeater' });
+    expect(resolveTakStyle(withIcon([filter()]), matched, 'meshcore')?.style).toBe(EMS);
+    const repeater = node({ long_name: 'Ridge', hw_model: 'Repeater' });
+    expect(resolveTakStyle(settings([]), repeater, 'meshcore')?.style).toBe(TAK_RELAY_STYLE);
+  });
+});
+
+describe('resolveTakStyle node kind and protocol conditions', () => {
+  const ORANGE = { cotType: 'a-f-G-U-C', group: 'Orange', role: 'Team Member' };
+  const BROWN = { cotType: 'a-f-G-E-S', group: 'Brown' };
+  const RTO = { cotType: 'a-f-G-U-C', group: 'Purple', role: 'RTO' };
+  const byKind = (overrides: Partial<TakUnitFilter>): TakUnitFilter =>
+    filter({ patterns: [], ...overrides });
+
+  const filters = [
+    byKind({ nodeKind: 'companion', protocol: 'meshcore', style: ORANGE }),
+    byKind({ nodeKind: 'sensor', style: BROWN }),
+    byKind({ nodeKind: 'room', style: RTO }),
+  ];
+
+  it('restyles every node of a kind without a name pattern', () => {
+    const companion = node({ long_name: 'Ridge', hw_model: 'Chat' });
+    expect(resolveTakStyle(settings(filters), companion, 'meshcore')).toMatchObject({
+      style: ORANGE,
+      callsign: 'Ridge',
+      matched: true,
+    });
+    const sensor = node({ long_name: 'Creek gauge', hw_model: 'Sensor' });
+    expect(resolveTakStyle(settings(filters), sensor, 'meshcore')?.style).toBe(BROWN);
+    const room = node({ long_name: 'Lobby', hw_model: 'Room' });
+    expect(resolveTakStyle(settings(filters), room, 'meshcore')?.style).toBe(RTO);
+  });
+
+  it('tells repeaters from room servers and leaves other kinds to their advertised style', () => {
+    const repeater = node({ long_name: 'Peak', hw_model: 'Repeater' });
+    expect(resolveTakStyle(settings(filters), repeater, 'meshcore')).toMatchObject({
+      style: TAK_RELAY_STYLE,
+      matched: false,
+    });
+  });
+
+  it('applies the protocol condition', () => {
+    const client = node({ long_name: 'Ridge', role: 0 });
+    expect(resolveTakStyle(settings(filters), client, 'meshtastic')?.style).toBe(TAK_PERSON_STYLE);
+    const sensor = node({ long_name: 'Weather', role: 6 });
+    expect(resolveTakStyle(settings(filters), sensor, 'meshtastic')?.style).toBe(BROWN);
+    const onlyMeshtastic = [byKind({ protocol: 'meshtastic', style: ORANGE })];
+    expect(resolveTakStyle(settings(onlyMeshtastic), client, 'meshtastic')?.style).toBe(ORANGE);
+    expect(resolveTakStyle(settings(onlyMeshtastic), client, 'meshcore')?.style).toBe(
+      TAK_PERSON_STYLE,
+    );
+  });
+
+  it('requires the name pattern as well when one is set', () => {
+    const named = [filter({ nodeKind: 'repeater', patterns: ['medic'], style: EMS })];
+    const repeater = node({ long_name: 'Medic relay', hw_model: 'Repeater' });
+    expect(resolveTakStyle(settings(named), repeater, 'meshcore')?.style).toBe(EMS);
+    const otherRepeater = node({ long_name: 'Peak', hw_model: 'Repeater' });
+    expect(resolveTakStyle(settings(named), otherRepeater, 'meshcore')?.matched).toBe(false);
+    const companion = node({ long_name: 'Medic 12', hw_model: 'Chat' });
+    expect(resolveTakStyle(settings(named), companion, 'meshcore')?.matched).toBe(false);
+  });
+
+  it('lets the first matching filter win and skips disabled ones', () => {
+    const ordered = [
+      byKind({ nodeKind: 'companion', enabled: false, style: BROWN }),
+      filter({ patterns: ['medic'], style: EMS }),
+      byKind({ nodeKind: 'companion', style: ORANGE }),
+    ];
+    const medic = node({ long_name: 'Medic 12', hw_model: 'Chat' });
+    expect(resolveTakStyle(settings(ordered), medic, 'meshcore')?.style).toBe(EMS);
+    const other = node({ long_name: 'Ridge', hw_model: 'Chat' });
+    expect(resolveTakStyle(settings(ordered), other, 'meshcore')?.style).toBe(ORANGE);
+  });
+
+  it('matches nothing with a filter that sets no condition', () => {
+    const empty = [byKind({ style: ORANGE })];
+    const companion = node({ long_name: 'Ridge', hw_model: 'Chat' });
+    expect(resolveTakStyle(settings(empty), companion, 'meshcore')?.matched).toBe(false);
+  });
+
+  it('matches trackers by kind', () => {
+    const trackers = [byKind({ nodeKind: 'tracker', style: ORANGE })];
+    const tracker = node({ long_name: 'Rex', hw_model: 'Chat' });
+    expect(
+      resolveTakStyle(settings(trackers), { ...tracker, tracker_role: 'k9' }, 'meshcore')?.style,
+    ).toBe(ORANGE);
+    expect(resolveTakStyle(settings(trackers), tracker, 'meshcore')?.matched).toBe(false);
+  });
+});

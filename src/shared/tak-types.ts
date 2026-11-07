@@ -35,6 +35,32 @@ export interface TakUnitStyle {
   role?: string;
   /** `#RRGGBB`; emitted as `<color argb>`. */
   color?: string;
+  /**
+   * Icon from an ATAK icon set, as `<set uid>/<group>/<file>`; emitted as
+   * `<usericon iconsetpath>`. A client without that set installed draws `cotType` instead.
+   */
+  iconsetPath?: string;
+}
+
+export const TAK_ICONSET_PATH_MAX_LEN = 256;
+const ICONSET_PATH_FORBIDDEN = new Set(['<', '>', '"', "'", '&']);
+/** Unicode control characters: C0, DEL, and C1. */
+const CONTROL_CHAR_RE = /\p{Cc}/u;
+
+/** One path segment: non-empty, no surrounding whitespace, no markup or control characters. */
+function isIconsetPathSegment(segment: string): boolean {
+  if (segment.length === 0 || segment.trim() !== segment) return false;
+  for (const ch of segment) {
+    if (CONTROL_CHAR_RE.test(ch) || ICONSET_PATH_FORBIDDEN.has(ch)) return false;
+  }
+  return true;
+}
+
+/** `<set uid>/<group>/<file>`: three non-empty segments with no markup or control characters. */
+export function isTakIconsetPath(value: string): boolean {
+  if (value.length > TAK_ICONSET_PATH_MAX_LEN) return false;
+  const segments = value.split('/');
+  return segments.length === 3 && segments.every(isIconsetPathSegment);
 }
 
 /** ATAK team colors accepted as `<__group name>`. */
@@ -87,12 +113,32 @@ export const TAK_MATCH_OPS: readonly TakMatchOp[] = [
   'contains',
 ];
 
-/** Restyles relayed nodes whose callsign or long name matches one of its patterns. */
+/**
+ * What a relayed node is, from what it advertises: a MeshCore advert type, a Meshtastic device
+ * role, a Reticulum interface, or a tracker fix.
+ */
+export const TAK_NODE_KINDS = ['companion', 'repeater', 'room', 'sensor', 'tracker'] as const;
+export type TakNodeKind = (typeof TAK_NODE_KINDS)[number];
+
+/** The node a filter is tested against, beyond its names. */
+export interface TakFilterSubject {
+  kind: TakNodeKind;
+  protocol: MeshProtocol;
+}
+
+/**
+ * Restyles relayed nodes that meet every condition it sets: a name pattern, a node kind, a
+ * protocol. A filter that sets none matches nothing.
+ */
 export interface TakUnitFilter {
   enabled: boolean;
   op: TakMatchOp;
-  /** Compared case-insensitively. */
+  /** Compared case-insensitively against the callsign, then the long name. Empty: any name. */
   patterns: string[];
+  /** Only nodes of this kind. Unset: any kind. */
+  nodeKind?: TakNodeKind;
+  /** Only nodes heard on this protocol. Unset: any protocol. */
+  protocol?: MeshProtocol;
   /** Remove the matched prefix (startsWith) or suffix (endsWith) from the callsign. */
   stripMatch: boolean;
   style: TakUnitStyle;
@@ -107,6 +153,11 @@ export interface TakStyleSettings {
   filters: TakUnitFilter[];
   /** Relay nodes no filter matches; off sends only matched nodes. */
   sendUnmatched: boolean;
+  /**
+   * Icon set path for nodes that advertise a relay role (repeaters, routers, room servers,
+   * interfaces) and that no filter matches. Unset keeps the plain installation symbol.
+   */
+  relayIconsetPath?: string;
 }
 
 export const DEFAULT_TAK_STYLE_SETTINGS: TakStyleSettings = { filters: [], sendUnmatched: true };
@@ -160,6 +211,18 @@ export interface TAKGeochatMessage {
   /** Sender's last known position; omitted when unknown. */
   latitude?: number;
   longitude?: number;
+}
+
+/** A GeoChat message a local TAK client sent to the server, for the mesh channel bridge. */
+export interface TAKInboundChat {
+  /** GeoChat room (chatroom) the client addressed. */
+  room: string;
+  senderCallsign: string;
+  text: string;
+  /** Server-side id of the client connection that sent it. */
+  clientId: string;
+  /** When the server received it, epoch milliseconds. */
+  timeMs: number;
 }
 
 export const TAK_GEOCHAT_TEXT_MAX_LEN = 1024;

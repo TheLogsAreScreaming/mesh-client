@@ -14,6 +14,13 @@ const MAX_DEBUG_SNAPSHOT_JSON_BYTES = 5 * 1024 * 1024;
 /** Tail-cap for preserved/rotated `mesh-client.log.1` in support zips (full file can be ~100 MB). */
 const MAX_SUPPORT_BUNDLE_LOG_BACKUP_BYTES = 10 * 1024 * 1024;
 const LOG_BACKUP_FILENAME = 'mesh-client.log.1';
+const GITHUB_SUPPORT_BUNDLE_ALLOWLIST = new Set([
+  'debug-snapshot.json',
+  'mesh-client.log',
+  LOG_BACKUP_FILENAME,
+  'manifest.json',
+  'README.txt',
+]);
 
 export function validateDebugSnapshotJson(debugSnapshotJson: string): Record<string, unknown> {
   if (debugSnapshotJson.length > MAX_DEBUG_SNAPSHOT_JSON_BYTES) {
@@ -82,8 +89,6 @@ Contents:
   debug-snapshot.json  — UI/session state for triage (Meshtastic, MeshCore)
   mesh-client.log      — Application log (current session)
   mesh-client.log.1    — Prior session log (preserved on restart) or size-rotated backup
-  mecp-received.log    — Durable MECP (emergency) received audit log
-  mecp-received.log.1  — Size-rotated MECP audit backup (if present)
   manifest.json        — App version, buildChannel, and platform metadata
   README.txt           — This file
 
@@ -97,8 +102,9 @@ export "Export for Developer" separately and share it via a private channel only
 PRIVATE USE ONLY — do not attach this zip or mesh-client.db to public GitHub issues.
 
 The database may contain saved passwords (MeshCore room/repeater credentials, MQTT
-settings, and similar secrets). Share this bundle only with maintainers via a
-private channel (email, Discord DM, etc.) when they request it.
+settings, and similar secrets). MECP audit logs may contain emergency message text,
+sender and channel identifiers, and location details. Share this bundle only with
+maintainers via a private channel (email, Discord DM, etc.) when they request it.
 
 ${buildChannelReadmeLine()}
 
@@ -174,6 +180,15 @@ export function isSupportBundleMode(value: unknown): value is SupportBundleMode 
   return value === 'github' || value === 'developer';
 }
 
+/** Public (GitHub) bundles may only contain the allowlisted, non-sensitive files. */
+function assertGitHubSupportBundleAllowlist(zip: JSZip): void {
+  for (const [name, entry] of Object.entries(zip.files)) {
+    if (!entry.dir && !GITHUB_SUPPORT_BUNDLE_ALLOWLIST.has(name)) {
+      throw new Error(`GitHub support bundle contains non-public entry: ${name}`);
+    }
+  }
+}
+
 /** Build a support zip at destZipPath. Failure point: disk I/O or DB backup; throws on error. */
 export async function buildSupportBundleZip(
   destZipPath: string,
@@ -197,23 +212,23 @@ export async function buildSupportBundleZip(
     zip.file(LOG_BACKUP_FILENAME, backupLog);
   }
 
-  const mecpLogPath = path.join(logDir, 'mecp-received.log');
-  const mecpLog = await readFileOrEmpty(mecpLogPath);
-  if (mecpLog.length > 0) {
-    zip.file('mecp-received.log', mecpLog);
-  }
-  const mecpBackupPath = path.join(logDir, 'mecp-received.log.1');
-  if (fs.existsSync(mecpBackupPath)) {
-    zip.file(
-      'mecp-received.log.1',
-      await readFileTailOrEmpty(mecpBackupPath, MAX_SUPPORT_BUNDLE_LOG_BACKUP_BYTES),
-    );
-  }
-
   zip.file('manifest.json', JSON.stringify(buildManifest(mode), null, 2));
   zip.file('README.txt', buildReadme(mode));
 
   if (mode === 'developer') {
+    const mecpLogPath = path.join(logDir, 'mecp-received.log');
+    const mecpLog = await readFileOrEmpty(mecpLogPath);
+    if (mecpLog.length > 0) {
+      zip.file('mecp-received.log', mecpLog);
+    }
+    const mecpBackupPath = path.join(logDir, 'mecp-received.log.1');
+    if (fs.existsSync(mecpBackupPath)) {
+      zip.file(
+        'mecp-received.log.1',
+        await readFileTailOrEmpty(mecpBackupPath, MAX_SUPPORT_BUNDLE_LOG_BACKUP_BYTES),
+      );
+    }
+
     const tempRoot = app.getPath('temp');
     await fs.promises.mkdir(tempRoot, { recursive: true });
     const tempDbDir = await fs.promises.mkdtemp(path.join(tempRoot, 'mesh-support-db-'));
@@ -224,6 +239,8 @@ export async function buildSupportBundleZip(
     } finally {
       await fs.promises.rm(tempDbDir, { recursive: true, force: true });
     }
+  } else {
+    assertGitHubSupportBundleAllowlist(zip);
   }
 
   const buf = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });

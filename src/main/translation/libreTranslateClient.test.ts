@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { LibreTranslateClient } from './libreTranslateClient';
 
-function setup(response: () => Promise<Response>) {
-  let saved: string | undefined;
+function setup(response: () => Promise<Response>, initialSaved?: string) {
+  let saved = initialSaved;
   const safeStorage = {
     isEncryptionAvailable: () => true,
     encryptString: vi.fn((text: string) => Buffer.from(`encrypted:${text}`)),
@@ -18,7 +18,9 @@ function setup(response: () => Promise<Response>) {
     },
     safeStorage,
   });
-  client.setConfig({ enabled: true, url: 'http://localhost:5000', apiKey: 'private-key' });
+  if (initialSaved === undefined) {
+    client.setConfig({ enabled: true, url: 'http://localhost:5000', apiKey: 'private-key' });
+  }
   return { client, fetchImpl, safeStorage, saved: () => saved };
 }
 describe('LibreTranslate client', () => {
@@ -79,4 +81,31 @@ describe('LibreTranslate client', () => {
       client.setConfig({ enabled: true, url: 'https://key@server.test' });
     }).toThrow();
   });
+  it.each([true, false])(
+    'preserves unsafe legacy configuration while blocking requests (enabled=%s)',
+    async (enabled) => {
+      const { client, fetchImpl, safeStorage, saved } = setup(
+        () => Promise.resolve(Response.json({ translatedText: 'hello' })),
+        JSON.stringify({
+          enabled,
+          url: 'http://translate.example',
+          encryptedKey: Buffer.from('encrypted:private-key').toString('base64'),
+        }),
+      );
+
+      const original = saved();
+      expect(client.status()).toEqual({
+        enabled: false,
+        url: 'http://translate.example',
+        hasApiKey: true,
+        needsSecureUrl: true,
+      });
+      expect(saved()).toBe(original);
+      await expect(client.translate('secret', 'en', 'fr')).rejects.toThrow(
+        'LibreTranslate disabled',
+      );
+      expect(fetchImpl).not.toHaveBeenCalled();
+      expect(safeStorage.decryptString).not.toHaveBeenCalled();
+    },
+  );
 });

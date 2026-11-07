@@ -14,7 +14,6 @@ import {
   powerMonitor,
   powerSaveBlocker,
   protocol,
-  safeStorage,
   screen,
   type Session,
   shell,
@@ -136,6 +135,7 @@ import { formatGpxTracks, GPX_EXPORT_MAX_POINTS } from './gpxExportFormat';
 import { isHarmlessSocketOptionError } from './harmlessSocketOptionError';
 import { probeHttpRttMs, probeTcpRttMs } from './host-link-rtt';
 import { isValidHttpHostname } from './httpHostValidation';
+import { registerBeaconIpcHandlers } from './ipc/beacon-handlers';
 import { registerBlockedContactsIpcHandlers } from './ipc/blocked-contacts-handlers';
 import { registerEnvironmentTelemetryIpcHandlers } from './ipc/environment-telemetry-handlers';
 import { registerGattPairingIpcHandlers } from './ipc/gatt-pairing-handlers';
@@ -189,6 +189,7 @@ import { PermissionDecisionLogger } from './permissionDecisionLog';
 import { readFileUpTo } from './readFileUpTo';
 import { createRendererHeartbeatWatchdog } from './rendererHeartbeatWatchdog';
 import { resolveRendererLoadUrl } from './resolveRendererLoadUrl';
+import { SecureSecretStore } from './secure-secret-store';
 import {
   buildSupportBundleZip,
   defaultSupportBundleFilename,
@@ -328,7 +329,7 @@ gattSidecarProxy.setEnsureSidecar(async () => {
   }
   const mgr = ensureBleSidecarManager();
   const port = await mgr.ensureForBle();
-  gattSidecarProxy.setPort(port);
+  gattSidecarProxy.setPort(port, mgr.getAuthTokenForLocalProxy());
   return port;
 });
 bleCoexistenceCoordinator.setGattProxy(gattSidecarProxy);
@@ -341,7 +342,7 @@ bleCoexistenceCoordinator.setGattProxy(gattSidecarProxy);
     if (!(status.processRunning ?? status.running)) {
       gattSidecarProxy.invalidateAfterSidecarExit();
     } else if (status.port > 0) {
-      gattSidecarProxy.setPort(status.port);
+      gattSidecarProxy.setPort(status.port, mgr.getAuthTokenForLocalProxy());
     }
   });
 }
@@ -366,6 +367,11 @@ function attachTakForwarders(manager: TakServerManager): void {
   manager.on('client-updated', (client) => {
     if (mainWindow) mainWindow.webContents.send('tak:clientUpdated', client);
     else console.debug('[main] tak:clientUpdated dropped (mainWindow not ready)');
+  });
+  // Dropped while the window is down: a chat message must not be sent on the mesh late.
+  manager.on('client-chat', (message) => {
+    if (mainWindow) mainWindow.webContents.send('tak:inboundChat', message);
+    else console.debug('[main] tak:inboundChat dropped (mainWindow not ready)');
   });
   // The renderer re-reads tak:getContacts on mount, so a dropped batch is recovered there.
   manager.on('contacts', (update) => {
@@ -3603,6 +3609,7 @@ ipcMain.handle('mqtt:publishWaypoint', (event, args) => {
 });
 
 registerGeoIpcHandlers();
+registerBeaconIpcHandlers();
 registerGpsIpcHandlers();
 registerNotificationSoundHandlers();
 const disposeTranslation = registerTranslationHandlers({
@@ -3643,66 +3650,74 @@ ipcMain.handle('notify:message', (event, title: unknown, body: unknown) => {
   }
 });
 
-// ─── IPC: Safe storage (OS-keychain-backed encryption) ─────────────
+// ─── IPC: Main-owned secure secret storage ─────────────────────────
 /** Export / import dialogs — max 5 / 60s. */
 const exportIpcRateLimit = createIpcRateLimiter({
   max: 5,
   windowMs: MS_PER_MINUTE,
   label: 'export',
 });
-/** storage:encrypt / storage:decrypt — max 30 / 60s. */
-const storageCryptoIpcRateLimit = createIpcRateLimiter({
-  max: 30,
+/** Typed secure-secret operations — max 120 / 60s for startup hydration and migrations. */
+const secureSecretIpcRateLimit = createIpcRateLimiter({
+  max: 120,
   windowMs: MS_PER_MINUTE,
-  label: 'storage:crypto',
+  label: 'secureSecrets',
+});
+const secureSecretStore = new SecureSecretStore(getDatabase);
+
+ipcMain.handle('secureSecrets:status', (event) => {
+  assertIpcSender(event, 'secureSecrets:status');
+  secureSecretIpcRateLimit.checkOrThrow();
+  return secureSecretStore.status();
 });
 
-ipcMain.handle('storage:isAvailable', (event) => {
-  assertIpcSender(event, 'storage:isAvailable');
-  try {
-    return safeStorage.isEncryptionAvailable();
-  } catch (e) {
-    console.warn(
-      '[IPC] storage:isAvailable failed:',
-      sanitizeLogMessage(e instanceof Error ? e.message : String(e)),
-    );
-    return false;
-  }
+ipcMain.handle('secureSecrets:list', (event) => {
+  assertIpcSender(event, 'secureSecrets:list');
+  secureSecretIpcRateLimit.checkOrThrow();
+  return secureSecretStore.list();
 });
 
-ipcMain.handle('storage:encrypt', (event, plaintext: unknown) => {
-  assertIpcSender(event, 'storage:encrypt');
-  storageCryptoIpcRateLimit.checkOrThrow();
-  if (typeof plaintext !== 'string' || plaintext.length > 4096)
-    throw new Error('storage:encrypt: invalid input');
-  try {
-    if (!safeStorage.isEncryptionAvailable()) return null;
-    return safeStorage.encryptString(plaintext).toString('base64');
-  } catch (e) {
-    console.warn(
-      '[IPC] storage:encrypt failed:',
-      sanitizeLogMessage(e instanceof Error ? e.message : String(e)),
-    );
-    return null;
-  }
+ipcMain.handle('secureSecrets:getAll', (event) => {
+  assertIpcSender(event, 'secureSecrets:getAll');
+  secureSecretIpcRateLimit.checkOrThrow();
+  return secureSecretStore.getAll();
 });
 
-ipcMain.handle('storage:decrypt', (event, ciphertext: unknown) => {
-  assertIpcSender(event, 'storage:decrypt');
-  storageCryptoIpcRateLimit.checkOrThrow();
-  if (typeof ciphertext !== 'string' || ciphertext.length > 8192)
-    throw new Error('storage:decrypt: invalid input');
-  try {
-    if (!safeStorage.isEncryptionAvailable()) return null;
-    return safeStorage.decryptString(Buffer.from(ciphertext, 'base64'));
-  } catch (e) {
-    console.warn(
-      '[IPC] storage:decrypt failed:',
-      sanitizeLogMessage(e instanceof Error ? e.message : String(e)),
-    );
-    return null;
-  }
+ipcMain.handle('secureSecrets:get', (event, key: unknown) => {
+  assertIpcSender(event, 'secureSecrets:get');
+  secureSecretIpcRateLimit.checkOrThrow();
+  return secureSecretStore.get(key);
 });
+
+ipcMain.handle(
+  'secureSecrets:set',
+  (event, key: unknown, value: unknown, requirePersistent?: unknown) => {
+    assertIpcSender(event, 'secureSecrets:set');
+    secureSecretIpcRateLimit.checkOrThrow();
+    return secureSecretStore.set(key, value, requirePersistent);
+  },
+);
+
+ipcMain.handle('secureSecrets:remove', (event, key: unknown) => {
+  assertIpcSender(event, 'secureSecrets:remove');
+  secureSecretIpcRateLimit.checkOrThrow();
+  secureSecretStore.remove(key);
+});
+
+ipcMain.handle('secureSecrets:migrateLegacyIdentityCiphertext', (event, ciphertext: unknown) => {
+  assertIpcSender(event, 'secureSecrets:migrateLegacyIdentityCiphertext');
+  secureSecretIpcRateLimit.checkOrThrow();
+  return secureSecretStore.migrateLegacyIdentityCiphertext(ciphertext);
+});
+
+ipcMain.handle(
+  'secureSecrets:migrateLegacyBackupCiphertext',
+  (event, protocol: unknown, id: unknown, format: unknown, ciphertext: unknown) => {
+    assertIpcSender(event, 'secureSecrets:migrateLegacyBackupCiphertext');
+    secureSecretIpcRateLimit.checkOrThrow();
+    return secureSecretStore.migrateLegacyBackupCiphertext(protocol, id, format, ciphertext);
+  },
+);
 
 // ─── IPC: Login item (launch at startup) ───────────────────────────
 ipcMain.handle('app:getProcessUptimeSec', (event) => {
@@ -3775,6 +3790,7 @@ const APP_SETTINGS_ALLOWED_KEYS: ReadonlySet<string> = new Set([
   'use24HourTime',
   'notificationSounds',
   'alwaysShowMessageActions',
+  'autoUpdateDownloadEnabled',
   /** Legacy blob; prefer meshtasticRemoteAdminKey:<nodeNum> per-node keys. */
   'meshtasticRemoteAdminKeyByNode',
 ]);
@@ -3786,6 +3802,13 @@ function isAppSettingsKeyAllowed(key: string): boolean {
     key.startsWith(MESHTASTIC_REMOTE_ADMIN_KEY_SETTING_PREFIX) ||
     key.startsWith(MESHCORE_ROOM_SYNC_SETTING_PREFIX) ||
     key.startsWith(MESHCORE_ROOM_LAST_POST_SETTING_PREFIX) ||
+    key.startsWith(MESHCORE_ROOM_CREDENTIAL_SETTING_PREFIX) ||
+    key.startsWith(MESHCORE_REPEATER_CREDENTIAL_SETTING_PREFIX)
+  );
+}
+
+function isLegacyPlaintextCredentialKey(key: string): boolean {
+  return (
     key.startsWith(MESHCORE_ROOM_CREDENTIAL_SETTING_PREFIX) ||
     key.startsWith(MESHCORE_REPEATER_CREDENTIAL_SETTING_PREFIX)
   );
@@ -3841,6 +3864,9 @@ ipcMain.handle('appSettings:set', (event, key: unknown, value: unknown) => {
   if (typeof key !== 'string' || !isAppSettingsKeyAllowed(key)) {
     throw new Error('appSettings:set: key not allowed');
   }
+  if (isLegacyPlaintextCredentialKey(key)) {
+    throw new Error('appSettings:set: plaintext credentials are not allowed');
+  }
   const maxValueLength = appSettingsMaxValueLengthForKey(key);
   if (typeof value !== 'string' || value.length > maxValueLength) {
     throw new Error(`appSettings:set: value must be a string under ${maxValueLength} chars`);
@@ -3858,6 +3884,17 @@ ipcMain.handle('appSettings:set', (event, key: unknown, value: unknown) => {
     );
     throw err;
   }
+});
+
+ipcMain.handle('appSettings:remove', (event, key: unknown) => {
+  if (!validateIpcSender(event)) {
+    throw new Error('IPC sender validation failed');
+  }
+  if (typeof key !== 'string' || !isAppSettingsKeyAllowed(key)) {
+    throw new Error('appSettings:remove: key not allowed');
+  }
+  const result = getDatabase().prepareOnce('DELETE FROM app_settings WHERE key = ?').run(key);
+  return { changes: Number(result.changes) };
 });
 
 /** Notification click → bring the sender's window forward (restores from minimize / tray). */

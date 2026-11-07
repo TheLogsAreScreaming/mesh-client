@@ -34,7 +34,9 @@
     "queueBadge": "Q: {{used}}/{{max}}",
     "telemetryDisabled": "Telemetry is disabled on this device. Enabling device metrics helps the mesh and this app (diagnostics, battery, signal). Enable it in the Radio tab.",
     "scrollToTop": "↑ Top",
-    "footerGithubTitle": "Mesh Hub on GitHub"
+    "footerGithubTitle": "Mesh Hub on GitHub",
+    "savedSettingsUnavailable": "Saved settings could not be loaded",
+    "savedSettingsRecovery": "Your saved data has been kept. Check that your system keyring is available, or wait a minute and try again."
   },
   "appPanel": {
     "failedSaveRetention": "Failed to save message retention setting.",
@@ -136,7 +138,7 @@
     "exportForGitHubDesc": "Includes debug snapshot and log files in one zip. Safe to attach to public GitHub issues.",
     "exportForDeveloper": "Export support bundle for developer",
     "exportForDeveloperButton": "Export for Developer",
-    "exportForDeveloperWarning": "Includes your full database, which may contain saved passwords (MeshCore room credentials, MQTT settings, etc.). Share this bundle privately with maintainers only — never on public GitHub.",
+    "exportForDeveloperWarning": "Includes your full database and MECP emergency audit logs, which may contain saved passwords, message text, sender and channel identifiers, and location details. Share this bundle privately with maintainers only — never on public GitHub.",
     "exportSupportBundleFailed": "Could not export support bundle: {{message}}",
     "appearanceSection": "Appearance",
     "colorScheme": "Color scheme",
@@ -414,7 +416,11 @@
       "sky": "Sky",
       "classic": "Classic green"
     },
-    "pruneNoFixNodesTitle": "Prune No-Fix / Zero Island Nodes"
+    "pruneNoFixNodesTitle": "Prune No-Fix / Zero Island Nodes",
+    "updatesSection": "Updates",
+    "autoUpdateDownload": "Download updates automatically",
+    "autoUpdateDownloadSaveFailed": "Could not save the automatic update download setting.",
+    "autoUpdateDownloadDesc": "Downloads the latest update in the background after each check. When off, updates are still detected but only downloaded when you press the Download button — useful when a package manager handles installation."
   },
   "aria": {
     "closeDialog": "Close dialog",
@@ -755,7 +761,66 @@
       "snr": "SNR {{snr}} dB",
       "rssi": "RSSI {{rssi}} dBm",
       "noise": "Noise {{noise}} dBm",
-      "path": "Path: {{path}}"
+      "path": "Path: {{path}}",
+      "place": "From: {{place}}"
+    },
+    "healthCheck": {
+      "label": "MeshCore Health Check code",
+      "tooltip": "Test code for MeshCore Health Check. Observers on the sender's mesh report which of them received it."
+    },
+    "firmwareBot": {
+      "label": "Bot reply",
+      "status": {
+        "title": "Status {{name}}",
+        "uptime": "Up {{uptime}}",
+        "battery": "Battery {{mv}} mV ({{percent}}%)",
+        "storage": "Storage {{used}}/{{total}} KB",
+        "counters": "Seen {{seen}}, sent {{sent}}, failed {{fail}}"
+      },
+      "air": {
+        "title": "Airtime",
+        "tx": "TX {{seconds}} s",
+        "rx": "RX {{seconds}} s",
+        "rxPackets": "RX flood {{flood}} / direct {{direct}}",
+        "txPackets": "TX flood {{flood}} / direct {{direct}}"
+      },
+      "neighbors": {
+        "title_one": "{{count}} neighbor",
+        "title_other": "{{count}} neighbors",
+        "none": "None heard recently",
+        "ago": "{{ago}} ago"
+      },
+      "trace": {
+        "title": "Trace",
+        "hop": "{{hash}} {{snr}} dB",
+        "tail": "Return SNR {{snr}} dB",
+        "directLink": "Direct link",
+        "timeout": "Timed out",
+        "sent": "Sent"
+      },
+      "lora": {
+        "title": "LoRa",
+        "freq": "{{freq}} MHz",
+        "sf": "SF{{sf}}",
+        "bw": "BW {{bw}} kHz",
+        "cr": "CR {{cr}}",
+        "power": "{{power}} dBm"
+      },
+      "version": {
+        "title": "Firmware",
+        "built": "Built {{built}}"
+      },
+      "channels": {
+        "title": "Bot channels",
+        "bot": "Commands {{name}}",
+        "testing": "Testing {{name}}",
+        "emergency": "Emergency {{name}}",
+        "public": "Public {{name}}"
+      },
+      "help": {
+        "title": "Commands",
+        "diagTitle": "Diagnostic commands"
+      }
     }
   },
   "common": {
@@ -791,7 +856,11 @@
     "hoursAgo": "{{count}}h ago",
     "daysAgo": "{{count}}d ago",
     "days": "days",
-    "emDash": "—"
+    "emDash": "—",
+    "retry": "Retry",
+    "botBadge": "Bot",
+    "botBadgeLabel": "Bot",
+    "botBadgeTooltip": "Detected as a bot from its automated replies"
   },
   "configApplyNotice": {
     "persistNote": "Applied settings are saved to the device's flash memory and persist across reboots.",
@@ -1124,7 +1193,8 @@
     "disconnectRadioGroup": "Disconnect radio",
     "moreDisconnectOptions": "More disconnect options",
     "disconnectOptions": "Disconnect options",
-    "lastConnectionLabel": "Last connection"
+    "lastConnectionLabel": "Last connection",
+    "mqttPacketTooLarge": "Broker sent an MQTT packet larger than the {{limit}}-byte safety limit; automatic reconnect is disabled."
   },
   "contactGroupsModal": {
     "title": "Contact Groups",
@@ -1701,7 +1771,7 @@
     "layerControlsAria": "Toggle map layer controls",
     "basemapHeading": "Basemap",
     "basemapSelectAria": "Select map basemap",
-    "basemapDark": "Dark (Carto)",
+    "basemapDark": "Dark (OpenStreetMap)",
     "basemapOsm": "OpenStreetMap (light)",
     "basemapUsgsTopo": "USGS Topo (US only)",
     "layersHeading": "Overlays",
@@ -1745,7 +1815,8 @@
       "cacheStats": "Cache: {{count}} tiles ({{size}})",
       "clear": "Clear tile cache",
       "clearAria": "Clear offline map tile cache",
-      "cleared": "Tile cache cleared."
+      "cleared": "Tile cache cleared.",
+      "viewCacheOnly": "Viewed tiles are cached automatically. Region downloads are available with USGS Topo; OpenStreetMap does not allow prefetching."
     },
     "waypointDefaultName": "Waypoint",
     "waypointDelete": "Delete Waypoint",
@@ -3503,7 +3574,12 @@
         "UNLOCK_FAILED": "Unlock failed",
         "DISABLED": "Disabled"
       }
-    }
+    },
+    "floodScopePresetsTitle": "Saved regions",
+    "floodScopePresetsHelp": "Add regions here, then choose a scope for each channel beside Send or in Radio → Channels. Saving or removing a region leaves the radio default and channel choices unchanged.",
+    "floodScopeAddHashtag": "Region hashtag to save",
+    "floodScopeAddSaved": "Save region",
+    "floodScopePresetsFull": "You can save up to {{count}} regions. Remove one before adding another."
   },
   "rawPacketLog": {
     "filterPackets": "Filter packets",
@@ -4178,10 +4254,11 @@
       "enrollNoCert": "The enrollment response has no certificate",
       "enrollTooLarge": "The enrollment response is too large",
       "enrollKeyMismatch": "The server returned a certificate for a different key",
-      "enrollBusy": "Wait for the current certificate import to finish"
+      "enrollBusy": "Wait for the current certificate import to finish",
+      "frameTooLarge": "CoT event exceeds {{max}} bytes"
     },
     "unitStylesTitle": "Relayed unit styles",
-    "unitStylesDesc": "Relayed nodes are drawn from the role they advertise: repeaters and routers as installations, sensors as sensors, everyone else as a team member. Add filters to restyle nodes by name. The first enabled filter that matches wins.",
+    "unitStylesDesc": "Relayed nodes are drawn from the role they advertise: repeaters and routers as installations, sensors as sensors, everyone else as a team member. Add filters to restyle nodes by name, node type, or protocol. A filter with no name patterns applies to every node of its type or protocol. The first enabled filter that matches wins.",
     "unitStylesSendUnmatched": "Relay nodes that no filter matches",
     "unitStylesAddFilter": "Add filter",
     "unitStylesSave": "Save styles",
@@ -4198,7 +4275,7 @@
     "unitFilterOpEndsWith": "Name ends with",
     "unitFilterOpContains": "Name contains",
     "unitFilterPatterns": "Name patterns for filter {{n}}",
-    "unitFilterPatternsPlaceholder": "Comma-separated, e.g. EMS-, Medic",
+    "unitFilterPatternsPlaceholder": "Any name, or comma-separated, e.g. EMS-, Medic",
     "unitFilterRemove": "Remove filter {{n}}",
     "unitFilterRemoveShort": "Remove",
     "unitFilterType": "Unit type for filter {{n}}",
@@ -4218,15 +4295,30 @@
     "unitTypeSensor": "Sensor",
     "unitTypeAir": "Aircraft",
     "channelRelayTitle": "MeshCore channels to TAK",
-    "channelRelayDesc": "Choose what heard channel messages feed into TAK. Tracker fixes turns MeshCore tracker position messages (!MT1) into map markers. A GeoChat room mirrors the channel into that TAK chat room. Both only go one way: nothing from TAK is sent over the mesh.",
     "channelRelayTrackers": "Tracker fixes",
     "channelRelayRoom": "GeoChat room for {{channel}}",
     "channelRelayRoomPlaceholder": "GeoChat room (off)",
     "channelRelayNoChannels": "Connect a MeshCore radio to list its channels.",
     "channelRelayTitleMeshtastic": "Meshtastic channels to TAK",
-    "channelRelayDescMeshtastic": "Choose which heard channel messages feed into TAK. A GeoChat room mirrors the channel, including messages heard over MQTT, into that TAK chat room. This only goes one way: nothing from TAK is sent over the mesh.",
     "channelRelayNoChannelsMeshtastic": "Connect a Meshtastic radio to list its channels.",
-    "channelRelayUnnamed": "Channel {{n}}"
+    "channelRelayUnnamed": "Channel {{n}}",
+    "unitStylesRelayIcon": "Icon for repeaters, routers and room servers",
+    "unitStylesRelayIconHint": "Optional. Path of an icon in an ATAK icon set, as set UID/group/file name. Devices without that icon set show the installation symbol.",
+    "unitStylesPreviewKind": "Node type to test",
+    "unitStylesPreviewProtocol": "Protocol to test",
+    "unitFilterKind": "Node type for filter {{n}}",
+    "unitFilterAnyKind": "Any node type",
+    "unitFilterProtocol": "Protocol for filter {{n}}",
+    "unitFilterAnyProtocol": "Any protocol",
+    "unitKindCompanion": "Companions and clients",
+    "unitKindRepeater": "Repeaters and routers",
+    "unitKindRoom": "Room servers",
+    "unitKindSensor": "Sensors",
+    "unitKindTracker": "Trackers",
+    "channelRelayHelp": "Choose what heard channel messages feed into TAK. Tracker fixes turns MeshCore tracker position messages (!MT1) into map markers. A GeoChat room mirrors the channel into that TAK chat room. Nothing from TAK is sent over the mesh unless you tick TAK can send for a channel: then messages that connected TAK devices post in its room are transmitted on that channel from this radio, prefixed with the sender's callsign.",
+    "channelRelaySend": "TAK can send",
+    "channelRelaySendFor": "Let TAK devices send to {{channel}}",
+    "channelRelayHelpMeshtastic": "Choose which heard channel messages feed into TAK. A GeoChat room mirrors the channel, including messages heard over MQTT, into that TAK chat room. Nothing from TAK is sent over the mesh unless you tick TAK can send for a channel: then messages that connected TAK devices post in its room are transmitted on that channel from this radio, prefixed with the sender's callsign."
   },
   "telemetryPanel": {
     "title": "Telemetry",
@@ -4365,10 +4457,10 @@
       "hint": "Mesh Emergency Communication Protocol — compose reports from Chat, bridge RF between Meshtastic and MeshCore here, and export the durable received audit log.",
       "learnMore": "How MECP works (site & video)",
       "protocolSource": "Protocol source on GitHub",
-      "showComposeButton": "Show MECP button in Chat",
-      "showComposeButtonHint": "Off by default. When enabled, Chat shows a MECP button to compose and send emergency reports.",
       "standingAlert": "Incident Command station (standing alert)",
-      "standingAlertHint": "Off by default. For EOCs and monitored stations: keeps a red banner up and flashes the taskbar or bounces the dock until someone looks at each new MAYDAY or URGENT. Everyone still hears the one-time alert tone and sees the toast."
+      "standingAlertHint": "Off by default. For EOCs and monitored stations: keeps a red banner up and flashes the taskbar or bounces the dock until someone looks at each new MAYDAY or URGENT. Everyone still hears the one-time alert tone and sees the toast.",
+      "showComposeButtons": "Show MECP buttons in Chat",
+      "showComposeButtonsHint": "Off by default. When enabled, Chat shows a red request/report button and a blue response button."
     },
     "block": {
       "listTitle": "Blocked emergency senders",
@@ -4389,7 +4481,6 @@
     },
     "compose": {
       "title": "Compose MECP report",
-      "open": "Open MECP compose",
       "severity": "Severity",
       "category": "Category",
       "codes": "Codes",
@@ -4400,7 +4491,12 @@
       "gpsFailed": "Could not get a GPS fix",
       "sendFailed": "Failed to send MECP report",
       "byteBudget": "{{used}} / {{max}} bytes",
-      "send": "Send MECP"
+      "send": "Send MECP",
+      "openResponse": "Respond with MECP",
+      "requestTitle": "MECP request or report",
+      "responseTitle": "MECP response",
+      "showAllCodes": "Show all MECP codes",
+      "openRequest": "Request or report with MECP"
     },
     "rebroadcast": {
       "title": "RF rebroadcast bridge",
@@ -4568,7 +4664,11 @@
     "pendingChanges_other": "{{count}} changes",
     "read": "Settings read",
     "radioConnected": "Radio connected",
-    "radioDisconnected": "Radio disconnected"
+    "radioDisconnected": "Radio disconnected",
+    "scope": "Default flood scope",
+    "defaultScope": "Region name (blank for unscoped)",
+    "scopeSummary": "Region used for this node’s outgoing floods",
+    "scopeHint": "Firmware v1.15+: enter a public region name such as #us-tn-tri, or leave blank for unscoped. This controls flooded adverts and room delivery; direct routes and room access are separate. The companion radio and channel scopes are configured separately."
   },
   "chatTranslation": {
     "translate": "Translate message",
@@ -4621,7 +4721,7 @@
     "deletePack": "Delete {{pack}} pack",
     "downloadPack": "Download {{pack}} pack",
     "delete": "Delete",
-    "onlinePrivacy": "Online translation sends the selected message text to your configured LibreTranslate server only when you choose Translate online. Automatic translation always stays offline.",
+    "onlinePrivacy": "Online translation sends the selected message text to your configured LibreTranslate server only when you choose Translate online. Automatic translation always stays offline. HTTP is allowed only for localhost and loopback addresses; all other servers must use HTTPS.",
     "serverUrl": "LibreTranslate server URL",
     "apiKey": "API key (optional)",
     "savedKey": "An API key is saved securely. A blank field keeps it only for the same server URL.",
@@ -4631,6 +4731,158 @@
     "clearKey": "Remove saved API key",
     "diskUsage": "Installed files use {{size}} on disk.",
     "removeAll": "Remove all translation files",
-    "settingsError": "The operation failed. Check your connection or server settings and try again."
+    "settingsError": "The operation failed. Check your connection or server settings and try again.",
+    "secureUrlRequired": "Online translation is paused. Your server and saved key have been kept; use an HTTPS URL to resume."
+  },
+  "liveTraffic": {
+    "controlPacket": "Control packet",
+    "discoveryRequest": "Node discovery request",
+    "discoveryResponse": "Node discovery response",
+    "cancelConnection": "Cancel connection",
+    "connectionActionFailed": "Unable to update the feed connection. Try again.",
+    "estimatedRouteHint": "CoreScope estimated some node identities. These links are unverified; missing hops remain unknown.",
+    "estimatedLinks": "Links including server estimates",
+    "additionalLocations_one": "{{count}} more location",
+    "additionalLocations_other": "{{count}} more locations",
+    "directoryLimited": "This map directory reached its limit. Some nodes may be missing.",
+    "directoryLimitedShort": "Partial directory",
+    "corescope": {
+      "feed": "Regional CoreScope",
+      "preset": "Regional CoreScope map",
+      "url": "CoreScope map URL",
+      "waitingHint": "Connect a CoreScope feed above to watch its observers. No local radio is required.",
+      "disconnected": "Choose a CoreScope map URL to connect."
+    },
+    "trafficSource": "Traffic source",
+    "title": "Live traffic",
+    "mapOverview": "Overview",
+    "mapModes": "Map mode",
+    "pause": "Pause",
+    "resume": "Resume",
+    "region": "Map area",
+    "regions": {
+      "all": "All regions"
+    },
+    "transportScope": "Transport code",
+    "scopeHint": "Filter observed packet transport codes, or enter scoped or unscoped. Codes are packet-specific and do not configure the radio.",
+    "allScopes": "All scopes",
+    "unscoped": "Unscoped",
+    "scoped": "Scoped",
+    "packetType": "Packet type",
+    "kinds": {
+      "all": "All packets",
+      "message": "Messages",
+      "advert": "Adverts / position",
+      "telemetry": "Telemetry",
+      "routing": "Routing",
+      "other": "Other"
+    },
+    "speed": "Playback",
+    "speedNormal": "1×",
+    "speedFast": "2×",
+    "mapAria": "Live packet traffic map",
+    "basemap": "Map style",
+    "darkMap": "Dark",
+    "streetMap": "Streets",
+    "topographicMap": "USGS topo",
+    "waiting": "Waiting for packet observations",
+    "waitingHint": "Connect a radio to see live traffic.",
+    "animationDisclaimer": "Motion illustrates packet order, not radio speed. Unknown hops break the path.",
+    "meshtasticDisclaimer": "Reception links are illustrative. Ordinary packets do not reveal every relay.",
+    "feed": "Packet feed",
+    "noFilterMatches": "No recent packets match these filters.",
+    "emptyFeed": "Packets appear here as this client receives them. Nodes with known positions can be shown on the map.",
+    "packetList": "Recent packet observations",
+    "inspectPacket": "Inspect {{kind}} packet at {{time}}",
+    "sources": {
+      "CoreScope": "CoreScope",
+      "RF": "RF",
+      "MQTT": "MQTT",
+      "unknown": "Unknown source",
+      "Beacon": "Beacon"
+    },
+    "noSignal": "No signal data",
+    "inspector": "Packet details",
+    "closeInspector": "Close packet details",
+    "route": "Route evidence",
+    "source": "Observed via",
+    "signal": "RSSI / SNR",
+    "signalValues": "{{rssi}} dBm / {{snr}} dB",
+    "routeStatus": {
+      "resolved": "Resolved packet path",
+      "estimated": "Server-estimated route",
+      "partial": "Partial / reception link",
+      "unlocated": "No drawable route",
+      "direct": "Direct observation",
+      "unparsed": "Unparsed packet"
+    },
+    "meshtasticInspector": "A reception relationship is not a confirmed relay chain. Detailed traces are shown only when the packet contains them.",
+    "meshcoreInspector": "Only resolved adjacent hops are joined. Unknown or ambiguous hashes leave gaps in the route.",
+    "knownLocations": "Located points",
+    "filterHint": "View filters only. Radio settings stay unchanged.",
+    "filters": "Filters",
+    "observationCount_one": "{{count}} packet",
+    "observationCount_other": "{{count}} packets",
+    "mappedCount": "{{count}} mapped",
+    "nodeCount": "{{count}} shown nodes",
+    "toggleFeed": "Expand or collapse packet feed",
+    "expandFeed": "Expand packet feed window",
+    "shrinkFeed": "Shrink packet feed window",
+    "moveFeed": "Move packet feed",
+    "moveFeedHint": "Drag to move. Arrow keys move the window; hold Shift for larger steps.",
+    "resetFeed": "Reset packet feed position",
+    "encryptedContent": "Encrypted message",
+    "contentUnavailable": "Message content unavailable",
+    "beacon": {
+      "feed": "Regional Beacon",
+      "url": "Beacon map URL",
+      "region": "Feed region",
+      "connect": "Connect",
+      "disconnect": "Disconnect",
+      "configure": "Configure",
+      "readOnly": "Public feed · No API key needed",
+      "waitingHint": "Connect a regional Beacon feed above to watch its observers. No local radio is required.",
+      "listeningHint": "Connected. New observations will appear as regional observers receive packets.",
+      "status": {
+        "connecting": "Connecting to regional observers…",
+        "live": "Live regional feed",
+        "reconnecting": "Reconnecting…",
+        "disconnected": "Choose a Beacon map URL to connect.",
+        "error": "Unable to connect.",
+        "feedOpenFailed": "Could not open the regional map feed.",
+        "refreshing": "Refreshing the regional map after a feed interruption.",
+        "connectionInterrupted": "Regional map connection interrupted.",
+        "publicHttpsRejected": "Could not open this public HTTPS regional map."
+      },
+      "preset": "Regional Beacon map",
+      "custom": "Custom URL"
+    },
+    "localRadio": "Local radio",
+    "closeSource": "Close feed settings",
+    "aboutMap": "About this traffic map",
+    "packetColorHint": "A packet keeps one color across its reported paths. Repeated reports are grouped.",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "reports_one": "{{count}} report",
+    "reports_other": "{{count}} reports",
+    "observedLinks": "Observed links",
+    "additionalLinks_one": "{{count}} additional link",
+    "additionalLinks_other": "{{count}} additional links",
+    "mapLinkLimit": "The map draws the latest {{count}} links for this packet.",
+    "reportsLabel": "Reports in view",
+    "mixedCodes": "Multiple transport codes",
+    "zoomControls": "Map zoom controls",
+    "connectionState": {
+      "live": "Live",
+      "connecting": "Connecting",
+      "reconnecting": "Reconnecting",
+      "disconnected": "Disconnected",
+      "error": "Connection error"
+    },
+    "areas": {
+      "all": "All traffic",
+      "viewport": "Current map area"
+    },
+    "fitTraffic": "Fit traffic"
   }
 }

@@ -34,7 +34,9 @@
     "takRemoteConnecting": "vzdálené připojení",
     "takRemoteError": "chyba vzdáleného připojení",
     "takRemoteOnly": "TAK {{remote}}",
-    "takWithRemote": "{{local}}, {{remote}}"
+    "takWithRemote": "{{local}}, {{remote}}",
+    "savedSettingsUnavailable": "Uložená nastavení se nepodařilo načíst",
+    "savedSettingsRecovery": "Vaše uložená data byla zachována. Zkontrolujte, zda je systémová klíčenka k dispozici, nebo chvíli počkejte a zkuste to znovu."
   },
   "appPanel": {
     "failedSaveRetention": "Nastavení uchovávání zpráv se nepodařilo uložit.",
@@ -334,7 +336,7 @@
     "exportForGitHubDesc": "Zahrnuje snímek ladění a soubory protokolu v jednom zipu. Bezpečné připojení k veřejným problémům GitHub.",
     "exportForDeveloper": "Balíček podpory exportu pro vývojáře",
     "exportForDeveloperButton": "Export pro vývojáře",
-    "exportForDeveloperWarning": "Zahrnuje vaši úplnou databázi, která může obsahovat uložená hesla (přihlašovací údaje místnosti MeshCore, nastavení MQTT atd.). Sdílejte tento balíček soukromě pouze se správci – nikdy na veřejném GitHub.",
+    "exportForDeveloperWarning": "Zahrnuje úplnou databázi a nouzové auditní protokoly MECP, které mohou obsahovat uložená hesla, text zpráv, identifikátory odesílatelů a kanálů a údaje o poloze. Sdílejte tento balíček soukromě pouze se správci – nikdy na veřejném GitHub.",
     "exportSupportBundleFailed": "Nelze exportovat balíček podpory: {{message}}",
     "storeForwardHistoryProfileLabel": "Store & Forward catch-up profile",
     "storeForwardHistoryProfileAria": "Agresivita dohánění historie Store & Forward",
@@ -421,7 +423,11 @@
       "empty": "Žádné blokované uzly.",
       "unblockAria": "Odblokovat {{node}}",
       "unblockFailed": "Nelze odblokovat tento uzel."
-    }
+    },
+    "updatesSection": "Aktualizace",
+    "autoUpdateDownload": "Automaticky stahovat aktualizace",
+    "autoUpdateDownloadDesc": "Po každém šeku stáhne nejnovější aktualizaci na pozadí. Když je vypnuto, aktualizace jsou stále detekovány, ale stahovány pouze po stisknutí tlačítka Stáhnout — užitečné, když správce balíčků zpracovává instalaci.",
+    "autoUpdateDownloadSaveFailed": "Nelze uložit nastavení automatické aktualizace stahování."
   },
   "aria": {
     "closeDialog": "Zavřít dialog",
@@ -742,7 +748,67 @@
       "hops_one": "{{count}} skok",
       "hops_few": "{{count}} skoky",
       "hops_many": "{{count}} skoků",
-      "hops_other": "{{count}} skoků"
+      "hops_other": "{{count}} skoků",
+      "place": "Od: {{place}}"
+    },
+    "firmwareBot": {
+      "label": "Odpověď robota",
+      "status": {
+        "title": "Stav {{name}}",
+        "uptime": "Nahoru {{uptime}}",
+        "battery": "Baterie {{mv}} mV ({{percent}}%)",
+        "storage": "Úložiště {{used}}/{{total}} kB",
+        "counters": "Viděno {{seen}}, odesláno {{sent}}, nezdařilo se {{fail}}"
+      },
+      "air": {
+        "title": "Vysílací čas",
+        "tx": "TX {{seconds}} s",
+        "rx": "RX {{seconds}} s",
+        "rxPackets": "RX Flood {{flood}} / přímá {{direct}}",
+        "txPackets": "TX Flood {{flood}} / přímá {{direct}}"
+      },
+      "neighbors": {
+        "title_one": "{{count}} soused",
+        "title_few": "{{count}} sousedé",
+        "title_other": "{{count}} sousedů",
+        "none": "V poslední době nikdo neslyšel",
+        "ago": "před {{ago}}"
+      },
+      "trace": {
+        "title": "Stopa",
+        "hop": "{{hash}} {{snr}} dB",
+        "tail": "Návrat SNR {{snr}} dB",
+        "directLink": "Přímý odkaz",
+        "timeout": "Vypršel časový limit",
+        "sent": "Odesláno"
+      },
+      "lora": {
+        "title": "LoRa",
+        "freq": "{{freq}} MHz",
+        "sf": "SF{{sf}}",
+        "bw": "BW {{bw}} kHz",
+        "cr": "CR {{cr}}",
+        "power": "{{power}} dBm"
+      },
+      "version": {
+        "title": "Firmware",
+        "built": "Postaveno {{built}}"
+      },
+      "channels": {
+        "title": "Botové kanály",
+        "bot": "Příkazy {{name}}",
+        "testing": "Testování {{name}}",
+        "emergency": "Pohotovost {{name}}",
+        "public": "Veřejné {{name}}"
+      },
+      "help": {
+        "title": "Příkazy",
+        "diagTitle": "Diagnostické příkazy"
+      }
+    },
+    "healthCheck": {
+      "label": "MeshCore Kód zdravotní kontroly",
+      "tooltip": "Kód testu pro zdravotní prohlídku MeshCore. Pozorovatelé na síti odesílatele hlásí, který z nich ji obdržel."
     }
   },
   "common": {
@@ -778,7 +844,11 @@
     "emDash": "—",
     "saving": "Ukládání…",
     "delete": "Vymazat",
-    "copied": "Zkopírováno"
+    "copied": "Zkopírováno",
+    "botBadge": "Bot",
+    "botBadgeLabel": "Bot",
+    "botBadgeTooltip": "Zjištěno jako robot ze svých automatických odpovědí",
+    "retry": "Zkusit znovu"
   },
   "configApplyNotice": {
     "persistNote": "Použitá nastavení jsou uložena do flash paměti zařízení a přetrvávají při restartu.",
@@ -1111,7 +1181,8 @@
     "meshcoreBleWindowsInAppPairingHint": "V systému Windows zde vyberte rádio a zadejte KÓD PIN zobrazený na obrazovce. Mesh Hub jej spáruje za vás, takže jej nemusíte spárovat v nastavení systému Windows. Nejprve zavřete aplikaci MeshCore v telefonu; rádio přijímá pouze jedno připojení Bluetooth najednou.",
     "stageEnterPinWindows": "Pro spárování s Windows zadejte PIN zobrazený v rádiu",
     "stagePairingWindows": "Párování s Windows...",
-    "meshtasticSilentAfterConfigure": "Připojeno k rádiu, ale po nastavení přestalo odesílat síťový provoz. Automatické opětovné připojení. Pokud k tomu dochází i nadále, zkontrolujte síťové připojení rádia nebo jej restartujte."
+    "meshtasticSilentAfterConfigure": "Připojeno k rádiu, ale po nastavení přestalo odesílat síťový provoz. Automatické opětovné připojení. Pokud k tomu dochází i nadále, zkontrolujte síťové připojení rádia nebo jej restartujte.",
+    "mqttPacketTooLarge": "Broker odeslal paket MQTT větší než bezpečnostní limit {{limit}} bajtů; automatické opětovné připojení je vypnuto."
   },
   "contactGroupsModal": {
     "failedLoadMembers": "Nepodařilo se načíst členy: {{message}}",
@@ -1595,7 +1666,7 @@
     "layerControlsAria": "Přepnout ovládací prvky mapové vrstvy",
     "basemapHeading": "Podkladová mapa",
     "basemapSelectAria": "Vybrat podkladovou mapu",
-    "basemapDark": "Tmavá (karto)",
+    "basemapDark": "Tmavá (OpenStreetMap)",
     "basemapOsm": "OpenStreetMap (světlá)",
     "layersHeading": "Překryvné vrstvy",
     "layerNodes": "Značky uzlů",
@@ -1630,7 +1701,8 @@
       "cacheStats": "Mezipaměť: {{count}} dlaždice ({{size}})",
       "clear": "Vymazat mezipaměť dlaždic",
       "clearAria": "Vymazat offline mezipaměť mapových dlaždic",
-      "cleared": "Mezipaměť vymazána."
+      "cleared": "Mezipaměť vymazána.",
+      "viewCacheOnly": "Zobrazené mapové dlaždice se automaticky ukládají do mezipaměti. Stahování oblastí je dostupné s USGS Topo; OpenStreetMap předběžné stahování nepovoluje."
     },
     "basemapUsgsTopo": "USGS Topo (pouze USA)",
     "layerIncidents": "Nouzové události",
@@ -3355,7 +3427,12 @@
     "frequencyOffsetLabel": "Frekvenční posun",
     "frequencyOffsetDesc": "Pokročilé: offset v MHz přidaný k vypočtené středové frekvenci pro opravu chyby kalibrace krystalů. Ponechte v 0, pokud nemáte testovací zařízení.",
     "enumLicensedOnlySuffix": "(pouze s licencí)",
-    "unknownEnumValue": "Neznámý ({{value}})"
+    "unknownEnumValue": "Neznámý ({{value}})",
+    "floodScopePresetsTitle": "Uložené oblasti",
+    "floodScopePresetsHelp": "Zde přidejte regiony a poté vyberte rozsah pro každý kanál vedle Odeslat nebo v Rádiových → kanálech. Uložení nebo odebrání oblasti ponechává výchozí nastavení rádia a volby kanálu beze změny.",
+    "floodScopeAddHashtag": "Hashtag regionu, který chcete uložit",
+    "floodScopeAddSaved": "Uložit region",
+    "floodScopePresetsFull": "Můžeš ušetřit až {{count}} regionů. Před přidáním dalšího odstraňte jeden."
   },
   "rawPacketLog": {
     "filterPackets": "Filtrační balíčky",
@@ -3997,7 +4074,8 @@
       "enrollNoCert": "Odpověď na zápis nemá žádný certifikát",
       "enrollTooLarge": "Odpověď na zápis je příliš velká",
       "enrollKeyMismatch": "Server vrátil certifikát pro jiný klíč",
-      "enrollBusy": "Počkejte na dokončení importu aktuálního certifikátu"
+      "enrollBusy": "Počkejte na dokončení importu aktuálního certifikátu",
+      "frameTooLarge": "Událost CoT překračuje {{max}} bajtů"
     },
     "remoteUseTls": "Použít TLS (doporučeno)",
     "remotePlainTcpWarning": "Obyčejný TCP je nešifrovaný: kdokoli na síťové cestě může číst přenášené pozice. Certifikáty se nepoužívají a připojení při spuštění zůstává vypnuté.",
@@ -4047,15 +4125,30 @@
     "unitTypeSensor": "Snímač",
     "unitTypeAir": "Letadla",
     "channelRelayTitle": "MeshCore kanály do TAK",
-    "channelRelayDesc": "Vyber, které zprávy slyšeného kanálu se přenášejí do TAK. Opravy trackeru změní MeshCore zprávy o poloze trackeru (!MT1) do mapových značek. Místnost GeoChat zrcadlí kanál do chatovací místnosti TAK. Obojí je pouze jednosměrné: přes síť se neposílá nic z TAK.",
     "channelRelayTrackers": "Opravy trackeru",
     "channelRelayRoom": "Místnost GeoChat pro {{channel}}",
     "channelRelayRoomPlaceholder": "Místnost GeoChat (vypnuto)",
     "channelRelayNoChannels": "Připojte rádio MeshCore a zobrazte seznam jeho kanálů.",
     "channelRelayUnnamed": "Kanál {{n}}",
     "channelRelayTitleMeshtastic": "Meshtastic kanály do TAK",
-    "channelRelayDescMeshtastic": "Vyber, které zprávy slyšeného kanálu se budou přenášet do TAK. Místnost GeoChat zrcadlí kanál, včetně zpráv slyšených přes MQTT, do této TAK chatovací místnosti. Toto platí pouze pro jednu cestu: nic z TAK není odesláno přes síť.",
-    "channelRelayNoChannelsMeshtastic": "Připojte rádio Meshtastic a zobrazte seznam jeho kanálů."
+    "channelRelayNoChannelsMeshtastic": "Připojte rádio Meshtastic a zobrazte seznam jeho kanálů.",
+    "unitStylesPreviewKind": "Typ uzlu k testování",
+    "unitStylesPreviewProtocol": "Protokol k testování",
+    "unitFilterKind": "Typ uzlu pro filtr {{n}}",
+    "unitFilterAnyKind": "Jakýkoli typ uzlu",
+    "unitFilterProtocol": "Protokol pro filtr {{n}}",
+    "unitFilterAnyProtocol": "Jakýkoli protokol",
+    "unitKindCompanion": "Společníci a klienti",
+    "unitKindRepeater": "Opakovače a směrovače",
+    "unitKindRoom": "Pokojové servery",
+    "unitKindSensor": "Snímače",
+    "unitKindTracker": "Trackery",
+    "unitStylesRelayIcon": "Ikona pro opakovače, routery a pokojové servery",
+    "unitStylesRelayIconHint": "Volitelné. Cesta ikony v sadě ikon atak, jako je nastaveno UID/skupina/název souboru. Zařízení bez této sady ikon zobrazují symbol instalace.",
+    "channelRelayHelp": "Vyber, které zprávy slyšeného kanálu se přenášejí do TAK. Opravy trackeru změní MeshCore zprávy o poloze trackeru (!MT1) do mapových značek. Místnost GeoChat zrcadlí kanál do chatovací místnosti TAK. Nic z TAK není odesláno přes síť, pokud nezaškrtnete TAK pro kanál: pak zprávy, které připojila zařízení TAK ve své místnosti, jsou přenášeny na tomto kanálu z tohoto rádia s předponou volací značky odesílatele.",
+    "channelRelaySend": "TAK může odeslat",
+    "channelRelaySendFor": "Nechte TAK zařízení odeslat na {{channel}}",
+    "channelRelayHelpMeshtastic": "Vyber, které zprávy slyšeného kanálu se budou přenášet do TAK. Místnost GeoChat zrcadlí kanál, včetně zpráv slyšených přes MQTT, do této TAK chatovací místnosti. Nic z TAK není odesláno přes síť, pokud nezaškrtnete TAK pro kanál: pak zprávy, které připojila zařízení TAK ve své místnosti, jsou přenášeny na tomto kanálu z tohoto rádia s předponou volací značky odesílatele."
   },
   "telemetryPanel": {
     "title": "Telemetrie",
@@ -4210,7 +4303,6 @@
     "exportLog": "Export MECP log",
     "compose": {
       "title": "Compose MECP report",
-      "open": "Open MECP compose",
       "severity": "Severity",
       "category": "Category",
       "codes": "Codes",
@@ -4221,7 +4313,12 @@
       "byteBudget": "{{used}} / {{max}} bytes",
       "send": "Send MECP",
       "gpsFailed": "Nepodařilo se získat opravu GPS",
-      "sendFailed": "Nepodařilo se odeslat zprávu MECP"
+      "sendFailed": "Nepodařilo se odeslat zprávu MECP",
+      "openResponse": "Reaguj pomocí MECP",
+      "requestTitle": "Požadavek nebo zpráva MECP",
+      "responseTitle": "Odpověď MECP",
+      "showAllCodes": "Zobrazit všechny kódy MECP",
+      "openRequest": "Žádost nebo hlášení s MECP"
     },
     "rebroadcast": {
       "title": "MECP RF rebroadcast",
@@ -4243,10 +4340,10 @@
       "hint": "Mesh Emergency Communication Protocol — sestavte zprávy z chatu, přemostěte RF mezi Meshtastic a MeshCore zde a exportujte trvanlivý přijatý protokol auditu.",
       "learnMore": "Jak MECP funguje",
       "protocolSource": "Zdroj protokolu na GitHub",
-      "showComposeButton": "Zobrazit tlačítko MECP v chatu",
-      "showComposeButtonHint": "Ve výchozím nastavení vypnuto. Pokud je povoleno, Chat zobrazuje tlačítko MECP pro vytváření a odesílání nouzových zpráv.",
       "standingAlert": "Stanice velení incidentu (stálá pohotovost)",
-      "standingAlertHint": "Ve výchozím nastavení vypnuto. Pro EOC a monitorované stanice: udržuje červený banner nahoře a bliká na hlavním panelu nebo odrazí dok, dokud se někdo nepodívá na každý nový MAYDAY nebo URGENTNÍ. Každý stále slyší jednorázový výstražný tón a vidí přípitek."
+      "standingAlertHint": "Ve výchozím nastavení vypnuto. Pro EOC a monitorované stanice: udržuje červený banner nahoře a bliká na hlavním panelu nebo odrazí dok, dokud se někdo nepodívá na každý nový MAYDAY nebo URGENTNÍ. Každý stále slyší jednorázový výstražný tón a vidí přípitek.",
+      "showComposeButtons": "Zobrazit tlačítka MECP v chatu",
+      "showComposeButtonsHint": "Ve výchozím nastavení vypnuto. Pokud je povoleno, Chat zobrazuje červené tlačítko požadavku/zprávy a modré tlačítko odpovědi."
     },
     "exportLogEmpty": "V přijatém protokolu zatím nejsou žádné zprávy MECP",
     "block": {
@@ -4609,7 +4706,11 @@
     "read": "Nastavení načteno",
     "radioConnected": "Rádio připojeno",
     "radioDisconnected": "Rádio odpojeno",
-    "pendingChanges_few": "{{count}} změny"
+    "pendingChanges_few": "{{count}} změny",
+    "scope": "Výchozí rozsah Flood",
+    "defaultScope": "Název regionu (prázdný pro neskopírovaný)",
+    "scopeSummary": "Oblast pro odchozí Flood pakety tohoto uzlu",
+    "scopeHint": "Firmware v1.15+: zadejte veřejný název oblasti, např. #us-tn-tri; prázdná hodnota znamená bez omezení oblasti. Platí pro Flood oznámení a doručování zpráv místnosti přes Flood. Přímé trasy a přístupová práva místnosti jsou nezávislé. Rozsahy rádia a jeho kanálů se nastavují samostatně."
   },
   "chatTranslation": {
     "translate": "Přeložit zprávu",
@@ -4640,7 +4741,7 @@
     "deletePack": "Smazat {{pack}} balíček",
     "downloadPack": "Stáhnout {{pack}} balíček",
     "delete": "Odstranit",
-    "onlinePrivacy": "Online překlad odešle vybraný text zprávy na váš nakonfigurovaný server LibreTranslate pouze tehdy, když zvolíte Přeložit online. Automatický překlad vždy zůstane offline.",
+    "onlinePrivacy": "Online překlad odešle vybraný text zprávy na váš nakonfigurovaný server LibreTranslate pouze tehdy, když zvolíte Přeložit online. Automatický překlad vždy zůstane offline. HTTP je povoleno pouze pro localhost a adresy zpětné smyčky; všechny ostatní servery musí používat HTTPS.",
     "serverUrl": "Adresa URL serveru LibreTranslate",
     "apiKey": "API klíč (volitelné)",
     "savedKey": "Klíč API je bezpečně uložen. Prázdné pole jej uchovává pouze pro stejnou adresu URL serveru.",
@@ -4672,6 +4773,166 @@
     "downloadSize": "Stáhnout ({{size}})",
     "readLanguagesHint": "Zprávy v těchto jazycích nejsou nikdy přeloženy automaticky. Jazyk vybraný v části Přeložit do se vždy počítá jako jazyk, který čtete.",
     "pivotHint": "Balíček pokrývá jeden směr překladu, například z francouzštiny do angličtiny. Jiné jazykové páry jsou přeloženy do angličtiny: Francouzština do němčiny potřebuje francouzskou → angličtinu a anglickou → němčinu. Pro překlad do angličtiny stačí pouze jeden balíček.",
-    "hideTranslation": "Skrýt překlad"
+    "hideTranslation": "Skrýt překlad",
+    "secureUrlRequired": "Online překlad je pozastaven. Váš server a uložený klíč byly zachovány; pro obnovení použijte adresu URL https."
+  },
+  "liveTraffic": {
+    "controlPacket": "Řídicí paket",
+    "discoveryRequest": "Požadavek na vyhledání uzlů",
+    "discoveryResponse": "Odpověď na vyhledání uzlů",
+    "directoryLimited": "Seznam uzlů této mapy dosáhl limitu. Některé uzly mohou chybět.",
+    "directoryLimitedShort": "Neúplný seznam uzlů",
+    "sources": {
+      "CoreScope": "CoreScope",
+      "RF": "RF",
+      "MQTT": "MQTT",
+      "unknown": "Neznámý zdroj",
+      "Beacon": "Beacon"
+    },
+    "corescope": {
+      "feed": "Regionální CoreScope",
+      "preset": "Regionální mapa CoreScope",
+      "url": "URL mapy CoreScope",
+      "waitingHint": "Připojte výše zdroj CoreScope a sledujte hlášení jeho pozorovatelů. Místní rádio není potřeba.",
+      "disconnected": "Pro připojení vyberte URL mapy CoreScope."
+    },
+    "trafficSource": "Zdroj provozu",
+    "estimatedRouteHint": "CoreScope odhadl identitu některých uzlů. Tato spojení nejsou ověřena; chybějící přeskoky zůstávají neznámé.",
+    "cancelConnection": "Zrušit připojení",
+    "connectionActionFailed": "Připojení ke zdroji nelze aktualizovat. Zkuste to znovu.",
+    "estimatedLinks": "Spojení včetně odhadů serveru",
+    "additionalLocations_one": "{{count}} další místo",
+    "additionalLocations_other": "{{count}} dalších míst",
+    "title": "Živý provoz",
+    "mapOverview": "Přehled",
+    "mapModes": "Režim mapy",
+    "pause": "Pozastavit",
+    "resume": "Pokračovat",
+    "region": "Oblast mapy",
+    "regions": {
+      "all": "Všechny regiony"
+    },
+    "transportScope": "Transportní kód",
+    "scopeHint": "Filtrujte podle pozorovaných transportních kódů paketů nebo zadejte scoped či unscoped. Kódy platí pro jednotlivé pakety a nemění nastavení rádia.",
+    "allScopes": "Všechny rozsahy",
+    "unscoped": "Bez rozsahu",
+    "scoped": "S rozsahem",
+    "packetType": "Typ paketu",
+    "kinds": {
+      "all": "Všechny pakety",
+      "message": "Zprávy",
+      "advert": "Adverty / poloha",
+      "telemetry": "Telemetrie",
+      "routing": "Směrování",
+      "other": "Ostatní"
+    },
+    "speed": "Přehrávání",
+    "speedNormal": "1×",
+    "speedFast": "2×",
+    "mapAria": "Mapa provozu paketů v reálném čase",
+    "basemap": "Styl mapy",
+    "darkMap": "Tmavý",
+    "streetMap": "Ulice",
+    "topographicMap": "USGS topo",
+    "waitingHint": "Připojte rádio a zobrazte živý provoz.",
+    "waiting": "Čekání na příjem paketů",
+    "animationDisclaimer": "Pohyb znázorňuje pořadí paketů, nikoli rychlost rádiového přenosu. Neznámé přeskoky přerušují trasu.",
+    "meshtasticDisclaimer": "Spojení znázorňující příjem jsou pouze ilustrativní. Běžné pakety neodhalí každý retranslační uzel.",
+    "feed": "Přehled paketů",
+    "noFilterMatches": "Těmto filtrům neodpovídají žádné nedávné pakety.",
+    "emptyFeed": "Pakety se zde zobrazují, jakmile je klient přijme. Uzly se známou polohou lze zobrazit na mapě.",
+    "packetList": "Nedávná pozorování paketů",
+    "inspectPacket": "Zobrazit paket typu {{kind}} z {{time}}",
+    "noSignal": "Údaje o signálu nejsou k dispozici",
+    "inspector": "Podrobnosti o paketu",
+    "closeInspector": "Zavřít podrobnosti o paketu",
+    "route": "Podklady pro trasu",
+    "source": "Zdroj pozorování",
+    "signal": "RSSI / SNR",
+    "signalValues": "{{rssi}} dBm / {{snr}} dB",
+    "routeStatus": {
+      "resolved": "Určená trasa paketu",
+      "estimated": "Trasa odhadnutá serverem",
+      "partial": "Částečná trasa / příjem",
+      "unlocated": "Trasu nelze vykreslit",
+      "direct": "Přímé pozorování",
+      "unparsed": "Neanalyzovaný paket"
+    },
+    "meshtasticInspector": "Spojení znázorňující příjem nepotvrzuje celý řetězec retranslačních uzlů. Podrobné trasy se zobrazují pouze tehdy, pokud je paket obsahuje.",
+    "meshcoreInspector": "Propojují se pouze sousední přeskoky se známou identitou uzlu. Neznámé nebo nejednoznačné hashe zanechávají v trase mezery.",
+    "knownLocations": "Body se známou polohou",
+    "filterHint": "Filtry se týkají pouze zobrazení. Nastavení rádia se nemění.",
+    "filters": "Filtry",
+    "observationCount_one": "{{count}} paket",
+    "observationCount_other": "{{count}} paketů",
+    "mappedCount": "Na mapě: {{count}}",
+    "nodeCount": "Zobrazené uzly: {{count}}",
+    "toggleFeed": "Rozbalit nebo sbalit přehled paketů",
+    "expandFeed": "Zvětšit okno přehledu paketů",
+    "shrinkFeed": "Zmenšit okno přehledu paketů",
+    "moveFeed": "Přesunout přehled paketů",
+    "moveFeedHint": "Přetažením přesunete okno. Lze použít i šipky; pro větší kroky podržte Shift.",
+    "resetFeed": "Obnovit polohu přehledu paketů",
+    "encryptedContent": "Zašifrovaná zpráva",
+    "contentUnavailable": "Obsah zprávy není k dispozici",
+    "beacon": {
+      "feed": "Regionální Beacon",
+      "url": "URL mapy Beacon",
+      "region": "Oblast zdroje",
+      "disconnect": "Odpojit",
+      "connect": "Připojit",
+      "configure": "Nastavit",
+      "waitingHint": "Připojte výše regionální zdroj Beacon a sledujte hlášení jeho pozorovatelů. Místní rádio není potřeba.",
+      "readOnly": "Veřejný zdroj · Bez klíče API",
+      "listeningHint": "Připojeno. Nová pozorování se zobrazí, jakmile regionální pozorovatelé přijmou pakety.",
+      "status": {
+        "connecting": "Připojování k regionálním pozorovatelům…",
+        "live": "Živý regionální zdroj",
+        "reconnecting": "Opětovné připojování…",
+        "disconnected": "Pro připojení vyberte URL mapy Beacon.",
+        "error": "Nelze se připojit.",
+        "feedOpenFailed": "Regionální mapový kanál se nepodařilo otevřít.",
+        "refreshing": "Obnovování regionální mapy po přerušení kanálu.",
+        "connectionInterrupted": "Připojení regionální mapy bylo přerušeno.",
+        "publicHttpsRejected": "Tuto veřejnou regionální mapu HTTPS se nepodařilo otevřít."
+      },
+      "preset": "Regionální mapa Beacon",
+      "custom": "Vlastní URL"
+    },
+    "localRadio": "Místní rádio",
+    "closeSource": "Zavřít nastavení zdroje",
+    "aboutMap": "O této mapě paketového provozu",
+    "packetColorHint": "Paket si zachovává stejnou barvu na všech hlášených trasách. Opakovaná hlášení se seskupují.",
+    "zoomIn": "Přiblížit",
+    "zoomOut": "Oddálit",
+    "reports_one": "{{count}} hlášení",
+    "reports_other": "{{count}} hlášení",
+    "observedLinks": "Pozorovaná spojení",
+    "additionalLinks_one": "{{count}} další spojení",
+    "additionalLinks_other": "{{count}} dalších spojení",
+    "mapLinkLimit": "Mapa zobrazuje nejnovější spojení tohoto paketu, nejvýše {{count}}.",
+    "reportsLabel": "Zobrazená hlášení",
+    "mixedCodes": "Více transportních kódů",
+    "zoomControls": "Ovládání přiblížení mapy",
+    "connectionState": {
+      "live": "Živě",
+      "connecting": "Připojování",
+      "reconnecting": "Opětovné připojování",
+      "error": "Chyba připojení",
+      "disconnected": "Odpojeno"
+    },
+    "additionalLocations_few": "{{count}} další místa",
+    "additionalLocations_many": "{{count}} dalšího místa",
+    "observationCount_few": "{{count}} pakety",
+    "observationCount_many": "{{count}} paketu",
+    "reports_few": "{{count}} hlášení",
+    "reports_many": "{{count}} hlášení",
+    "additionalLinks_few": "{{count}} další spojení",
+    "additionalLinks_many": "{{count}} dalšího spojení",
+    "areas": {
+      "all": "Veškerý provoz",
+      "viewport": "Aktuální oblast mapy"
+    },
+    "fitTraffic": "Přizpůsobit provozu"
   }
 }

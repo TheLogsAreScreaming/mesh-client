@@ -34,7 +34,9 @@
     "takRemoteConnecting": "リモート接続",
     "takRemoteError": "リモートAPIエラー。",
     "takRemoteOnly": "TAK {{remote}}",
-    "takWithRemote": "{{local}}、{{remote}}"
+    "takWithRemote": "{{local}}、{{remote}}",
+    "savedSettingsUnavailable": "保存された設定を読み込めませんでした",
+    "savedSettingsRecovery": "保存されたデータは保持されました。システムのキーリングが使用可能であることを確認するか、しばらく待ってからもう一度お試しください。"
   },
   "appPanel": {
     "failedSaveRetention": "メッセージ保持設定の保存に失敗しました。",
@@ -334,7 +336,7 @@
     "exportForGitHubDesc": "デバッグ スナップショットとログ ファイルが 1 つの zip に含まれています。 GitHub のパブリックな問題に安全に添付できます。",
     "exportForDeveloper": "開発者向けのサポート バンドルをエクスポートする",
     "exportForDeveloperButton": "開発者向けのエクスポート",
-    "exportForDeveloperWarning": "保存されたパスワード (MeshCore ルームの資格情報、MQTT 設定など) が含まれる可能性のある完全なデータベースが含まれます。このバンドルはメンテナとのみ非公開で共有し、公開 GitHub では決して共有しません。",
+    "exportForDeveloperWarning": "保存されたパスワード、メッセージ本文、送信者とチャンネルの識別子、位置情報が含まれる可能性のある完全なデータベースとMECP緊急監査ログが含まれます。このバンドルはメンテナとのみ非公開で共有し、公開GitHubでは決して共有しないでください。",
     "exportSupportBundleFailed": "サポート バンドルをエクスポートできませんでした: {{message}}",
     "storeForwardHistoryProfileLabel": "ストア＆フォワードのキャッチアッププロファイル",
     "storeForwardHistoryProfileAria": "ストア＆フォワード履歴のキャッチアップの積極性",
@@ -414,7 +416,11 @@
       "empty": "ブロックされたノードはありません。",
       "unblockAria": "{{node}}のブロックを解除",
       "unblockFailed": "そのノードのブロックを解除できませんでした。"
-    }
+    },
+    "updatesSection": "更新",
+    "autoUpdateDownload": "自動的に更新をダウンロード",
+    "autoUpdateDownloadDesc": "各チェック後にバックグラウンドで最新のアップデートをダウンロードします。オフの場合、アップデートは検出されますが、ダウンロードボタンを押したときにのみダウンロードされます。これは、パッケージマネージャーがインストールを処理する場合に便利です。",
+    "autoUpdateDownloadSaveFailed": "自動更新ダウンロード設定を保存できませんでした。"
   },
   "aria": {
     "closeDialog": "ダイアログを閉じる",
@@ -724,7 +730,66 @@
       "noise": "騒音 {{noise}} dBm",
       "path": "パス: {{path}}",
       "hops_one": "{{count}} ホップ",
-      "hops_other": "{{count}} ホップ"
+      "hops_other": "{{count}} ホップ",
+      "place": "開始： {{place}}"
+    },
+    "firmwareBot": {
+      "label": "ボットの返信",
+      "status": {
+        "title": "ステータス {{name}}",
+        "uptime": "上 {{uptime}}",
+        "battery": "バッテリー {{mv}} mV ({{percent}}%)",
+        "storage": "ストレージ {{used}}/{{total}} KB",
+        "counters": "{{seen}} を受信、{{sent}} を送信、{{fail}} に失敗しました"
+      },
+      "air": {
+        "title": "放送時間",
+        "tx": "TX {{seconds}} 秒",
+        "rx": "RX {{seconds}}",
+        "rxPackets": "RX フラッド {{flood}} / ダイレクト {{direct}}",
+        "txPackets": "TX フラッド {{flood}} / 直接 {{direct}}"
+      },
+      "neighbors": {
+        "title_one": "{{count}} 隣人",
+        "title_other": "{{count}} 隣人",
+        "none": "最近聞いたことはありません",
+        "ago": "{{ago}}前"
+      },
+      "trace": {
+        "title": "トレース",
+        "hop": "{{hash}} {{snr}} dB",
+        "tail": "SNR {{snr}} dB を返す",
+        "directLink": "直接リンク",
+        "timeout": "タイムアウトしました",
+        "sent": "送信済み"
+      },
+      "lora": {
+        "title": "LoRa",
+        "freq": "{{freq}} MHz",
+        "sf": "SF{{sf}}",
+        "bw": "BW {{bw}} kHz",
+        "cr": "CR {{cr}}",
+        "power": "{{power}}dBm"
+      },
+      "version": {
+        "title": "ファームウェア",
+        "built": "{{built}} を構築しました"
+      },
+      "channels": {
+        "title": "ボットチャンネル",
+        "bot": "コマンド {{name}}",
+        "testing": "{{name}} をテストしています",
+        "emergency": "緊急{{name}}",
+        "public": "公共 {{name}}"
+      },
+      "help": {
+        "title": "コマンド",
+        "diagTitle": "診断コマンド"
+      }
+    },
+    "healthCheck": {
+      "label": "MeshCoreヘルスチェックコード",
+      "tooltip": "MeshCoreヘルスチェックのテストコード。送信者のメッシュの観察者は、どちらがそれを受け取ったかを報告します。"
     }
   },
   "common": {
@@ -760,7 +825,11 @@
     "emDash": "—",
     "saving": "保存中…",
     "delete": "消去",
-    "copied": "コピーしました"
+    "copied": "コピーしました",
+    "botBadge": "ボット",
+    "botBadgeLabel": "ボット",
+    "botBadgeTooltip": "自動返信からボットとして検出される",
+    "retry": "再試行"
   },
   "configApplyNotice": {
     "persistNote": "適用された設定はデバイスのフラッシュメモリに保存され、再起動後も保持されます。",
@@ -1093,7 +1162,8 @@
     "meshcoreBleWindowsInAppPairingHint": "Windowsでは、ここでラジオを選択し、画面に表示されているPINを入力します。Mesh Hubがペアリングするため、Windows設定でペアリングする必要はありません。最初にスマートフォンのMeshCoreアプリを閉じます。ラジオは一度に1つのBluetooth接続のみを受け入れます。",
     "stageEnterPinWindows": "ラジオに表示されている暗証番号を入力して、Windowsとペアリングします",
     "stagePairingWindows": "Windowsとペアリングしています…",
-    "meshtasticSilentAfterConfigure": "無線に接続されていますが、セットアップ後にメッシュトラフィックの送信が停止しました。自動的に再接続しています。これが続く場合は、ラジオのネットワーク接続を確認するか、再起動してください。"
+    "meshtasticSilentAfterConfigure": "無線に接続されていますが、セットアップ後にメッシュトラフィックの送信が停止しました。自動的に再接続しています。これが続く場合は、ラジオのネットワーク接続を確認するか、再起動してください。",
+    "mqttPacketTooLarge": "ブローカーが安全上限の {{limit}} バイトを超える MQTT パケットを送信したため、自動再接続は無効です。"
   },
   "contactGroupsModal": {
     "failedLoadMembers": "メンバーのロードに失敗しました: {{message}}",
@@ -1570,7 +1640,7 @@
     "layerControlsAria": "マップレイヤーコントロールの切り替え",
     "basemapHeading": "ベースマップ",
     "basemapSelectAria": "マップベースマップを選択",
-    "basemapDark": "ダーク（カート）",
+    "basemapDark": "ダーク（OpenStreetMap）",
     "basemapOsm": "OpenStreetMap (ライト)",
     "layersHeading": "Overlays",
     "layerNodes": "ノードマーカー",
@@ -1605,7 +1675,8 @@
       "cacheStats": "キャッシュ： {{count}}タイル（ {{size}} ）",
       "clear": "タイルキャッシュをクリア",
       "clearAria": "オフラインマップタイルキャッシュをクリア",
-      "cleared": "キャッシュはクリアされました。"
+      "cleared": "キャッシュはクリアされました。",
+      "viewCacheOnly": "表示した地図タイルは自動的にキャッシュされます。地域全体のダウンロードは USGS Topo で利用できます。OpenStreetMap では事前取得が許可されていません。"
     },
     "basemapUsgsTopo": "USGS Topo （米国のみ）",
     "layerIncidents": "緊急事態",
@@ -3321,7 +3392,12 @@
     "frequencyOffsetLabel": "頻度オフセット",
     "frequencyOffsetDesc": "アドバンス：計算された中心周波数にMHz単位のオフセットを追加して、結晶キャリブレーションエラーを修正します。試験装置がない限り、0のままにしておきます。",
     "enumLicensedOnlySuffix": "（ライセンスのみ）",
-    "unknownEnumValue": "不明（ {{value}} ）"
+    "unknownEnumValue": "不明（ {{value}} ）",
+    "floodScopePresetsTitle": "保存された地域",
+    "floodScopePresetsHelp": "ここに領域を追加し、送信またはラジオ→チャンネルの横にある各チャンネルのスコープを選択します。範囲を保存または削除すると、ラジオのデフォルトとチャンネルの選択肢は変更されません。",
+    "floodScopeAddHashtag": "保存する地域のハッシュタグ",
+    "floodScopeAddSaved": "地域を保存",
+    "floodScopePresetsFull": "{{count}}地域まで節約できます。1つ削除してから別のものを追加してください。"
   },
   "rawPacketLog": {
     "filterPackets": "パケットをフィルタリングする",
@@ -3962,7 +4038,8 @@
       "enrollNoCert": "登録応答に証明書がありません",
       "enrollTooLarge": "登録応答が大きすぎます",
       "enrollKeyMismatch": "サーバーが別のキーの証明書を返しました",
-      "enrollBusy": "現在の証明書のインポートが完了するまで待ちます"
+      "enrollBusy": "現在の証明書のインポートが完了するまで待ちます",
+      "frameTooLarge": "CoT イベントが {{max}} バイトを超えています"
     },
     "remoteUseTls": "TLSを使用する（推奨）",
     "remotePlainTcpWarning": "プレーンTCPは暗号化されていません。ネットワークパス上の誰でも中継された位置を読み取ることができます。証明書は使用されず、ローンチ時の接続はオフのままです。",
@@ -4012,15 +4089,30 @@
     "unitTypeSensor": "センサー",
     "unitTypeAir": "飛行機",
     "channelRelayTitle": "MeshCoreチャンネルからTAK",
-    "channelRelayDesc": "TAKにフィードされたチャンネルメッセージを選択してください。トラッカーはMeshCoreトラッカーポジションメッセージを修正しました(! ＭＴ １ ）をマップマーカーに入れた。GeoChatルームは、そのTAKチャットルームにチャンネルをミラーリングします。どちらも一方通行です。TAKからメッシュに送信されるものはありません。",
     "channelRelayTrackers": "トラッカーの修正",
     "channelRelayRoom": "{{channel}}のGeoChatルーム",
     "channelRelayRoomPlaceholder": "GeoChatルーム（オフ）",
     "channelRelayNoChannels": "チャンネルを一覧表示するには、MeshCoreラジオを接続してください。",
     "channelRelayUnnamed": "チャンネル{{n}}",
     "channelRelayTitleMeshtastic": "MeshtasticチャンネルからTAK",
-    "channelRelayDescMeshtastic": "どのチャネル メッセージを TAK にフィードするかを選択します。 GeoChat ルームは、MQTT で聞いたメッセージを含むチャネルを TAK チャット ルームにミラーリングします。これは一方向にのみ行われます。TAK からはメッシュ経由で何も送信されません。",
-    "channelRelayNoChannelsMeshtastic": "Meshtastic 無線を接続して、そのチャンネルをリストします。"
+    "channelRelayNoChannelsMeshtastic": "Meshtastic 無線を接続して、そのチャンネルをリストします。",
+    "unitStylesPreviewKind": "テストするノードタイプ",
+    "unitStylesPreviewProtocol": "テストプロトコル",
+    "unitFilterKind": "フィルタ{{n}}のノードタイプ",
+    "unitFilterAnyKind": "任意のノードタイプ",
+    "unitFilterProtocol": "フィルタ{{n}}のプロトコル",
+    "unitFilterAnyProtocol": "任意のプロトコル",
+    "unitKindCompanion": "コンパニオンとクライアント",
+    "unitKindRepeater": "リピーターとルーター",
+    "unitKindRoom": "ルームサーバー",
+    "unitKindSensor": "センサー",
+    "unitKindTracker": "トラッカー",
+    "unitStylesRelayIcon": "リピーター、ルーター、ルームサーバーのアイコン",
+    "unitStylesRelayIconHint": "オプション。設定されたUID/グループ/ファイル名として、ATAKアイコンセット内のアイコンのパス。そのアイコンが設定されていないデバイスには、インストールシンボルが表示されます。",
+    "channelRelayHelp": "TAKにフィードされたチャンネルメッセージを選択してください。トラッカーはMeshCoreトラッカーポジションメッセージを修正しました(! ＭＴ １ ）をマップマーカーに入れた。GeoChatルームは、そのTAKチャットルームにチャンネルをミラーリングします。TAKにチェックを入れない限り、TAKからメッシュに送信されるものはありません。その後、そのルームにあるTAKデバイスの投稿に接続したメッセージは、送信者のコールサインが付いたこのラジオからそのチャネルに送信されます。",
+    "channelRelaySend": "TAKは送信できます",
+    "channelRelaySendFor": "TAKデバイスを{{channel}}に送信",
+    "channelRelayHelpMeshtastic": "TAKにフィードされる再生チャンネルメッセージを選択してください。GeoChatルームは、MQTTで聞いたメッセージを含むチャンネルをそのTAKチャットルームに反映しています。TAKにチェックを入れない限り、TAKからメッシュに送信されるものはありません。その後、そのルームにあるTAKデバイスの投稿に接続したメッセージは、送信者のコールサインが付いたこのラジオからそのチャネルに送信されます。"
   },
   "telemetryPanel": {
     "title": "テレメトリー",
@@ -4173,7 +4265,6 @@
     "exportLog": "Export MECP log",
     "compose": {
       "title": "Compose MECP report",
-      "open": "Open MECP compose",
       "severity": "Severity",
       "category": "Category",
       "codes": "Codes",
@@ -4184,7 +4275,12 @@
       "byteBudget": "{{used}} / {{max}} bytes",
       "send": "Send MECP",
       "gpsFailed": "GPS修正を取得できませんでした",
-      "sendFailed": "MECPレポートの送信に失敗しました"
+      "sendFailed": "MECPレポートの送信に失敗しました",
+      "openResponse": "MECPで対応",
+      "requestTitle": "MECPの要求または報告",
+      "responseTitle": "MECP応答",
+      "showAllCodes": "すべてのMECPコードを表示",
+      "openRequest": "MECPにリクエストまたは報告する"
     },
     "rebroadcast": {
       "title": "MECP RF rebroadcast",
@@ -4206,10 +4302,10 @@
       "hint": "メッシュ緊急通信プロトコル—チャットからレポートを作成し、ここでMeshtasticとMeshCoreの間のRFをブリッジし、耐久性のある受信監査ログをエクスポートします。",
       "learnMore": "MECPの仕組み",
       "protocolSource": "GitHub上のプロトコルソース",
-      "showComposeButton": "チャットにMECPボタンを表示する",
-      "showComposeButtonHint": "デフォルトではオフになっています。有効にすると、チャットに緊急レポートを作成して送信するためのMECPボタンが表示されます。",
       "standingAlert": "インシデントコマンドステーション（スタンディングアラート）",
-      "standingAlertHint": "デフォルトでオフになっています。EOCと監視ステーションの場合：赤いバナーを上にしてタスクバーを点滅させるか、誰かが新しいメーデーまたは緊急を見るまでドックを跳ね返します。誰もが一度限りの警告音を聞き、トーストを見ます。"
+      "standingAlertHint": "デフォルトでオフになっています。EOCと監視ステーションの場合：赤いバナーを上にしてタスクバーを点滅させるか、誰かが新しいメーデーまたは緊急を見るまでドックを跳ね返します。誰もが一度限りの警告音を聞き、トーストを見ます。",
+      "showComposeButtons": "チャットでMECPボタンを表示する",
+      "showComposeButtonsHint": "デフォルトではオフになっています。有効にすると、チャットには赤いリクエスト/レポートボタンと青い応答ボタンが表示されます。"
     },
     "exportLogEmpty": "受信したログにMECPメッセージはまだありません",
     "block": {
@@ -4568,7 +4664,11 @@
     "pendingChanges_other": "{{count}} 件の変更",
     "read": "設定を読み取り済み",
     "radioConnected": "無線機接続済み",
-    "radioDisconnected": "無線機未接続"
+    "radioDisconnected": "無線機未接続",
+    "scope": "デフォルトのフラッドスコープ",
+    "defaultScope": "リージョン名（スコープなしの場合は空白）",
+    "scopeSummary": "このノードが送信するFloodパケットのリージョン",
+    "scopeHint": "ファームウェアv1.15以降：#us-tn-triなどの公開リージョン名を入力します。空欄はリージョン制限なしです。FloodアドバートとFlood経由のルームメッセージ配信に適用されます。直接ルートとルームへのアクセス権は別です。コンパニオン無線機と各チャンネルのスコープは個別に設定します。"
   },
   "chatTranslation": {
     "translate": "メッセージを翻訳する",
@@ -4599,7 +4699,7 @@
     "deletePack": "{{pack}}パックを削除",
     "downloadPack": "{{pack}}パックをダウンロード",
     "delete": "削除",
-    "onlinePrivacy": "オンライン翻訳は、オンライン翻訳を選択した場合にのみ、選択したメッセージテキストを設定されたLibreTranslateサーバーに送信します。自動翻訳は常にオフラインのままです。",
+    "onlinePrivacy": "オンライン翻訳は、オンライン翻訳を選択した場合にのみ、選択したメッセージテキストを設定されたLibreTranslateサーバーに送信します。自動翻訳は常にオフラインのままです。HTTPはlocalhostとループバックアドレスでのみ許可され、その他のサーバーではHTTPSが必要です。",
     "serverUrl": "LibreTranslateサーバーURL",
     "apiKey": "APIキー（オプション）",
     "savedKey": "APIキーは安全に保存されます。空白のフィールドは、同じサーバーURLに対してのみ保持されます。",
@@ -4631,6 +4731,158 @@
     "downloadSize": "ダウンロード（ {{size}} ）",
     "readLanguagesHint": "これらの言語のメッセージは自動翻訳されません。「次の言語に翻訳」で選択した言語は、常に読める言語として扱われます。",
     "pivotHint": "各パックは、フランス語 → 英語のように一方向の翻訳を担当します。その他の言語ペアは英語を経由して翻訳されるため、フランス語からドイツ語へは「フランス語 → 英語」と「英語 → ドイツ語」の両方のパックが必要です。英語への翻訳に必要なパックは1つだけです。",
-    "hideTranslation": "翻訳を非表示にする"
+    "hideTranslation": "翻訳を非表示にする",
+    "secureUrlRequired": "オンライン翻訳が一時停止されています。サーバーと保存されたキーが保持されました。HTTPS URLを使用して再開してください。"
+  },
+  "liveTraffic": {
+    "controlPacket": "制御パケット",
+    "discoveryRequest": "ノード探索リクエスト",
+    "discoveryResponse": "ノード探索応答",
+    "directoryLimited": "このマップのノード一覧が上限に達しました。一部のノードが表示されない場合があります。",
+    "directoryLimitedShort": "一覧が不完全",
+    "sources": {
+      "CoreScope": "CoreScope",
+      "RF": "RF",
+      "unknown": "不明な取得元",
+      "MQTT": "MQTT",
+      "Beacon": "Beacon"
+    },
+    "corescope": {
+      "feed": "地域の CoreScope",
+      "preset": "地域の CoreScope マップ",
+      "url": "CoreScope マップの URL",
+      "waitingHint": "上の CoreScope フィードに接続して観測ノードを確認します。ローカルの無線機は不要です。",
+      "disconnected": "接続する CoreScope マップの URL を選択してください。"
+    },
+    "trafficSource": "トラフィックの取得元",
+    "estimatedRouteHint": "CoreScope が一部のノード識別情報を推定しました。これらのリンクは未確認で、不明なホップは補完されません。",
+    "cancelConnection": "接続をキャンセル",
+    "connectionActionFailed": "フィード接続を更新できません。もう一度お試しください。",
+    "estimatedLinks": "サーバーの推定を含むリンク",
+    "additionalLocations_one": "ほか {{count}} か所",
+    "additionalLocations_other": "ほか {{count}} か所",
+    "mapOverview": "概要",
+    "title": "ライブトラフィック",
+    "mapModes": "マップモード",
+    "resume": "再開",
+    "pause": "一時停止",
+    "region": "マップエリア",
+    "regions": {
+      "all": "すべての地域"
+    },
+    "transportScope": "トランスポートコード",
+    "scopeHint": "観測したパケットのトランスポートコードで絞り込むか、「scoped」（スコープあり）または「unscoped」（スコープなし）を入力します。コードはパケットごとの値で、無線機の設定は変更されません。",
+    "unscoped": "スコープなし",
+    "allScopes": "すべてのスコープ",
+    "scoped": "スコープあり",
+    "packetType": "パケットタイプ",
+    "kinds": {
+      "all": "すべてのパケット",
+      "message": "メッセージ",
+      "telemetry": "テレメトリー",
+      "advert": "Advert / 位置",
+      "routing": "ルーティング",
+      "other": "その他"
+    },
+    "speed": "再生",
+    "speedNormal": "1×",
+    "mapAria": "ライブパケットトラフィックマップ",
+    "speedFast": "2×",
+    "basemap": "地図スタイル",
+    "darkMap": "ダーク",
+    "streetMap": "道路地図",
+    "topographicMap": "USGS 地形図",
+    "waiting": "パケットの観測待ち",
+    "waitingHint": "無線機を接続すると、ライブトラフィックを表示できます。",
+    "animationDisclaimer": "アニメーションはパケットの順序を表し、実際の通信速度を示すものではありません。不明なホップでは経路が途切れます。",
+    "meshtasticDisclaimer": "受信リンクは関係を示す表示です。通常のパケットからはすべての中継ノードを特定できません。",
+    "feed": "パケットフィード",
+    "noFilterMatches": "これらのフィルタに一致する最近のパケットはありません。",
+    "packetList": "最近のパケット観測",
+    "emptyFeed": "このクライアントが受信したパケットがここに表示されます。位置が判明しているノードは地図にも表示できます。",
+    "inspectPacket": "{{time}} の {{kind}} パケットを確認",
+    "noSignal": "信号データなし",
+    "inspector": "パケットの詳細",
+    "closeInspector": "パケットの詳細を閉じる",
+    "route": "経路の根拠",
+    "source": "観測元",
+    "signal": "RSSI/SNR",
+    "signalValues": "{{rssi}} dBm/{{snr}} dB",
+    "routeStatus": {
+      "resolved": "特定できたパケット経路",
+      "estimated": "サーバーが推定した経路",
+      "partial": "一部の経路 / 受信リンク",
+      "unlocated": "描画できる経路なし",
+      "direct": "直接観測",
+      "unparsed": "未解析のパケット"
+    },
+    "meshtasticInspector": "受信関係だけでは中継経路全体を確認できません。詳細な経路は、パケットにその情報が含まれる場合にのみ表示されます。",
+    "meshcoreInspector": "特定できた隣接ホップのみを結びます。不明または曖昧なハッシュがある箇所では経路が途切れます。",
+    "filters": "フィルター",
+    "knownLocations": "位置が判明している地点",
+    "filterHint": "表示のみに適用するフィルターです。無線機の設定は変更されません。",
+    "observationCount_one": "{{count}}パケット",
+    "observationCount_other": "{{count}}パケット",
+    "mappedCount": "{{count}} 件を地図に表示",
+    "nodeCount": "{{count}} ノードを表示",
+    "expandFeed": "パケットフィードのウィンドウを拡大",
+    "toggleFeed": "パケットフィードを展開または折りたたむ",
+    "moveFeed": "パケットフィードを移動",
+    "shrinkFeed": "パケットフィードのウィンドウを縮小",
+    "moveFeedHint": "ドラッグまたは矢印キーでウィンドウを移動できます。Shift キーを押しながら操作すると移動幅が大きくなります。",
+    "resetFeed": "パケットフィード位置をリセット",
+    "encryptedContent": "暗号化されたメッセージ",
+    "contentUnavailable": "メッセージの内容を取得できません",
+    "beacon": {
+      "feed": "地域の Beacon",
+      "url": "Beacon マップの URL",
+      "region": "フィードの地域",
+      "connect": "接続",
+      "disconnect": "接続を解除",
+      "configure": "設定",
+      "readOnly": "公開フィード · API キー不要",
+      "waitingHint": "上の地域の Beacon フィードに接続すると、観測ノードの受信状況を確認できます。ローカルの無線機は不要です。",
+      "listeningHint": "接続済みです。地域の観測ノードがパケットを受信すると、新しい観測結果が表示されます。",
+      "status": {
+        "connecting": "地域の観測ノードに接続中…",
+        "live": "地域のライブフィード",
+        "reconnecting": "再接続中…",
+        "disconnected": "接続する Beacon マップの URL を選択してください。",
+        "error": "接続できません。",
+        "feedOpenFailed": "地域マップのフィードを開けませんでした。",
+        "refreshing": "フィード中断後に地域マップを更新しています。",
+        "connectionInterrupted": "地域マップの接続が中断されました。",
+        "publicHttpsRejected": "この公開 HTTPS 地域マップを開けませんでした。"
+      },
+      "preset": "地域の Beacon マップ",
+      "custom": "カスタム URL"
+    },
+    "localRadio": "ローカルの無線機",
+    "closeSource": "フィード設定を閉じる",
+    "packetColorHint": "同じパケットは、報告されたすべての経路で同じ色を使います。重複する報告はまとめて表示します。",
+    "aboutMap": "このトラフィックマップについて",
+    "zoomIn": "拡大",
+    "zoomOut": "縮小",
+    "reports_one": "{{count}} 件の報告",
+    "reports_other": "{{count}} 件の報告",
+    "observedLinks": "観測されたリンク",
+    "additionalLinks_one": "ほか {{count}} リンク",
+    "additionalLinks_other": "ほか {{count}} リンク",
+    "mapLinkLimit": "このパケットの最新 {{count}} リンクを地図に描画します。",
+    "reportsLabel": "表示中の報告",
+    "mixedCodes": "複数のトランスポートコード",
+    "zoomControls": "地図のズーム操作",
+    "connectionState": {
+      "live": "ライブ",
+      "connecting": "接続中",
+      "reconnecting": "再接続中",
+      "disconnected": "未接続",
+      "error": "接続エラー"
+    },
+    "areas": {
+      "all": "すべてのトラフィック",
+      "viewport": "現在の地図範囲"
+    },
+    "fitTraffic": "トラフィックに合わせて表示"
   }
 }
