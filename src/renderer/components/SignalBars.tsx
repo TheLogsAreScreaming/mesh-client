@@ -12,7 +12,7 @@ export function LinkIcon({ className }: { className?: string }) {
   return (
     <Link2
       aria-hidden
-      className={className ?? 'h-4 w-4 text-green-400'}
+      className={className ?? 'text-success-400 h-4 w-4'}
       trigger={trigger}
       size={16}
     />

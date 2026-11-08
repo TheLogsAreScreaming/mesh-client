@@ -25,7 +25,7 @@ export function StatusBarButton({
       title={ariaLabel}
       onClick={onClick}
       {...{ [PARENT_HOVER_ATTR]: '' }}
-      className="hover:bg-sidebar-active-bg/60 flex h-6.5 max-w-[18rem] min-w-0 shrink-0 items-center gap-1.5 rounded-md px-2.5 whitespace-nowrap transition-colors"
+      className="hover:bg-sidebar-active-bg/60 rounded-card flex h-6.5 max-w-[18rem] min-w-0 shrink-0 items-center gap-1.5 px-2.5 whitespace-nowrap transition-colors"
     >
       {icon}
       <span className={`truncate ${textClass}`}>{children}</span>

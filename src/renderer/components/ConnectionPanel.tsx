@@ -1829,7 +1829,7 @@ export default function ConnectionPanel({
   /** Linux BLE / MeshCore pairing PIN entry, shared by the connecting and disconnected views. */
   const renderPinForm = (onSubmit: () => void) => (
     <>
-      <p className="text-ink-200 mb-2 text-sm">{t('connectionPanel.enterPin')}</p>
+      <p className="text-ink-200 text-body-lg mb-2">{t('connectionPanel.enterPin')}</p>
       <div className="flex flex-wrap gap-2">
         <div className="w-40">
           <input
@@ -1859,7 +1859,7 @@ export default function ConnectionPanel({
       <div
         role="status"
         aria-live="polite"
-        className="rounded-lg border border-cyan-700/45 bg-cyan-950/40 px-4 py-3 text-sm text-cyan-100"
+        className="rounded-card text-body-lg border border-cyan-700/45 bg-cyan-950/40 px-4 py-3 text-cyan-100"
       >
         {t('connectionPanel.autoReconnectInProgress')}
       </div>
@@ -1872,7 +1872,7 @@ export default function ConnectionPanel({
         {renderAutoReconnectBanner()}
         <SpinnerIconLg className="text-bright-green" />
         <div className="space-y-2 text-center">
-          <h2 className="text-ink-200 text-lg font-semibold">
+          <h2 className="text-ink-200 text-heading font-semibold">
             {showPinPrompt
               ? t('connectionPanel.pairWithDevice')
               : showBlePicker
@@ -1887,13 +1887,13 @@ export default function ConnectionPanel({
             <p
               className={
                 connectionStage === STAGE_LINUX_UNPAIRED
-                  ? 'rounded-lg border border-orange-500/45 bg-orange-950/40 px-4 py-3 text-sm text-orange-200'
-                  : 'text-muted text-sm'
+                  ? 'rounded-card border-warning-500/45 bg-warning-950/40 text-body-lg text-warning-200 border px-4 py-3'
+                  : 'text-muted text-body-lg'
               }
             >
               {resolveConnectionStageText(connectionStage, autoConnectBleTarget, t)}
             </p>
-            <p className="text-muted/80 mt-1 text-xs">{t('connectionPanel.stayOnTab')}</p>
+            <p className="text-muted/80 text-label mt-1">{t('connectionPanel.stayOnTab')}</p>
             {(() => {
               const targetId =
                 lastConnection?.bleDeviceId ?? loadLastBleDevice(protocol) ?? undefined;
@@ -1904,7 +1904,7 @@ export default function ConnectionPanel({
               return isWeakBleRssi(targetRssi) ? (
                 <BleWeakSignalBanner
                   rssi={targetRssi}
-                  className="mt-2 rounded-lg border border-orange-800/60 bg-orange-900/40 px-3 py-2 text-xs text-orange-200"
+                  className="rounded-card border-warning-800/60 bg-warning-900/40 text-label text-warning-200 mt-2 border px-3 py-2"
                 />
               ) : null;
             })()}
@@ -1916,14 +1916,17 @@ export default function ConnectionPanel({
           <div
             role="region"
             aria-labelledby="ble-device-picker-heading"
-            className="bg-deep-black border-ink-800 w-full overflow-hidden rounded-xl border"
+            className="bg-deep-black border-ink-800 rounded-container w-full overflow-hidden border"
           >
             <div className="border-ink-800 flex min-h-12 items-center justify-between gap-2 border-b px-4 py-2">
-              <span id="ble-device-picker-heading" className="text-ink-200 text-sm font-semibold">
+              <span
+                id="ble-device-picker-heading"
+                className="text-ink-200 text-body-lg font-semibold"
+              >
                 {t('connectionPanel.selectBluetoothDevice')}
               </span>
               <div className="flex items-center gap-2">
-                <span className="text-ink-300 text-xs" aria-live="polite">
+                <span className="text-ink-300 text-label" aria-live="polite">
                   {t('connectionPanel.devicesFound', { count: bleDevices.length })}
                 </span>
                 {bleDevices.length > 0 ? (
@@ -1940,7 +1943,7 @@ export default function ConnectionPanel({
             </div>
             <div className="max-h-60 overflow-y-auto">
               {bleDevices.length === 0 ? (
-                <div className="text-muted px-4 py-6 text-center text-sm">
+                <div className="text-muted text-body-lg px-4 py-6 text-center">
                   <SpinnerIcon className="text-muted mx-auto mb-2 h-5 w-5" />
                   {t('connectionPanel.scanningDevices', {
                     protocol: protocol === 'meshcore' ? 'MeshCore' : 'Meshtastic',
@@ -1976,11 +1979,11 @@ export default function ConnectionPanel({
                       }}
                       className="hover:bg-sidebar-active-bg border-ink-800 w-full border-b px-4 py-3 text-left transition-colors last:border-b-0"
                     >
-                      <div className="text-ink-200 flex items-center gap-2 text-sm">
+                      <div className="text-ink-200 text-body-lg flex items-center gap-2">
                         <ConnectionIcon type="ble" trigger={parentIconTrigger} />
                         <span className="min-w-0 flex-1 truncate">{displayName}</span>
                         {hasRssi ? (
-                          <span className="text-muted flex shrink-0 items-center gap-1 text-xs">
+                          <span className="text-muted text-label flex shrink-0 items-center gap-1">
                             <SignalBars rssi={device.rssi} className="h-3 w-4" />
                             {t('connectionPanel.bleRssiDbm', {
                               rssi: Math.round(device.rssi!),
@@ -1989,7 +1992,9 @@ export default function ConnectionPanel({
                         ) : null}
                       </div>
                       {identity.display !== displayName ? (
-                        <div className="text-muted ml-7 font-mono text-xs">{identity.display}</div>
+                        <div className="text-muted text-label ml-7 font-mono">
+                          {identity.display}
+                        </div>
                       ) : null}
                     </button>
                   );
@@ -2004,12 +2009,12 @@ export default function ConnectionPanel({
               return <BleWeakSignalBanner rssi={weakest} />;
             })()}
             {bleDevices.some((d) => d.deviceName === 'AdaDFU') && (
-              <p className="text-muted border-ink-800 border-t px-4 py-2 text-xs">
+              <p className="text-muted border-ink-800 text-label border-t px-4 py-2">
                 {t('connectionPanel.hintAdaDfuBle')}
               </p>
             )}
             {protocol === 'meshcore' && (
-              <p className="border-ink-800 border-t px-4 py-2 text-xs text-orange-400">
+              <p className="border-ink-800 text-label text-warning-400 border-t px-4 py-2">
                 <Trans
                   i18nKey="connectionPanel.meshcoreBlePairingHint"
                   components={{ strong: <strong /> }}
@@ -2025,14 +2030,17 @@ export default function ConnectionPanel({
           <div
             role="region"
             aria-labelledby="serial-port-picker-heading"
-            className="bg-deep-black border-ink-800 w-full overflow-hidden rounded-xl border"
+            className="bg-deep-black border-ink-800 rounded-container w-full overflow-hidden border"
           >
             <div className="border-ink-800 flex min-h-12 items-center justify-between gap-2 border-b px-4 py-2">
-              <span id="serial-port-picker-heading" className="text-ink-200 text-sm font-semibold">
+              <span
+                id="serial-port-picker-heading"
+                className="text-ink-200 text-body-lg font-semibold"
+              >
                 {t('connectionPanel.selectSerialPort')}
               </span>
               <div className="flex items-center gap-2">
-                <span className="text-ink-300 text-xs" aria-live="polite">
+                <span className="text-ink-300 text-label" aria-live="polite">
                   {t('connectionPanel.devicesFound', { count: serialPorts.length })}
                 </span>
                 {serialPorts.length > 0 ? (
@@ -2049,7 +2057,7 @@ export default function ConnectionPanel({
             </div>
             <div className="max-h-60 overflow-y-auto">
               {serialPorts.length === 0 ? (
-                <div className="text-muted px-4 py-6 text-center text-sm">
+                <div className="text-muted text-body-lg px-4 py-6 text-center">
                   {t('connectionPanel.noSerialPorts')}
                 </div>
               ) : (
@@ -2068,11 +2076,11 @@ export default function ConnectionPanel({
                       }}
                       className="hover:bg-sidebar-active-bg border-ink-800 w-full border-b px-4 py-3 text-left transition-colors last:border-b-0"
                     >
-                      <div className="text-ink-200 flex items-center gap-2 text-sm">
+                      <div className="text-ink-200 text-body-lg flex items-center gap-2">
                         <ConnectionIcon type="serial" trigger={parentIconTrigger} />
                         {cachedNodeName ?? port.displayName}
                       </div>
-                      <div className="text-muted ml-7 font-mono text-xs">
+                      <div className="text-muted text-label ml-7 font-mono">
                         {port.portName}
                         {port.vendorId && ` (VID: ${port.vendorId})`}
                         {port.productId && ` PID: ${port.productId}`}
@@ -2174,7 +2182,7 @@ export default function ConnectionPanel({
           </LabelValueGrid>
           {protocol !== 'meshcore' && mqttProfiles.length > 0 ? (
             <div data-setting-anchor="connection.mqtt.switchProfile" className="space-y-1">
-              <p id="conn-meshtastic-live-profile" className="text-muted text-xs">
+              <p id="conn-meshtastic-live-profile" className="text-muted text-label">
                 {t('mqttProfiles.switchLabel')}
               </p>
               <MqttNetworkPresetSelect
@@ -2197,7 +2205,7 @@ export default function ConnectionPanel({
                 }}
               />
               {pendingMqttProfile ? (
-                <p className="text-xs text-orange-400" role="status">
+                <p className="text-label text-warning-400" role="status">
                   {t('mqttProfiles.reconnectNeeded')}
                 </p>
               ) : null}
@@ -2234,7 +2242,7 @@ export default function ConnectionPanel({
           )}
           {protocol !== 'meshcore' && (
             <div data-setting-anchor="connection.mqtt.meshtasticPreset" className="space-y-1">
-              <p id="conn-meshtastic-network-preset" className="text-muted text-xs">
+              <p id="conn-meshtastic-network-preset" className="text-muted text-label">
                 {t('connectionPanel.networkPreset')}
               </p>
               <MqttNetworkPresetSelect
@@ -2283,7 +2291,7 @@ export default function ConnectionPanel({
                 }}
               />
               {meshtasticPreset === 'liam' && !activeMqttProfile && (
-                <p className="text-xs text-orange-400">{t('connectionPanel.liamServerNote')}</p>
+                <p className="text-label text-warning-400">{t('connectionPanel.liamServerNote')}</p>
               )}
               <MqttProfileControls
                 activeProfile={activeMqttProfile}
@@ -2301,7 +2309,7 @@ export default function ConnectionPanel({
           )}
           {protocol === 'meshcore' && (
             <div data-setting-anchor="connection.mqtt.meshcorePreset" className="space-y-1">
-              <p id="conn-meshcore-network-preset" className="text-muted text-xs">
+              <p id="conn-meshcore-network-preset" className="text-muted text-label">
                 {t('connectionPanel.networkPreset')}
               </p>
               <MqttNetworkPresetSelect
@@ -2352,7 +2360,9 @@ export default function ConnectionPanel({
                 }}
               />
               {meshcorePreset === 'coloradomesh' && (
-                <p className="text-xs text-orange-400">{t('connectionPanel.coloradoServerNote')}</p>
+                <p className="text-label text-warning-400">
+                  {t('connectionPanel.coloradoServerNote')}
+                </p>
               )}
               {meshcorePreset === 'meshcoreca' && (
                 <div
@@ -2361,7 +2371,7 @@ export default function ConnectionPanel({
                   role="group"
                   aria-label={t('connectionPanel.meshcoreCaBroker')}
                 >
-                  <span className="text-muted text-xs">{t('connectionPanel.broker')}</span>
+                  <span className="text-muted text-label">{t('connectionPanel.broker')}</span>
                   <button
                     type="button"
                     aria-pressed={meshcoreMqttSettings.server === MESHCORE_CA_HOST_PRIMARY}
@@ -2411,7 +2421,7 @@ export default function ConnectionPanel({
                   role="group"
                   aria-label={t('connectionPanel.letsMeshRegion')}
                 >
-                  <span className="text-muted text-xs">{t('connectionPanel.region')}</span>
+                  <span className="text-muted text-label">{t('connectionPanel.region')}</span>
                   <button
                     type="button"
                     aria-pressed={meshcoreMqttSettings.server === LETSMESH_HOST_US}
@@ -2458,7 +2468,7 @@ export default function ConnectionPanel({
           )}
           <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-3">
             <div data-setting-anchor="connection.mqtt.server" className="space-y-1">
-              <label htmlFor="mqtt-server" className="text-muted text-xs">
+              <label htmlFor="mqtt-server" className="text-muted text-label">
                 {t('connectionPanel.server')}
               </label>
               <input
@@ -2472,7 +2482,7 @@ export default function ConnectionPanel({
               />
             </div>
             <div data-setting-anchor="connection.mqtt.port" className="space-y-1">
-              <label htmlFor="mqtt-port" className="text-muted text-xs">
+              <label htmlFor="mqtt-port" className="text-muted text-label">
                 {t('connectionPanel.port')}
               </label>
               <input
@@ -2517,7 +2527,10 @@ export default function ConnectionPanel({
                 }}
                 className={CHECKBOX_CLASS}
               />
-              <label htmlFor="mqtt-tls-insecure" className="cursor-pointer text-xs text-orange-200">
+              <label
+                htmlFor="mqtt-tls-insecure"
+                className="text-label text-warning-200 cursor-pointer"
+              >
                 {t('connectionPanel.mqttTlsInsecure')}
               </label>
             </div>
@@ -2590,7 +2603,7 @@ export default function ConnectionPanel({
           )}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div data-setting-anchor="connection.mqtt.username" className="space-y-1">
-              <label htmlFor="mqtt-username" className="text-muted text-xs">
+              <label htmlFor="mqtt-username" className="text-muted text-label">
                 {t('connectionPanel.username')}
               </label>
               <input
@@ -2604,7 +2617,7 @@ export default function ConnectionPanel({
               />
             </div>
             <div data-setting-anchor="connection.mqtt.password" className="space-y-1">
-              <label htmlFor="mqtt-password" className="text-muted text-xs">
+              <label htmlFor="mqtt-password" className="text-muted text-label">
                 {t('connectionPanel.password')}
               </label>
               <div className="relative">
@@ -2627,7 +2640,7 @@ export default function ConnectionPanel({
                       ? t('connectionPanel.hidePassword')
                       : t('connectionPanel.showPassword')
                   }
-                  className="text-muted hover:text-ink-200 absolute top-1/2 right-2.5 -translate-y-1/2 text-xs"
+                  className="text-muted hover:text-ink-200 text-label absolute top-1/2 right-2.5 -translate-y-1/2"
                 >
                   {showMqttPassword
                     ? t('connectionPanel.hidePassword')
@@ -2638,7 +2651,7 @@ export default function ConnectionPanel({
           </div>
           <div data-setting-anchor="connection.mqtt.topicPrefix" className="space-y-1">
             <div className="flex items-center gap-1.5">
-              <label htmlFor="mqtt-topic-prefix" className="text-muted text-xs">
+              <label htmlFor="mqtt-topic-prefix" className="text-muted text-label">
                 {t('connectionPanel.topicPrefix')}
               </label>
               <HelpTooltip
@@ -2678,12 +2691,12 @@ export default function ConnectionPanel({
             {protocol === 'meshcore' &&
             isIataScopedMeshcoreMqtt(meshcorePreset, activeMqttSettings) &&
             !parseMeshcoreIataTopicPrefix(activeMqttSettings.topicPrefix).ok ? (
-              <p className="text-xs text-orange-400" role="alert">
+              <p className="text-label text-warning-400" role="alert">
                 {t('connectionPanel.topicPrefixInvalidIata')}
               </p>
             ) : null}
             {radioMqttRootDiverges ? (
-              <p className="text-xs text-orange-400" role="status">
+              <p className="text-label text-warning-400" role="status">
                 {t('connectionPanel.radioMqttRootDivergesWarning', {
                   radioRoot: radioMqttRoot,
                   appPrefix: normalizeMeshtasticMqttTopicPrefix(activeMqttSettings.topicPrefix),
@@ -2713,7 +2726,7 @@ export default function ConnectionPanel({
           {protocol !== 'meshcore' && (
             <div data-setting-anchor="connection.mqtt.channelPsks" className="space-y-1">
               <div className="flex items-center gap-1.5">
-                <label htmlFor="mqtt-channel-psks" className="text-muted text-xs">
+                <label htmlFor="mqtt-channel-psks" className="text-muted text-label">
                   {t('connectionPanel.channelPsks')}
                 </label>
                 <HelpTooltip text={t('connectionPanel.channelPsksHelp')} />
@@ -2734,16 +2747,16 @@ export default function ConnectionPanel({
                 spellCheck={false}
               />
               {channelPskWarn && (
-                <p className="text-xs text-orange-300/90" role="status">
+                <p className="text-label text-warning-300/90" role="status">
                   {channelPskWarn}
                 </p>
               )}
               {showMqttOnlyChannelPskIndexHint && (
-                <p className="text-xs text-orange-300/90" role="status">
+                <p className="text-label text-warning-300/90" role="status">
                   {t('connectionPanel.channelPsksMqttOnlyIndexHint')}
                 </p>
               )}
-              <p className="text-muted text-xs">
+              <p className="text-muted text-label">
                 {t('connectionPanel.channelPsksPrivateUplinkNote')}
               </p>
             </div>
@@ -2977,7 +2990,7 @@ export default function ConnectionPanel({
       href={troubleshootingDocsUrl(protocol)}
       target="_blank"
       rel="noreferrer"
-      className="hover:text-bright-green text-muted text-xs transition-colors"
+      className="hover:text-bright-green text-muted text-label transition-colors"
     >
       {t('diagnosticsPanel.docsLink')}
     </a>
@@ -3149,13 +3162,13 @@ export default function ConnectionPanel({
 
       {/* Last Connection — one-click reconnect card */}
       {showLastConnection && (
-        <div className="bg-deep-black border-ink-800 flex flex-wrap items-center gap-3 rounded-xl border px-4.5 py-4">
+        <div className="bg-deep-black border-ink-800 rounded-container flex flex-wrap items-center gap-3 border px-4.5 py-4">
           <span className="bg-sidebar-active-bg text-ink-300 flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px]">
             <ConnectionIcon type={lastConnection.type} />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-muted text-xs">{t('connectionPanel.lastConnectionLabel')}</p>
-            <p className="text-ink-200 truncate text-sm font-semibold">
+            <p className="text-muted text-label">{t('connectionPanel.lastConnectionLabel')}</p>
+            <p className="text-ink-200 text-body-lg truncate font-semibold">
               {lastConnection.type === 'ble'
                 ? (lastConnection.bleDeviceName ?? t('connectionPanel.bluetoothDevice'))
                 : lastConnection.type === 'serial'
@@ -3163,9 +3176,9 @@ export default function ConnectionPanel({
                   : (lastConnection.httpAddress ?? t('connectionPanel.wifiDevice'))}
             </p>
             {lastConnection.type === 'ble' && lastBleIdentity ? (
-              <p className="text-muted font-mono text-xs">{lastBleIdentity.display}</p>
+              <p className="text-muted text-label font-mono">{lastBleIdentity.display}</p>
             ) : (
-              <p className="text-muted text-xs">
+              <p className="text-muted text-label">
                 {connectionPanelConnectionTypeLabel(t, lastConnection.type, protocol)}
               </p>
             )}
@@ -3240,7 +3253,7 @@ export default function ConnectionPanel({
                 data-setting-anchor="connection.radio.httpAddress"
                 className="max-w-md space-y-1"
               >
-                <label htmlFor="connection-meshtastic-host" className="text-muted text-xs">
+                <label htmlFor="connection-meshtastic-host" className="text-muted text-label">
                   {t('connectionPanel.deviceAddress')}
                 </label>
                 <input
@@ -3254,15 +3267,17 @@ export default function ConnectionPanel({
                   className={INPUT_CLASS}
                   autoComplete="off"
                 />
-                <p className="text-muted text-xs">{t('connectionPanel.deviceAddressHint')}</p>
+                <p className="text-muted text-label">{t('connectionPanel.deviceAddressHint')}</p>
                 {navigator.userAgent.toLowerCase().includes('windows') && (
-                  <p className="text-xs text-orange-400">{t('connectionPanel.windowsMdnsNote')}</p>
+                  <p className="text-label text-warning-400">
+                    {t('connectionPanel.windowsMdnsNote')}
+                  </p>
                 )}
               </div>
             )}
             {connectionType === 'tcp' && protocol === 'meshtastic' && (
               <div data-setting-anchor="connection.radio.tcpAddress" className="max-w-md space-y-1">
-                <label htmlFor="connection-meshtastic-tcp-host" className="text-muted text-xs">
+                <label htmlFor="connection-meshtastic-tcp-host" className="text-muted text-label">
                   {t('connectionPanel.deviceAddress')}
                 </label>
                 <input
@@ -3276,7 +3291,7 @@ export default function ConnectionPanel({
                   className={INPUT_CLASS}
                   autoComplete="off"
                 />
-                <p className="text-muted text-xs">{t('connectionPanel.tcpAddressHint')}</p>
+                <p className="text-muted text-label">{t('connectionPanel.tcpAddressHint')}</p>
               </div>
             )}
             {connectionType === 'http' && protocol === 'meshcore' && (
@@ -3286,7 +3301,7 @@ export default function ConnectionPanel({
                     data-setting-anchor="connection.radio.meshcoreHost"
                     className="min-w-0 flex-1 space-y-1"
                   >
-                    <label htmlFor="connection-meshcore-tcp-host" className="text-muted text-xs">
+                    <label htmlFor="connection-meshcore-tcp-host" className="text-muted text-label">
                       {t('connectionPanel.meshcoreHost')}
                     </label>
                     <input
@@ -3306,7 +3321,7 @@ export default function ConnectionPanel({
                     data-setting-anchor="connection.radio.meshcorePort"
                     className="w-24 space-y-1"
                   >
-                    <label htmlFor="connection-meshcore-tcp-port" className="text-muted text-xs">
+                    <label htmlFor="connection-meshcore-tcp-port" className="text-muted text-label">
                       {t('connectionPanel.meshcorePort')}
                     </label>
                     <input
@@ -3323,7 +3338,7 @@ export default function ConnectionPanel({
                     />
                   </div>
                 </div>
-                <p className="text-muted text-xs">{t('connectionPanel.meshcoreHostHint')}</p>
+                <p className="text-muted text-label">{t('connectionPanel.meshcoreHostHint')}</p>
               </div>
             )}
 

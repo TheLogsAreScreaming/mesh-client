@@ -27,7 +27,7 @@ export function WeatherFilterSettings() {
       data-testid="weather-filter-settings"
     >
       <label
-        className="text-muted flex cursor-pointer items-center gap-2 text-xs"
+        className="text-muted text-label flex cursor-pointer items-center gap-2"
         data-setting-anchor="chat.weather.hideInChannels"
       >
         <input
@@ -41,7 +41,7 @@ export function WeatherFilterSettings() {
         {t('weatherFilter.hideInChannels')}
       </label>
       <label
-        className="text-muted flex cursor-pointer items-center gap-2 text-xs"
+        className="text-muted text-label flex cursor-pointer items-center gap-2"
         title={t('weatherFilter.onlinePlaceLookupHint')}
         data-setting-anchor="chat.weather.onlinePlaceLookup"
       >
@@ -81,7 +81,7 @@ export function WeatherFilterSettings() {
           }}
         />
         {draftInvalid ? (
-          <span id="weather-pattern-error" role="alert" className="text-xs text-red-400">
+          <span id="weather-pattern-error" role="alert" className="text-label text-danger-400">
             {t('weatherFilter.patternInvalid')}
           </span>
         ) : null}

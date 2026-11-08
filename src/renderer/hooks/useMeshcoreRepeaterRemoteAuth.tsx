@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Dialog } from '@/renderer/components/ui/Dialog';
 import {
   hasResolvableAdminPassword,
   setAdminPassword,
@@ -45,7 +46,7 @@ function InfraRemoteAuthFields({
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
       <div className="min-w-[12rem] flex-1 space-y-1">
-        <label htmlFor={passwordInputId} className="text-ink-400 text-xs">
+        <label htmlFor={passwordInputId} className="text-ink-400 text-label">
           {t('repeatersPanel.remoteAuthLabel')}
         </label>
         <input
@@ -179,29 +180,22 @@ export function useMeshcoreRepeaterRemoteAuth() {
 
   const RemoteAuthModal =
     modalOpen && pending != null ? (
-      <div
-        className="fixed inset-0 flex items-center justify-center p-4"
-        style={{ zIndex: Z_NESTED_AUTH_OVERLAY }}
+      <Dialog
+        title={t('repeatersPanel.remoteAuthTitle')}
+        description={
+          <>
+            <span className="text-ink-200 block font-medium">{pending.displayName}</span>
+            <span className="block">{t('repeatersPanel.remoteAuthModalHelp')}</span>
+          </>
+        }
+        onClose={() => {
+          void finishModal(false, 'cancel', '', true, pending.nodeId, pending.hwModel);
+        }}
+        size="md"
+        zIndex={Z_NESTED_AUTH_OVERLAY}
+        backdropLabel={t('repeatersPanel.remoteAuthCancelDialog')}
       >
-        <button
-          type="button"
-          className="absolute inset-0 cursor-default border-0 bg-black/60 p-0"
-          aria-label={t('repeatersPanel.remoteAuthCancelDialog')}
-          onClick={() => {
-            void finishModal(false, 'cancel', '', true, pending.nodeId, pending.hwModel);
-          }}
-        />
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="repeater-remote-auth-title"
-          className="shadow-level-4 border-ink-600 bg-ink-900 relative z-10 w-full max-w-md space-y-3 rounded-lg border p-4"
-        >
-          <h2 id="repeater-remote-auth-title" className="text-base font-semibold text-white">
-            {t('repeatersPanel.remoteAuthTitle')}
-          </h2>
-          <p className="text-ink-400 text-sm">{pending.displayName}</p>
-          <p className="text-ink-400 text-sm">{t('repeatersPanel.remoteAuthModalHelp')}</p>
+        <div className="space-y-3 pb-1">
           <ModalAuthBody
             passwordId={passwordId}
             nodeId={pending.nodeId}
@@ -220,7 +214,7 @@ export function useMeshcoreRepeaterRemoteAuth() {
             continueLabel={t('repeatersPanel.remoteAuthContinue')}
           />
         </div>
-      </div>
+      </Dialog>
     ) : null;
 
   return { ensureRepeaterAuth, promptRepeaterPassword, RemoteAuthModal };
@@ -262,7 +256,7 @@ function ModalAuthBody({
         onSubmit={submitPassword}
         passwordInputId={passwordId}
       />
-      <label className="text-ink-400 flex items-center gap-2 text-xs">
+      <label className="text-ink-400 text-label flex items-center gap-2">
         <input
           type="checkbox"
           checked={rememberPassword}
@@ -277,7 +271,7 @@ function ModalAuthBody({
         <button
           type="button"
           onClick={onCancel}
-          className="border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700 rounded border px-3 py-1.5 text-xs font-medium"
+          className="border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700 text-label rounded border px-3 py-1.5 font-medium"
           aria-label={cancelLabel}
         >
           {cancelLabel}
@@ -285,7 +279,7 @@ function ModalAuthBody({
         <button
           type="button"
           onClick={onSkip}
-          className="border-ink-600 bg-ink-700 text-ink-200 hover:bg-ink-600 rounded border px-3 py-1.5 text-xs font-medium"
+          className="border-ink-600 bg-ink-700 text-ink-200 hover:bg-ink-600 text-label rounded border px-3 py-1.5 font-medium"
           aria-label={skipLabel}
         >
           {skipLabel}
@@ -293,7 +287,7 @@ function ModalAuthBody({
         <button
           type="button"
           onClick={submitPassword}
-          className="bg-brand-green/20 text-brand-green border-brand-green/40 hover:bg-brand-green/30 rounded border px-3 py-1.5 text-xs font-medium"
+          className="bg-brand-green/20 text-brand-green border-brand-green/40 hover:bg-brand-green/30 text-label rounded border px-3 py-1.5 font-medium"
           aria-label={continueLabel}
         >
           {continueLabel}

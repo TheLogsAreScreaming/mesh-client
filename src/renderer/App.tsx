@@ -424,7 +424,7 @@ function PanelSkeleton() {
   const { t } = useTranslation();
   return (
     <div
-      className="border-ink-800 bg-ink-900/50 flex h-full min-h-[12rem] items-center justify-center rounded-xl border"
+      className="border-ink-800 bg-ink-900/50 rounded-container flex h-full min-h-[12rem] items-center justify-center border"
       role="status"
       aria-busy="true"
     >
@@ -3415,7 +3415,7 @@ function AppContent() {
                     aria-expanded={launcherOpen}
                     aria-label={launcherButtonLabel}
                     title={launcherButtonLabel}
-                    className="text-muted hover:bg-sidebar-active-bg hover:text-ink-200 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors"
+                    className="text-muted hover:bg-sidebar-active-bg hover:text-ink-200 rounded-card flex h-8 w-8 shrink-0 items-center justify-center transition-colors"
                   >
                     <Search aria-hidden className={ICON_MD} size={16} />
                   </button>
@@ -3451,7 +3451,7 @@ function AppContent() {
                   <div
                     role="status"
                     aria-live="polite"
-                    className="border-ink-700 bg-ink-900 flex items-center justify-between gap-3 border-b px-4 py-2 text-sm"
+                    className="border-ink-700 bg-ink-900 text-body-lg flex items-center justify-between gap-3 border-b px-4 py-2"
                   >
                     <span className="text-ink-300">{t('app.telemetryDisabled')}</span>
                     <button
@@ -3460,7 +3460,7 @@ function AppContent() {
                         setTelemetryNoticeDismissed(true);
                       }}
                       aria-label={t('common.dismiss')}
-                      className="border-ink-600 text-ink-400 hover:border-ink-500 hover:text-ink-300 shrink-0 rounded border px-2 py-1 text-xs font-medium transition-colors"
+                      className="border-ink-600 text-ink-400 hover:border-ink-500 hover:text-ink-300 text-label shrink-0 rounded border px-2 py-1 font-medium transition-colors"
                     >
                       {t('common.dismiss')}
                     </button>
@@ -4661,7 +4661,7 @@ function AppContent() {
                   <button
                     type="button"
                     onClick={scrollMainToTop}
-                    className="bg-brand-green text-deep-black hover:bg-bright-green shadow-level-3 fixed right-28 bottom-12 z-50 rounded-full px-3 py-2 text-xs font-semibold transition-colors"
+                    className="bg-brand-green text-deep-black hover:bg-bright-green shadow-level-3 text-label fixed right-28 bottom-12 z-50 rounded-full px-3 py-2 font-semibold transition-colors"
                     title={t('aria.backToTop')}
                     aria-label={t('aria.backToTop')}
                   >
@@ -4921,17 +4921,19 @@ function ConnectionBanner({
       <div
         role="region"
         aria-label={t('connectionBanner.statusRegion')}
-        className="flex items-center justify-between border-b border-red-700 bg-red-900/80 px-4 py-2"
+        className="border-danger-700 bg-danger-900/80 flex items-center justify-between border-b px-4 py-2"
       >
         <div className="flex items-center gap-2">
-          <TriangleAlert aria-hidden className="h-4 w-4 shrink-0 text-red-400" />
-          <span className="text-sm text-red-200">{t('connectionBanner.serialReselect')}</span>
+          <TriangleAlert aria-hidden className="text-danger-400 h-4 w-4 shrink-0" />
+          <span className="text-body-lg text-danger-200">
+            {t('connectionBanner.serialReselect')}
+          </span>
         </div>
         <button
           type="button"
           onClick={onReconnect}
           aria-label={t('connectionBanner.serialReselectAction')}
-          className="text-sm font-medium text-red-300 underline hover:text-red-100"
+          className="text-body-lg text-danger-300 hover:text-danger-100 font-medium underline"
         >
           {t('connectionBanner.serialReselectAction')}
         </button>
@@ -4944,17 +4946,19 @@ function ConnectionBanner({
       <div
         role="region"
         aria-label={t('connectionBanner.statusRegion')}
-        className="flex items-center justify-between border-b border-red-700 bg-red-900/80 px-4 py-2"
+        className="border-danger-700 bg-danger-900/80 flex items-center justify-between border-b px-4 py-2"
       >
         <div className="flex items-center gap-2">
-          <TriangleAlert aria-hidden className="h-4 w-4 shrink-0 text-red-400" />
-          <span className="text-sm text-red-200">{t('connectionBanner.disconnectedLoss')}</span>
+          <TriangleAlert aria-hidden className="text-danger-400 h-4 w-4 shrink-0" />
+          <span className="text-body-lg text-danger-200">
+            {t('connectionBanner.disconnectedLoss')}
+          </span>
         </div>
         <button
           type="button"
           onClick={onReconnect}
           aria-label={t('connectionBanner.reconnect')}
-          className="text-sm font-medium text-red-300 underline hover:text-red-100"
+          className="text-body-lg text-danger-300 hover:text-danger-100 font-medium underline"
         >
           {t('connectionBanner.reconnect')}
         </button>
@@ -4967,17 +4971,17 @@ function ConnectionBanner({
       <div
         role="region"
         aria-label={t('connectionBanner.statusRegion')}
-        className="flex items-center justify-between border-b border-orange-700 bg-orange-900/80 px-4 py-2"
+        className="border-warning-700 bg-warning-900/80 flex items-center justify-between border-b px-4 py-2"
       >
         <div className="flex items-center gap-2">
-          <TriangleAlert aria-hidden className="h-4 w-4 shrink-0 text-orange-400" />
-          <span className="text-sm text-orange-200">{t('connectionBanner.staleLoss')}</span>
+          <TriangleAlert aria-hidden className="text-warning-400 h-4 w-4 shrink-0" />
+          <span className="text-body-lg text-warning-200">{t('connectionBanner.staleLoss')}</span>
         </div>
         <button
           type="button"
           onClick={onReconnect}
           aria-label={t('connectionBanner.reconnect')}
-          className="text-sm font-medium text-orange-300 underline hover:text-orange-100"
+          className="text-body-lg text-warning-300 hover:text-warning-100 font-medium underline"
         >
           {t('connectionBanner.reconnect')}
         </button>
@@ -4990,12 +4994,12 @@ function ConnectionBanner({
       <div
         role="region"
         aria-label={t('connectionBanner.statusRegion')}
-        className="flex items-center gap-2 border-b border-orange-700 bg-orange-900/80 px-4 py-2"
+        className="border-warning-700 bg-warning-900/80 flex items-center gap-2 border-b px-4 py-2"
       >
-        <span aria-hidden className="inline-block animate-spin text-orange-200">
+        <span aria-hidden className="text-warning-200 inline-block animate-spin">
           ⟳
         </span>
-        <span className="text-sm text-orange-200">
+        <span className="text-body-lg text-warning-200">
           {t('connectionBanner.reconnectingAttempt', {
             attempt: reconnectAttempt ?? 1,
             max: reconnectBannerMaxAttempts(connectionType),

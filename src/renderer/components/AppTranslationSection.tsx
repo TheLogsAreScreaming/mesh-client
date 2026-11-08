@@ -56,7 +56,8 @@ function TranslationPackControl({
   onCancel,
 }: TranslationPackControlProps) {
   const { t } = useTranslation();
-  if (!pack) return <span className="text-muted text-xs">{t('chatTranslation.unavailable')}</span>;
+  if (!pack)
+    return <span className="text-muted text-label">{t('chatTranslation.unavailable')}</span>;
   if (progress && ACTIVE_STATES.includes(progress.state)) {
     return (
       <span className="flex items-center gap-2">
@@ -78,11 +79,11 @@ function TranslationPackControl({
       </span>
     );
   }
-  if (starting) return <span className="text-muted text-xs">{t('chatTranslation.queued')}</span>;
+  if (starting) return <span className="text-muted text-label">{t('chatTranslation.queued')}</span>;
   if (pack.installed) {
     return (
       <span className="flex items-center gap-2">
-        <span className="text-xs text-green-400">{t('chatTranslation.installed')}</span>
+        <span className="text-label text-success-400">{t('chatTranslation.installed')}</span>
         <Button
           size="sm"
           variant="danger"
@@ -100,7 +101,7 @@ function TranslationPackControl({
   return (
     <span className="flex items-center gap-2">
       {failed && (
-        <span className="text-xs text-red-400">{t('chatTranslation.downloadFailed')}</span>
+        <span className="text-label text-danger-400">{t('chatTranslation.downloadFailed')}</span>
       )}
       <Button
         size="sm"
@@ -270,22 +271,22 @@ export function AppTranslationSection() {
   return (
     <details
       data-setting-anchor="app.translation"
-      className="group bg-deep-black border-secondary-dark rounded-lg border"
+      className="group bg-deep-black border-secondary-dark rounded-card border"
     >
-      <summary className="text-ink-200 hover:bg-ink-800/40 flex cursor-pointer list-none items-center justify-between gap-2 rounded-lg px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
+      <summary className="text-ink-200 hover:bg-ink-800/40 rounded-card text-body-lg flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 font-medium [&::-webkit-details-marker]:hidden">
         <h3>{t('chatTranslation.settingsTitle')}</h3>
         <DetailsChevron className="text-muted h-4 w-4 shrink-0 transition-transform group-open:rotate-180" />
       </summary>
       <div className="border-ink-700 space-y-4 border-t px-4 pt-3 pb-4">
-        <p className="text-muted text-sm">{t('chatTranslation.offlinePrivacy')}</p>
+        <p className="text-muted text-body-lg">{t('chatTranslation.offlinePrivacy')}</p>
         {status?.libre.needsSecureUrl && (
-          <p role="status" className="text-sm text-orange-400">
+          <p role="status" className="text-body-lg text-warning-400">
             {t('chatTranslation.secureUrlRequired')}
           </p>
         )}
         {!status?.enabled ? (
           <>
-            <p className="text-ink-300 text-sm">
+            <p className="text-ink-300 text-body-lg">
               {t('chatTranslation.optInDescription', {
                 size: bytes(packById('engine')?.downloadBytes ?? 3103889),
               })}
@@ -311,7 +312,7 @@ export function AppTranslationSection() {
           <>
             <label
               data-setting-anchor="app.translation.enabled"
-              className="text-ink-200 flex items-center gap-2 text-sm"
+              className="text-ink-200 text-body-lg flex items-center gap-2"
             >
               <input
                 type="checkbox"
@@ -334,7 +335,7 @@ export function AppTranslationSection() {
               <h4 className="text-ink-200 font-medium">{t('chatTranslation.yourLanguages')}</h4>
               <label
                 data-setting-anchor="app.translation.target"
-                className="text-ink-200 flex flex-col gap-1 text-sm"
+                className="text-ink-200 text-body-lg flex flex-col gap-1"
               >
                 {t('chatTranslation.target')}
                 <select
@@ -356,17 +357,17 @@ export function AppTranslationSection() {
                 </select>
               </label>
               <fieldset data-setting-anchor="app.translation.readLanguages" className="space-y-1">
-                <legend className="text-ink-200 text-sm">
+                <legend className="text-ink-200 text-body-lg">
                   {t('chatTranslation.readLanguages')}
                 </legend>
-                <p className="text-muted text-sm">{t('chatTranslation.readLanguagesHint')}</p>
+                <p className="text-muted text-body-lg">{t('chatTranslation.readLanguagesHint')}</p>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 pt-1 sm:grid-cols-3 md:grid-cols-4">
                   {TRANSLATION_LANGUAGES.map((language) => {
                     const isTarget = language === preferences.target;
                     return (
                       <label
                         key={language}
-                        className="text-ink-200 flex items-center gap-2 text-sm"
+                        className="text-ink-200 text-body-lg flex items-center gap-2"
                       >
                         <input
                           type="checkbox"
@@ -392,7 +393,7 @@ export function AppTranslationSection() {
               <h4 className="text-ink-200 font-medium">{t('chatTranslation.autoTitle')}</h4>
               <label
                 data-setting-anchor="app.translation.auto"
-                className="text-ink-200 flex items-center gap-2 text-sm"
+                className="text-ink-200 text-body-lg flex items-center gap-2"
               >
                 <input
                   type="checkbox"
@@ -408,9 +409,11 @@ export function AppTranslationSection() {
                 />
                 {t('chatTranslation.auto')}
               </label>
-              <p className="text-muted text-sm">{t('chatTranslation.autoDescription')}</p>
+              <p className="text-muted text-body-lg">{t('chatTranslation.autoDescription')}</p>
               {!autoReady && (
-                <p className="text-sm text-orange-300">{t('chatTranslation.autoNeedsPacks')}</p>
+                <p className="text-body-lg text-warning-300">
+                  {t('chatTranslation.autoNeedsPacks')}
+                </p>
               )}
             </div>
             <div
@@ -418,7 +421,7 @@ export function AppTranslationSection() {
               className="border-ink-700 space-y-3 border-t pt-3"
             >
               <h4 className="text-ink-200 font-medium">{t('chatTranslation.packs')}</h4>
-              <div className="text-ink-200 flex flex-wrap items-center justify-between gap-2 text-sm">
+              <div className="text-ink-200 text-body-lg flex flex-wrap items-center justify-between gap-2">
                 <span>
                   {t('chatTranslation.engine')}
                   <span className="text-muted ml-2">
@@ -428,15 +431,17 @@ export function AppTranslationSection() {
                 {packControl('engine')}
               </div>
               <div className="bg-app-bg border-ink-800 rounded-card space-y-2 border p-3">
-                <h5 className="text-ink-200 text-sm font-medium">
+                <h5 className="text-ink-200 text-body-lg font-medium">
                   {t('chatTranslation.neededTitle')}
                 </h5>
-                <p className="text-muted text-sm">{t('chatTranslation.pivotHint')}</p>
+                <p className="text-muted text-body-lg">{t('chatTranslation.pivotHint')}</p>
                 {missingNeeded.length === 0 ? (
-                  <p className="text-sm text-green-400">{t('chatTranslation.neededComplete')}</p>
+                  <p className="text-body-lg text-success-400">
+                    {t('chatTranslation.neededComplete')}
+                  </p>
                 ) : (
                   <>
-                    <p className="text-ink-300 text-sm">
+                    <p className="text-ink-300 text-body-lg">
                       {t('chatTranslation.neededSummary', {
                         packs: missingNeeded.map((pack) => packName(pack.id)).join(', '),
                         size: bytes(
@@ -459,7 +464,7 @@ export function AppTranslationSection() {
                 )}
               </div>
               <div className="space-y-2">
-                <h5 className="text-ink-200 text-sm font-medium">
+                <h5 className="text-ink-200 text-body-lg font-medium">
                   {t('chatTranslation.allPacks')}
                 </h5>
                 <input
@@ -473,11 +478,11 @@ export function AppTranslationSection() {
                   }}
                 />
                 {packLanguages.length === 0 ? (
-                  <p className="text-muted text-sm">{t('chatTranslation.noLanguagesMatch')}</p>
+                  <p className="text-muted text-body-lg">{t('chatTranslation.noLanguagesMatch')}</p>
                 ) : (
-                  <table className="w-full text-sm">
+                  <table className="text-body-lg w-full">
                     <thead>
-                      <tr className="text-muted text-left text-xs">
+                      <tr className="text-muted text-label text-left">
                         <th scope="col" className="py-1 pr-2 font-normal">
                           {t('chatTranslation.packLanguage')}
                         </th>
@@ -512,8 +517,8 @@ export function AppTranslationSection() {
               className="border-ink-700 space-y-2 border-t pt-3"
             >
               <h4 className="text-ink-200 font-medium">LibreTranslate</h4>
-              <p className="text-muted text-sm">{t('chatTranslation.onlinePrivacy')}</p>
-              <label className="text-ink-200 flex flex-col gap-1 text-sm">
+              <p className="text-muted text-body-lg">{t('chatTranslation.onlinePrivacy')}</p>
+              <label className="text-ink-200 text-body-lg flex flex-col gap-1">
                 {t('chatTranslation.serverUrl')}
                 <input
                   className={INPUT_BOX_CLASS}
@@ -525,7 +530,7 @@ export function AppTranslationSection() {
                   }}
                 />
               </label>
-              <label className="text-ink-200 flex flex-col gap-1 text-sm">
+              <label className="text-ink-200 text-body-lg flex flex-col gap-1">
                 {t('chatTranslation.apiKey')}
                 <input
                   className={INPUT_BOX_CLASS}
@@ -539,9 +544,9 @@ export function AppTranslationSection() {
                 />
               </label>
               {status.libre.hasApiKey && (
-                <p className="text-muted text-sm">{t('chatTranslation.savedKey')}</p>
+                <p className="text-muted text-body-lg">{t('chatTranslation.savedKey')}</p>
               )}
-              <label className="text-ink-200 flex items-center gap-2 text-sm">
+              <label className="text-ink-200 text-body-lg flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={status.libre.enabled}
@@ -614,7 +619,7 @@ export function AppTranslationSection() {
             </div>
           </>
         )}
-        <p className="text-muted text-sm">
+        <p className="text-muted text-body-lg">
           {t('chatTranslation.diskUsage', { size: bytes(status?.diskBytes ?? 0) })}
         </p>
         <Button
@@ -640,7 +645,7 @@ export function AppTranslationSection() {
           {t('chatTranslation.removeAll')}
         </Button>
         {notice && (
-          <p role="status" className="text-ink-200 text-sm">
+          <p role="status" className="text-ink-200 text-body-lg">
             {notice}
           </p>
         )}

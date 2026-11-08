@@ -106,23 +106,23 @@ export default function MeshcoreContactSettingsSection({
   return (
     <details
       data-setting-anchor="radio.contacts.management"
-      className="group bg-deep-black/50 border-ink-700 rounded-lg border"
+      className="group bg-deep-black/50 border-ink-700 rounded-card border"
     >
-      <summary className="text-ink-200 hover:bg-ink-800 flex cursor-pointer items-center justify-between rounded-lg px-4 py-3 font-medium transition-colors">
+      <summary className="text-ink-200 hover:bg-ink-800 rounded-card flex cursor-pointer items-center justify-between px-4 py-3 font-medium transition-colors">
         <span>{t('meshcoreContactSettings.contactManagement')}</span>
         <DetailsChevron />
       </summary>
       <div className="space-y-4 px-4 pb-4">
-        <p className="text-muted text-xs">{t('meshcoreContactSettings.intro')}</p>
+        <p className="text-muted text-label">{t('meshcoreContactSettings.intro')}</p>
         <fieldset
           data-setting-anchor="radio.contacts.autoAddMode"
-          className="border-ink-600/80 space-y-3 rounded-lg border p-3"
+          className="border-ink-600/80 rounded-card space-y-3 border p-3"
           disabled={disabled || applying}
         >
-          <legend className="text-ink-200 px-1 text-sm font-medium">
+          <legend className="text-ink-200 text-body-lg px-1 font-medium">
             {t('meshcoreContactSettings.autoAddModeLegend')}
           </legend>
-          <div className="hover:bg-secondary-dark/50 flex gap-2 rounded-md p-1.5">
+          <div className="hover:bg-secondary-dark/50 rounded-card flex gap-2 p-1.5">
             <input
               id={`${modeGroupId}-all`}
               type="radio"
@@ -139,15 +139,15 @@ export default function MeshcoreContactSettingsSection({
               htmlFor={`${modeGroupId}-all`}
               className="flex min-w-0 flex-1 cursor-pointer flex-col gap-0.5"
             >
-              <span className="text-ink-200 text-sm">
+              <span className="text-ink-200 text-body-lg">
                 {t('meshcoreContactSettings.autoAddAllTitle')}
               </span>
-              <span className="text-muted text-xs">
+              <span className="text-muted text-label">
                 {t('meshcoreContactSettings.autoAddAllDesc')}
               </span>
             </label>
           </div>
-          <div className="hover:bg-secondary-dark/50 flex gap-2 rounded-md p-1.5">
+          <div className="hover:bg-secondary-dark/50 rounded-card flex gap-2 p-1.5">
             <input
               id={`${modeGroupId}-selected`}
               type="radio"
@@ -164,10 +164,10 @@ export default function MeshcoreContactSettingsSection({
               htmlFor={`${modeGroupId}-selected`}
               className="flex min-w-0 flex-1 cursor-pointer flex-col gap-0.5"
             >
-              <span className="text-ink-200 text-sm">
+              <span className="text-ink-200 text-body-lg">
                 {t('meshcoreContactSettings.autoAddSelectedTitle')}
               </span>
-              <span className="text-muted text-xs">
+              <span className="text-muted text-label">
                 {t('meshcoreContactSettings.autoAddSelectedDesc')}
               </span>
             </label>
@@ -176,10 +176,10 @@ export default function MeshcoreContactSettingsSection({
 
         <div
           data-setting-anchor="radio.contacts.autoAddTypes"
-          className={`border-ink-600/60 space-y-2 rounded-lg border p-3 ${autoAddAll ? 'opacity-50' : ''}`}
+          className={`border-ink-600/60 rounded-card space-y-2 border p-3 ${autoAddAll ? 'opacity-50' : ''}`}
           aria-disabled={autoAddAll}
         >
-          <p className="text-ink-300 text-xs font-medium">
+          <p className="text-ink-300 text-label font-medium">
             {t('meshcoreContactSettings.autoAddTypesHeading')}
           </p>
           {[
@@ -221,7 +221,7 @@ export default function MeshcoreContactSettingsSection({
             },
           ].map((row) => (
             <div key={row.id} className="flex items-center justify-between gap-3">
-              <label htmlFor={row.id} className="text-ink-200 text-sm">
+              <label htmlFor={row.id} className="text-ink-200 text-body-lg">
                 {row.label}
               </label>
               <input
@@ -241,13 +241,13 @@ export default function MeshcoreContactSettingsSection({
 
         <div
           data-setting-anchor="radio.contacts.overwriteOldest"
-          className="border-ink-600/60 flex items-center justify-between gap-3 rounded-lg border p-3"
+          className="border-ink-600/60 rounded-card flex items-center justify-between gap-3 border p-3"
         >
           <div>
-            <label htmlFor="meshcore-overwrite-oldest" className="text-ink-200 text-sm">
+            <label htmlFor="meshcore-overwrite-oldest" className="text-ink-200 text-body-lg">
               {t('meshcoreContactSettings.overwriteOldestTitle')}
             </label>
-            <p className="text-muted mt-0.5 text-xs">
+            <p className="text-muted text-label mt-0.5">
               {t('meshcoreContactSettings.overwriteOldestHelp')}
             </p>
           </div>
@@ -267,10 +267,10 @@ export default function MeshcoreContactSettingsSection({
         </div>
 
         <div data-setting-anchor="radio.contacts.maxHops" className="space-y-1">
-          <label htmlFor="meshcore-autoadd-max-hops" className="text-ink-200 text-sm">
+          <label htmlFor="meshcore-autoadd-max-hops" className="text-ink-200 text-body-lg">
             {t('meshcoreContactSettings.maxHopsLabel')}
           </label>
-          <p className="text-muted text-xs">
+          <p className="text-muted text-label">
             {t('meshcoreContactSettings.maxHopsHelp', {
               uiMax: Math.min(63, MESHCORE_AUTOADD_MAX_HOPS_WIRE_MAX),
               wireMax: MESHCORE_AUTOADD_MAX_HOPS_WIRE_MAX,
@@ -300,14 +300,14 @@ export default function MeshcoreContactSettingsSection({
             aria-describedby={hopsError ? 'meshcore-autoadd-hops-err' : undefined}
           />
           {hopsError && (
-            <p id="meshcore-autoadd-hops-err" className="text-xs text-red-400">
+            <p id="meshcore-autoadd-hops-err" className="text-label text-danger-400">
               {hopsError}
             </p>
           )}
         </div>
 
         <div className="border-ink-600/80 space-y-3 border-t pt-4">
-          <p className="text-ink-400 text-xs font-medium">
+          <p className="text-ink-400 text-label font-medium">
             {t('meshcoreContactSettings.contactsListAppHeading')}
           </p>
           <div
@@ -315,10 +315,10 @@ export default function MeshcoreContactSettingsSection({
             className="flex items-center justify-between gap-3"
           >
             <div>
-              <span className="text-ink-200 text-sm">
+              <span className="text-ink-200 text-body-lg">
                 {t('meshcoreContactSettings.autoOffloadWhenFullLabel')}
               </span>
-              <p className="text-muted mt-0.5 text-xs">
+              <p className="text-muted text-label mt-0.5">
                 {t('meshcoreContactSettings.autoOffloadWhenFullDesc')}
               </p>
             </div>
@@ -334,7 +334,10 @@ export default function MeshcoreContactSettingsSection({
             />
           </div>
           {meshcoreAutoOffloadWhenFull && overwriteOldest && (
-            <p className="text-muted text-xs" data-testid="meshcore-overwrite-oldest-evicts-note">
+            <p
+              className="text-muted text-label"
+              data-testid="meshcore-overwrite-oldest-evicts-note"
+            >
               {t('meshcoreContactSettings.overwriteOldestEvictsNote')}
             </p>
           )}
@@ -343,10 +346,10 @@ export default function MeshcoreContactSettingsSection({
             className="flex items-center justify-between gap-3"
           >
             <div>
-              <span className="text-ink-200 text-sm">
+              <span className="text-ink-200 text-body-lg">
                 {t('meshcoreContactSettings.showRefreshLabel')}
               </span>
-              <p className="text-muted mt-0.5 text-xs">
+              <p className="text-muted text-label mt-0.5">
                 {t('meshcoreContactSettings.showRefreshDesc')}
               </p>
             </div>
@@ -366,10 +369,10 @@ export default function MeshcoreContactSettingsSection({
             className="flex items-center justify-between gap-3"
           >
             <div>
-              <span className="text-ink-200 text-sm">
+              <span className="text-ink-200 text-body-lg">
                 {t('meshcoreContactSettings.showPublicKeysLabel')}
               </span>
-              <p className="text-muted mt-0.5 text-xs">
+              <p className="text-muted text-label mt-0.5">
                 {t('meshcoreContactSettings.showPublicKeysDesc')}
               </p>
             </div>
@@ -389,9 +392,11 @@ export default function MeshcoreContactSettingsSection({
         {onClearAllContacts ? (
           <div
             data-setting-anchor="radio.contacts.clearAll"
-            className="border-t border-red-900/50 pt-4"
+            className="border-danger-900/50 border-t pt-4"
           >
-            <p className="text-muted mb-2 text-xs">{t('meshcoreContactSettings.clearAllIntro')}</p>
+            <p className="text-muted text-label mb-2">
+              {t('meshcoreContactSettings.clearAllIntro')}
+            </p>
             <button
               type="button"
               disabled={disabled || applying || clearingAll}
@@ -419,7 +424,7 @@ export default function MeshcoreContactSettingsSection({
                     setClearingAll(false);
                   });
               }}
-              className="rounded-lg border border-red-700 bg-red-950/40 px-4 py-2 text-sm font-medium text-red-200 hover:bg-red-900/50 disabled:opacity-50"
+              className="rounded-card border-danger-700 bg-danger-950/40 text-body-lg text-danger-200 hover:bg-danger-900/50 border px-4 py-2 font-medium disabled:opacity-50"
               aria-label={t('meshcoreContactSettings.clearAllContacts')}
             >
               {clearingAll

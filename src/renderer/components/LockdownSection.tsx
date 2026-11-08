@@ -57,19 +57,19 @@ export default function LockdownSection({ isConnected, onSendLockdownAuth }: Pro
   return (
     <div
       data-setting-anchor="radio.lockdown.passphrase"
-      className="bg-deep-black border-ink-800 space-y-3 rounded-xl border p-4"
+      className="bg-deep-black border-ink-800 rounded-container space-y-3 border p-4"
     >
-      <h3 className="text-ink-300 flex items-center gap-2 text-sm font-medium">
+      <h3 className="text-ink-300 text-body-lg flex items-center gap-2 font-medium">
         {locked ? (
-          <Lock className="h-4 w-4 text-orange-400" aria-hidden="true" />
+          <Lock className="text-warning-400 h-4 w-4" aria-hidden="true" />
         ) : (
-          <LockOpen className="h-4 w-4 text-green-400" aria-hidden="true" />
+          <LockOpen className="text-success-400 h-4 w-4" aria-hidden="true" />
         )}
         {t('radioPanel.lockdown.title')}
       </h3>
-      <p className="text-ink-400 text-xs">{t('radioPanel.lockdown.description')}</p>
+      <p className="text-ink-400 text-label">{t('radioPanel.lockdown.description')}</p>
 
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+      <dl className="text-label grid grid-cols-2 gap-x-4 gap-y-1">
         <dt className="text-muted">{t('radioPanel.lockdown.stateLabel')}</dt>
         <dd className="text-ink-200">
           {state === null
@@ -99,7 +99,7 @@ export default function LockdownSection({ isConnected, onSendLockdownAuth }: Pro
         {status?.backoffSeconds !== undefined && (
           <>
             <dt className="text-muted">{t('radioPanel.lockdown.backoffLabel')}</dt>
-            <dd className="text-orange-300">
+            <dd className="text-warning-300">
               {t('radioPanel.lockdown.backoffValue', { seconds: status.backoffSeconds })}
             </dd>
           </>
@@ -107,7 +107,7 @@ export default function LockdownSection({ isConnected, onSendLockdownAuth }: Pro
       </dl>
 
       <div className="space-y-2">
-        <label htmlFor={`${id}-passphrase`} className="text-ink-400 block text-xs">
+        <label htmlFor={`${id}-passphrase`} className="text-ink-400 text-label block">
           {t('radioPanel.lockdown.passphraseLabel')}
         </label>
         <input
@@ -130,7 +130,7 @@ export default function LockdownSection({ isConnected, onSendLockdownAuth }: Pro
           disabled={controlsDisabled || passphraseRequired}
           onClick={() => void send({ passphrase: passphrase.trim() })}
           aria-label={t('radioPanel.lockdown.unlockAria')}
-          className="border-ink-600 text-ink-200 hover:border-ink-500 rounded border px-3 py-1.5 text-xs font-medium disabled:opacity-50"
+          className="border-ink-600 text-ink-200 hover:border-ink-500 text-label rounded border px-3 py-1.5 font-medium disabled:opacity-50"
         >
           {state === 'NEEDS_PROVISION'
             ? t('radioPanel.lockdown.provision')
@@ -141,7 +141,7 @@ export default function LockdownSection({ isConnected, onSendLockdownAuth }: Pro
           disabled={controlsDisabled || passphraseRequired}
           onClick={() => void send({ passphrase: passphrase.trim(), lockNow: true })}
           aria-label={t('radioPanel.lockdown.lockNowAria')}
-          className="border-ink-600 text-ink-200 hover:border-ink-500 rounded border px-3 py-1.5 text-xs font-medium disabled:opacity-50"
+          className="border-ink-600 text-ink-200 hover:border-ink-500 text-label rounded border px-3 py-1.5 font-medium disabled:opacity-50"
         >
           {t('radioPanel.lockdown.lockNow')}
         </button>
@@ -150,13 +150,13 @@ export default function LockdownSection({ isConnected, onSendLockdownAuth }: Pro
           disabled={controlsDisabled || passphraseRequired}
           onClick={() => void send({ passphrase: passphrase.trim(), disable: true })}
           aria-label={t('radioPanel.lockdown.disableAria')}
-          className="border-ink-600 text-ink-200 hover:border-ink-500 rounded border px-3 py-1.5 text-xs font-medium disabled:opacity-50"
+          className="border-ink-600 text-ink-200 hover:border-ink-500 text-label rounded border px-3 py-1.5 font-medium disabled:opacity-50"
         >
           {t('radioPanel.lockdown.disable')}
         </button>
       </div>
 
-      {error !== null && <p className="text-xs text-red-400">{error}</p>}
+      {error !== null && <p className="text-label text-danger-400">{error}</p>}
     </div>
   );
 }

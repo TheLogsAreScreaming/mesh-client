@@ -612,7 +612,7 @@ describe('NodeDetailModal MeshCore actions', () => {
 
     const status = screen.getByText('Delete failed. Disconnect MQTT and try again.');
     expect(status).toBeInTheDocument();
-    expect(status).toHaveClass('text-red-300');
+    expect(status).toHaveClass('text-danger-300');
   });
 
   it('renders Pax Counter section when data is present', () => {

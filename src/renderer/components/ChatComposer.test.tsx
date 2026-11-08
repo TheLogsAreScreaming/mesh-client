@@ -157,7 +157,7 @@ describe('ChatComposer', () => {
       <button
         type="button"
         aria-label="Open emergency report"
-        className="flex h-[2.625rem] min-w-[2.625rem] shrink-0 items-center justify-center rounded-lg border border-red-600/70 bg-red-950/50 px-2.5 text-red-300 transition-colors hover:bg-red-900/60 hover:text-red-200"
+        className="rounded-card border-danger-600/70 bg-danger-950/50 text-danger-300 hover:bg-danger-900/60 hover:text-danger-200 flex h-[2.625rem] min-w-[2.625rem] shrink-0 items-center justify-center border px-2.5 transition-colors"
       >
         <svg aria-hidden className="h-4 w-4" />
       </button>

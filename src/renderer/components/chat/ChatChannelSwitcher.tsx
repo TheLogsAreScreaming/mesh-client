@@ -10,6 +10,7 @@ import type { Severity } from '@/renderer/lib/mecp/mecpMessages';
 import { Z_POPOVER_MENU } from '@/renderer/lib/modalZIndex';
 
 import { MecpUnreadIcon, useMecpUnreadLabel } from '../mecp/MecpUnreadIcon';
+import { buttonClassName } from '../ui/Button';
 import { INPUT_CLASS } from '../ui/formClasses';
 
 export interface ChatChannelOption {
@@ -205,14 +206,14 @@ export function ChatChannelSwitcher({
           if (open) close(false);
           else setOpen(true);
         }}
-        className="border-secondary-dark bg-sidebar-active-bg hover:bg-secondary-dark text-control text-ink-200 inline-flex h-7 shrink-0 items-center gap-1.5 rounded-lg border px-2 font-medium transition-colors"
+        className={buttonClassName('secondary', 'md', 'shrink-0 gap-1.5')}
       >
         <TriggerIcon aria-hidden className={`${ICON_SM_PLUS} text-muted`} size={14} />
         <span className="text-meta text-ink-300 font-mono tabular-nums">{channels.length}</span>
         {unreadElsewhere > 0 && (
           <span
             aria-hidden="true"
-            className="text-2xs flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 leading-none font-semibold text-white"
+            className="text-2xs bg-danger-600 flex h-4 min-w-4 items-center justify-center rounded-full px-1 leading-none font-semibold text-white"
           >
             {formatUnread(unreadElsewhere)}
           </span>
@@ -262,7 +263,7 @@ export function ChatChannelSwitcher({
               className="min-h-0 flex-1 overflow-y-auto p-1"
             >
               {filtered.length === 0 ? (
-                <p className="text-muted px-2.5 py-3 text-center text-xs">{emptyLabel}</p>
+                <p className="text-muted text-label px-2.5 py-3 text-center">{emptyLabel}</p>
               ) : (
                 filtered.map((ch) => {
                   const unread = ch.index === activeIndex ? 0 : (unreadCounts.get(ch.index) ?? 0);
@@ -290,7 +291,7 @@ export function ChatChannelSwitcher({
                           choose(ch.index);
                         }
                       }}
-                      className={`text-body flex h-8 cursor-pointer items-center gap-2 rounded-lg px-2.5 ${
+                      className={`text-body rounded-card flex h-8 cursor-pointer items-center gap-2 px-2.5 ${
                         highlighted ? 'bg-sidebar-active-bg text-ink-100' : 'text-ink-300'
                       }`}
                     >
@@ -305,7 +306,7 @@ export function ChatChannelSwitcher({
                         {ch.name}
                       </span>
                       {unread > 0 && (
-                        <span className="text-2xs flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 leading-none font-semibold text-white">
+                        <span className="text-2xs bg-danger-600 flex h-4 min-w-4 items-center justify-center rounded-full px-1 leading-none font-semibold text-white">
                           {formatUnread(unread)}
                         </span>
                       )}

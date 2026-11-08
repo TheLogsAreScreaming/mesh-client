@@ -19,7 +19,7 @@ export function MapLayerRow({
   onChange: (enabled: boolean) => void;
 }) {
   return (
-    <label className="text-muted flex cursor-pointer items-center gap-2 text-xs">
+    <label className="text-muted text-label flex cursor-pointer items-center gap-2">
       <input
         type="checkbox"
         className="accent-brand-green"

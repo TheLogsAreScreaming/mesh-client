@@ -392,7 +392,7 @@ export default function LogPanel({
                 aria-label={t('logPanel.logInfo')}
                 className="border-ink-600 rounded"
               />
-              <label htmlFor="log-filter-loginfo" className="text-muted cursor-pointer text-xs">
+              <label htmlFor="log-filter-loginfo" className="text-muted text-label cursor-pointer">
                 {t('logPanel.logInfo')}
               </label>
             </div>
@@ -407,7 +407,7 @@ export default function LogPanel({
                 aria-label={t('logPanel.warnError')}
                 className="border-ink-600 rounded"
               />
-              <label htmlFor="log-filter-warn" className="text-muted cursor-pointer text-xs">
+              <label htmlFor="log-filter-warn" className="text-muted text-label cursor-pointer">
                 {t('logPanel.warnError')}
               </label>
             </div>
@@ -422,7 +422,7 @@ export default function LogPanel({
                 aria-label={t('logPanel.debug')}
                 className="border-ink-600 rounded"
               />
-              <label htmlFor="log-filter-debug" className="text-muted cursor-pointer text-xs">
+              <label htmlFor="log-filter-debug" className="text-muted text-label cursor-pointer">
                 {t('logPanel.debug')}
               </label>
             </div>
@@ -460,7 +460,7 @@ export default function LogPanel({
               type="button"
               onClick={narrow}
               aria-label={t('logPanel.narrowLogPanel')}
-              className="border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700 rounded border px-2 py-1 text-xs"
+              className="border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700 text-label rounded border px-2 py-1"
             >
               −
             </button>
@@ -468,7 +468,7 @@ export default function LogPanel({
               type="button"
               onClick={widen}
               aria-label={t('logPanel.widenLogPanel')}
-              className="border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700 rounded border px-2 py-1 text-xs"
+              className="border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700 text-label rounded border px-2 py-1"
             >
               +
             </button>
@@ -483,7 +483,7 @@ export default function LogPanel({
                 setAnalyzeModalOpen(true);
               }}
               aria-label={t('logPanel.analyzeLog')}
-              className="bg-ink-700 text-ink-200 hover:bg-ink-600 flex-1 rounded px-2 py-1 text-xs"
+              className="bg-ink-700 text-ink-200 hover:bg-ink-600 text-label flex-1 rounded px-2 py-1"
             >
               {t('logPanel.analyze')}
             </button>
@@ -491,7 +491,7 @@ export default function LogPanel({
               type="button"
               onClick={handleExport}
               aria-label={t('logPanel.exportLog')}
-              className="border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700 rounded border px-2 py-1 text-xs"
+              className="border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700 text-label rounded border px-2 py-1"
             >
               {t('logPanel.export')}
             </button>
@@ -499,13 +499,13 @@ export default function LogPanel({
               type="button"
               onClick={handleDelete}
               aria-label={t('logPanel.deleteLog')}
-              className="border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700 rounded border px-2 py-1 text-xs"
+              className="border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700 text-label rounded border px-2 py-1"
             >
               {t('logPanel.delete')}
             </button>
           </div>
           {logClearError && (
-            <div role="alert" className="text-2xs text-red-400">
+            <div role="alert" className="text-2xs text-danger-400">
               {logClearError}
             </div>
           )}
@@ -570,7 +570,7 @@ export default function LogPanel({
               type="button"
               onClick={() => onClose?.()}
               aria-label={t('logPanel.close')}
-              className="border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700 rounded border px-2 py-1 text-xs"
+              className="border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700 text-label rounded border px-2 py-1"
             >
               {t('logPanel.close')}
             </button>

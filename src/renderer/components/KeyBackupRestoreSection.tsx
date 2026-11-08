@@ -29,6 +29,7 @@ import { formatIsoDateTime } from '@/shared/formatIsoDate';
 import { touch } from '@/shared/touch';
 
 import { ConfirmModal } from './ConfirmModal';
+import { buttonClassName } from './ui/Button';
 
 type BackupIndexEntry = MeshtasticDmKeyBackupIndexEntry | MeshcoreKeyBackupIndexEntry;
 
@@ -244,7 +245,7 @@ export function KeyBackupRestoreSection({
   );
 
   if (safeStorageAvailable === false) {
-    return <p className="text-xs text-orange-400">{t('securityPanel.keyBackupUnavailable')}</p>;
+    return <p className="text-label text-warning-400">{t('securityPanel.keyBackupUnavailable')}</p>;
   }
 
   if (safeStorageAvailable === null) {
@@ -258,9 +259,9 @@ export function KeyBackupRestoreSection({
 
   return (
     <>
-      <p className="text-muted text-xs">{t('securityPanel.keyBackupDesc')}</p>
-      <p className="text-muted text-xs">{t('securityPanel.keyBackupNotIncluded')}</p>
-      <div className="text-muted flex items-center gap-2 text-xs">
+      <p className="text-muted text-label">{t('securityPanel.keyBackupDesc')}</p>
+      <p className="text-muted text-label">{t('securityPanel.keyBackupNotIncluded')}</p>
+      <div className="text-muted text-label flex items-center gap-2">
         <span
           className={`h-2 w-2 rounded-full ${backupAvailable ? 'bg-brand-green' : 'bg-ink-600'}`}
         />
@@ -269,7 +270,7 @@ export function KeyBackupRestoreSection({
           : t('securityPanel.noBackupForNode', { label: nodeDisplayLabel })}
       </div>
       {otherBackupCount > 0 && (
-        <p className="text-muted text-xs">
+        <p className="text-muted text-label">
           {t('securityPanel.otherBackupsCount', { count: otherBackupCount })}
         </p>
       )}
@@ -280,7 +281,7 @@ export function KeyBackupRestoreSection({
             void handleBackup();
           }}
           disabled={disabled || backupInProgress || !canBackup || localNodeKey == null}
-          className="bg-secondary-dark border-ink-600 text-ink-200 hover:bg-ink-700 min-w-[8rem] flex-1 rounded-lg border px-4 py-2 text-sm transition-colors disabled:opacity-50"
+          className={buttonClassName('secondary', 'md', 'min-w-[8rem] flex-1')}
         >
           {backupInProgress ? t('securityPanel.working') : t('securityPanel.backupKeys')}
         </button>
@@ -292,7 +293,7 @@ export function KeyBackupRestoreSection({
             }
           }}
           disabled={disabled || backupInProgress || !backupAvailable || localNodeKey == null}
-          className="bg-secondary-dark border-ink-600 text-ink-200 hover:bg-ink-700 min-w-[8rem] flex-1 rounded-lg border px-4 py-2 text-sm transition-colors disabled:opacity-50"
+          className={buttonClassName('secondary', 'md', 'min-w-[8rem] flex-1')}
         >
           {backupInProgress ? t('securityPanel.working') : t('securityPanel.restoreKeys')}
         </button>
@@ -302,7 +303,7 @@ export function KeyBackupRestoreSection({
             setShowPicker(true);
           }}
           disabled={disabled || backupInProgress || allBackups.length === 0}
-          className="bg-secondary-dark border-ink-600 text-ink-200 hover:bg-ink-700 min-w-[8rem] flex-1 rounded-lg border px-4 py-2 text-sm transition-colors disabled:opacity-50"
+          className={buttonClassName('secondary', 'md', 'min-w-[8rem] flex-1')}
         >
           {t('securityPanel.restoreFromBackup')}
         </button>
@@ -313,7 +314,7 @@ export function KeyBackupRestoreSection({
               setRemoveConfirmKey(localNodeKey);
             }}
             disabled={disabled || backupInProgress}
-            className="bg-secondary-dark border-ink-600 text-ink-200 hover:bg-ink-700 rounded-lg border px-4 py-2 text-sm transition-colors disabled:opacity-50"
+            className={buttonClassName('secondary', 'md')}
           >
             {t('securityPanel.removeBackup')}
           </button>
@@ -321,8 +322,8 @@ export function KeyBackupRestoreSection({
       </div>
 
       {showPicker && (
-        <div className="border-ink-700 bg-ink-900/40 space-y-2 rounded-lg border p-3">
-          <p className="text-ink-200 text-sm font-medium">
+        <div className="border-ink-700 bg-ink-900/40 rounded-card space-y-2 border p-3">
+          <p className="text-ink-200 text-body-lg font-medium">
             {t('securityPanel.restoreFromBackupTitle')}
           </p>
           <ul className="max-h-48 space-y-1 overflow-y-auto">
@@ -344,7 +345,7 @@ export function KeyBackupRestoreSection({
                     onClick={() => {
                       setPendingRestoreKey(nodeKey);
                     }}
-                    className="hover:bg-secondary-dark text-ink-300 w-full rounded px-2 py-1.5 text-left text-xs"
+                    className="hover:bg-secondary-dark text-ink-300 text-label w-full rounded px-2 py-1.5 text-left"
                   >
                     {formatEntryLabel(entry, protocol, t)} · {prefix}… ·{' '}
                     {formatIsoDateTime(entry.backedUpAt)}
@@ -358,7 +359,7 @@ export function KeyBackupRestoreSection({
             onClick={() => {
               setShowPicker(false);
             }}
-            className="text-muted hover:text-ink-200 text-xs"
+            className="text-muted hover:text-ink-200 text-label"
           >
             {t('common.cancel')}
           </button>

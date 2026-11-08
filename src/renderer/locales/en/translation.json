@@ -406,7 +406,8 @@
       "deepSea": "Deep sea",
       "dusk": "Dusk",
       "evergreen": "Evergreen",
-      "highContrast": "High contrast"
+      "highContrast": "High contrast",
+      "daylight": "Daylight"
     },
     "themeAccents": {
       "heading": "Accent",

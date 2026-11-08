@@ -84,11 +84,11 @@ export default function TakChannelRelaySection({
   if (!sinkActive || !identityId) return null;
 
   return (
-    <div className="bg-deep-black border-ink-800 space-y-3 rounded-xl border p-4">
-      <h3 className="text-ink-300 text-sm font-medium">{title}</h3>
-      <p className="text-ink-400 text-xs">{description}</p>
+    <div className="bg-deep-black border-ink-800 rounded-container space-y-3 border p-4">
+      <h3 className="text-ink-300 text-body-lg font-medium">{title}</h3>
+      <p className="text-ink-400 text-label">{description}</p>
       {channels.length === 0 ? (
-        <p className="text-muted text-xs">{emptyText}</p>
+        <p className="text-muted text-label">{emptyText}</p>
       ) : (
         <ul data-setting-anchor={anchorId} className="space-y-2">
           {channels.map((ch) => {
@@ -99,7 +99,7 @@ export default function TakChannelRelaySection({
             const checkboxId = `tak-channel-relay-${identityId}-${ch.index}`;
             const sendCheckboxId = `tak-channel-send-${identityId}-${ch.index}`;
             return (
-              <li key={ch.index} className="flex flex-wrap items-center gap-3 text-xs">
+              <li key={ch.index} className="text-label flex flex-wrap items-center gap-3">
                 <span className="text-ink-200 min-w-24 font-medium">{name}</span>
                 {showTrackers && (
                   <label htmlFor={checkboxId} className="text-ink-300 flex items-center gap-1">

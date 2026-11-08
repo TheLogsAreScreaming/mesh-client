@@ -25,13 +25,13 @@ export function StatusTile({ icon, label, status, tone, pulse, detail, action }:
       <span
         aria-hidden="true"
         className={`rounded-control flex h-10 w-10 shrink-0 items-center justify-center ${
-          active ? 'bg-green-500/12 text-green-400' : 'bg-sidebar-active-bg text-muted'
+          active ? 'bg-success-500/12 text-success-400' : 'bg-sidebar-active-bg text-muted'
         }`}
       >
         {icon}
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="text-muted text-xs">{label}</span>
+        <span className="text-muted text-label">{label}</span>
         <span className="text-title text-ink-200 flex items-center gap-1.75 font-semibold">
           <StatusDot tone={tone} pulse={pulse} size="md" />
           <span className="min-w-0 truncate">{status}</span>

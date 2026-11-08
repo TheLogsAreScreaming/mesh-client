@@ -88,19 +88,19 @@ The token names say "green" for history; they hold whatever accent the theme set
 
 ### Status (semantic)
 
-Status colors never double as the accent. The style guide gives each a Light-BG, Main and Dark-Text step. The Main step is a token; the other two are Tailwind steps until the designer's values are in `styles.css`.
+Status colors never double as the accent. Each meaning has a full 50 to 950 scale in `styles.css` (`--color-danger-*`, `--color-warning-*`, `--color-success-*`, `--color-info-*`), so every banner, badge, toast and status text changes in one place. Source policy (`renderer-semantic-status-colors`) rejects raw `red-*`, `orange-*`, `green-*` and `indigo-*` classes.
 
-| Meaning                 | Main token (dots, icons)   | Text on dark surfaces | Light (tint)             | Dark (fills) |
-| ----------------------- | -------------------------- | --------------------- | ------------------------ | ------------ |
-| Success, online         | `status-success` `#34d399` | `green-400`           | `green-900/40` or `100`  | `green-800`  |
-| Warning, caution, stale | `status-warning` `#f97316` | `orange-400`          | `orange-900/40` or `100` | `orange-800` |
-| Error, offline, danger  | `status-error` `#ef4444`   | `red-400`             | `red-900/40` or `100`    | `red-800`    |
-| Info, neutral status    | `status-info` `#818cf8`    | `indigo-400`          | `indigo-900/40` or `100` | `indigo-800` |
+| Meaning                 | Scale     | Main token (dots, icons) | Text on dark surfaces | Tint (banners)                    | Fill under white text |
+| ----------------------- | --------- | ------------------------ | --------------------- | --------------------------------- | --------------------- |
+| Success, online         | `success` | `status-success`         | `success-300` / `400` | `success-500/10`, border `500/35` | `success-700`         |
+| Warning, caution, stale | `warning` | `status-warning` (amber) | `warning-300` / `400` | `warning-500/10`, border `500/40` | `warning-700`         |
+| Error, offline, danger  | `danger`  | `status-error`           | `danger-300` / `400`  | `danger-500/10`, border `500/40`  | `danger-700`          |
+| Info, neutral status    | `info`    | `status-info`            | `info-300` / `400`    | `info-500/10`, border `500/35`    | `info-700`            |
 
+- Warning is **amber**, not orange, so a warning never reads as the Signature Orange accent (active, selected). Pair it with an icon or text anyway.
+- Use the components rather than hand-mixing tints: `Callout` (banners, `ui/Callout.tsx`), `Badge` (pills, `ui/Badge.tsx`), toasts (`Toast.tsx`). They read one tone table (`ui/tone.ts`). `NOTICE_CLASS` in `formClasses.ts` is the class-string form of the same table.
 - Status dots use `StatusDot` tones (`ok`, `idle`, `off`, `warn`, `error`, `info`), which read the Main tokens. Use `bg-status-*` / `text-status-*` for any other dot or status icon.
-- Keep the `-400` steps for status text: the Main error red is under 4.5:1 on `ink-800` rows.
-- Red means broken; orange means caution or delay (maintainer rule). Unread badges stay `bg-red-600` with white text, like the macOS dock.
-- Inline notices use `NOTICE_CLASS` in `formClasses.ts`.
+- Red means broken; amber means caution or delay (maintainer rule). Unread badges stay `bg-danger-600` with white text, like the macOS dock.
 
 Allowed exceptions: favourite stars are `yellow-400`; search highlights are yellow; data scales (battery, SNR, MECP severity, chart series, packet types) keep their own ramps and are labelled.
 
@@ -108,10 +108,12 @@ Allowed exceptions: favourite stars are `yellow-400`; search highlights are yell
 
 App > Appearance > Colors has two one-click choices (`lib/themePresets.ts`, `components/ThemePicker.tsx`). Any surface pairs with any accent, and single tokens can still be edited afterwards.
 
-- **Surfaces** replace the whole neutral scale (every `ink-*` class, through `--color-ink-*` on `:root`) and the neutral tokens: Charcoal (default), Midnight, Slate, Zinc, Graphite, Deep sea, Dusk, Evergreen and High contrast. Deep sea, Dusk and Evergreen keep Midnight's lightness and chroma per step with another hue, so they stay tinted neutrals rather than colored backgrounds. High contrast brings body text near white and lifts field borders to 3:1 against panels (WCAG 1.4.11).
+- **Surfaces** replace the whole neutral scale (every `ink-*` class, through `--color-ink-*` on `:root`) and the neutral tokens: Charcoal (default), Midnight, Slate, Zinc, Graphite, Deep sea, Dusk, Evergreen, High contrast and **Daylight** (light). Deep sea, Dusk and Evergreen keep Midnight's lightness and chroma per step with another hue, so they stay tinted neutrals rather than colored backgrounds. High contrast brings body text near white and lifts field borders to 3:1 against panels (WCAG 1.4.11).
 - **Accents** set the accent and the sent-message bubbles: Signature orange (default), Meshtastic, MeshCore, Sky and Classic green (the pre-v6 green). Slate with Classic green is the pre-v6 look.
 
-`themePresets.test.ts` checks every surface's text pairs and every surface and accent pair against the guards in `themeColors.ts`, so no combination is ever reset. A light theme needs a sweep of hard-coded dark text first.
+`themePresets.test.ts` checks every surface's text pairs and every surface and accent pair against the guards in `themeColors.ts`, so no combination is ever reset.
+
+**Daylight** (light tone, for sunlight and bright rooms) keeps the same step roles (950 window, 900 panels, 800 control fills, 700 borders, 400 muted text, 50 to 200 body text) with values running light to dark, so `ink-*` classes need no change. `applyThemeSurface()` sets `html[data-tone='light']`, and `styles.css` then flips the status and categorical scales around their middle (300 and 400 text take the 700 and 600 values, 800 to 950 tints take 200 to 50; 500 to 700 fills stay so white text on them keeps 4.5:1). Accents switch to their `light` step (`ThemeAccent.light`). New UI does not need to do anything special as long as it uses ink, semantic and token classes; raw hex and `text-white` on a surface (not on a fill) break in Daylight.
 
 Never use `#000000` or `#ffffff` as a surface, gradients, glows, text shadows, or left-border accent stripes on cards and rows.
 
@@ -125,19 +127,20 @@ All sizes are rem, so App > Appearance > Text size scales the whole UI (the root
 | ---------------- | ---------------------------------- | ------------------ | ---------------------------------------- |
 | Display          | `text-4xl font-light`              | 36 / 40            | Rare; empty-state hero                   |
 | H1               | `text-3xl font-semibold`           | 30 / 36            | Page title (rare inside panels)          |
-| H2               | `text-2xl font-semibold`           | 24 / 32            | Panel page titles                        |
-| H3               | `text-lg font-medium`              | 18 / 28            | Section titles                           |
+| H2               | `text-display-lg font-semibold`    | 24 / 32            | Panel page titles                        |
+| H2 (small)       | `text-display font-semibold`       | 20 / 28            | Empty-state and onboarding titles        |
+| H3               | `text-heading font-semibold`       | 18 / 26            | Dialog and section titles                |
 | H4               | `text-title font-semibold`         | 16 / 22            | Pane and card titles                     |
-| H5               | `text-sm font-semibold`            | 14 / 20            | Group headings                           |
+| H5               | `text-body-lg font-semibold`       | 14 / 20            | Group headings                           |
 | Body             | `text-body-lg`                     | 14 / 20            | Chat messages, paragraphs                |
 | Body (dense)     | `text-body`                        | 13 / 18            | Rows, inputs, menus, most controls       |
 | Control          | `text-control`                     | 13 / 18            | Small buttons, chips                     |
-| Caption          | `text-label`, `text-xs`            | 12 / 16            | Labels, captions, rail labels            |
+| Caption          | `text-label`                       | 12 / 16            | Labels, captions, rail labels            |
 | Data / tabular   | `font-mono text-meta tabular-nums` | 12 / 16            | Times, IDs, metrics that update in place |
 | Badge            | `text-2xs`                         | 11 / 16            | Badge and tag text only                  |
 | Count pill       | `text-3xs`                         | 10 / 14            | Numeric count pills only                 |
 
-Tailwind's own `text-2xl` to `text-4xl` sizes are close to the guide's 22, 28 and 36px headings; use them until the designer's heading tokens are final.
+Use the tokens, never Tailwind's `text-xs` to `text-2xl` (source policy `renderer-type-and-radius-tokens`). `text-3xl` and up remain for the rare display sizes.
 
 Minimum: 12px for anything a person reads; 13px body for dense data views, 14px for standard content. Line height 1.4 to 1.5 for body, 1.2 to 1.3 for headings. Weights: sans 400, 500, 600; mono 400, 500. Those are the only faces bundled, so anything heavier is synthesized: `font-semibold` is the top weight for sans and `font-medium` for mono.
 
@@ -149,15 +152,17 @@ A 4px grid (Tailwind spacing, base 1rem = 16px): `0.5` 2px (inline icon gaps), `
 
 Radius tokens in `styles.css` (`--radius-*`), so a family changes in one place. The sizes are Tailwind's stock scale; the Figma names use Tailwind v3's naming, which v4 (this app) shifted by one step, so the roles get their own class names:
 
-| Class               | Size | Figma name | Stock v4 class | Use                                       |
-| ------------------- | ---- | ---------- | -------------- | ----------------------------------------- |
-| `rounded-none`      | 0    |            | `rounded-none` | Tables, inline data                       |
-| `rounded-badge`     | 2px  | `sm`       | `rounded-xs`   | Badges, chips, tags, segments, menu items |
-| `rounded-control`   | 4px  | (default)  | `rounded-sm`   | Buttons, inputs, selects, map controls    |
-| `rounded-card`      | 6px  | `md`       | `rounded-md`   | Cards, panels, popovers, menus, notices   |
-| `rounded-modal`     | 8px  | `lg`       | `rounded-lg`   | Modals, sheets                            |
-| `rounded-container` | 12px | `xl`       | `rounded-xl`   | Page sections, large containers           |
-| `rounded-full`      | pill |            | `rounded-full` | Pills, avatars, toggles, dots             |
+| Class             | Size | Figma name | Stock v4 class | Use                                       |
+| ----------------- | ---- | ---------- | -------------- | ----------------------------------------- |
+| `rounded-none`    | 0    |            | `rounded-none` | Tables, inline data                       |
+| `rounded-badge`   | 2px  | `sm`       | `rounded-xs`   | Badges, chips, tags, segments, menu items |
+| `rounded-control` | 4px  | (default)  | `rounded-sm`   | Buttons, inputs, selects, map controls    |
+| `rounded-card`    | 6px  | `md`       | `rounded-md`   | Cards, panels, popovers, menus, notices   |
+| `rounded-modal`   | 8px  | `lg`       | `rounded-lg`   | Modals, sheets                            |
+
+Use the role classes, not the stock `rounded-sm` / `-md` / `-lg` / `-xl` (source policy `renderer-type-and-radius-tokens`).
+| `rounded-container` | 12px | `xl` | `rounded-xl` | Page sections, large containers |
+| `rounded-full` | pill | | `rounded-full` | Pills, avatars, toggles, dots |
 
 ## Elevation
 
@@ -242,10 +247,11 @@ Dialogs trap Tab, close on Esc and return focus to their trigger.
 
 Use the class strings and primitives; do not restyle native elements per panel.
 
-- Buttons (`Button`, `buttonClassName`): `rounded-control`, 30 or 32px tall, 13px medium label, optional 14 to 16px icon.
+- Buttons (`Button`, `buttonClassName`): `rounded-control`, 30, 32 or 36px tall (`sm`, `md`, `lg`; `lg` for dialog footers and calls to action), 13px medium label, optional 14 to 16px icon, `loading` for a spinner with `aria-busy`.
   - Primary: accent fill with `text-app-bg`. One per view.
   - Secondary: `bg-sidebar-active-bg` with `border-secondary-dark`.
   - Danger: red outline sized to its label. Never a full-width red bar. A stacked list of destructive actions with a second line uses `DANGER_ROW_CLASS`.
+  - Destructive: solid `danger-700` with white text, only for the confirm button of a destructive dialog.
   - Ghost and icon-only (`IconButton`): transparent, `text-muted`, `aria-label` and `title`.
 - A main action with rare variants: `SplitButton`. Row actions: one `MenuButton` overflow menu.
 - Single choice (filters, modes, protocol): `SegmentedControl` (`role="radiogroup"`, arrow keys). Toggle chips with `aria-pressed`: `chipClass()`.
@@ -253,7 +259,10 @@ Use the class strings and primitives; do not restyle native elements per panel.
 - On/off settings: `Switch`. Small integers: `Stepper`. Read-only values: `CopyField`.
 - Label and value pairs: `LabelValueGrid` inside their card, about 560px wide at most.
 - Cards: `Panel` (`bg-deep-black`, `border-ink-800`, `rounded-card`, level 1). Settings sections: `bg-deep-black rounded-xl border border-ink-800`.
-- Notices: `NOTICE_CLASS.info|warn|error|success`.
+- Notices: `Callout` (`tone`, optional `title` and `action`, its own icon per tone, `role` alert / status / none). `NOTICE_CLASS` is the class-string form.
+- Dialogs: `Dialog` (`ui/Dialog.tsx`): backdrop, focus trap, Escape, focus return, entry motion. `ConfirmModal` is built on it; cancel comes first and has focus.
+- Empty and first-run views: `EmptyState` (icon, title, what to do next, action).
+- Toasts: `pushAppToast()` / `useToast()`. Errors and emergencies are `role="alert"`; others are `role="status"`. Hover or focus pauses the timer.
 - Map overlays: `MAP_CONTROL_CLASS`, `MAP_CHIP_CLASS`, `MAP_OVERLAY_PANEL_CLASS` (`map/mapControlClasses.ts`); Leaflet's own controls are restyled in `styles.css`.
 - Status: `StatusDot` only where it carries state; pulses on a separate `aria-hidden` element, never on small text.
 
@@ -263,7 +272,11 @@ Use the class strings and primitives; do not restyle native elements per panel.
 | Split button, overflow menu                   | `SplitButton`, `MenuButton`, `Menu` (`ui/Menu.tsx`)         |
 | Single choice                                 | `SegmentedControl`                                          |
 | Switch, stepper                               | `Switch`, `Stepper`                                         |
-| Card with header                              | `Panel`                                                     |
+| Card with header                              | `Panel`, or `Card` + `CardHeader`                           |
+| Banner / inline notice                        | `Callout`                                                   |
+| Status pill                                   | `Badge`                                                     |
+| Modal                                         | `Dialog`, `ConfirmModal`                                    |
+| Empty / first-run view                        | `EmptyState`                                                |
 | Link status                                   | `StatusTile`, `StatusDot`                                   |
 | Label and value pairs                         | `LabelValueGrid`, `LabelValue`                              |
 | Copyable value                                | `CopyField`                                                 |
@@ -286,6 +299,8 @@ Menus render in a portal above modals (`Z_POPOVER_MENU`), close on Esc or outsid
 ## Motion and battery
 
 - App > Appearance > Reduce motion (seeded from the OS setting) stops decorative pulses and shortens transitions app-wide (`html[data-reduce-motion='true']` in `styles.css`).
+- One easing (`--ease-standard`) and three entry animations: `animate-dialog-in` (160ms), `animate-fade-in` (140ms, backdrops), `animate-toast-in` (200ms). Reduce motion and the OS `prefers-reduced-motion` drop them.
+- Keyboard focus: one accent ring for everything focusable (`:focus-visible` in the `styles.css` base layer).
 - Status motion that carries meaning (connecting, logging in, sending, MAYDAY / URGENT) keeps moving: give it the `motion-status` class.
 - No network fonts, emoji data or images: they are bundled (`assets/fonts/plex`, and the English emoji data from `emoji-picker-element-data` at build time).
 
@@ -313,6 +328,8 @@ Source-policy rules in `src/architecture/sourcePolicyRules.ts` (Vitest, pre-comm
 | ---------------------------------------- | ------------------------------------------------------------------------ |
 | `renderer-font-size-in-rem`              | `text-[Npx]` font sizes                                                  |
 | `renderer-ink-neutrals`                  | `slate-*`, `zinc-*` and `gray-*` palette classes                         |
+| `renderer-semantic-status-colors`        | raw `red-*`, `orange-*`, `green-*`, `indigo-*` classes                   |
+| `renderer-type-and-radius-tokens`        | `text-xs` to `text-2xl` and `rounded-sm` to `rounded-xl`                 |
 | `renderer-elevation-levels`              | stock `shadow-xs` to `shadow-2xl` classes                                |
 | `renderer-bundled-font-weights`          | `font-bold`, `font-extrabold`, `font-black` (only Plex 400 to 600 ship)  |
 | `renderer-no-muted-text-on-control-fill` | muted text on a resting `bg-secondary-dark` (under 4.5:1 in every theme) |
@@ -325,9 +342,10 @@ Source-policy rules in `src/architecture/sourcePolicyRules.ts` (Vitest, pre-comm
 
 - From the designer's Figma: the status Light-BG and Dark-Text steps, and the exact Level 1 to 4 shadows. Protocol scales, status Main colors and type are already exact.
 - Neutrals: the Mesh Hub palette gives four fixed steps (950, 900, 500, 50); the steps between are plain greys. Exact values from a designer drop into `--color-ink-*`.
-- The Signature orange accent sits close to the warning orange (`status-warning` `#f97316`); warning states should keep a non-color signal (icon or text) so they never read as the accent.
 - Protocol colors outside `protocolTheme.ts` (for example some data ramps) still use Tailwind's `emerald` / `cyan` / `yellow` classes; move the ones that mark a protocol to the scale tokens.
-- Status text still uses Tailwind's `-400` steps (v4 oklch values) next to the exact Main tokens used by dots.
+- About 360 `<button>` elements still carry hand-written classes; move them to `Button` / `buttonClassName` as their panels are touched.
+- Some modals (node detail, contact groups, macros, MECP compose, log analyze) keep their own shells; move them into `Dialog`.
+- Daylight: data ramps with inline hex (charts, SNR, packet distribution) and the dark basemap are not tuned for light backgrounds yet.
 - The Main success green (`#34d399`) sits close to the Meshtastic base (`#67e8b4`); status dots always come with text, so "online" is never color alone.
 - Field borders (`border-secondary-dark` on panels) are about 1.7:1 in every surface except High contrast, under the 3:1 WCAG 1.4.11 asks of a control boundary. Raising them changes the look, so it is a design call.
 - A night vision field mode for eyes adjusted to the dark: red color surfaces rather than a whole-window filter (a filter costs CPU and battery on every repaint), with MAYDAY, URGENT and info badges still telling apart by more than brightness.

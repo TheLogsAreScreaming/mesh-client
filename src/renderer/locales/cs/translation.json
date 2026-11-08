@@ -399,7 +399,8 @@
       "deepSea": "Hlubina",
       "dusk": "Soumrak",
       "evergreen": "Jehličí",
-      "highContrast": "Vysoký kontrast"
+      "highContrast": "Vysoký kontrast",
+      "daylight": "Denní světlo"
     },
     "themeAccents": {
       "heading": "Zvýraznění",

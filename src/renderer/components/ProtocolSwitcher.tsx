@@ -58,7 +58,7 @@ export function ProtocolSwitcher({
         role="radiogroup"
         aria-label={t('aria.protocolSwitcher')}
         aria-orientation={orientation}
-        className={`bg-app-bg border-ink-800 flex shrink-0 items-center gap-1 rounded-xl border p-1 ${
+        className={`bg-app-bg border-ink-800 rounded-container flex shrink-0 items-center gap-1 border p-1 ${
           vertical ? 'flex-col' : 'flex-row'
         }`}
       >

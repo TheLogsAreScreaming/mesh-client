@@ -231,20 +231,20 @@ export function MecpComposeModal({
       />
       <div
         ref={panelRef}
-        className={`bg-deep-black rounded-modal shadow-level-4 relative max-h-[90vh] w-full max-w-lg overflow-y-auto border p-4 ${responseMode ? 'border-blue-700/50' : 'border-red-700/50'}`}
+        className={`bg-deep-black rounded-modal shadow-level-4 relative max-h-[90vh] w-full max-w-lg overflow-y-auto border p-4 ${responseMode ? 'border-blue-700/50' : 'border-danger-700/50'}`}
         role="dialog"
         aria-modal="true"
         aria-label={title}
       >
         <div className="mb-3 flex items-center justify-between">
           <h2
-            className={`text-lg font-semibold ${responseMode ? 'text-blue-200' : 'text-red-200'}`}
+            className={`text-heading font-semibold ${responseMode ? 'text-blue-200' : 'text-danger-200'}`}
           >
             {title}
           </h2>
           <button
             type="button"
-            className="text-ink-400 text-sm hover:text-white"
+            className="text-ink-400 text-body-lg hover:text-ink-50"
             onClick={onClose}
             aria-label={t('aria.closeDialog')}
           >
@@ -252,7 +252,7 @@ export function MecpComposeModal({
           </button>
         </div>
 
-        <p className="text-ink-400 mb-2 text-xs">{t('mecp.compose.severity')}</p>
+        <p className="text-ink-400 text-label mb-2">{t('mecp.compose.severity')}</p>
         <div className="mb-3 flex flex-wrap gap-2">
           {SEVERITY_ORDER.map((s) => (
             <button
@@ -264,7 +264,7 @@ export function MecpComposeModal({
                 clearError();
                 setSeverity(s);
               }}
-              className={`rounded px-2 py-1 text-xs font-semibold ${
+              className={`text-label rounded px-2 py-1 font-semibold ${
                 severity === s ? MECP_SEVERITY_BADGE_CLASSES[s] : 'bg-ink-800 text-ink-300'
               }`}
             >
@@ -274,7 +274,7 @@ export function MecpComposeModal({
         </div>
 
         {mode !== 'all' && (
-          <label className="text-ink-300 mb-3 flex items-center gap-2 text-xs">
+          <label className="text-ink-300 text-label mb-3 flex items-center gap-2">
             <input
               type="checkbox"
               checked={showAllCodes}
@@ -287,7 +287,7 @@ export function MecpComposeModal({
             {t('mecp.compose.showAllCodes')}
           </label>
         )}
-        <p className="text-ink-400 mb-2 text-xs">{t('mecp.compose.category')}</p>
+        <p className="text-ink-400 text-label mb-2">{t('mecp.compose.category')}</p>
         <div className="mb-3 grid grid-cols-3 gap-1 sm:grid-cols-4">
           {categories.map((letter) => (
             <button
@@ -303,7 +303,7 @@ export function MecpComposeModal({
                 category === letter
                   ? responseMode
                     ? 'bg-blue-900/80 text-blue-100'
-                    : 'bg-red-900/80 text-red-100'
+                    : 'bg-danger-900/80 text-danger-100'
                   : 'bg-ink-800 text-ink-300'
               }`}
             >
@@ -312,7 +312,7 @@ export function MecpComposeModal({
           ))}
         </div>
 
-        <p className="text-ink-400 mb-2 text-xs">{t('mecp.compose.codes')}</p>
+        <p className="text-ink-400 text-label mb-2">{t('mecp.compose.codes')}</p>
         <div className="mb-2 flex max-h-32 flex-wrap gap-1 overflow-y-auto">
           {codesForCategory.map((code) => (
             <button
@@ -326,7 +326,7 @@ export function MecpComposeModal({
                 codes.includes(code)
                   ? responseMode
                     ? 'bg-blue-700 text-white'
-                    : 'bg-red-700 text-white'
+                    : 'bg-danger-700 text-white'
                   : 'bg-ink-800 text-ink-300'
               }`}
             >
@@ -344,7 +344,7 @@ export function MecpComposeModal({
                 onClick={() => {
                   toggleCode(code);
                 }}
-                className={`text-2xs rounded-full px-2 py-0.5 ${responseMode ? 'bg-blue-900/60 text-blue-100' : 'bg-red-900/60 text-red-100'}`}
+                className={`text-2xs rounded-full px-2 py-0.5 ${responseMode ? 'bg-blue-900/60 text-blue-100' : 'bg-danger-900/60 text-danger-100'}`}
               >
                 {code} ×
               </button>
@@ -352,7 +352,7 @@ export function MecpComposeModal({
           </div>
         ) : null}
 
-        <label className="text-ink-400 mb-1 block text-xs" htmlFor="mecp-freetext">
+        <label className="text-ink-400 text-label mb-1 block" htmlFor="mecp-freetext">
           {t('mecp.compose.freetext')}
         </label>
         <textarea
@@ -369,7 +369,7 @@ export function MecpComposeModal({
         <div className="mb-3 flex flex-wrap gap-2">
           <button
             type="button"
-            className="border-ink-600 text-ink-300 rounded border px-2 py-0.5 text-xs"
+            className="border-ink-600 text-ink-300 text-label rounded border px-2 py-0.5"
             onClick={() => {
               clearError();
               setFreetext(bumpMecpPaxFreetext);
@@ -380,7 +380,7 @@ export function MecpComposeModal({
           </button>
           <button
             type="button"
-            className="border-ink-600 text-ink-300 rounded border px-2 py-0.5 text-xs"
+            className="border-ink-600 text-ink-300 text-label rounded border px-2 py-0.5"
             onClick={() => {
               void attachGps();
             }}
@@ -390,16 +390,16 @@ export function MecpComposeModal({
           </button>
         </div>
 
-        <p className="text-ink-300 mb-1 font-mono text-xs break-all">{encoded.message || '—'}</p>
+        <p className="text-ink-300 text-label mb-1 font-mono break-all">{encoded.message || '—'}</p>
         <p
-          className={`mb-3 text-xs ${encoded.overLimit ? 'text-red-400' : 'text-muted'}`}
+          className={`text-label mb-3 ${encoded.overLimit ? 'text-danger-400' : 'text-muted'}`}
           role="status"
         >
           {t('mecp.compose.byteBudget', { used: byteLen, max: MAX_MESSAGE_BYTES })}
         </p>
 
         {error ? (
-          <p className="mb-3 text-xs text-red-400" role="alert">
+          <p className="text-label text-danger-400 mb-3" role="alert">
             {error}
           </p>
         ) : null}
@@ -407,7 +407,7 @@ export function MecpComposeModal({
         <div className="flex justify-end gap-2">
           <button
             type="button"
-            className="text-ink-300 rounded px-3 py-1.5 text-sm"
+            className="text-ink-300 text-body-lg rounded px-3 py-1.5"
             onClick={onClose}
             aria-label={t('common.cancel')}
           >
@@ -416,7 +416,7 @@ export function MecpComposeModal({
           <button
             type="button"
             disabled={!canSend}
-            className={`rounded px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40 ${responseMode ? 'bg-blue-700' : 'bg-red-700'}`}
+            className={`text-body-lg rounded px-3 py-1.5 font-semibold text-white disabled:opacity-40 ${responseMode ? 'bg-blue-700' : 'bg-danger-700'}`}
             onClick={() => void handleSend()}
             aria-label={t('mecp.compose.send')}
           >

@@ -19,6 +19,8 @@ import {
 import { bytesToHex, hexToBytesExactOrThrow } from '@/shared/hexBytes';
 
 import { useToast } from './Toast';
+import { buttonClassName } from './ui/Button';
+import { Dialog } from './ui/Dialog';
 import { INPUT_BOX_CLASS } from './ui/formClasses';
 
 interface Props {
@@ -131,30 +133,18 @@ export default function MeshcoreChatChannelManager({
       </button>
 
       {open ? (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="meshcore-chat-channel-title"
-            className="bg-secondary-dark rounded-modal shadow-level-3 border-ink-600 w-full max-w-md space-y-4 border p-4"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <h2 id="meshcore-chat-channel-title" className="text-base font-semibold text-white">
-                {t('radioPanel.meshcoreChannel.addTitle')}
-              </h2>
-              <button
-                type="button"
-                onClick={() => {
-                  closeDialog();
-                }}
-                disabled={saving}
-                aria-label={t('common.close')}
-                className="text-muted hover:bg-ink-700 rounded p-1 hover:text-white"
-              >
-                <X aria-hidden className="h-4 w-4" size={16} />
-              </button>
-            </div>
-
+        <Dialog
+          title={t('radioPanel.meshcoreChannel.addTitle')}
+          onClose={() => {
+            if (!saving) closeDialog();
+          }}
+          size="md"
+          zIndex={100}
+          showCloseButton
+          busy={saving}
+          dismissOnBackdrop={false}
+        >
+          <div className="space-y-4 pb-1">
             {configuredChannels.length > 0 ? (
               <div className="flex flex-wrap gap-2" aria-label={t('chatPanel.channels')}>
                 {configuredChannels.map((channel) => (
@@ -167,7 +157,7 @@ export default function MeshcoreChatChannelManager({
                         onSelectChannel(channel.index);
                         closeDialog();
                       }}
-                      className="bg-deep-black text-muted hover:border-brand-green border-ink-700 hover:text-ink-100 rounded-full border px-2.5 py-1 text-xs"
+                      className="bg-deep-black text-muted hover:border-brand-green border-ink-700 hover:text-ink-100 text-label rounded-full border px-2.5 py-1"
                     >
                       {channel.name}
                     </button>
@@ -181,7 +171,7 @@ export default function MeshcoreChatChannelManager({
                           closeDialog();
                           onRemoveChannel(channel);
                         }}
-                        className="text-muted flex h-6 w-6 items-center justify-center rounded hover:bg-red-400/10 hover:text-red-400"
+                        className="text-muted hover:bg-danger-400/10 hover:text-danger-400 flex h-6 w-6 items-center justify-center rounded"
                       >
                         <X aria-hidden className="h-3.5 w-3.5" size={14} />
                       </button>
@@ -190,7 +180,7 @@ export default function MeshcoreChatChannelManager({
                 ))}
               </div>
             ) : (
-              <p className="text-muted text-xs">{t('radioPanel.noChannels')}</p>
+              <p className="text-muted text-label">{t('radioPanel.noChannels')}</p>
             )}
 
             <form
@@ -200,7 +190,7 @@ export default function MeshcoreChatChannelManager({
                 void handleAdd();
               }}
             >
-              <label className="text-muted flex items-center gap-2 text-xs">
+              <label className="text-muted text-label flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={privateChannel}
@@ -213,7 +203,7 @@ export default function MeshcoreChatChannelManager({
                 />
                 {t('radioPanel.meshcoreChannel.privateChannel')}
               </label>
-              <label htmlFor="meshcore-chat-channel-name" className="text-muted block text-xs">
+              <label htmlFor="meshcore-chat-channel-name" className="text-muted text-label block">
                 {t('radioPanel.meshcoreChannelNameLabel')}
               </label>
               <div className="flex items-center gap-2">
@@ -240,14 +230,17 @@ export default function MeshcoreChatChannelManager({
                   type="submit"
                   disabled={!valid || saving || disabled}
                   aria-label={saving ? t('common.saving') : t('common.save')}
-                  className="bg-brand-green hover:bg-brand-green/90 text-app-bg disabled:bg-ink-600 disabled:text-ink-400 rounded px-3 py-2 text-xs font-medium disabled:cursor-not-allowed"
+                  className={buttonClassName('primary', 'sm')}
                 >
                   {saving ? t('common.saving') : t('common.save')}
                 </button>
               </div>
               {privateChannel ? (
                 <div className="space-y-2">
-                  <label htmlFor="meshcore-chat-channel-key" className="text-muted block text-xs">
+                  <label
+                    htmlFor="meshcore-chat-channel-key"
+                    className="text-muted text-label block"
+                  >
                     {t('radioPanel.meshcoreChannelKeyLabel')}
                   </label>
                   <input
@@ -265,16 +258,16 @@ export default function MeshcoreChatChannelManager({
                     aria-invalid={keyHex.length > 0 && !validKey}
                     className={`${INPUT_BOX_CLASS} w-full font-mono`}
                   />
-                  <p id="meshcore-chat-channel-key-hint" className="text-muted text-xs">
+                  <p id="meshcore-chat-channel-key-hint" className="text-muted text-label">
                     {t('radioPanel.meshcoreChannel.privateKeyHint')}
                   </p>
                 </div>
               ) : (
-                <p className="text-muted text-xs">{t('radioPanel.meshcoreSha256KeyTitle')}</p>
+                <p className="text-muted text-label">{t('radioPanel.meshcoreSha256KeyTitle')}</p>
               )}
             </form>
           </div>
-        </div>
+        </Dialog>
       ) : null}
     </>
   );

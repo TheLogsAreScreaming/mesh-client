@@ -5,7 +5,7 @@
  * `aria-expanded` / `aria-pressed` give the open or active state a green edge.
  */
 export const MAP_CONTROL_CLASS =
-  'bg-deep-black/90 inline-flex h-8 items-center gap-1.5 rounded-control border border-ink-700 px-3 text-xs font-medium text-ink-200 shadow-level-2 backdrop-blur-sm transition-colors hover:border-ink-500 hover:bg-ink-800 disabled:cursor-not-allowed disabled:opacity-50 aria-expanded:border-brand-green/60 aria-pressed:border-brand-green/60 aria-pressed:text-bright-green pointer-coarse:h-10';
+  'bg-deep-black/90 inline-flex h-8 items-center gap-1.5 rounded-control border border-ink-700 px-3 text-label font-medium text-ink-200 shadow-level-2 backdrop-blur-sm transition-colors hover:border-ink-500 hover:bg-ink-800 disabled:cursor-not-allowed disabled:opacity-50 aria-expanded:border-brand-green/60 aria-pressed:border-brand-green/60 aria-pressed:text-bright-green pointer-coarse:h-10';
 
 /** Panel that opens under a map control (layers, basemap, offline maps). */
 export const MAP_OVERLAY_PANEL_CLASS =
@@ -13,4 +13,4 @@ export const MAP_OVERLAY_PANEL_CLASS =
 
 /** Read-only chip over a map (status legend, counts). */
 export const MAP_CHIP_CLASS =
-  'bg-deep-black/90 flex h-8 items-center gap-3 rounded-control border border-ink-700 px-3 text-xs text-ink-200 shadow-level-2 backdrop-blur-sm';
+  'bg-deep-black/90 flex h-8 items-center gap-3 rounded-control border border-ink-700 px-3 text-label text-ink-200 shadow-level-2 backdrop-blur-sm';

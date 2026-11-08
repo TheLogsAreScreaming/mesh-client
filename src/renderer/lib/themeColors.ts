@@ -321,8 +321,15 @@ function ensureBrandGreenContrast(colors: Record<ThemeColorKey, string>): boolea
   const green = normalizeHex(colors.brandGreen);
   const bg = normalizeHex(colors.appBg) ?? DEFAULT_THEME_COLORS.appBg;
   if (!green || contrastRatio(bg, green) < BRAND_GREEN_ON_APP_BG_MIN_RATIO) {
-    const wasDifferent = colors.brandGreen !== DEFAULT_THEME_COLORS.brandGreen;
-    colors.brandGreen = DEFAULT_THEME_COLORS.brandGreen;
+    // On a light surface the accent's fill step is the readable accent; prefer it over the
+    // default so the chosen accent survives a switch to Daylight.
+    const fill = normalizeHex(colors.readableGreen);
+    const fallback =
+      fill && contrastRatio(bg, fill) >= BRAND_GREEN_ON_APP_BG_MIN_RATIO
+        ? fill
+        : DEFAULT_THEME_COLORS.brandGreen;
+    const wasDifferent = colors.brandGreen !== fallback;
+    colors.brandGreen = fallback;
     return wasDifferent;
   }
   return false;

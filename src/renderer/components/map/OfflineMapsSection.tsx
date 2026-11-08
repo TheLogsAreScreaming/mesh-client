@@ -7,6 +7,8 @@ import { useMapViewportStore } from '@/renderer/stores/mapViewportStore';
 import { supportsOfflineMapDownload } from '@/shared/offlineMaps/basemapRegistry';
 import { OFFLINE_MAP_MAX_ZOOM } from '@/shared/offlineMaps/tileMath';
 
+import { buttonClassName } from '../ui/Button';
+
 const AUTO_CACHE_KEY = 'mesh-client:offlineMapsAutoCache';
 
 function readAutoCache(): boolean {
@@ -267,7 +269,7 @@ export function OfflineMapsSection() {
         type="button"
         aria-label={t('mapPanel.offlineMaps.downloadAria')}
         disabled={!downloadSupported || estimating || progress != null}
-        className="bg-secondary-dark border-ink-600 text-ink-200 hover:border-ink-500 w-full rounded border px-2 py-1 text-xs transition-colors disabled:opacity-50"
+        className={buttonClassName('secondary', 'sm', 'w-full')}
         onClick={() => {
           void startEstimate();
         }}
@@ -288,7 +290,7 @@ export function OfflineMapsSection() {
             <button
               type="button"
               aria-label={t('mapPanel.offlineMaps.confirmDownloadAria')}
-              className="flex-1 rounded border border-green-700 bg-green-950/50 px-1 py-0.5 text-green-200"
+              className="border-success-700 bg-success-950/50 text-success-200 flex-1 rounded border px-1 py-0.5"
               onClick={() => {
                 void confirmDownload();
               }}
@@ -322,7 +324,7 @@ export function OfflineMapsSection() {
           <button
             type="button"
             aria-label={t('mapPanel.offlineMaps.cancelAria')}
-            className="w-full rounded border border-orange-700 px-1 py-0.5 text-orange-200"
+            className="border-warning-700 text-warning-200 w-full rounded border px-1 py-0.5"
             onClick={() => {
               void cancelJob();
             }}

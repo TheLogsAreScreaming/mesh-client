@@ -68,7 +68,7 @@ export function MeshtasticRfPathIcon({ className }: { className?: string }) {
   return (
     <Wifi
       aria-hidden
-      className={className ?? 'h-3 w-3 text-indigo-400'}
+      className={className ?? 'text-info-400 h-3 w-3'}
       trigger={trigger}
       size={12}
     />

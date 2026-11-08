@@ -89,6 +89,7 @@ import { BotBadge } from './BotBadge';
 import SignalBars from './SignalBars';
 import { useToast } from './Toast';
 import { Button, IconButton } from './ui/Button';
+import { EmptyState } from './ui/EmptyState';
 import { INPUT_CLASS, NOTICE_CLASS, SELECT_CLASS } from './ui/formClasses';
 import { LabeledMenuButton } from './ui/Menu';
 import { SegmentedControl } from './ui/SegmentedControl';
@@ -776,7 +777,7 @@ export default function NodeListPanel({
   return (
     <div className="flex h-full min-h-0 flex-col gap-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h2 className="text-ink-200 text-base font-semibold">{listHeading}</h2>
+        <h2 className="text-ink-200 text-title font-semibold">{listHeading}</h2>
         <SegmentedControl
           aria-label={t('nodeListPanel.listViewAria')}
           value={listTab}
@@ -786,7 +787,7 @@ export default function NodeListPanel({
             { value: 'history', label: t('nodeListPanel.tabHistory') },
           ]}
         />
-        <span data-list-count="" className="text-muted font-mono text-sm">
+        <span data-list-count="" className="text-muted text-body-lg font-mono">
           ({headerCountLabel})
         </span>
         <div className="ml-auto flex flex-wrap items-center gap-2">
@@ -971,7 +972,7 @@ export default function NodeListPanel({
         )}
       </div>
       {mode === 'meshcore' && (
-        <p className="text-muted max-w-2xl text-xs">{t('nodeListPanel.meshcoreImportedHint')}</p>
+        <p className="text-muted text-label max-w-2xl">{t('nodeListPanel.meshcoreImportedHint')}</p>
       )}
       {mode === 'meshcore' && summary.isWarning && (
         <div className={`shrink-0 ${summary.isCritical ? NOTICE_CLASS.error : NOTICE_CLASS.warn}`}>
@@ -990,7 +991,7 @@ export default function NodeListPanel({
                   aria-live="polite"
                   aria-label={t('radioPanel.offloading')}
                 >
-                  <span className="inline-block h-3 w-3 animate-spin rounded-full border border-orange-300 border-t-transparent" />
+                  <span className="border-warning-300 inline-block h-3 w-3 animate-spin rounded-full border border-t-transparent" />
                   <span>
                     {offloadProgress?.phase === 'removing' && offloadProgress.total > 0
                       ? t('radioPanel.offloadingProgress', {
@@ -1041,15 +1042,15 @@ export default function NodeListPanel({
 
       <div
         ref={nodeTableScrollRef}
-        className="bg-deep-black border-ink-800 min-h-0 min-w-0 flex-1 overflow-auto rounded-xl border"
+        className="bg-deep-black border-ink-800 rounded-container @container min-h-0 min-w-0 flex-1 overflow-auto border"
       >
         <table
           style={{ minWidth: mode === 'meshcore' ? '1000px' : '1600px' }}
-          className="text-sm whitespace-nowrap"
+          className="text-body-lg whitespace-nowrap"
         >
           <caption className="sr-only">{t('nodeListPanel.tableCaptionMeshNodes')}</caption>
           <thead>
-            <tr className="bg-deep-black text-muted border-ink-800 sticky top-0 z-10 border-b text-left text-xs whitespace-nowrap">
+            <tr className="bg-deep-black text-muted border-ink-800 text-label sticky top-0 z-10 border-b text-left whitespace-nowrap">
               <th scope="col" className="w-16 px-3 py-2">
                 {t('nodeListPanel.columnHealth')}
               </th>
@@ -1313,12 +1314,22 @@ export default function NodeListPanel({
           <tbody className="divide-ink-800 divide-y">
             {nodeList.length === 0 ? (
               <tr>
-                <td colSpan={nodeTableColSpan} className="text-muted py-8 text-center">
-                  {searchQuery
-                    ? t('nodeListPanel.emptyNoSearchMatches')
-                    : listTab === 'history'
-                      ? t('nodeListPanel.emptyHistory')
-                      : t('nodeListPanel.emptyNoNodesYet')}
+                <td colSpan={nodeTableColSpan} className="p-0">
+                  {/* Pinned to the visible width (container query on the scroller), so the
+                      message stays centered in view instead of across the 1600px table. */}
+                  <div data-node-list-empty="" className="sticky left-0 w-[100cqw]">
+                    <EmptyState
+                      size="compact"
+                      icon={<Search aria-hidden className="h-4 w-4" />}
+                      title={
+                        searchQuery
+                          ? t('nodeListPanel.emptyNoSearchMatches')
+                          : listTab === 'history'
+                            ? t('nodeListPanel.emptyHistory')
+                            : t('nodeListPanel.emptyNoNodesYet')
+                      }
+                    />
+                  </div>
                 </td>
               </tr>
             ) : (
@@ -1393,10 +1404,10 @@ export default function NodeListPanel({
                           <span
                             className={`text-3xs rounded px-1 leading-tight font-semibold ${
                               healthTier === 'good'
-                                ? 'bg-green-900/60 text-green-400'
+                                ? 'bg-success-900/60 text-success-400'
                                 : healthTier === 'warn'
-                                  ? 'bg-orange-900/60 text-orange-400'
-                                  : 'bg-red-900/60 text-red-400'
+                                  ? 'bg-warning-900/60 text-warning-400'
+                                  : 'bg-danger-900/60 text-danger-400'
                             }`}
                             title={t('nodeListPanel.healthTooltip', {
                               total: health.total,
@@ -1449,7 +1460,7 @@ export default function NodeListPanel({
                         )}
                       </td>
                       {mode !== 'meshcore' && (
-                        <td className="text-muted px-3 py-2 font-mono text-xs">
+                        <td className="text-muted text-label px-3 py-2 font-mono">
                           {formatMeshtasticNodeId(node.node_id)}
                         </td>
                       )}
@@ -1507,10 +1518,10 @@ export default function NodeListPanel({
                                       aria-hidden
                                       className={`h-4 w-4 shrink-0 ${
                                         routingRow.severity === 'error'
-                                          ? 'text-red-400'
+                                          ? 'text-danger-400'
                                           : routingRow.severity === 'info'
-                                            ? 'text-indigo-400'
-                                            : 'text-orange-400'
+                                            ? 'text-info-400'
+                                            : 'text-warning-400'
                                       }`}
                                       trigger={iconTrigger}
                                       size={16}
@@ -1536,7 +1547,7 @@ export default function NodeListPanel({
                         </td>
                       )}
                       <td className="text-muted px-3 py-2">{formatTime(node.last_heard)}</td>
-                      <td className="px-3 py-2 text-xs">
+                      <td className="text-label px-3 py-2">
                         {mode === 'meshcore' ? (
                           node.hw_model === 'Repeater' || node.hw_model === 'Room' ? (
                             <span className="text-ink-300 inline-flex items-center gap-1">
@@ -1561,7 +1572,7 @@ export default function NodeListPanel({
                             </span>
                           )
                         ) : node.hw_model === 'Chat' ? (
-                          <span className="text-ink-400 inline-flex items-center gap-1 text-xs">
+                          <span className="text-ink-400 text-label inline-flex items-center gap-1">
                             <User
                               aria-hidden
                               className="h-3.5 w-3.5"
@@ -1575,7 +1586,7 @@ export default function NodeListPanel({
                         )}
                       </td>
                       <td
-                        className={`px-3 py-2 text-right text-xs ${(isSelf && (node.hops_away ?? 0)) === 0 ? 'text-bright-green' : 'text-ink-300'}`}
+                        className={`text-label px-3 py-2 text-right ${(isSelf && (node.hops_away ?? 0)) === 0 ? 'text-bright-green' : 'text-ink-300'}`}
                       >
                         {node.heard_via_mqtt_only ? (
                           <span className="text-muted">—</span>
@@ -1584,7 +1595,7 @@ export default function NodeListPanel({
                         )}
                       </td>
                       {mode !== 'meshcore' && (
-                        <td className="text-ink-300 px-3 py-2 text-xs">
+                        <td className="text-ink-300 text-label px-3 py-2">
                           <div className="flex justify-center">
                             {(() => {
                               const pathBadge = resolveMeshtasticPathBadge({
@@ -1633,7 +1644,7 @@ export default function NodeListPanel({
                         const canShowOnMap = onShowOnMap != null && mapPosition != null;
                         return (
                           <>
-                            <td className="text-muted px-3 py-2 text-right font-mono text-xs">
+                            <td className="text-muted text-label px-3 py-2 text-right font-mono">
                               <span className="inline-flex items-center justify-end gap-1">
                                 {latCell}
                                 {canShowOnMap && (
@@ -1655,7 +1666,7 @@ export default function NodeListPanel({
                               </span>
                             </td>
                             {coordinateFormat !== 'mgrs' && (
-                              <td className="text-muted px-3 py-2 text-right font-mono text-xs">
+                              <td className="text-muted text-label px-3 py-2 text-right font-mono">
                                 {lonCell}
                               </td>
                             )}
@@ -1665,12 +1676,12 @@ export default function NodeListPanel({
                       <td className="px-3 py-2 text-right">
                         <div className="flex justify-end">
                           {node.heard_via_mqtt_only ? (
-                            <span className="text-muted text-xs">—</span>
+                            <span className="text-muted text-label">—</span>
                           ) : isSelf || snrMeaningfulForNodeDiagnostics(node, capabilities) ? (
                             <SignalBars rssi={node.rssi} isSelf={isSelf} />
                           ) : (
                             <span
-                              className="text-muted text-xs"
+                              className="text-muted text-label"
                               title={t('nodeListPanel.signalBarsTooltip')}
                             >
                               —
@@ -1678,7 +1689,7 @@ export default function NodeListPanel({
                           )}
                         </div>
                       </td>
-                      <td className="text-muted px-3 py-2 text-right font-mono text-xs">
+                      <td className="text-muted text-label px-3 py-2 text-right font-mono">
                         {node.heard_via_mqtt_only
                           ? '—'
                           : isSelf || snrMeaningfulForNodeDiagnostics(node, capabilities)
@@ -1696,8 +1707,8 @@ export default function NodeListPanel({
                                   node.battery > 50
                                     ? 'bg-brand-green'
                                     : node.battery > 20
-                                      ? 'bg-orange-500'
-                                      : 'bg-red-500'
+                                      ? 'bg-warning-500'
+                                      : 'bg-danger-500'
                                 }`}
                                 style={{
                                   width: `${Math.min(node.battery, 100)}%`,
@@ -1710,9 +1721,9 @@ export default function NodeListPanel({
                               node.battery > 50
                                 ? 'text-bright-green'
                                 : node.battery > 20
-                                  ? 'text-orange-400'
+                                  ? 'text-warning-400'
                                   : node.battery > 0
-                                    ? 'text-red-400'
+                                    ? 'text-danger-400'
                                     : 'text-muted'
                             }
                           >
@@ -1722,18 +1733,18 @@ export default function NodeListPanel({
                       </td>
                       {mode !== 'meshcore' && (
                         <>
-                          <td className="text-ink-300 px-3 py-2 text-right text-xs">
+                          <td className="text-ink-300 text-label px-3 py-2 text-right">
                             {node.voltage != null ? `${node.voltage.toFixed(2)} V` : '-'}
                           </td>
-                          <td className="text-ink-300 px-3 py-2 text-right text-xs">
+                          <td className="text-ink-300 text-label px-3 py-2 text-right">
                             {node.channel_utilization != null
                               ? `${node.channel_utilization.toFixed(1)}%`
                               : '-'}
                           </td>
-                          <td className="text-ink-300 px-3 py-2 text-right text-xs">
+                          <td className="text-ink-300 text-label px-3 py-2 text-right">
                             {node.air_util_tx != null ? `${node.air_util_tx.toFixed(1)}%` : '-'}
                           </td>
-                          <td className="text-ink-300 px-3 py-2 text-right text-xs">
+                          <td className="text-ink-300 text-label px-3 py-2 text-right">
                             {node.altitude != null && node.altitude !== 0
                               ? `${node.altitude} m`
                               : '-'}
@@ -1743,7 +1754,7 @@ export default function NodeListPanel({
                             const echoes = red ? red.maxPaths - 1 : 0;
                             return (
                               <td
-                                className={`px-3 py-2 text-right font-mono text-xs ${
+                                className={`text-label px-3 py-2 text-right font-mono ${
                                   echoes >= 3
                                     ? 'text-lime-400'
                                     : echoes > 0

@@ -140,7 +140,10 @@ export function EditMacrosDialog({
         className="bg-deep-black rounded-modal shadow-level-3 border-ink-600 relative mx-4 flex max-h-[85vh] w-full max-w-2xl flex-col border"
       >
         <div className="border-ink-700 flex flex-wrap items-center gap-3 border-b px-4 py-3">
-          <h3 id={titleId} className="text-ink-200 flex items-center gap-2 text-sm font-semibold">
+          <h3
+            id={titleId}
+            className="text-ink-200 text-body-lg flex items-center gap-2 font-semibold"
+          >
             <Keyboard aria-hidden className="text-ink-300" trigger={iconTrigger} size={16} />
             {t('chatMacros.dialogTitle')}
           </h3>
@@ -326,13 +329,13 @@ function MacroRow({
         aria-describedby={overLimit ? warnId : undefined}
         className={`${inputBase} min-w-0 flex-1 ${
           overLimit
-            ? 'border-red-500 focus:border-red-400'
+            ? 'border-danger-500 focus:border-danger-400'
             : 'border-secondary-dark focus:border-brand-green'
         }`}
       />
       <span
         className={`text-label inline-flex w-16 shrink-0 items-center justify-end gap-1 font-mono ${
-          overLimit ? 'text-red-400' : 'text-muted'
+          overLimit ? 'text-danger-400' : 'text-muted'
         }`}
       >
         {overLimit && <TriangleAlert aria-hidden size={12} />}

@@ -105,7 +105,7 @@ type LauncherRowTarget =
   LauncherTabTarget | LauncherChannelTarget | LauncherContactTarget | LauncherSettingTarget;
 
 function launcherRowClass(isActive: boolean, fullWidth: boolean): string {
-  return `hover:bg-sidebar-active-bg text-body text-ink-200 flex h-9 min-w-0 items-center gap-2.5 rounded-md px-2 text-left ${LAUNCHER_ROW_FOCUS} ${
+  return `hover:bg-sidebar-active-bg text-body text-ink-200 flex h-9 min-w-0 items-center gap-2.5 rounded-card px-2 text-left ${LAUNCHER_ROW_FOCUS} ${
     fullWidth ? 'w-full' : 'flex-1'
   }${isActive ? ' bg-sidebar-active-bg' : ''}`;
 }
@@ -317,11 +317,13 @@ export function PanelLauncher({
     const headingId = `${titleId}-${key}`;
     return (
       <section key={key} aria-labelledby={headingId} className="mb-2">
-        <h3 id={headingId} className="text-muted px-2 pt-2 pb-1 text-xs font-semibold">
+        <h3 id={headingId} className="text-muted text-label px-2 pt-2 pb-1 font-semibold">
           {label}
         </h3>
         <ul>{rows}</ul>
-        {more && <p className="text-muted px-2 pt-1 text-xs">{t('shell.launcher.moreMatches')}</p>}
+        {more && (
+          <p className="text-muted text-label px-2 pt-1">{t('shell.launcher.moreMatches')}</p>
+        )}
       </section>
     );
   };
@@ -371,7 +373,7 @@ export function PanelLauncher({
             placeholder={t('shell.launcher.placeholder')}
             spellCheck={false}
             autoComplete="off"
-            className="placeholder:text-muted text-ink-200 min-w-0 flex-1 bg-transparent text-sm outline-none"
+            className="placeholder:text-muted text-ink-200 text-body-lg min-w-0 flex-1 bg-transparent outline-none"
           />
           <Kbd>Esc</Kbd>
         </div>
@@ -383,7 +385,7 @@ export function PanelLauncher({
 
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
           {groups.length === 0 && !hasDestinations ? (
-            <p className="text-muted px-2 py-6 text-center text-sm">
+            <p className="text-muted text-body-lg px-2 py-6 text-center">
               {t('shell.launcher.noResults')}
             </p>
           ) : groups.length === 0 ? null : (
@@ -396,7 +398,10 @@ export function PanelLauncher({
                     aria-labelledby={headingId}
                     className="mb-2 break-inside-avoid"
                   >
-                    <h3 id={headingId} className="text-muted px-2 pt-2 pb-1 text-xs font-semibold">
+                    <h3
+                      id={headingId}
+                      className="text-muted text-label px-2 pt-2 pb-1 font-semibold"
+                    >
                       {group.label}
                     </h3>
                     <ul>
@@ -461,7 +466,7 @@ export function PanelLauncher({
                               onClick={() => {
                                 onTogglePin(entry.slot);
                               }}
-                              className={`hover:bg-sidebar-active-bg flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                              className={`hover:bg-sidebar-active-bg rounded-card flex h-8 w-8 shrink-0 items-center justify-center transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                                 isPinned ? 'text-bright-green' : 'text-muted hover:text-ink-200'
                               }`}
                             >
@@ -591,7 +596,7 @@ export function PanelLauncher({
             )}
         </div>
 
-        <div className="text-muted border-ink-800 flex h-10 shrink-0 items-center gap-4 border-t px-4 text-xs">
+        <div className="text-muted border-ink-800 text-label flex h-10 shrink-0 items-center gap-4 border-t px-4">
           <span className="flex items-center gap-1.5 pointer-coarse:hidden">
             <Kbd>{'↑↓'}</Kbd>
             {t('shell.launcher.hintMove')}

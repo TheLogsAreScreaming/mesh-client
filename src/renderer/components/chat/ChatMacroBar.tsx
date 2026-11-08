@@ -12,6 +12,8 @@ import {
   useChatMacrosStore,
 } from '@/renderer/stores/chatMacrosStore';
 
+import { buttonClassName } from '../ui/Button';
+
 export const CHAT_MACRO_MIN_VISIBLE = 6;
 
 /** Approximate button width per size in rem; drives how many fit before "More". */
@@ -103,7 +105,7 @@ export function ChatMacroBar({ placement, onApply, onEdit }: ChatMacroBarProps) 
         }}
         aria-label={t('chatMacros.show')}
         aria-expanded={false}
-        className="border-secondary-dark bg-sidebar-active-bg text-label text-ink-300 hover:text-ink-200 rounded-control inline-flex h-6 shrink-0 items-center gap-1 border px-2 transition-colors"
+        className={buttonClassName('secondary', 'sm', 'shrink-0 gap-1')}
       >
         <span>{t('chatMacros.show')}</span>
         <ChevronUp aria-hidden className="h-3.5 w-3.5" trigger={iconTrigger} size={14} />

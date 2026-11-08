@@ -6,6 +6,7 @@ import { formatMeshtasticNodeId } from '@/shared/nodeNameUtils';
 import { meshcoreHwModelIsContactTypeLabel } from '../lib/meshcoreUtils';
 import type { RemoteAdminSessionStatus } from '../lib/meshtasticRemoteAdmin';
 import type { ConfigTargetContext, MeshNode, RemoteAdminStatus } from '../lib/types';
+import { buttonClassName } from './ui/Button';
 
 interface ConfigureNodeSelectorProps {
   nodes: Map<number, MeshNode>;
@@ -90,7 +91,7 @@ export default function ConfigureNodeSelector({
   }, [isOpen]);
 
   if (!isLocalRadioConnected) {
-    return <p className="text-muted text-xs">{t('configureNode.requiresLocalRadio')}</p>;
+    return <p className="text-muted text-label">{t('configureNode.requiresLocalRadio')}</p>;
   }
 
   const selectedRemote =
@@ -113,7 +114,7 @@ export default function ConfigureNodeSelector({
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <span
           id="configure-node-select-label"
-          className="text-muted shrink-0 text-xs font-medium uppercase"
+          className="text-muted text-label shrink-0 font-medium uppercase"
         >
           {t('configureNode.label')}
         </span>
@@ -128,10 +129,10 @@ export default function ConfigureNodeSelector({
             onClick={() => {
               setIsOpen((o) => !o);
             }}
-            className="bg-secondary-dark focus:border-brand-green border-ink-600 text-ink-200 flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm focus:outline-none"
+            className={buttonClassName('secondary', 'md', 'w-full justify-between gap-2')}
           >
             <span className="truncate">{triggerLabel}</span>
-            <span className="text-muted shrink-0 text-xs" aria-hidden="true">
+            <span className="text-muted text-label shrink-0" aria-hidden="true">
               {isOpen ? '▴' : '▾'}
             </span>
           </button>
@@ -140,7 +141,7 @@ export default function ConfigureNodeSelector({
             <ul
               role="listbox"
               aria-label={t('configureNode.label')}
-              className="bg-deep-black shadow-level-4 border-ink-700 absolute top-full right-0 left-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-lg border py-1"
+              className="bg-deep-black shadow-level-4 border-ink-700 rounded-card absolute top-full right-0 left-0 z-50 mt-1 max-h-60 overflow-y-auto border py-1"
             >
               <li role="presentation">
                 <button
@@ -150,7 +151,7 @@ export default function ConfigureNodeSelector({
                   onClick={() => {
                     handleSelect(null);
                   }}
-                  className={`w-full px-3 py-2 text-left text-sm transition-colors ${
+                  className={`text-body-lg w-full px-3 py-2 text-left transition-colors ${
                     configureTargetNodeNum == null
                       ? 'text-brand-green bg-ink-800'
                       : 'text-ink-300 hover:bg-ink-800 hover:text-ink-100'
@@ -168,7 +169,7 @@ export default function ConfigureNodeSelector({
                     onClick={() => {
                       handleSelect(node.node_id);
                     }}
-                    className={`w-full px-3 py-2 text-left text-sm transition-colors ${
+                    className={`text-body-lg w-full px-3 py-2 text-left transition-colors ${
                       configureTargetNodeNum === node.node_id
                         ? 'text-brand-green bg-ink-800'
                         : 'text-ink-300 hover:bg-ink-800 hover:text-ink-100'
@@ -185,7 +186,7 @@ export default function ConfigureNodeSelector({
 
       {configTarget.mode === 'remote' && configTarget.error && (
         <div
-          className="rounded-lg border border-red-700/50 bg-red-900/20 px-3 py-2 text-sm text-red-200"
+          className="rounded-card border-danger-700/50 bg-danger-900/20 text-body-lg text-danger-200 border px-3 py-2"
           role="alert"
         >
           {t(configTarget.error)}
@@ -194,7 +195,7 @@ export default function ConfigureNodeSelector({
 
       {configTarget.mode === 'remote' && selectedRemote && (
         <div
-          className="rounded-lg border border-indigo-700/50 bg-indigo-900/20 px-3 py-2 text-sm text-indigo-100"
+          className="rounded-card border-info-700/50 bg-info-900/20 text-body-lg text-info-100 border px-3 py-2"
           role="status"
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -208,7 +209,7 @@ export default function ConfigureNodeSelector({
               {onRefresh && (
                 <button
                   type="button"
-                  className="text-xs text-indigo-300 hover:text-indigo-200"
+                  className="text-label text-info-300 hover:text-info-200"
                   aria-label={t('configureNode.refresh')}
                   disabled={configTarget.isLoading}
                   onClick={() => {
@@ -220,7 +221,7 @@ export default function ConfigureNodeSelector({
               )}
               <button
                 type="button"
-                className="text-xs text-indigo-300 hover:text-indigo-200"
+                className="text-label text-info-300 hover:text-info-200"
                 aria-label={t('configureNode.switchToLocal')}
                 onClick={() => {
                   onConfigureTargetChange(null);
@@ -231,7 +232,7 @@ export default function ConfigureNodeSelector({
             </div>
           </div>
           {configTarget.isLoading && (
-            <p className="text-muted mt-1 text-xs" role="status">
+            <p className="text-muted text-label mt-1" role="status">
               {remoteAdminSessionStatus === 'none'
                 ? t('configureNode.establishingSession')
                 : t('configureNode.loading')}
@@ -239,8 +240,8 @@ export default function ConfigureNodeSelector({
           )}
           {!configTarget.isLoading && remoteAdminSessionStatus !== 'none' && (
             <p
-              className={`mt-1 text-xs ${
-                remoteAdminSessionStatus === 'active' ? 'text-green-300' : 'text-orange-300'
+              className={`text-label mt-1 ${
+                remoteAdminSessionStatus === 'active' ? 'text-success-300' : 'text-warning-300'
               }`}
               role="status"
             >

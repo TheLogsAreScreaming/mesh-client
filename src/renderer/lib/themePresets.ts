@@ -15,7 +15,11 @@ export type ThemeSurfaceId =
   | 'deepSea'
   | 'dusk'
   | 'evergreen'
-  | 'highContrast';
+  | 'highContrast'
+  | 'daylight';
+
+/** Whether a surface is a dark or a light family; sets `data-tone` on <html>. */
+export type ThemeTone = 'dark' | 'light';
 
 export type ThemeAccentId = 'signature' | 'meshtastic' | 'meshcore' | 'sky' | 'classic';
 
@@ -24,6 +28,12 @@ export interface ThemeSurface {
   id: ThemeSurfaceId;
   labelKey: string;
   scale: InkScale;
+  /**
+   * `light` flips the meaning of the ink scale (950 is the lightest background, 50 the darkest
+   * text) and makes styles.css flip the status and categorical scales too
+   * (`html[data-tone='light']`). Omitted means dark.
+   */
+  tone?: ThemeTone;
 }
 
 export interface ThemeAccent {
@@ -33,6 +43,11 @@ export interface ThemeAccent {
   base: string;
   /** Fills under white text (the 700 step). */
   fill: string;
+  /**
+   * Accent text, icons and primary fills on light surfaces (Daylight): 4.5:1 against the light
+   * window, panel and control-fill steps, and under white text.
+   */
+  light: string;
 }
 
 function scale(values: readonly string[]): InkScale {
@@ -40,8 +55,7 @@ function scale(values: readonly string[]): InkScale {
 }
 
 /**
- * Surface families for App > Appearance > Colors, dark only (many older panels hard-code light
- * text). Charcoal (the Mesh Hub palette) is the default and must match the `--color-ink-*` values
+ * Surface families for App > Appearance > Colors. Every family but Daylight is dark. Charcoal (the Mesh Hub palette) is the default and must match the `--color-ink-*` values
  * in styles.css. The other families pass the same text and border contrast pairs
  * (`themePresets.test.ts`).
  */
@@ -202,6 +216,27 @@ export const THEME_SURFACES: readonly ThemeSurface[] = [
       '#11151c',
     ]),
   },
+  {
+    // Daylight: a light family for sunlight and bright rooms. Same step roles as the dark families
+    // (950 window, 900 panels, 800 control fills, 700 borders, 400 muted text, 50-200 body text),
+    // with the values running light to dark. 400 keeps 4.5:1 on 900 and 950.
+    id: 'daylight',
+    labelKey: 'appPanel.themeSurfaces.daylight',
+    tone: 'light',
+    scale: scale([
+      '#111110',
+      '#1c1c1b',
+      '#2b2b2a',
+      '#3d3d3b',
+      '#575755',
+      '#7a7a77',
+      '#a3a3a0',
+      '#d6d6d3',
+      '#ebebe8',
+      '#ffffff',
+      '#f5f5f3',
+    ]),
+  },
 ];
 
 /** Signature orange (default), the protocol scales, plus two extras; any accent pairs with any surface. */
@@ -211,17 +246,37 @@ export const THEME_ACCENTS: readonly ThemeAccent[] = [
     labelKey: 'appPanel.themeAccents.signature',
     base: '#ffa31a',
     fill: '#b35f00',
+    light: '#8f4a00',
   },
   {
     id: 'meshtastic',
     labelKey: 'appPanel.themeAccents.meshtastic',
     base: '#67e8b4',
     fill: '#047857',
+    light: '#046c4e',
   },
-  { id: 'meshcore', labelKey: 'appPanel.themeAccents.meshcore', base: '#00d3f2', fill: '#0e7490' },
-  { id: 'sky', labelKey: 'appPanel.themeAccents.sky', base: '#38bdf8', fill: '#0369a1' },
+  {
+    id: 'meshcore',
+    labelKey: 'appPanel.themeAccents.meshcore',
+    base: '#00d3f2',
+    fill: '#0e7490',
+    light: '#0a6178',
+  },
+  {
+    id: 'sky',
+    labelKey: 'appPanel.themeAccents.sky',
+    base: '#38bdf8',
+    fill: '#0369a1',
+    light: '#035d8f',
+  },
   // The pre-v6 green.
-  { id: 'classic', labelKey: 'appPanel.themeAccents.classic', base: '#86efac', fill: '#15803d' },
+  {
+    id: 'classic',
+    labelKey: 'appPanel.themeAccents.classic',
+    base: '#86efac',
+    fill: '#15803d',
+    light: '#146c34',
+  },
 ];
 
 export const DEFAULT_THEME_SURFACE_ID: ThemeSurfaceId = 'charcoal';
@@ -255,10 +310,23 @@ export function surfaceThemeColors(surface: ThemeSurface): Record<SurfaceTokenKe
   return out;
 }
 
-export function accentThemeColors(accent: ThemeAccent): Record<AccentTokenKey, string> {
+/** The surface's tone (dark unless the family says otherwise). */
+export function themeSurfaceTone(surface: ThemeSurface): ThemeTone {
+  return surface.tone ?? 'dark';
+}
+
+/**
+ * Accent tokens for one tone. On a light surface the bright base step fails contrast, so accent
+ * text and primary fills take the accent's `light` step instead.
+ */
+export function accentThemeColors(
+  accent: ThemeAccent,
+  tone: ThemeTone = 'dark',
+): Record<AccentTokenKey, string> {
+  const base = tone === 'light' ? accent.light : accent.base;
   return {
-    brandGreen: accent.base,
-    brightGreen: accent.base,
+    brandGreen: base,
+    brightGreen: base,
     readableGreen: accent.fill,
     chatOutgoingBg: accent.fill,
     chatOutgoingBorder: accent.base,
@@ -269,7 +337,10 @@ export function themeColorsFor(
   surface: ThemeSurface,
   accent: ThemeAccent,
 ): Record<ThemeColorKey, string> {
-  return { ...surfaceThemeColors(surface), ...accentThemeColors(accent) };
+  return {
+    ...surfaceThemeColors(surface),
+    ...accentThemeColors(accent, themeSurfaceTone(surface)),
+  };
 }
 
 function sameColors(expected: Record<string, string>, colors: Record<ThemeColorKey, string>) {
@@ -288,7 +359,13 @@ export function matchThemeSurface(
 
 /** The accent whose colors match exactly, or null for a custom accent. */
 export function matchThemeAccent(colors: Record<ThemeColorKey, string>): ThemeAccentId | null {
-  return THEME_ACCENTS.find((a) => sameColors(accentThemeColors(a), colors))?.id ?? null;
+  return (
+    THEME_ACCENTS.find(
+      (a) =>
+        sameColors(accentThemeColors(a, 'dark'), colors) ||
+        sameColors(accentThemeColors(a, 'light'), colors),
+    )?.id ?? null
+  );
 }
 
 /** A stored surface id, or the default when it is missing or unknown. */
@@ -315,4 +392,6 @@ export function applyThemeSurface(id: ThemeSurfaceId): void {
   for (const step of INK_STEPS) {
     root.style.setProperty(`--color-ink-${step}`, surface.scale[step]);
   }
+  root.dataset.tone = themeSurfaceTone(surface);
+  root.style.colorScheme = themeSurfaceTone(surface);
 }

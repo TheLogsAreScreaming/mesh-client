@@ -52,7 +52,7 @@ export default function QrCodeImage({ value, size = 180, className, ariaLabel }:
 
   if (result.key === requestKey && result.error) {
     return (
-      <p className="text-xs text-red-400" role="alert">
+      <p className="text-label text-danger-400" role="alert">
         {t('qrIngest.encodeFailed')}
       </p>
     );

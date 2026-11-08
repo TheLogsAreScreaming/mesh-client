@@ -1,4 +1,4 @@
-import { CircleCheck, CircleX, Info, Siren, TriangleAlert } from 'lucide-react-motion';
+import { CircleCheck, CircleX, Info, Siren, TriangleAlert, X } from 'lucide-react-motion';
 import {
   createContext,
   useCallback,
@@ -9,6 +9,8 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+
+import { type Tone, TONE_ICON_CLASS, TONE_STRIPE_CLASS } from './ui/tone';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info' | 'emergency';
 
@@ -114,72 +116,108 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+const TOAST_TONE: Record<ToastType, Tone> = {
+  success: 'success',
+  error: 'danger',
+  warning: 'warning',
+  info: 'info',
+  emergency: 'danger',
+};
+
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: number) => void }) {
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const remainingRef = useRef(toast.duration);
+  const startedAtRef = useRef(0);
 
   const dismiss = useCallback(() => {
     clearTimeout(timerRef.current);
     setVisible(false);
     dismissTimerRef.current = setTimeout(() => {
       onDismiss(toast.id);
-    }, 300);
+    }, 200);
   }, [onDismiss, toast.id]);
 
+  const startTimer = useCallback(() => {
+    clearTimeout(timerRef.current);
+    startedAtRef.current = Date.now();
+    timerRef.current = setTimeout(dismiss, remainingRef.current);
+  }, [dismiss]);
+
+  // Hovering or focusing a toast pauses its timer, so it never vanishes while being read or used.
+  const pauseTimer = useCallback(() => {
+    clearTimeout(timerRef.current);
+    remainingRef.current = Math.max(
+      1000,
+      remainingRef.current - (Date.now() - startedAtRef.current),
+    );
+  }, []);
+
   useEffect(() => {
-    // Slide in
     requestAnimationFrame(() => {
       setVisible(true);
     });
-    // Auto-dismiss
-    timerRef.current = setTimeout(dismiss, toast.duration);
+    remainingRef.current = toast.duration;
+    startTimer();
     return () => {
       clearTimeout(timerRef.current);
       clearTimeout(dismissTimerRef.current);
     };
-  }, [toast, dismiss]);
+  }, [toast, startTimer]);
 
   const Icon = TOAST_ICON[toast.type];
-
-  const colors = {
-    success: 'bg-green-950/90 border-green-500 text-green-200',
-    error: 'bg-red-900/90 border-red-600 text-red-200',
-    warning: 'bg-orange-900/90 border-orange-600 text-orange-200',
-    info: 'bg-deep-black/90 border-ink-600 text-ink-200',
-    emergency: 'bg-red-900/95 border-red-500 text-red-100',
-  }[toast.type];
+  const tone = TOAST_TONE[toast.type];
+  const urgent = toast.type === 'error' || toast.type === 'emergency';
+  const emergency = toast.type === 'emergency';
 
   return (
     <div
-      className={`shadow-level-3 pointer-events-auto flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm backdrop-blur-sm transition-all duration-300 ${colors} ${
-        visible ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'
-      }`}
+      role={urgent ? 'alert' : 'status'}
+      aria-live={urgent ? 'assertive' : 'polite'}
+      onMouseEnter={pauseTimer}
+      onMouseLeave={startTimer}
+      onFocus={pauseTimer}
+      onBlur={startTimer}
+      className={`shadow-level-4 rounded-card text-body-lg pointer-events-auto relative flex w-[min(24rem,calc(100vw-2rem))] items-start gap-3 overflow-hidden border py-3 pr-3 pl-4 transition-all duration-200 ${
+        emergency ? 'bg-danger-900 border-danger-500' : 'bg-deep-black border-ink-700'
+      } ${visible ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'}`}
     >
-      <Icon aria-hidden className="h-4 w-4 shrink-0" />
-      <span className="flex-1">{toast.message}</span>
-      {toast.action ? (
+      <span aria-hidden className={`absolute inset-y-0 left-0 w-1 ${TONE_STRIPE_CLASS[tone]}`} />
+      <Icon
+        aria-hidden
+        className={`mt-0.5 h-4 w-4 shrink-0 ${emergency ? 'text-danger-200' : TONE_ICON_CLASS[tone]}`}
+      />
+      <span
+        className={`min-w-0 flex-1 leading-snug ${emergency ? 'text-danger-50' : 'text-ink-100'}`}
+      >
+        {toast.message}
+      </span>
+      <div className="-my-0.5 flex shrink-0 items-center gap-1">
+        {toast.action ? (
+          <button
+            type="button"
+            onClick={() => {
+              toast.action?.onClick();
+              dismiss();
+            }}
+            aria-label={toast.action.label}
+            className="text-bright-green hover:bg-ink-800 rounded-control text-label px-2 py-1 font-semibold"
+          >
+            {toast.action.label}
+          </button>
+        ) : null}
         <button
           type="button"
-          onClick={() => {
-            toast.action?.onClick();
-            dismiss();
-          }}
-          aria-label={toast.action.label}
-          className="ml-1 shrink-0 rounded border border-current/40 px-2 py-0.5 text-xs font-medium hover:bg-white/10"
+          onClick={dismiss}
+          aria-label={t('common.dismiss')}
+          title={t('common.dismiss')}
+          className="text-muted hover:text-ink-100 hover:bg-ink-800 rounded-control flex h-6 w-6 items-center justify-center"
         >
-          {toast.action.label}
+          <X aria-hidden className="h-3.5 w-3.5" />
         </button>
-      ) : null}
-      <button
-        type="button"
-        onClick={dismiss}
-        aria-label={t('common.dismiss')}
-        className="text-muted hover:text-ink-200 ml-2 shrink-0 text-xs font-medium"
-      >
-        {t('common.dismiss')}
-      </button>
+      </div>
     </div>
   );
 }

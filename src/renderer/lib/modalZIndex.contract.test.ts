@@ -29,8 +29,11 @@ describe('modal z-index layering contract', () => {
   it('repeater auth hook uses Z_NESTED_AUTH_OVERLAY above the node modal', () => {
     const src = readRenderer('hooks/useMeshcoreRepeaterRemoteAuth.tsx');
     expect(src).toContain('Z_NESTED_AUTH_OVERLAY');
-    expect(src).toMatch(/style=\{\{\s*zIndex:\s*Z_NESTED_AUTH_OVERLAY\s*\}\}/);
+    // Rendered through the shared Dialog, which applies `zIndex` as an inline style.
+    expect(src).toMatch(/zIndex=\{Z_NESTED_AUTH_OVERLAY\}/);
     expect(src).not.toMatch(/z-\[200\]/);
+    const dialog = readRenderer('components/ui/Dialog.tsx');
+    expect(dialog).toMatch(/style=\{zIndex == null \? undefined : \{ zIndex \}\}/);
   });
 
   it('constants remain ordered so auth can cover node detail and tooltips cover both', () => {

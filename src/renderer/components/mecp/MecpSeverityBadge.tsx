@@ -5,16 +5,16 @@ import { severityLabelKey } from '@/renderer/lib/mecp/mecpMessages';
 
 /** Badge fill for MECP severity 0–3 (MAYDAY/URGENT red, SAFETY yellow, ROUTINE blue). */
 export const MECP_SEVERITY_BADGE_CLASSES: Record<Severity, string> = {
-  0: 'bg-red-700 text-white',
-  1: 'bg-red-700 text-white',
+  0: 'bg-danger-700 text-white',
+  1: 'bg-danger-700 text-white',
   2: 'bg-yellow-600 text-black',
   3: 'bg-blue-700 text-white',
 };
 
 /** Stroke color for the unread MECP shield on chat chips (non-text graphic, 3:1 on dark chips). */
 export const MECP_UNREAD_ICON_CLASSES: Record<Severity, string> = {
-  0: 'text-red-500',
-  1: 'text-red-500',
+  0: 'text-danger-500',
+  1: 'text-danger-500',
   2: 'text-yellow-400',
   3: 'text-blue-400',
 };
@@ -23,8 +23,8 @@ export const MECP_UNREAD_ICON_CLASSES: Record<Severity, string> = {
 export function mecpChatBubbleToneClasses(severity: Severity, isOwn: boolean): string {
   if (severity <= 1) {
     return isOwn
-      ? 'border border-red-400/70 bg-red-900/30 font-semibold'
-      : 'border border-dashed border-red-500 bg-red-950/40 font-semibold';
+      ? 'border border-danger-400/70 bg-danger-900/30 font-semibold'
+      : 'border border-dashed border-danger-500 bg-danger-950/40 font-semibold';
   }
   if (severity === 2) {
     return isOwn

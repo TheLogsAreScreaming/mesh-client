@@ -18,25 +18,25 @@ const SEVERITY_STYLE: Record<
   { strip: string; icon: string; title: string; body: string; control: string }
 > = {
   info: {
-    strip: 'border-indigo-700 bg-indigo-900/80',
-    icon: 'text-indigo-300',
-    title: 'text-indigo-100',
-    body: 'text-indigo-200',
-    control: 'text-indigo-200 hover:text-white',
+    strip: 'border-info-700 bg-info-900/80',
+    icon: 'text-info-300',
+    title: 'text-info-100',
+    body: 'text-info-200',
+    control: 'text-info-200 hover:text-ink-50',
   },
   warning: {
-    strip: 'border-orange-700 bg-orange-900/80',
-    icon: 'text-orange-300',
-    title: 'text-orange-100',
-    body: 'text-orange-200',
-    control: 'text-orange-200 hover:text-white',
+    strip: 'border-warning-700 bg-warning-900/80',
+    icon: 'text-warning-300',
+    title: 'text-warning-100',
+    body: 'text-warning-200',
+    control: 'text-warning-200 hover:text-ink-50',
   },
   critical: {
-    strip: 'border-red-700 bg-red-900/80',
-    icon: 'text-red-300',
-    title: 'text-red-100',
-    body: 'text-red-200',
-    control: 'text-red-200 hover:text-white',
+    strip: 'border-danger-700 bg-danger-900/80',
+    icon: 'text-danger-300',
+    title: 'text-danger-100',
+    body: 'text-danger-200',
+    control: 'text-danger-200 hover:text-ink-50',
   },
 };
 
@@ -81,8 +81,10 @@ export function ServiceAnnouncementStrip({
     >
       <Icon aria-hidden className={`${ICON_MD} mt-0.5 ${style.icon}`} />
       <div className="min-w-0 flex-1">
-        <p className={`text-sm font-semibold ${style.title}`}>{current.title}</p>
-        <p className={`text-sm break-words whitespace-pre-wrap ${style.body}`}>{current.body}</p>
+        <p className={`text-body-lg font-semibold ${style.title}`}>{current.title}</p>
+        <p className={`text-body-lg break-words whitespace-pre-wrap ${style.body}`}>
+          {current.body}
+        </p>
         {current.url ? (
           <button
             type="button"
@@ -90,7 +92,7 @@ export function ServiceAnnouncementStrip({
               if (current.url) onOpenUrl(current.url);
             }}
             aria-label={t('serviceAnnouncement.openLinkAria', { label: linkLabel })}
-            className={`mt-1 inline-flex items-center gap-1 text-sm font-medium underline ${style.control}`}
+            className={`text-body-lg mt-1 inline-flex items-center gap-1 font-medium underline ${style.control}`}
           >
             {linkLabel}
             <ExternalLink aria-hidden className={ICON_SM} />
@@ -105,7 +107,7 @@ export function ServiceAnnouncementStrip({
               setIndex((position + 1) % total);
             }}
             aria-label={t('serviceAnnouncement.next')}
-            className={`inline-flex items-center gap-1 rounded px-1.5 py-1 text-xs font-medium ${style.control}`}
+            className={`text-label inline-flex items-center gap-1 rounded px-1.5 py-1 font-medium ${style.control}`}
           >
             {t('serviceAnnouncement.position', { current: position + 1, total })}
             <ChevronRight aria-hidden className={ICON_SM} />

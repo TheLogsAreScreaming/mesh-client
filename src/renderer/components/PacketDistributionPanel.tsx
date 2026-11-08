@@ -175,7 +175,7 @@ interface LegendEntryProps {
 function LegendEntry({ name, value, total, fill }: LegendEntryProps) {
   const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
   return (
-    <div className="flex items-center gap-2 text-xs">
+    <div className="text-label flex items-center gap-2">
       <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: fill }} />
       <span className="text-ink-300">
         {name}:{' '}
@@ -201,15 +201,15 @@ function DonutChart({ title, slices }: DonutProps) {
   if (slices.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-2">
-        <p className="text-ink-400 text-sm font-medium">{title}</p>
-        <p className="text-ink-600 text-xs">{t('packetDistribution.noData')}</p>
+        <p className="text-ink-400 text-body-lg font-medium">{title}</p>
+        <p className="text-ink-600 text-label">{t('packetDistribution.noData')}</p>
       </div>
     );
   }
 
   return (
     <div className="flex flex-1 flex-col gap-3">
-      <p className="text-ink-300 text-center text-sm font-medium">{title}</p>
+      <p className="text-ink-300 text-body-lg text-center font-medium">{title}</p>
       <div className="flex flex-col items-center gap-4 md:flex-row md:items-start">
         <div className="h-44 w-44 shrink-0">
           <ResponsiveContainer width="100%" height={176}>
@@ -321,7 +321,7 @@ export default function PacketDistributionPanel({
       <div className="flex flex-wrap items-center gap-3">
         {/* Main view toggle */}
         <div
-          className="border-ink-700 flex rounded border text-xs"
+          className="border-ink-700 text-label flex rounded border"
           data-setting-anchor="stats.packets.view"
         >
           {(
@@ -366,7 +366,7 @@ export default function PacketDistributionPanel({
         {/* Time filter — Overall view only */}
         {mainView === 'overall' && (
           <div
-            className="border-ink-700 flex rounded border text-xs"
+            className="border-ink-700 text-label flex rounded border"
             data-setting-anchor="stats.packets.timeRange"
           >
             {TIME_FILTER_VALUES.map((value) => {
@@ -416,7 +416,7 @@ export default function PacketDistributionPanel({
           </select>
         )}
 
-        <span className="text-muted ml-auto text-xs">
+        <span className="text-muted text-label ml-auto">
           {t('packetDistribution.packets', { count: filtered.length })}
         </span>
       </div>
@@ -431,7 +431,7 @@ export default function PacketDistributionPanel({
         <div className="flex min-h-0 flex-1 flex-col gap-4">
           {effectiveType ? (
             <>
-              <p className="text-ink-400 text-sm">
+              <p className="text-ink-400 text-body-lg">
                 {t('packetDistribution.devicesTransmitting')}{' '}
                 <span className="text-ink-200 font-mono">{effectiveType}</span>
                 {' — '}
@@ -475,7 +475,7 @@ export default function PacketDistributionPanel({
               </div>
             </>
           ) : (
-            <p className="text-ink-600 text-sm">{t('packetDistribution.noPacketsYet')}</p>
+            <p className="text-ink-600 text-body-lg">{t('packetDistribution.noPacketsYet')}</p>
           )}
         </div>
       )}

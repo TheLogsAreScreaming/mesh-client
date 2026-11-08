@@ -28,8 +28,10 @@ export default function ChannelUtilizationChart({ nodes }: ChannelUtilizationCha
   if (rows.length === 0) {
     return (
       <div className="border-ink-700 bg-ink-800/50 mt-6 rounded border p-4">
-        <h3 className="text-ink-300 mb-1 text-sm font-medium">{t('channelUtilization.title')}</h3>
-        <p className="text-muted text-xs">{t('channelUtilization.noData')}</p>
+        <h3 className="text-ink-300 text-body-lg mb-1 font-medium">
+          {t('channelUtilization.title')}
+        </h3>
+        <p className="text-muted text-label">{t('channelUtilization.noData')}</p>
       </div>
     );
   }
@@ -38,7 +40,9 @@ export default function ChannelUtilizationChart({ nodes }: ChannelUtilizationCha
 
   return (
     <div className="border-ink-700 bg-ink-800/50 mt-6 rounded border p-4">
-      <h3 className="text-ink-300 mb-1 text-sm font-medium">{t('channelUtilization.title')}</h3>
+      <h3 className="text-ink-300 text-body-lg mb-1 font-medium">
+        {t('channelUtilization.title')}
+      </h3>
       <ResponsiveContainer width="100%" height={chartHeight}>
         <BarChart data={rows} layout="vertical" margin={{ top: 0, right: 48, left: 0, bottom: 0 }}>
           <XAxis

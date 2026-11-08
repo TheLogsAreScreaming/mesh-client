@@ -406,7 +406,8 @@
       "deepSea": "Глубина",
       "dusk": "Сумерки",
       "evergreen": "Хвоя",
-      "highContrast": "Высокая контрастность"
+      "highContrast": "Высокая контрастность",
+      "daylight": "Дневной свет"
     },
     "themeAccents": {
       "heading": "Акцент",

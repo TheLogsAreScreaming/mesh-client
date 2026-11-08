@@ -114,12 +114,12 @@ describe('MecpSeverityBadge', () => {
   });
 
   it('uses red for 0–1, yellow for 2, blue for 3', () => {
-    expect(MECP_SEVERITY_BADGE_CLASSES[0]).toContain('bg-red-700');
-    expect(MECP_SEVERITY_BADGE_CLASSES[1]).toContain('bg-red-700');
+    expect(MECP_SEVERITY_BADGE_CLASSES[0]).toContain('bg-danger-700');
+    expect(MECP_SEVERITY_BADGE_CLASSES[1]).toContain('bg-danger-700');
     expect(MECP_SEVERITY_BADGE_CLASSES[2]).toContain('bg-yellow-600');
     expect(MECP_SEVERITY_BADGE_CLASSES[3]).toContain('bg-blue-700');
-    expect(mecpChatBubbleToneClasses(0, false)).toContain('border-red-500');
-    expect(mecpChatBubbleToneClasses(1, true)).toContain('border-red-400');
+    expect(mecpChatBubbleToneClasses(0, false)).toContain('border-danger-500');
+    expect(mecpChatBubbleToneClasses(1, true)).toContain('border-danger-400');
     expect(mecpChatBubbleToneClasses(2, false)).toContain('border-yellow-500');
     expect(mecpChatBubbleToneClasses(3, true)).toContain('border-blue-400');
   });

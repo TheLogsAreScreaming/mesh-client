@@ -7,6 +7,7 @@ import type { ConfigTargetContext } from '@/renderer/lib/types';
 import { ConfirmModal } from './ConfirmModal';
 import { useToast } from './Toast';
 import { buttonClassName } from './ui/Button';
+import { Callout } from './ui/Callout';
 
 interface PendingAction {
   name: string;
@@ -82,19 +83,21 @@ export default function AdminPanel({
 
   return (
     <div className="w-full space-y-4">
-      <h2 className="text-xl font-semibold text-red-400">{t('tabs.admin')}</h2>
+      <h2 className="text-display text-danger-400 font-semibold">{t('tabs.admin')}</h2>
 
       {!isConnected && (
-        <div className="rounded-lg border border-orange-700 bg-orange-900/30 px-4 py-2 text-sm text-orange-300">
+        <Callout tone="warning" role="none">
           {t('radioPanel.connectToConfigure')}
-        </div>
+        </Callout>
       )}
 
       {/* ═══ Device Commands ═══ */}
       <div className="space-y-3">
-        <h3 className="text-sm font-medium text-orange-400">{t('radioPanel.deviceCommands')}</h3>
-        <div className="space-y-2 rounded-lg border border-orange-900 p-4">
-          <p className="text-xs text-orange-400/80">
+        <h3 className="text-body-lg text-warning-400 font-medium">
+          {t('radioPanel.deviceCommands')}
+        </h3>
+        <div className="rounded-card border-warning-900 space-y-2 border p-4">
+          <p className="text-label text-warning-400/80">
             {t('radioPanel.deviceCommandsImmediateWarning')}
           </p>
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
@@ -112,7 +115,7 @@ export default function AdminPanel({
                 }}
                 disabled={localOnlyCommandsDisabled || !onEnterDfu}
                 data-setting-anchor="admin.deviceCommands.enterDfu"
-                className="rounded-lg border border-orange-800/60 bg-orange-900/30 px-4 py-3 text-sm font-medium text-orange-200 transition-colors hover:bg-orange-900/50 disabled:opacity-50"
+                className="rounded-card border-warning-800/60 bg-warning-900/30 text-body-lg text-warning-200 hover:bg-warning-900/50 border px-4 py-3 font-medium transition-colors disabled:opacity-50"
               >
                 {t('radioPanel.enterDfuButton')}
               </button>
@@ -133,7 +136,7 @@ export default function AdminPanel({
               }}
               disabled={!isConnected}
               data-setting-anchor="admin.deviceCommands.reboot"
-              className="rounded-lg border border-orange-800/60 bg-orange-900/30 px-4 py-3 text-sm font-medium text-orange-200 transition-colors hover:bg-orange-900/50 disabled:opacity-50"
+              className="rounded-card border-warning-800/60 bg-warning-900/30 text-body-lg text-warning-200 hover:bg-warning-900/50 border px-4 py-3 font-medium transition-colors disabled:opacity-50"
             >
               {t('radioPanel.rebootButton')}
             </button>
@@ -152,7 +155,7 @@ export default function AdminPanel({
                 }}
                 disabled={localOnlyCommandsDisabled || !onRebootOta}
                 data-setting-anchor="admin.deviceCommands.rebootOta"
-                className="rounded-lg border border-orange-800/60 bg-orange-900/30 px-4 py-3 text-sm font-medium text-orange-200 transition-colors hover:bg-orange-900/50 disabled:opacity-50"
+                className="rounded-card border-warning-800/60 bg-warning-900/30 text-body-lg text-warning-200 hover:bg-warning-900/50 border px-4 py-3 font-medium transition-colors disabled:opacity-50"
               >
                 {t('radioPanel.rebootOtaButton')}
               </button>
@@ -174,7 +177,7 @@ export default function AdminPanel({
                 }}
                 disabled={!isConnected}
                 data-setting-anchor="admin.deviceCommands.resetNodeDb"
-                className="rounded-lg border border-orange-800/60 bg-orange-900/30 px-4 py-3 text-sm font-medium text-orange-200 transition-colors hover:bg-orange-900/50 disabled:opacity-50"
+                className="rounded-card border-warning-800/60 bg-warning-900/30 text-body-lg text-warning-200 hover:bg-warning-900/50 border px-4 py-3 font-medium transition-colors disabled:opacity-50"
               >
                 {t('radioPanel.resetNodeDbButton')}
               </button>
@@ -194,7 +197,7 @@ export default function AdminPanel({
                 }}
                 disabled={!isConnected}
                 data-setting-anchor="admin.deviceCommands.shutdown"
-                className="rounded-lg border border-orange-800/60 bg-orange-900/30 px-4 py-3 text-sm font-medium text-orange-200 transition-colors hover:bg-orange-900/50 disabled:opacity-50"
+                className="rounded-card border-warning-800/60 bg-warning-900/30 text-body-lg text-warning-200 hover:bg-warning-900/50 border px-4 py-3 font-medium transition-colors disabled:opacity-50"
               >
                 {t('radioPanel.shutdownButton')}
               </button>
@@ -206,9 +209,9 @@ export default function AdminPanel({
       {/* ═══ Danger Zone ═══ */}
       {capabilities?.hasFactoryReset !== false && (
         <div className="space-y-3">
-          <h3 className="text-sm font-medium text-red-400">{t('radioPanel.dangerZone')}</h3>
-          <div className="space-y-2 rounded-lg border border-red-900 p-4">
-            <p className="text-xs text-red-400/80">{t('radioPanel.dangerZonePermanent')}</p>
+          <h3 className="text-body-lg text-danger-400 font-medium">{t('radioPanel.dangerZone')}</h3>
+          <div className="rounded-card border-danger-900 space-y-2 border p-4">
+            <p className="text-label text-danger-400/80">{t('radioPanel.dangerZonePermanent')}</p>
             {!isRemoteTarget && (
               <button
                 type="button"

@@ -162,7 +162,7 @@ export function MeasureControl() {
           {active ? (
             <div
               role="status"
-              className="bg-deep-black/90 border-ink-700 text-ink-100 rounded-lg border px-2.5 py-1.5 text-xs"
+              className="bg-deep-black/90 border-ink-700 text-ink-100 rounded-card text-label border px-2.5 py-1.5"
             >
               {points.length < 2
                 ? t('mapPanel.measureHint')

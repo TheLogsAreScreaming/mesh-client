@@ -17,12 +17,12 @@ export function AppAboutSection() {
   const { t } = useTranslation();
   return (
     <section aria-labelledby="app-about-heading" className="mt-8 space-y-3">
-      <h3 id="app-about-heading" className="text-muted text-sm font-medium">
+      <h3 id="app-about-heading" className="text-muted text-body-lg font-medium">
         {t('appPanel.aboutSection')}
       </h3>
       <div className="space-y-2">
         <MeshHubWordmark label={t('app.brandName')} />
-        <div className="min-w-0 text-sm">
+        <div className="text-body-lg min-w-0">
           <p className="text-muted">
             {t('app.footerSlogan')}{' '}
             <span className="inline-flex flex-wrap gap-x-3">

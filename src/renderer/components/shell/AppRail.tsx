@@ -76,12 +76,19 @@ export function AppRail({
         onClick={() => {
           onSectionSelect(section.id);
         }}
-        className={`relative flex h-14 w-15 shrink-0 flex-col items-center justify-center gap-1 rounded-[10px] transition-colors [@media(max-height:720px)]:h-12 ${
+        className={`rounded-container relative flex h-14 w-15 shrink-0 flex-col items-center justify-center gap-1 transition-colors duration-150 [@media(max-height:720px)]:h-12 ${
           isActive
             ? 'bg-sidebar-active-bg text-bright-green'
             : 'text-muted hover:bg-sidebar-active-bg/60 hover:text-ink-200'
         }`}
       >
+        {isActive && (
+          <span
+            aria-hidden="true"
+            data-rail-active-indicator=""
+            className="bg-brand-green absolute top-1/2 -left-1.5 h-6 w-1 -translate-y-1/2 rounded-full"
+          />
+        )}
         <NavSectionIcon id={section.id} />
         <span className="text-label max-w-full truncate px-1 leading-none font-medium">
           {visibleLabel}
@@ -132,12 +139,18 @@ export function AppRail({
               onClick={() => {
                 onPinSelect?.(pin.tabIndex);
               }}
-              className={`rounded-modal flex h-10 w-10 shrink-0 items-center justify-center transition-colors ${
+              className={`rounded-modal relative flex h-10 w-10 shrink-0 items-center justify-center transition-colors duration-150 ${
                 isActive
                   ? 'bg-sidebar-active-bg text-bright-green'
                   : 'text-muted hover:bg-sidebar-active-bg/60 hover:text-ink-200'
               }`}
             >
+              {isActive && (
+                <span
+                  aria-hidden="true"
+                  className="bg-brand-green absolute top-1/2 -left-3 h-5 w-1 -translate-y-1/2 rounded-full"
+                />
+              )}
               <TabIcon name={pin.iconSlot} />
             </button>
           );

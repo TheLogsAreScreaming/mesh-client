@@ -30,20 +30,20 @@ const ROLE_INFO: Record<number, RoleInfo> = {
   0: { labelKey: 'roleInfo.roles.client', colorClass: 'text-ink-400', isBadge: false },
   1: { labelKey: 'roleInfo.roles.clientMute', colorClass: 'text-muted', isBadge: false },
   2: { labelKey: 'roleInfo.roles.router', colorClass: 'text-ink-400', isBadge: false },
-  3: { labelKey: 'roleInfo.roles.routerClient', colorClass: 'text-indigo-400', isBadge: false },
+  3: { labelKey: 'roleInfo.roles.routerClient', colorClass: 'text-info-400', isBadge: false },
   4: {
     labelKey: 'roleInfo.roles.repeater',
-    colorClass: 'text-orange-400',
+    colorClass: 'text-warning-400',
     isBadge: true,
-    badgeClass: 'bg-orange-900/60 text-orange-300 border border-orange-700/40',
+    badgeClass: 'bg-warning-900/60 text-warning-300 border border-warning-700/40',
   },
-  5: { labelKey: 'roleInfo.roles.tracker', colorClass: 'text-green-400', isBadge: false },
+  5: { labelKey: 'roleInfo.roles.tracker', colorClass: 'text-success-400', isBadge: false },
   6: { labelKey: 'roleInfo.roles.sensor', colorClass: 'text-teal-400', isBadge: false },
   7: {
     labelKey: 'roleInfo.roles.tak',
-    colorClass: 'text-red-400',
+    colorClass: 'text-danger-400',
     isBadge: true,
-    badgeClass: 'bg-red-900/60 text-red-300 border border-red-700/40',
+    badgeClass: 'bg-danger-900/60 text-danger-300 border border-danger-700/40',
   },
   8: { labelKey: 'roleInfo.roles.clientHidden', colorClass: 'text-purple-400', isBadge: false },
   9: {
@@ -54,9 +54,9 @@ const ROLE_INFO: Record<number, RoleInfo> = {
   },
   10: {
     labelKey: 'roleInfo.roles.takTracker',
-    colorClass: 'text-red-300',
+    colorClass: 'text-danger-300',
     isBadge: true,
-    badgeClass: 'bg-red-950/70 text-red-200 border border-red-800/50',
+    badgeClass: 'bg-danger-950/70 text-danger-200 border border-danger-800/50',
   },
   11: { labelKey: 'roleInfo.roles.routerLate', colorClass: 'text-ink-400', isBadge: false },
   12: { labelKey: 'roleInfo.roles.clientBase', colorClass: 'text-ink-400', isBadge: false },
@@ -111,13 +111,13 @@ export function RoleIcon({ role }: { role: number | undefined }) {
 export function RoleDisplay({ role }: { role: number | undefined }) {
   const { t } = useTranslation();
   if (role === undefined) {
-    return <span className="text-ink-600 text-xs">{t('roleInfo.placeholderDash')}</span>;
+    return <span className="text-ink-600 text-label">{t('roleInfo.placeholderDash')}</span>;
   }
   const info = getRoleInfo(role);
   if (info.isBadge && info.badgeClass) {
     return (
       <span
-        className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium ${info.badgeClass}`}
+        className={`text-label inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium ${info.badgeClass}`}
       >
         <RoleIcon role={role} />
         {t(info.labelKey, info.labelParams ?? undefined)}
@@ -125,7 +125,7 @@ export function RoleDisplay({ role }: { role: number | undefined }) {
     );
   }
   return (
-    <span className={`inline-flex items-center gap-1 text-xs ${info.colorClass}`}>
+    <span className={`text-label inline-flex items-center gap-1 ${info.colorClass}`}>
       <RoleIcon role={role} />
       {t(info.labelKey, info.labelParams ?? undefined)}
     </span>

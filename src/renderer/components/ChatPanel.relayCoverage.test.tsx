@@ -116,7 +116,7 @@ describe('RelayCoverageLine / ChatPanel.relayCoverage', () => {
       broadcastHeard: true,
     });
     render(<RelayCoverageLine protocol="meshtastic" messageId={MSG} isOwn identityId={IDENTITY} />);
-    expect(screen.getByText('Heard by network')).toHaveClass('text-green-400');
+    expect(screen.getByText('Heard by network')).toHaveClass('text-success-400');
   });
 
   it('renders Meshtastic not-heard timeout', () => {
@@ -126,7 +126,7 @@ describe('RelayCoverageLine / ChatPanel.relayCoverage', () => {
       broadcastHeard: false,
     });
     render(<RelayCoverageLine protocol="meshtastic" messageId={MSG} isOwn identityId={IDENTITY} />);
-    expect(screen.getByText('Not heard (timeout)')).toHaveClass('text-orange-400');
+    expect(screen.getByText('Not heard (timeout)')).toHaveClass('text-warning-400');
   });
 
   it('hides Meshtastic line while pending (null)', () => {
