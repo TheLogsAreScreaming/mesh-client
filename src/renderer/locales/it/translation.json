@@ -1125,7 +1125,7 @@
     "errors": {
       "ble": {
         "adapter_missing": "Non è stato trovato alcun adattatore Bluetooth. Abilita il Bluetooth nelle impostazioni di sistema e riprova.",
-        "permission_denied": "Bluetooth permission was denied. Allow Mesh Hub to use Bluetooth, then try again.",
+        "permission_denied": "L'autorizzazione Bluetooth è stata negata. Consenti a Mesh Hub di utilizzare il Bluetooth, quindi riprova.",
         "scan_busy": "È in corso un'altra scansione Bluetooth. Attendi un momento e riprova.",
         "mac_conflict": "This Bluetooth device is already connected to another protocol. Disconnect it there first.",
         "connect_timeout": "Connessione Bluetooth scaduta. Tieni la radio sveglia e nelle vicinanze, quindi riprova.",
@@ -3015,9 +3015,9 @@
     "paFanDisabledDesc": "Disabilitare la ventola di raffreddamento dell'amplificatore di potenza (dipendente dall'hardware).",
     "rebroadcastModeLabel": "Rebroadcast Mode",
     "nodeInfoBroadcastSecsLabel": "Node Info Broadcast Interval",
-    "nodeInfoBroadcastSecsDesc": "How often to broadcast node info in seconds (0 = firmware default ~15 min).",
+    "nodeInfoBroadcastSecsDesc": "Con quale frequenza trasmettere le informazioni sul nodo in secondi (0 = firmware predefinito ~15 min).",
     "doubleTapAsButtonPressLabel": "Double-tap as Button Press",
-    "doubleTapAsButtonPressDesc": "Treat an accelerometer double-tap as a user button press (hardware-dependent).",
+    "doubleTapAsButtonPressDesc": "Considera un doppio tocco rilevato dall’accelerometro come una pressione del pulsante utente (dipende dall’hardware).",
     "disableTripleClickLabel": "Disable Triple-click",
     "disableTripleClickDesc": "Disabilita l'azione del triplo clic sul pulsante utente.",
     "ledHeartbeatDisabledLabel": "Disable LED Heartbeat",
@@ -3055,7 +3055,7 @@
       }
     },
     "autoScreenCarouselSecsLabel": "Screen Carousel Interval",
-    "autoScreenCarouselSecsDesc": "Seconds between automatic screen page changes. 0 to disable.",
+    "autoScreenCarouselSecsDesc": "Secondi tra le modifiche automatiche della schermata. 0 per disabilitare.",
     "oledTypeLabel": "OLED Type",
     "flipScreenLabel": "Flip Screen",
     "flipScreenDesc": "Ruotare il display di 180 gradi.",
@@ -3065,7 +3065,7 @@
     "wakeOnTapOrMotionDesc": "Riattiva lo schermo quando il dispositivo viene toccato o spostato.",
     "use12hClockLabel": "12-Hour Clock",
     "useLongNodeNameLabel": "Use Long Node Name",
-    "useLongNodeNameDesc": "Show full node name instead of short name on screen.",
+    "useLongNodeNameDesc": "Mostra il nome completo del nodo invece del nome breve sullo schermo.",
     "enableMessageBubblesLabel": "Message Bubbles",
     "enableMessageBubblesDesc": "Mostra i messaggi in arrivo in una bolla sul display.",
     "oledTypes": {
@@ -4269,7 +4269,7 @@
       "severity": "Severity",
       "category": "Category",
       "codes": "Codes",
-      "removeCode": "Remove code {{code}}",
+      "removeCode": "Rimuovi il codice {{code}}",
       "freetext": "Free text (pax, GPS, notes)",
       "addPax": "Add 1pax",
       "attachGps": "Attach GPS",
@@ -4286,14 +4286,14 @@
     "rebroadcast": {
       "title": "MECP RF rebroadcast",
       "hint": "Facoltativamente, collega i MeCP ascoltati su un canale di protocollo a un altro. OFF per impostazione predefinita. Abilita Bidirezionale per invertire anche il percorso.",
-      "add": "Add bridge rule",
-      "remove": "Remove bridge rule",
+      "add": "Aggiungi regola bridge",
+      "remove": "Rimuovi regola di bridge",
       "enableRule": "Enabled",
       "bidirectional": "Bidirectional",
       "endpointA": "Listen / source (A)",
       "endpointB": "Forward / destination (B)",
       "protocol": "Protocol",
-      "channelIndex": "Channel index"
+      "channelIndex": "Indice dei canali"
     },
     "exportLogSuccess": "Registro MeCP esportato",
     "exportLogSuccessPath": "Registro MeCP esportato in {{path}}",

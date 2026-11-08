@@ -2786,12 +2786,19 @@ describe('ConnectionPanel Meshtastic MQTT profiles', () => {
 
     await user.click(screen.getByRole('button', { name: 'Delete MQTT profile NW Indiana' }));
 
+    // The option exists before the click too, so wait for the failed save to be handled first;
+    // otherwise the assertions below can run between the optimistic delete and the rollback.
+    await waitFor(() => {
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('[ConnectionPanel] MQTT profile persistence failed'),
+      );
+    });
     await waitFor(() => {
       expect(screen.getByRole('option', { name: 'Saved: NW Indiana' })).toBeInTheDocument();
+      expect(localStorage.getItem('mesh-client:mqttProfiles:meshtastic')).toBe(
+        JSON.stringify(storedProfiles),
+      );
     });
-    expect(localStorage.getItem('mesh-client:mqttProfiles:meshtastic')).toBe(
-      JSON.stringify(storedProfiles),
-    );
     warn.mockRestore();
   });
 });

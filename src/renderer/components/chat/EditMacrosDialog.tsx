@@ -260,7 +260,7 @@ function MacroRow({
         }}
         placeholder={t('chatMacros.labelPlaceholder')}
         aria-label={t('chatMacros.labelAria', { key })}
-        className={`${inputBase} border-secondary-dark focus:border-brand-green w-28 shrink-0`}
+        className={`${inputBase} border-ink-500 focus:border-brand-green w-28 shrink-0`}
       />
       <input
         type="text"

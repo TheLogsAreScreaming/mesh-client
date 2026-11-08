@@ -1125,7 +1125,7 @@
     "errors": {
       "ble": {
         "adapter_missing": "No se ha encontrado ningún adaptador Bluetooth. Habilite Bluetooth en la configuración del sistema e inténtelo de nuevo.",
-        "permission_denied": "Bluetooth permission was denied. Allow Mesh Hub to use Bluetooth, then try again.",
+        "permission_denied": "Se ha denegado el permiso de Bluetooth. Permita que Mesh Hub use Bluetooth y vuelva a intentarlo.",
         "scan_busy": "Se está realizando otro escaneo Bluetooth. Espera un momento e inténtalo de nuevo.",
         "mac_conflict": "This Bluetooth device is already connected to another protocol. Disconnect it there first.",
         "connect_timeout": "Se ha agotado el tiempo de espera de la conexión Bluetooth. Mantenga la radio despierta y cerca, luego inténtelo de nuevo.",
@@ -3015,9 +3015,9 @@
     "paFanDisabledDesc": "Desactive el ventilador de refrigeración del amplificador de potencia (dependiente del hardware).",
     "rebroadcastModeLabel": "Rebroadcast Mode",
     "nodeInfoBroadcastSecsLabel": "Node Info Broadcast Interval",
-    "nodeInfoBroadcastSecsDesc": "How often to broadcast node info in seconds (0 = firmware default ~15 min).",
+    "nodeInfoBroadcastSecsDesc": "Con qué frecuencia transmitir la información del nodo en segundos (0 = firmware predeterminado ~15 min).",
     "doubleTapAsButtonPressLabel": "Double-tap as Button Press",
-    "doubleTapAsButtonPressDesc": "Treat an accelerometer double-tap as a user button press (hardware-dependent).",
+    "doubleTapAsButtonPressDesc": "Tratar un doble toque en el acelerómetro como una pulsación del botón de usuario (depende del hardware).",
     "disableTripleClickLabel": "Disable Triple-click",
     "disableTripleClickDesc": "Deshabilite la acción de triple clic en el botón de usuario.",
     "ledHeartbeatDisabledLabel": "Disable LED Heartbeat",
@@ -3055,7 +3055,7 @@
       }
     },
     "autoScreenCarouselSecsLabel": "Screen Carousel Interval",
-    "autoScreenCarouselSecsDesc": "Seconds between automatic screen page changes. 0 to disable.",
+    "autoScreenCarouselSecsDesc": "Segundos entre cambios automáticos de página de pantalla. 0 para desactivar.",
     "oledTypeLabel": "OLED Type",
     "flipScreenLabel": "Flip Screen",
     "flipScreenDesc": "Gire la pantalla 180 grados.",
@@ -3065,7 +3065,7 @@
     "wakeOnTapOrMotionDesc": "Despertar la pantalla cuando se toque o mueva el dispositivo.",
     "use12hClockLabel": "12-Hour Clock",
     "useLongNodeNameLabel": "Use Long Node Name",
-    "useLongNodeNameDesc": "Show full node name instead of short name on screen.",
+    "useLongNodeNameDesc": "Mostrar el nombre completo del nodo en lugar del nombre corto en la pantalla.",
     "enableMessageBubblesLabel": "Message Bubbles",
     "enableMessageBubblesDesc": "Mostrar mensajes entrantes en una burbuja en la pantalla.",
     "oledTypes": {

@@ -1125,7 +1125,7 @@
     "errors": {
       "ble": {
         "adapter_missing": "Aucun adaptateur Bluetooth n'a été trouvé. Activez Bluetooth dans les paramètres système et réessayez.",
-        "permission_denied": "Bluetooth permission was denied. Allow Mesh Hub to use Bluetooth, then try again.",
+        "permission_denied": "L'autorisation Bluetooth a été refusée. Autorisez Mesh Hub à utiliser Bluetooth, puis réessayez.",
         "scan_busy": "Une autre analyse Bluetooth est en cours. Attendez un instant et réessayez.",
         "mac_conflict": "This Bluetooth device is already connected to another protocol. Disconnect it there first.",
         "connect_timeout": "La connexion Bluetooth a expiré. Gardez la radio éveillée et à proximité, puis réessayez.",
@@ -2301,7 +2301,7 @@
     "uptimeLabel": "Uptime",
     "txQueueLabel": "File d'attente TX",
     "floodDirectSentLabel": "Flood /envoi direct",
-    "floodDirectRecvLabel": "Flood /Récupération directe",
+    "floodDirectRecvLabel": "Flood / direct reçu",
     "errorsLabel": "Erreurs",
     "dupsDirectFloodLabel": "Dups (direct / flood)",
     "radioStatsLocalHeading": "Statistiques radio (local)",
@@ -3015,9 +3015,9 @@
     "paFanDisabledDesc": "Désactivez le ventilateur de refroidissement de l'amplificateur de puissance (dépendant du matériel).",
     "rebroadcastModeLabel": "Rebroadcast Mode",
     "nodeInfoBroadcastSecsLabel": "Node Info Broadcast Interval",
-    "nodeInfoBroadcastSecsDesc": "How often to broadcast node info in seconds (0 = firmware default ~15 min).",
+    "nodeInfoBroadcastSecsDesc": "Fréquence de diffusion des informations du nœud, en secondes (0 = valeur par défaut du firmware, ~15 min).",
     "doubleTapAsButtonPressLabel": "Double-tap as Button Press",
-    "doubleTapAsButtonPressDesc": "Treat an accelerometer double-tap as a user button press (hardware-dependent).",
+    "doubleTapAsButtonPressDesc": "Traiter un double appui détecté par l’accéléromètre comme un appui sur le bouton utilisateur (selon le matériel).",
     "disableTripleClickLabel": "Disable Triple-click",
     "disableTripleClickDesc": "Désactivez l'action de triple-clic sur le bouton utilisateur.",
     "ledHeartbeatDisabledLabel": "Disable LED Heartbeat",
@@ -3055,7 +3055,7 @@
       }
     },
     "autoScreenCarouselSecsLabel": "Screen Carousel Interval",
-    "autoScreenCarouselSecsDesc": "Seconds between automatic screen page changes. 0 to disable.",
+    "autoScreenCarouselSecsDesc": "Secondes entre les changements automatiques de page d'écran. 0 pour désactiver.",
     "oledTypeLabel": "OLED Type",
     "flipScreenLabel": "Flip Screen",
     "flipScreenDesc": "Faites pivoter l'écran de 180 degrés.",
@@ -3065,7 +3065,7 @@
     "wakeOnTapOrMotionDesc": "Réveillez l'écran lorsque l'appareil est effleuré ou déplacé.",
     "use12hClockLabel": "12-Hour Clock",
     "useLongNodeNameLabel": "Use Long Node Name",
-    "useLongNodeNameDesc": "Show full node name instead of short name on screen.",
+    "useLongNodeNameDesc": "Afficher le nom complet du nœud au lieu du nom court à l'écran.",
     "enableMessageBubblesLabel": "Message Bubbles",
     "enableMessageBubblesDesc": "Afficher les messages entrants dans une bulle à l'écran.",
     "oledTypes": {

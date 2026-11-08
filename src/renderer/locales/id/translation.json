@@ -1125,7 +1125,7 @@
     "errors": {
       "ble": {
         "adapter_missing": "Tidak ada adaptor Bluetooth yang ditemukan. Aktifkan Bluetooth di pengaturan sistem dan coba lagi.",
-        "permission_denied": "Bluetooth permission was denied. Allow Mesh Hub to use Bluetooth, then try again.",
+        "permission_denied": "Izin Bluetooth ditolak. Izinkan Mesh Hub menggunakan Bluetooth, lalu coba lagi.",
         "scan_busy": "Pemindaian Bluetooth lainnya sedang berlangsung. Tunggu sebentar dan coba lagi.",
         "mac_conflict": "This Bluetooth device is already connected to another protocol. Disconnect it there first.",
         "connect_timeout": "Waktu koneksi Bluetooth habis. Jaga agar radio tetap aktif dan berada di dekat Anda, lalu coba lagi.",
@@ -3989,7 +3989,7 @@
     "remotePortError": "Port harus antara 1 dan 65535",
     "remoteVerifyServer": "Verifikasi sertifikat server (disarankan)",
     "remoteAutoConnect": "Terhubung saat peluncuran aplikasi",
-    "remoteCertificates": "Certificates",
+    "remoteCertificates": "Sertifikat",
     "remoteCaSummary": "CA Tepercaya: {{names}}",
     "remoteNoCa": "Tidak ada CA yang diimpor. Server diperiksa terhadap toko kepercayaan sistem.",
     "remoteClientSummary": "Sertifikat klien: {{subject}}, kedaluwarsa {{date}}",
@@ -4269,7 +4269,7 @@
       "severity": "Severity",
       "category": "Category",
       "codes": "Codes",
-      "removeCode": "Remove code {{code}}",
+      "removeCode": "Hapus kode {{code}}",
       "freetext": "Free text (pax, GPS, notes)",
       "addPax": "Add 1pax",
       "attachGps": "Attach GPS",
@@ -4286,14 +4286,14 @@
     "rebroadcast": {
       "title": "MECP RF rebroadcast",
       "hint": "Secara opsional menjembatani MECP yang terdengar pada satu saluran protokol ke saluran protokol lainnya. Mati secara default. Aktifkan Dua Arah untuk juga membalikkan jalur.",
-      "add": "Add bridge rule",
-      "remove": "Remove bridge rule",
+      "add": "Tambah aturan jembatan",
+      "remove": "Hapus aturan jembatan",
       "enableRule": "Enabled",
       "bidirectional": "Bidirectional",
       "endpointA": "Listen / source (A)",
       "endpointB": "Forward / destination (B)",
       "protocol": "Protocol",
-      "channelIndex": "Channel index"
+      "channelIndex": "Indeks saluran"
     },
     "exportLogSuccess": "Log MECP diekspor",
     "exportLogSuccessPath": "Log MECP diekspor ke {{path}}",

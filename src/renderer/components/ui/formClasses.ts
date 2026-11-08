@@ -8,9 +8,13 @@ import { TONE_SOFT_CLASS } from './tone';
 /**
  * Background, border, focus, invalid and disabled treatment shared by every text control. It sets
  * no size: use the `*_CLASS` / `*_BOX_CLASS` constants below, which add height, padding and text.
+ *
+ * The border is `ink-500`, not the `secondary-dark` divider: a field's edge is how you find the
+ * control, so it keeps 3:1 against panels (900) and the field background (950) on every surface
+ * (WCAG 1.4.11; `themePresets.test.ts`). Dividers stay on `secondary-dark`.
  */
 export const FIELD_SURFACE_CLASS =
-  'bg-app-bg border-secondary-dark placeholder:text-muted focus:border-brand-green aria-invalid:border-danger-500 rounded-control border text-ink-200 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50';
+  'bg-app-bg border-ink-500 placeholder:text-muted focus:border-brand-green aria-invalid:border-danger-500 rounded-control border text-ink-200 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50';
 
 /** Text, number and search input without a width, for inputs sized by their row (`w-24`, `flex-1`). 32px, 40px on touch. */
 export const INPUT_BOX_CLASS = `${FIELD_SURFACE_CLASS} h-8 px-2.5 text-body pointer-coarse:h-10`;

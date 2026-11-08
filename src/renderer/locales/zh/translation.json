@@ -1125,7 +1125,7 @@
     "errors": {
       "ble": {
         "adapter_missing": "未找到蓝牙适配器。在系统设置中启用蓝牙，然后重试。",
-        "permission_denied": "Bluetooth permission was denied. Allow Mesh Hub to use Bluetooth, then try again.",
+        "permission_denied": "蓝牙权限被拒绝。允许Mesh Hub使用蓝牙，然后重试。",
         "scan_busy": "另一个蓝牙扫描正在进行中。请稍等片刻，然后重试。",
         "mac_conflict": "This Bluetooth device is already connected to another protocol. Disconnect it there first.",
         "connect_timeout": "蓝牙连接超时。保持收音机清醒并靠近，然后重试。",
@@ -3015,9 +3015,9 @@
     "paFanDisabledDesc": "禁用功率放大器冷却风扇（取决于硬件）。",
     "rebroadcastModeLabel": "Rebroadcast Mode",
     "nodeInfoBroadcastSecsLabel": "Node Info Broadcast Interval",
-    "nodeInfoBroadcastSecsDesc": "How often to broadcast node info in seconds (0 = firmware default ~15 min).",
+    "nodeInfoBroadcastSecsDesc": "以秒为单位广播节点信息的频率（ 0 =固件默认值~ 15分钟）。",
     "doubleTapAsButtonPressLabel": "Double-tap as Button Press",
-    "doubleTapAsButtonPressDesc": "Treat an accelerometer double-tap as a user button press (hardware-dependent).",
+    "doubleTapAsButtonPressDesc": "将加速度计双击视为用户按下按钮（取决于硬件）。",
     "disableTripleClickLabel": "Disable Triple-click",
     "disableTripleClickDesc": "禁用用户按钮上的三次点击操作。",
     "ledHeartbeatDisabledLabel": "Disable LED Heartbeat",
@@ -3055,7 +3055,7 @@
       }
     },
     "autoScreenCarouselSecsLabel": "Screen Carousel Interval",
-    "autoScreenCarouselSecsDesc": "Seconds between automatic screen page changes. 0 to disable.",
+    "autoScreenCarouselSecsDesc": "屏幕页面自动更改之间的秒数。0表示禁用。",
     "oledTypeLabel": "OLED Type",
     "flipScreenLabel": "翻转屏幕",
     "flipScreenDesc": "将显示屏旋转 180 度。",
@@ -3065,7 +3065,7 @@
     "wakeOnTapOrMotionDesc": "当设备被轻触或移动时唤醒屏幕。",
     "use12hClockLabel": "12-Hour Clock",
     "useLongNodeNameLabel": "Use Long Node Name",
-    "useLongNodeNameDesc": "Show full node name instead of short name on screen.",
+    "useLongNodeNameDesc": "在屏幕上显示完整的节点名称而不是短名称。",
     "enableMessageBubblesLabel": "消息气泡",
     "enableMessageBubblesDesc": "在显示屏上以气泡形式显示收到的消息。",
     "oledTypes": {
