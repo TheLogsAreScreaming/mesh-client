@@ -19,7 +19,7 @@ Bundled binaries, fonts, and vendored sources are attributed in [Credits](credit
 | @xterm/xterm               | MIT                           | ^6.0.0          | 6.0.0             | git+https://github.com/xtermjs/xterm.js.git                                    |
 | @zip.js/zip.js             | BSD-3-Clause                  | ^2.23.0         | 2.23.0            | git+https://github.com/gildas-lormeau/zip.js.git                               |
 | builder-util-runtime       | MIT                           | ^9.7.0          | 9.7.0             | git+https://github.com/electron-userland/electron-builder.git                  |
-| dompurify                  | (MPL-2.0 OR Apache-2.0)       | ^3.4.16         | 3.4.16            | git://github.com/cure53/DOMPurify.git                                          |
+| dompurify                  | (MPL-2.0 OR Apache-2.0)       | ^3.4.17         | 3.4.17            | git://github.com/cure53/DOMPurify.git                                          |
 | electron-updater           | MIT                           | ^6.8.9          | 6.8.9             | git+https://github.com/electron-userland/electron-builder.git                  |
 | emoji-picker-element       | Apache-2.0                    | ^1.29.1         | 1.29.1            | git+https://github.com/nolanlawson/emoji-picker-element.git                    |
 | esptool-js                 | Apache-2.0                    | ^0.6.1          | 0.6.1             | git+https://github.com/espressif/esptool-js.git                                |
@@ -33,14 +33,14 @@ Bundled binaries, fonts, and vendored sources are attributed in [Credits](credit
 | mgrs                       | MIT                           | ^2.2.0          | 2.2.0             | git://github.com/proj4js/mgrs.git                                              |
 | motion                     | MIT                           | ^12.43.0        | 12.43.0           | git+https://github.com/motiondivision/motion.git                               |
 | mqtt                       | MIT                           | ^5.16.0         | 5.16.0            | git://github.com/mqttjs/MQTT.js.git                                            |
-| node-forge                 | (BSD-3-Clause OR GPL-2.0)     | ^1.4.0          | 1.4.0             | git+https://github.com/digitalbazaar/forge.git                                 |
+| node-forge                 | (BSD-3-Clause OR GPL-2.0)     | ^1.4.1          | 1.4.3             | git+https://github.com/digitalbazaar/forge.git                                 |
 | qrcode                     | MIT                           | ^1.5.4          | 1.5.4             | git://github.com/soldair/node-qrcode.git                                       |
 | react-i18next              | MIT                           | ^17.0.16        | 17.0.16           | git+https://github.com/i18next/react-i18next.git                               |
 | react-leaflet-cluster      | SEE LICENSE IN LICENSE        | ^4.1.3          | 4.1.3             | git+https://github.com/akursat/react-leaflet-cluster.git                       |
 | readable-stream            | MIT                           | ^4.8.0          | 4.8.0             | git+https://github.com/nodejs/readable-stream.git                              |
 | semver                     | ISC                           | ^7.8.5          | 7.8.5             | git+https://github.com/npm/node-semver.git                                     |
-| systeminformation          | MIT                           | ^5.33.15        | 5.33.15           | git+https://github.com/sebhildebrandt/systeminformation.git                    |
-| undici                     | MIT                           | ^8.11.2         | 8.11.2            | git+https://github.com/nodejs/undici.git                                       |
+| systeminformation          | MIT                           | ^5.33.16        | 5.33.19           | git+https://github.com/sebhildebrandt/systeminformation.git                    |
+| undici                     | MIT                           | ^8.12.2         | 8.12.4            | git+https://github.com/nodejs/undici.git                                       |
 | ws                         | MIT                           | ^8.21.0         | 8.22.0            | git+https://github.com/websockets/ws.git                                       |
 
 ## Development dependencies
@@ -72,7 +72,7 @@ Bundled binaries, fonts, and vendored sources are attributed in [Credits](credit
 | @vitejs/plugin-react                  | MIT             | ^6.1.2          | 6.1.2             | git+https://github.com/vitejs/vite-plugin-react.git                                  |
 | @vitest/coverage-v8                   | MIT             | ^4.1.11         | 4.1.11            | git+https://github.com/vitest-dev/vitest.git                                         |
 | concurrently                          | MIT             | ^9.2.5          | 9.2.5             | git+https://github.com/open-cli-tools/concurrently.git                               |
-| electron                              | MIT             | ^44.1.1         | 44.7.0            | git+https://github.com/electron/electron.git                                         |
+| electron                              | MIT             | ^44.10.2        | 44.10.2           | git+https://github.com/electron/electron.git                                         |
 | electron-builder                      | MIT             | ^26.17.0        | 26.17.0           | git+https://github.com/electron-userland/electron-builder.git                        |
 | emoji-picker-element-data             | Apache-2.0      | ^1.8.0          | 1.8.0             | git+https://github.com/nolanlawson/emoji-picker-element-data.git                     |
 | esbuild                               | MIT             | ^0.28.2         | 0.28.2            | git+https://github.com/evanw/esbuild.git                                             |
@@ -82,7 +82,7 @@ Bundled binaries, fonts, and vendored sources are attributed in [Credits](credit
 | eslint-plugin-import                  | MIT             | ^2.32.0         | 2.32.0            | git+https://github.com/import-js/eslint-plugin-import.git                            |
 | eslint-plugin-jsx-a11y                | MIT             | ^6.10.2         | 6.10.2            | git+https://github.com/jsx-eslint/eslint-plugin-jsx-a11y.git                         |
 | eslint-plugin-no-secrets              | MIT             | ^2.3.3          | 2.3.3             | git+https://github.com/nickdeis/eslint-plugin-no-secrets.git                         |
-| eslint-plugin-prettier                | MIT             | ^5.5.6          | 5.5.6             | git+https://github.com/prettier/eslint-plugin-prettier.git                           |
+| eslint-plugin-prettier                | MIT             | ^5.5.6          | 5.5.6             | https://registry.npmjs.org/eslint-plugin-prettier/-/eslint-plugin-prettier-5.5.7.tgz |
 | eslint-plugin-react                   | MIT             | ^7.37.5         | 7.37.5            | git+https://github.com/jsx-eslint/eslint-plugin-react.git                            |
 | eslint-plugin-react-hooks             | MIT             | ^7.1.1          | 7.1.1             | git+https://github.com/facebook/react.git                                            |
 | eslint-plugin-security                | Apache-2.0      | ^4.2.0          | 4.2.0             | git+https://github.com/eslint-community/eslint-plugin-security.git                   |
@@ -109,4 +109,30 @@ Bundled binaries, fonts, and vendored sources are attributed in [Credits](credit
 
 ## Rust sidecar dependencies
 
-Rust crate licenses are gated by `pnpm run check:rust-licenses` (requires Cargo); run it locally to view this table.
+Licenses for all 214 crates resolved by `ble-sidecar/Cargo.lock` (`cargo metadata --locked --all-features`), gated by `pnpm run check:rust-licenses`.
+
+| License                                             | Crates |
+| --------------------------------------------------- | ------ |
+| MIT OR Apache-2.0                                   | 134    |
+| MIT                                                 | 46     |
+| Apache-2.0 OR MIT                                   | 5      |
+| Apache-2.0/MIT                                      | 4      |
+| Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT | 3      |
+| MIT/Apache-2.0                                      | 3      |
+| Unlicense OR MIT                                    | 3      |
+| BSD-2-Clause OR Apache-2.0 OR MIT                   | 2      |
+| BSD-3-Clause                                        | 2      |
+| MIT OR Apache-2.0 OR LGPL-2.1-or-later              | 2      |
+| MIT/Apache-2.0/BSD-3-Clause                         | 2      |
+| Unlicense/MIT                                       | 2      |
+| (MIT OR Apache-2.0) AND Unicode-3.0                 | 1      |
+| AGPL-3.0-or-later                                   | 1      |
+| Apache-2.0                                          | 1      |
+| Apache-2.0 OR BSL-1.0                               | 1      |
+| MIT AND BSD-3-Clause                                | 1      |
+| Zlib OR Apache-2.0 OR MIT                           | 1      |
+
+### Ratspeak stack crates
+
+| Crate | Version | License | Source |
+| ----- | ------- | ------- | ------ |
