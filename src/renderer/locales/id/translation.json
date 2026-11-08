@@ -573,7 +573,6 @@
     "dms": "DM",
     "receivedViaTcp": "Diterima melalui TCP",
     "receivedViaNetwork": "Diterima melalui jaringan",
-    "reticulumSendFailed": "Gagal mengirim",
     "dmPeerInfoAria": "Info rekan DM",
     "clearDateAria": "Hapus tanggal",
     "readOnlyDisconnected": "Tidak tersambung — pesan hanya dapat dibaca",
@@ -618,18 +617,10 @@
     "notificationMessageTitle": "Pesan dari {{sender}}",
     "hopCountRefinedFromRf": "Diperbarui dari jalur RF",
     "waitingMessagesSilentFetched": "Mengambil {{processed}} dari radio…",
-    "reticulumSendTimeout": "Waktu pengiriman habis. Stack Reticulum mungkin sedang mulai atau sibuk — coba lagi.",
     "meshcoreFastSend": {
       "warning": "Anda mengirim lebih cepat daripada yang dapat disampaikan oleh mesh. Pada mesh yang sibuk, repeater dapat menjatuhkan pesan yang dikirim secara berdekatan — menyisakan beberapa detik di antara pesan."
     },
     "outboxLegacyMultipartBlocked": "Pesan antrean ini menggunakan pemisahan MeshCore multi-bagian, yang tidak lagi terkirim. Batalkan dan kirim pesan singkat (atau beberapa pesan singkat terpisah).",
-    "voiceMemo": {
-      "recordAria": "Rekam memo suara",
-      "sendAria": "Kirim memo suara",
-      "recordTooltip": "Memo suara LXMF — merekam klip Opus singkat untuk pesan langsung ini. Didukung oleh Mesh Hub, Ratspeak, dan Sideband (FIELD_AUDIO). Tidak sama dengan LXST Call.",
-      "sendTooltip": "Kirim memo suara LXMF yang direkam",
-      "sendAriaWithElapsed": "Kirim memo suara ({{seconds}} detik direkam)"
-    },
     "heardByRepeaters_one": "Didengar oleh {{count}}",
     "heardByRepeaters_other": "Didengar oleh {{count}}",
     "heardByNetwork": "Didengar oleh jaringan",
@@ -986,8 +977,7 @@
         "chooserCancelledHint": "Jika Anda tidak membatalkan, pastikan Bluetooth aktif (status sistemctl bluetooth), lalu ketuk Hubungkan lagi. Di Flatpak, instal ulang build dengan Bluetooth yang diizinkan, atau gunakan AppImage/.deb/.rpm.",
         "bluetoothctlMissingHint": "Alat pemasangan OS Bluetooth tidak tersedia di lingkungan ini (umum di Flatpak). Gunakan AppImage resmi, .deb, atau .rpm, atau pasangkan radio dengan host bluetoothctl, lalu coba lagi Hubungkan.",
         "stackUnresponsiveGeneric": "Bluetooth macet pada upaya koneksi sebelumnya. Matikan dan nyalakan Bluetooth, pasangkan kembali radio jika perlu, lalu mulai ulang Mesh Hub.",
-        "stackUnresponsiveWindowsRePair": "Bluetooth Windows macet pada upaya koneksi sebelumnya, biasanya karena radio tidak dipasangkan dengan benar. Tekan Lepas & Pasangkan Ulang Perangkat dan masukkan PIN yang ditampilkan di radio. Jika koneksi masih ditolak, restart Mesh Hub dan coba lagi.",
-        "rnodeBondRecoveryHold": "Bluetooth dijeda untuk Meshtastic dan MeshCore karena Reticulum RNode memiliki pasangan Bluetooth yang rusak. Perbaiki RNode terlebih dahulu: lupakan di pengaturan Bluetooth sistem Anda, lalu pasangkan kembali dari Reticulum → Admin. Untuk segera menggunakan radio Bluetooth, hentikan tumpukan Reticulum atau alihkan RNode tersebut ke USB atau Wi-Fi."
+        "stackUnresponsiveWindowsRePair": "Bluetooth Windows macet pada upaya koneksi sebelumnya, biasanya karena radio tidak dipasangkan dengan benar. Tekan Lepas & Pasangkan Ulang Perangkat dan masukkan PIN yang ditampilkan di radio. Jika koneksi masih ditolak, restart Mesh Hub dan coba lagi."
       }
     },
     "error": {
@@ -1018,8 +1008,7 @@
     "stageAutoConnectingBle": "Menghubungkan ke {{deviceName}}…",
     "bleOwner": {
       "meshtastic": "Meshtastic",
-      "meshcore": "MeshCore",
-      "reticulum": "Reticulum"
+      "meshcore": "MeshCore"
     },
     "topicPrefixHelp": {
       "meshtastic": "msh/[Negara]/[Negara Bagian], mis. msh/CO/AS",
@@ -1558,10 +1547,6 @@
         "label": "Sambungkan Ulang Serial USB",
         "recommendation": "Port serial USB tidak dapat dibuka kembali atau aliran sebelumnya masih terkunci. Tutup aplikasi lain menggunakan radio, sambungkan kembali kabel, dan sambungkan kembali di aplikasi. Jika berulang, sertakan baris log serial dalam laporan bug."
       },
-      "reticulum-nomad-hosting": {
-        "label": "Masalah Hosting Halaman Nomad",
-        "recommendation": "Hosting Nomad My Pages gagal atau folder konten tidak tersedia. Buka Nomad Network → My Pages, pilih kembali folder pages jika dipindahkan, lalu Start serving. Detail muncul sebagai [nomad-serving] / [NomadHosting] di log."
-      },
       "renderer-unresponsive": {
         "label": "Aplikasi berhenti merespons",
         "recommendation": "Aplikasi berhenti mengirim detak jantung UI. Jika sudah pulih, perhatikan apa yang Anda lakukan di dekat waktu yang tercantum. Jika tetap beku, mulai ulang aplikasi dan sertakan laporan ini saat melaporkan hang berulang."
@@ -1573,18 +1558,6 @@
       "meshtastic-tcp": {
         "label": "Koneksi TCP Meshtastic gagal",
         "recommendation": "Sambungan TCP ke radio Meshtastic gagal. Periksa alamat radio dan port, jangkauan jaringan lokal, dan apakah klien lain menggunakan koneksi sebelum menyambung kembali."
-      },
-      "reticulum-sidecar": {
-        "label": "Layanan Reticulum terganggu",
-        "recommendation": "Layanan Reticulum lokal gagal memulai, merespons, atau mempertahankan koneksi acaranya. Periksa statusnya di Koneksi dan baris log di bawah ini. Jika belum pulih, nyalakan kembali koneksi Reticulum. Komponen layanan bawaan yang hilang mungkin memerlukan pemasangan ulang aplikasi."
-      },
-      "reticulum-delivery": {
-        "label": "Pengiriman atau sinkronisasi Reticulum gagal",
-        "recommendation": "Upaya pengiriman pesan atau sinkronisasi propagasi gagal. Periksa status pesan saat ini sebelum mencoba lagi, selidiki tujuan, dan periksa antarmuka yang diaktifkan. Untuk propagasi, periksa node yang dipilih dan status sinkronisasi di bawah Jaringan; pesan yang disimpan bukan bukti pengiriman penerima."
-      },
-      "reticulum-backpressure": {
-        "label": "Peristiwa atau paket Reticulum dibuang",
-        "recommendation": "Layanan Reticulum setempat menghentikan acara atau paket karena antrian terisi, pelanggan tertinggal, atau muatan melebihi batas. Kurangi transfer massal bersamaan, lalu periksa status pesan sebelum mencoba lagi. Paket yang berulang kali dibuang saat menganggur layak dilaporkan dengan sampel log ini."
       },
       "firmware-flash": {
         "label": "Transfer firmware terhenti",

@@ -889,16 +889,6 @@ describe('GattSidecarProxy', () => {
     expect(deletes).toBe(1);
   });
 
-  it('skips the sidecar bond-recovery clear request while quitting', async () => {
-    proxy.setQuitting();
-    proxy.setRnodeBondRecoveryExclusive(false);
-    await Promise.resolve();
-    expect(fetchMock).not.toHaveBeenCalledWith(
-      expect.stringContaining('/clear-bond-recovery'),
-      expect.anything(),
-    );
-  });
-
   it('releases on mid-retry DELETE success before cleanup budget is exhausted', async () => {
     vi.useFakeTimers();
     let deletes = 0;
@@ -931,29 +921,5 @@ describe('GattSidecarProxy', () => {
     // Would have been attempts 4–8 if still reserved — budget not forced.
     await vi.advanceTimersByTimeAsync(4_000 * 5);
     expect(deletes).toBe(3);
-  });
-
-  it('clearing bond-recovery exclusive with port 0 does not ensure/start sidecar', async () => {
-    const ensure = vi.fn(() => Promise.resolve(5555));
-    proxy.setEnsureSidecar(ensure);
-    proxy.invalidateAfterSidecarExit();
-    proxy.setRnodeBondRecoveryExclusive(true);
-    proxy.setRnodeBondRecoveryExclusive(false);
-    await vi.waitFor(() => {
-      expect(ensure).not.toHaveBeenCalled();
-    });
-    expect(fetchMock).not.toHaveBeenCalledWith(
-      expect.stringContaining('/api/v1/gatt/clear-bond-recovery'),
-      expect.anything(),
-    );
-  });
-
-  it('releaseBleCentral with port 0 disconnects locally without ensure/start', async () => {
-    const ensure = vi.fn(() => Promise.resolve(5555));
-    proxy.setEnsureSidecar(ensure);
-    proxy.invalidateAfterSidecarExit();
-    await proxy.releaseBleCentral();
-    expect(ensure).not.toHaveBeenCalled();
-    expect(proxy.isRnodeBondRecoveryExclusive()).toBe(true);
   });
 });

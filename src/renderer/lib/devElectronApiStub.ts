@@ -165,8 +165,6 @@ export function createDevElectronApiStub(): typeof window.electronAPI {
     stopGattScanning: noopAsync,
     connectGatt: async () => ({ ok: true }),
     disconnectGatt: noopAsync,
-    releaseGattBleCentral: noopAsync,
-    clearGattBondRecoveryExclusive: noopAsync,
     isGattConnected: async () => false,
     gattToRadio: noopAsync,
     gattPairState: async () => ({ ok: false as const, code: 'unsupported', error: 'dev stub' }),
@@ -298,7 +296,6 @@ export function createDevElectronApiStub(): typeof window.electronAPI {
     },
     hostLink: {
       probeHttpRtt: async () => null,
-      probeTcpRtt: async () => null,
       getSessionMeter: async () => null,
     },
     meshtastic: {
@@ -373,33 +370,27 @@ export function createDevElectronApiStub(): typeof window.electronAPI {
       register: async () => ({
         connections: [],
         scanOwner: null,
-        nobleYieldDecisionPending: false,
       }),
       unregister: async () => ({
         connections: [],
         scanOwner: null,
-        nobleYieldDecisionPending: false,
       }),
       assertCanConnect: async () => ({
         connections: [],
         scanOwner: null,
-        nobleYieldDecisionPending: false,
       }),
       getState: async () => ({
         connections: [],
         scanOwner: null,
-        nobleYieldDecisionPending: false,
       }),
       acquireScan: async () => ({
         ok: true as const,
         connections: [],
         scanOwner: null,
-        nobleYieldDecisionPending: false,
       }),
       releaseScan: async () => ({
         connections: [],
         scanOwner: null,
-        nobleYieldDecisionPending: false,
       }),
     },
   } as unknown as typeof window.electronAPI;

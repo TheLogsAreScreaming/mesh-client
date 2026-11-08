@@ -8,7 +8,6 @@ function gattReservations(connections: ReturnType<GattSidecarProxy['getConnectio
     getConnections: () => connections,
     setConnectionGuard:
       vi.fn<(guard: (session: GattSessionProfile, address: string) => void) => void>(),
-    disconnectAll: vi.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -38,23 +37,23 @@ describe('BleCoexistenceCoordinator', () => {
     );
   });
 
-  it('rejects a LoRa connect to a registered Reticulum device', () => {
+  it('rejects a LoRa connect to a MAC registered by the other LoRa stack', () => {
     const coordinator = new BleCoexistenceCoordinator();
     const gatt = gattReservations([]);
     coordinator.setGattProxy(gatt);
-    coordinator.register('AA:BB:CC:DD:EE:01', 'reticulum');
+    coordinator.register('AA:BB:CC:DD:EE:01', 'gatt:meshtastic');
 
     const guard = gatt.setConnectionGuard.mock.calls[0]?.[0];
     expect(guard).toBeDefined();
     expect(() => {
       guard('meshcore', 'aabbccddee01');
-    }).toThrow(/already in use by reticulum/);
+    }).toThrow(/already in use by gatt:meshtastic/);
     expect(() => {
-      guard('meshtastic', 'AA:BB:CC:DD:EE:02');
+      guard('meshcore', 'AA:BB:CC:DD:EE:02');
     }).not.toThrow();
   });
 
-  it('rejects Reticulum registration while a LoRa connection is pending', () => {
+  it('rejects registration while another LoRa connection is pending on that MAC', () => {
     const coordinator = new BleCoexistenceCoordinator();
     const connections: ReturnType<GattSidecarProxy['getConnections']> = [
       { mac: 'AA:BB:CC:DD:EE:01', owner: 'gatt:meshcore' },
@@ -62,78 +61,51 @@ describe('BleCoexistenceCoordinator', () => {
     coordinator.setGattProxy(gattReservations(connections));
 
     expect(() => {
-      coordinator.register('aabbccddee01', 'reticulum');
+      coordinator.register('aabbccddee01', 'gatt:meshtastic');
     }).toThrow(/already in use by gatt:meshcore/);
     connections.length = 0;
     expect(() => {
-      coordinator.register('aabbccddee01', 'reticulum');
+      coordinator.register('aabbccddee01', 'gatt:meshtastic');
     }).not.toThrow();
   });
 
-  it('reports live LoRa reservations together with Reticulum ownership', () => {
+  it('reports live LoRa reservations together with registered owners', () => {
     const coordinator = new BleCoexistenceCoordinator();
     coordinator.setGattProxy(
       gattReservations([{ mac: 'AA:BB:CC:DD:EE:01', owner: 'gatt:meshtastic' }]),
     );
-    coordinator.register('AA:BB:CC:DD:EE:02', 'reticulum');
+    coordinator.register('AA:BB:CC:DD:EE:02', 'gatt:meshcore');
 
     expect(coordinator.getState().connections).toEqual(
       expect.arrayContaining([
         { mac: 'aa:bb:cc:dd:ee:01', owner: 'gatt:meshtastic' },
-        { mac: 'aa:bb:cc:dd:ee:02', owner: 'reticulum' },
+        { mac: 'aa:bb:cc:dd:ee:02', owner: 'gatt:meshcore' },
       ]),
     );
   });
 
-  it('rejects a GATT scan while Reticulum is scanning', async () => {
+  it('releases nested GATT scan leases only when the outermost one ends', async () => {
     const coordinator = new BleCoexistenceCoordinator();
-    const scan = vi.fn().mockResolvedValue(undefined);
-    await coordinator.acquireScan('reticulum');
-
-    await expect(coordinator.withScan('gatt', scan)).rejects.toThrow(/Bluetooth scan in progress/);
-    expect(scan).not.toHaveBeenCalled();
-    expect(coordinator.getState().scanOwner).toBe('reticulum');
+    await coordinator.acquireScan('gatt');
+    await coordinator.acquireScan('gatt');
+    coordinator.releaseScan('gatt');
+    expect(coordinator.getState().scanOwner).toBe('gatt');
+    coordinator.releaseScan('gatt');
+    expect(coordinator.getState().scanOwner).toBeNull();
   });
 
   it.each([false, true])(
     'releases the GATT scan lease after completion (failure=%s)',
     async (fails) => {
       const coordinator = new BleCoexistenceCoordinator();
-      const operation = coordinator.withScan('gatt', async () => {
-        await expect(coordinator.acquireScan('reticulum')).rejects.toThrow(
-          /Bluetooth scan in progress/,
-        );
-        if (fails) throw new Error('adapter unavailable');
-        return 'done';
+      const operation = coordinator.withScan('gatt', () => {
+        expect(coordinator.getState().scanOwner).toBe('gatt');
+        if (fails) return Promise.reject(new Error('adapter unavailable'));
+        return Promise.resolve('done');
       });
       if (fails) await expect(operation).rejects.toThrow('adapter unavailable');
       else await expect(operation).resolves.toBe('done');
-      await expect(coordinator.acquireScan('reticulum')).resolves.toBeUndefined();
-    },
-  );
-
-  it('suspendForReticulumBleConnect does not disconnect GATT sessions', async () => {
-    const coordinator = new BleCoexistenceCoordinator();
-    const gatt = gattReservations([]);
-    coordinator.setGattProxy(gatt);
-    await coordinator.suspendForReticulumBleConnect();
-    expect(gatt.disconnectAll).not.toHaveBeenCalled();
-  });
-
-  it.each(['linux', 'darwin', 'win32'] as const)(
-    'suspendForReticulumBleConnect is a no-op on %s',
-    async (platform) => {
-      const original = process.platform;
-      Object.defineProperty(process, 'platform', { value: platform });
-      try {
-        const coordinator = new BleCoexistenceCoordinator();
-        const gatt = gattReservations([]);
-        coordinator.setGattProxy(gatt);
-        await coordinator.suspendForReticulumBleConnect();
-        expect(gatt.disconnectAll).not.toHaveBeenCalled();
-      } finally {
-        Object.defineProperty(process, 'platform', { value: original });
-      }
+      expect(coordinator.getState().scanOwner).toBeNull();
     },
   );
 });

@@ -133,7 +133,7 @@ import {
 import { writeGattToRadio } from './gattIpcWrite';
 import { formatGpxTracks, GPX_EXPORT_MAX_POINTS } from './gpxExportFormat';
 import { isHarmlessSocketOptionError } from './harmlessSocketOptionError';
-import { probeHttpRttMs, probeTcpRttMs } from './host-link-rtt';
+import { probeHttpRttMs } from './host-link-rtt';
 import { isValidHttpHostname } from './httpHostValidation';
 import { registerBeaconIpcHandlers } from './ipc/beacon-handlers';
 import { registerBlockedContactsIpcHandlers } from './ipc/blocked-contacts-handlers';
@@ -431,8 +431,6 @@ async function quitMainProcess(opts: { relaunch?: boolean } = {}): Promise<void>
   isQuitting = true;
   isConnected = false;
   gattSidecarProxy.setQuitting();
-  // Drop exclusive hold locally without HTTP so quit never ensurePort()-respawns sidecar.
-  gattSidecarProxy.setRnodeBondRecoveryExclusive(false);
   try {
     try {
       await gattSidecarProxy.disconnectAll();
@@ -2967,13 +2965,6 @@ ipcMain.handle('gatt:connect', async (event, sessionId: unknown, peripheralId: u
     return { ok: false as const, error: 'App is quitting' };
   }
   try {
-    if (gattSidecarProxy.isRnodeBondRecoveryExclusive()) {
-      return {
-        ok: false as const,
-        error: 'RNode bond recovery holds the Bluetooth adapter',
-        code: 'rnode_bond_recovery' as const,
-      };
-    }
     return await bleCoexistenceCoordinator.withScan('gatt', () =>
       gattSidecarProxy.connect(sessionId, peripheralId),
     );
@@ -3003,29 +2994,6 @@ ipcMain.handle('gatt:disconnect', async (event, sessionId: unknown) => {
     );
     throw err;
   }
-});
-ipcMain.handle('gatt:release-ble-central', async (event) => {
-  assertIpcSender(event, 'gatt:release-ble-central');
-  if (isQuitting) {
-    console.debug('[main] gatt:release-ble-central: ignoring (app is quitting)');
-    return;
-  }
-  try {
-    await gattSidecarProxy.releaseBleCentral();
-  } catch (err) {
-    console.error(
-      `[main] gatt:release-ble-central failed: message=${sanitizeLogMessage(err instanceof Error ? err.message : String(err))}`,
-    );
-    throw err;
-  }
-});
-ipcMain.handle('gatt:clear-bond-recovery-exclusive', (event) => {
-  assertIpcSender(event, 'gatt:clear-bond-recovery-exclusive');
-  if (isQuitting) {
-    console.debug('[main] gatt:clear-bond-recovery-exclusive: ignoring (app is quitting)');
-    return;
-  }
-  gattSidecarProxy.setRnodeBondRecoveryExclusive(false);
 });
 ipcMain.handle('gatt:is-connected', async (event, sessionId: unknown) => {
   assertIpcSender(event, 'gatt:is-connected');
@@ -6493,15 +6461,6 @@ ipcMain.handle('hostLink:probeHttpRtt', async (event, host: unknown, tls: unknow
     throw new Error('Invalid tls');
   }
   return probeHttpRttMs(host, tls);
-});
-
-ipcMain.handle('hostLink:probeTcpRtt', async (event, host: unknown, port: unknown) => {
-  assertIpcSender(event, 'hostLink:probeTcpRtt');
-  validateHttpHost(host);
-  if (!Number.isInteger(port) || (port as number) < 1 || (port as number) > 65535) {
-    throw new Error('Invalid port');
-  }
-  return probeTcpRttMs(host, port as number);
 });
 
 ipcMain.handle('hostLink:getSessionMeter', (event, protocol: unknown) => {

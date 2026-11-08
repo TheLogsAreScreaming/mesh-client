@@ -10,7 +10,6 @@ describe('useHostLinkMeter', () => {
     vi.mocked(window.electronAPI.getPlatform).mockReturnValue('darwin');
     vi.mocked(window.electronAPI.onGattLinkRssi).mockReturnValue(() => {});
     vi.mocked(window.electronAPI.hostLink.probeHttpRtt).mockResolvedValue(40);
-    vi.mocked(window.electronAPI.hostLink.probeTcpRtt).mockResolvedValue(80);
     vi.mocked(window.electronAPI.hostLink.getSessionMeter).mockResolvedValue({ rttMs: 80 });
   });
 
@@ -89,7 +88,6 @@ describe('useHostLinkMeter', () => {
       });
       expect(window.electronAPI.hostLink.probeHttpRtt).toHaveBeenCalled();
       expect(window.electronAPI.hostLink.getSessionMeter).not.toHaveBeenCalled();
-      expect(window.electronAPI.hostLink.probeTcpRtt).not.toHaveBeenCalled();
     },
   );
 
@@ -111,7 +109,6 @@ describe('useHostLinkMeter', () => {
         expect(result.current.level).toBe(3);
       });
       expect(window.electronAPI.hostLink.getSessionMeter).toHaveBeenCalledWith('meshtastic');
-      expect(window.electronAPI.hostLink.probeTcpRtt).not.toHaveBeenCalled();
     },
   );
 
@@ -132,7 +129,6 @@ describe('useHostLinkMeter', () => {
         expect(result.current.rttMs).toBe(80);
       });
       expect(window.electronAPI.hostLink.getSessionMeter).toHaveBeenCalledWith('meshcore');
-      expect(window.electronAPI.hostLink.probeTcpRtt).not.toHaveBeenCalled();
     },
   );
 
@@ -179,7 +175,6 @@ describe('useHostLinkMeter', () => {
       expect(result.current.rttMs).not.toBe(40);
       expect(result.current.rttMs).toBe(120);
     });
-    expect(window.electronAPI.hostLink.probeTcpRtt).not.toHaveBeenCalled();
     expect(window.electronAPI.hostLink.getSessionMeter).toHaveBeenCalledWith('meshtastic');
   });
 

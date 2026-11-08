@@ -588,7 +588,6 @@
     "dms": "DM",
     "receivedViaTcp": "Otrzymano poprzez",
     "receivedViaNetwork": "Odebrano przez sieć",
-    "reticulumSendFailed": "Nie udało się wysłać",
     "dmPeerInfoAria": "Informacje o partnerze DM",
     "clearDateAria": "Wyczyść datę",
     "readOnlyDisconnected": "Brak połączenia — wiadomości są tylko do odczytu",
@@ -636,18 +635,10 @@
     "emojiButton": "Emoji",
     "hopCountRefinedFromRf": "Zaktualizowano ze ścieżki RF",
     "waitingMessagesSilentFetched": "Pobrano {{processed}} z radia…",
-    "reticulumSendTimeout": "Przekroczono limit czasu wysyłania. Stos Reticulum może się uruchamiać lub być zajęty — spróbuj ponownie.",
     "meshcoreFastSend": {
       "warning": "Wysyłasz szybciej, niż siatka może przekazywać. Na zatłoczonej siatce wzmacniaki mogą odrzucać wiadomości wysyłane blisko siebie — pozostaw kilka sekund między wiadomościami."
     },
     "outboxLegacyMultipartBlocked": "Ta wiadomość umieszczona w kolejce korzystała z wieloczęściowego podziału MeshCore, który nie jest już wysyłany. Anuluj i wyślij krótszą wiadomość (lub kilka oddzielnych krótszych wiadomości).",
-    "voiceMemo": {
-      "recordAria": "Nagraj głos",
-      "sendAria": "Wyślij notatkę głosową",
-      "recordTooltip": "Notatka głosowa LXMF — nagrywa krótki klip Opus dla tej bezpośredniej wiadomości. Obsługiwane przez Mesh Hub, Ratspeak i Sideband (FIELD_AUDIO). To nie to samo, co połączenie LXST.",
-      "sendTooltip": "Wyślij nagraną notatkę głosową LXMF",
-      "sendAriaWithElapsed": "Wyślij notatkę głosową ({{seconds}} sekund nagranych)"
-    },
     "heardByRepeaters_one": "Odebrano przez {{count}}",
     "heardByRepeaters_other": "Odebrano przez {{count}}",
     "heardByNetwork": "Usłyszane przez sieć",
@@ -1016,8 +1007,7 @@
         "chooserCancelledHint": "Jeśli nie anulowałeś, upewnij się, że Bluetooth jest włączony (systemctl status bluetooth), a następnie ponownie dotknij Połącz. W Flatpak zainstaluj ponownie kompilację z zezwoleniem na Bluetooth lub użyj AppImage/.deb/.rpm.",
         "bluetoothctlMissingHint": "Narzędzia do parowania systemu operacyjnego Bluetooth są niedostępne w tym środowisku (powszechne w Flatpak). Użyj oficjalnego AppImage, .deb lub .rpm lub sparuj radio z hostem bluetoothctl, a następnie spróbuj połączyć się ponownie.",
         "stackUnresponsiveGeneric": "Bluetooth utknął podczas wcześniejszej próby połączenia. Włącz i wyłącz Bluetooth, w razie potrzeby ponownie sparuj radio, a następnie ponownie uruchom Mesh Hub.",
-        "stackUnresponsiveWindowsRePair": "Windows Bluetooth utknął podczas wcześniejszej próby połączenia, zwykle z powodu nieprawidłowego sparowania radia. Naciśnij przycisk Usuń i napraw urządzenie i wprowadź KOD PIN pokazany w radiu. Jeśli połączenie jest nadal odrzucane, uruchom ponownie Mesh Hub i spróbuj ponownie.",
-        "rnodeBondRecoveryHold": "Bluetooth jest wstrzymany dla Meshtastic i MeshCore, ponieważ Reticulum RNode ma przerwane parowanie Bluetooth. Najpierw napraw RNode: zapomnij o nim w ustawieniach Bluetooth systemu, a następnie ponownie sparuj go w Reticulum → Admin. Aby od razu korzystać z radia Bluetooth, zatrzymaj stos Reticulum lub przełącz ten RNode na USB lub Wi-Fi."
+        "stackUnresponsiveWindowsRePair": "Windows Bluetooth utknął podczas wcześniejszej próby połączenia, zwykle z powodu nieprawidłowego sparowania radia. Naciśnij przycisk Usuń i napraw urządzenie i wprowadź KOD PIN pokazany w radiu. Jeśli połączenie jest nadal odrzucane, uruchom ponownie Mesh Hub i spróbuj ponownie."
       }
     },
     "error": {
@@ -1048,8 +1038,7 @@
     "stageAutoConnectingBle": "Łączenie z {{deviceName}}…",
     "bleOwner": {
       "meshtastic": "Meshtastic",
-      "meshcore": "MeshCore",
-      "reticulum": "Reticulum"
+      "meshcore": "MeshCore"
     },
     "topicPrefixHelp": {
       "meshtastic": "msh/[Kraj]/[Stan], np. msh/CO/US",
@@ -1604,10 +1593,6 @@
         "label": "Ponowne połączenie szeregowe USB",
         "recommendation": "Port szeregowy USB nie mógł zostać ponownie otwarty lub jego poprzedni strumień jest nadal zablokowany. Zamknij inne aplikacje za pomocą radia, ponownie podłącz kabel i ponownie połącz się w aplikacji. Jeśli się powtórzy, dołącz wiersze dziennika seryjnego do raportu o błędzie."
       },
-      "reticulum-nomad-hosting": {
-        "label": "Problemy z hostingiem strony Nomad",
-        "recommendation": "Hosting Nomad My Pages nie powiódł się lub folder treści jest niedostępny. Otwórz Nomad Network → My Pages, ponownie wybierz folder stron, jeśli został przeniesiony, a następnie rozpocznij serwowanie. Szczegóły pojawiają się jako [nomad-serving] / [NomadHosting] w dzienniku."
-      },
       "renderer-unresponsive": {
         "label": "Aplikacja przestała odpowiadać",
         "recommendation": "Aplikacja przestała wysyłać bicie serca interfejsu użytkownika. Jeśli problem wyzdrowiał, zanotuj, co robiłeś w pobliżu podanego czasu. Jeśli pozostanie zablokowany, uruchom ponownie aplikację i dołącz ten raport podczas zgłaszania cyklicznego zawieszenia."
@@ -1619,18 +1604,6 @@
       "meshtastic-tcp": {
         "label": "Połączenie TCP Meshtastic nie powiodło się",
         "recommendation": "Połączenie TCP z radiem Meshtastic nie powiodło się. Przed ponownym połączeniem sprawdź adres i port radiowy, dostępność sieci lokalnej oraz to, czy inny klient korzysta z połączenia."
-      },
-      "reticulum-sidecar": {
-        "label": "Usługa Reticulum przerwana",
-        "recommendation": "Lokalna usługa Reticulum nie uruchomiła się, nie zareagowała lub nie utrzymała połączenia ze zdarzeniem. Sprawdź jego status w Połączeniu i poniższe wiersze dziennika. Jeśli nie odzyskał sprawności, uruchom ponownie połączenie Reticulum. Brakujący spakowany wózek boczny może wymagać ponownej instalacji aplikacji."
-      },
-      "reticulum-delivery": {
-        "label": "Dostarczenie lub synchronizacja Reticulum nie powiodły się",
-        "recommendation": "Próba dostarczenia wiadomości lub synchronizacji propagacji nie powiodła się. Sprawdź bieżący status wiadomości przed ponowną próbą, sprawdź miejsce docelowe i sprawdź włączone interfejsy. W celu propagacji sprawdź wybrany węzeł i stan synchronizacji w sekcji Sieć; zapisany komunikat nie jest dowodem dostawy odbiorcy."
-      },
-      "reticulum-backpressure": {
-        "label": "Odrzucone zdarzenia lub pakiety Reticulum",
-        "recommendation": "Lokalna usługa Reticulum odrzuciła zdarzenia lub pakiety, ponieważ kolejka została wypełniona, subskrybent został w tyle lub ładunek przekroczył limit. Zmniejsz liczbę jednoczesnych transferów masowych, a następnie sprawdź status wiadomości przed ponowną próbą. Powtarzające się spadki podczas bezczynności są warte raportowania za pomocą tych próbek dziennika."
       },
       "firmware-flash": {
         "label": "Transfer oprogramowania zablokowany",

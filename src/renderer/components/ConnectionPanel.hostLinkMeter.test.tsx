@@ -155,7 +155,6 @@ describe('ConnectionPanel host link meter', () => {
         expect(window.electronAPI.hostLink.getSessionMeter).toHaveBeenCalledWith('meshcore');
         expect(screen.getByText('88 ms')).toBeInTheDocument();
       });
-      expect(window.electronAPI.hostLink.probeTcpRtt).not.toHaveBeenCalled();
       hydrateAxeThemeColors(container);
       expect(await axe(container)).toHaveNoViolations();
     },
@@ -186,7 +185,6 @@ describe('ConnectionPanel host link meter', () => {
         expect(window.electronAPI.hostLink.getSessionMeter).toHaveBeenCalledWith('meshtastic');
         expect(screen.getByText('120 ms')).toBeInTheDocument();
       });
-      expect(window.electronAPI.hostLink.probeTcpRtt).not.toHaveBeenCalled();
       hydrateAxeThemeColors(container);
       expect(await axe(container)).toHaveNoViolations();
     },

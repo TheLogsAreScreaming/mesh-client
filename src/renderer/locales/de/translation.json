@@ -572,7 +572,6 @@
     "dms": "DMs",
     "receivedViaTcp": "Eingegangen über",
     "receivedViaNetwork": "Über Netzwerk empfangen",
-    "reticulumSendFailed": "Senden fehlgeschlagen",
     "dmPeerInfoAria": "DM-Peer-Informationen",
     "clearDateAria": "Klares Datum",
     "readOnlyDisconnected": "Nicht verbunden – Nachrichten sind schreibgeschützt",
@@ -618,18 +617,10 @@
     "emojiButton": "Emojis",
     "hopCountRefinedFromRf": "Aktualisiert von RF-Pfad",
     "waitingMessagesSilentFetched": "{{processed}} vom Funkgerät abgerufen…",
-    "reticulumSendTimeout": "Senden abgelaufen. Der Reticulum-Stack startet möglicherweise oder ist beschäftigt — bitte erneut versuchen.",
     "meshcoreFastSend": {
       "warning": "Sie senden schneller, als das Netz weiterleiten kann. In einem ausgelasteten Netz können Repeater Nachrichten, die nahe beieinander gesendet werden, ablegen — lassen Sie ein paar Sekunden zwischen den Nachrichten."
     },
     "outboxLegacyMultipartBlocked": "Diese in der Warteschlange befindliche Nachricht verwendete eine mehrteilige MeshCore-Aufteilung, die nicht mehr gesendet wird. Brechen Sie es ab und senden Sie eine kürzere Nachricht (oder mehrere separate kürzere Nachrichten).",
-    "voiceMemo": {
-      "recordAria": "Stimme aufzeichnen",
-      "sendAria": "Sprachnotiz senden",
-      "recordTooltip": "LXMF-Sprachnotiz — zeichnet einen kurzen Opus-Clip für diese Direktnachricht auf. Unterstützt von Mesh Hub, Ratspeak und Sideband (FIELD_AUDIO). Nicht das gleiche wie LXST Call.",
-      "sendTooltip": "Die aufgezeichnete LXMF-Sprachnotiz senden",
-      "sendAriaWithElapsed": "Sprachnotiz senden ({{seconds}} Sekunden aufgezeichnet)"
-    },
     "heardByRepeaters_one": "Gehört von {{count}}",
     "heardByRepeaters_other": "Gehört von {{count}}",
     "heardByNetwork": "Vom Netzwerk gehört",
@@ -984,8 +975,7 @@
         "chooserCancelledHint": "Wenn Sie nicht abgebrochen haben, stellen Sie sicher, dass Bluetooth aktiviert ist (systemctl status bluetooth), und tippen Sie dann erneut auf „Verbinden“. Installieren Sie auf Flatpak einen Build mit erlaubtem Bluetooth neu oder verwenden Sie AppImage/.deb/.rpm.",
         "bluetoothctlMissingHint": "OS-Bluetooth-Pairing-Tools sind in dieser Umgebung nicht verfügbar (üblich in Flatpak). Verwenden Sie das offizielle AppImage, .deb oder .rpm, oder koppeln Sie das Radio mit dem Host-Bluetoothctl und versuchen Sie dann erneut, Connect durchzuführen.",
         "stackUnresponsiveGeneric": "Bluetooth bleibt bei einem früheren Verbindungsversuch hängen. Schalten Sie Bluetooth aus und ein, koppeln Sie das Radio bei Bedarf neu und starten Sie dann den Mesh Hub neu.",
-        "stackUnresponsiveWindowsRePair": "Windows Bluetooth bleibt bei einem früheren Verbindungsversuch hängen, in der Regel, weil das Funkgerät nicht richtig gekoppelt ist. Drücken Sie auf Gerät entfernen und neu koppeln und geben Sie die im Radio angezeigte PIN ein. Wenn die Verbindung immer noch verweigert wird, starten Sie den Mesh Hub neu und versuchen Sie es erneut.",
-        "rnodeBondRecoveryHold": "Bluetooth ist für Meshtastic und MeshCore pausiert, da ein Reticulum RNode eine defekte Bluetooth-Kopplung aufweist. Reparieren Sie zuerst den RNode: Vergessen Sie ihn in den Bluetooth-Einstellungen Ihres Systems und koppeln Sie ihn dann erneut über den → Reticulum-Administrator. Um Bluetooth-Funkgeräte sofort zu verwenden, stoppen Sie den Reticulum-Stack oder schalten Sie diesen RNode auf USB oder WLAN um."
+        "stackUnresponsiveWindowsRePair": "Windows Bluetooth bleibt bei einem früheren Verbindungsversuch hängen, in der Regel, weil das Funkgerät nicht richtig gekoppelt ist. Drücken Sie auf Gerät entfernen und neu koppeln und geben Sie die im Radio angezeigte PIN ein. Wenn die Verbindung immer noch verweigert wird, starten Sie den Mesh Hub neu und versuchen Sie es erneut."
       }
     },
     "error": {
@@ -1016,8 +1006,7 @@
     "stageAutoConnectingBle": "Verbindung zu {{deviceName}} wird hergestellt…",
     "bleOwner": {
       "meshtastic": "Meshtastic",
-      "meshcore": "MeshCore",
-      "reticulum": "Reticulum"
+      "meshcore": "MeshCore"
     },
     "topicPrefixHelp": {
       "meshtastic": "msh/[Land]/[Bundesland], z.B. msh/CO/US",
@@ -1558,10 +1547,6 @@
         "label": "USB-Serielle Wiederverbindung",
         "recommendation": "Der serielle USB-Port konnte nicht wieder geöffnet werden oder sein vorheriger Stream ist immer noch gesperrt. Schließen Sie andere Apps mit dem Radio, schließen Sie das Kabel wieder an und stellen Sie die Verbindung in der App wieder her. Wenn es sich wiederholt, fügen Sie die seriellen Protokollzeilen in einen Fehlerbericht ein."
       },
-      "reticulum-nomad-hosting": {
-        "label": "Probleme beim Hosting von Nomad-Seiten",
-        "recommendation": "Das Hosting von Nomad My Pages ist fehlgeschlagen oder der Inhaltsordner ist nicht verfügbar. Öffnen Sie Nomad Network → My Pages, wählen Sie den Seitenordner erneut aus, wenn er verschoben wurde, und beginnen Sie mit der Bereitstellung. Details erscheinen als [nomad-serving] / [NomadHosting] im Protokoll."
-      },
       "renderer-unresponsive": {
         "label": "App antwortet nicht mehr",
         "recommendation": "Die App hat aufgehört, UI-Herzschläge zu senden. Wenn es sich erholt hat, notieren Sie sich, was Sie in der Nähe der angegebenen Zeit getan haben. Wenn sie eingefroren bleibt, starten Sie die App neu und fügen Sie diesen Bericht hinzu, wenn Sie einen wiederkehrenden Ausfall melden."
@@ -1573,18 +1558,6 @@
       "meshtastic-tcp": {
         "label": "Meshtastic-TCP-Verbindung fehlgeschlagen",
         "recommendation": "Die TCP-Verbindung zum Meshtastic-Funkgerät ist fehlgeschlagen. Überprüfen Sie die Funkadresse und den Port, die Erreichbarkeit des lokalen Netzwerks und ob ein anderer Client die Verbindung verwendet, bevor Sie die Verbindung wiederherstellen."
-      },
-      "reticulum-sidecar": {
-        "label": "Reticulum-Dienst unterbrochen",
-        "recommendation": "Der lokale Reticulum-Dienst konnte seine Ereignisverbindung nicht starten, nicht reagieren oder nicht aufrechterhalten. Überprüfen Sie den Status in Verbindung und den Protokollzeilen unten. Wenn es sich nicht erholt hat, starten Sie die Reticulum-Verbindung neu. Eine fehlende mitgelieferte Dienstkomponente erfordert möglicherweise eine Neuinstallation der App."
-      },
-      "reticulum-delivery": {
-        "label": "Reticulum-Zustellung oder -Synchronisierung fehlgeschlagen",
-        "recommendation": "Ein Nachrichtenübermittlungs- oder Übertragungssynchronisierungsversuch ist fehlgeschlagen. Überprüfen Sie den aktuellen Nachrichtenstatus, bevor Sie es erneut versuchen, prüfen Sie das Ziel und überprüfen Sie die aktivierten Schnittstellen. Überprüfen Sie für die Übertragung den ausgewählten Knoten und den Synchronisierungsstatus unter Netzwerk. Eine gespeicherte Nachricht ist kein Nachweis für die Zustellung durch den Empfänger."
-      },
-      "reticulum-backpressure": {
-        "label": "Reticulum-Ereignisse oder -Pakete verworfen",
-        "recommendation": "Der lokale Reticulum-Dienst ließ Ereignisse oder Pakete fallen, weil eine Warteschlange gefüllt war, ein Teilnehmer zurückfiel oder eine Nutzlast ein Limit überschritt. Reduzieren Sie gleichzeitige Massenübertragungen und überprüfen Sie dann den Nachrichtenstatus, bevor Sie es erneut versuchen. Wiederholte Drops im Leerlauf sind es wert, mit diesen Protokollbeispielen gemeldet zu werden."
       },
       "firmware-flash": {
         "label": "Firmware-Übertragung blockiert",

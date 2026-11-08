@@ -1,6 +1,3 @@
-import net from 'net';
-
-import { formatHostForSocket } from '../shared/connectHost';
 import { MS_PER_SECOND } from '../shared/timeConstants';
 import { sanitizeLogMessage } from './log-service';
 
@@ -33,51 +30,4 @@ export async function probeHttpRttMs(host: string, tls: boolean): Promise<number
     );
     return null;
   }
-}
-
-/**
- * Time a TCP connect to host:port, then destroy the socket immediately.
- * Measures LAN reachability latency without attaching a protocol session.
- */
-export function probeTcpRttMs(host: string, port: number): Promise<number | null> {
-  return new Promise((resolve) => {
-    let settled = false;
-    const socketHost = formatHostForSocket(host);
-    const socket = new net.Socket();
-    const started = Date.now();
-    const finish = (rtt: number | null) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      try {
-        socket.removeAllListeners();
-        socket.destroy();
-      } catch {
-        // catch-no-log-ok probe socket cleanup
-      }
-      resolve(rtt);
-    };
-    const timer = setTimeout(() => {
-      finish(null);
-    }, HOST_LINK_RTT_PROBE_TIMEOUT_MS);
-    socket.once('connect', () => {
-      finish(Date.now() - started);
-    });
-    socket.once('error', (err) => {
-      console.debug(
-        `[hostLink] TCP probe failed for ${sanitizeLogMessage(socketHost)}:${port}:`,
-        sanitizeLogMessage(err.message),
-      );
-      finish(null);
-    });
-    try {
-      socket.connect(port, socketHost);
-    } catch (err) {
-      console.debug(
-        `[hostLink] TCP probe connect threw for ${sanitizeLogMessage(socketHost)}:${port}:`,
-        sanitizeLogMessage(err instanceof Error ? err.message : String(err)),
-      );
-      finish(null);
-    }
-  });
 }

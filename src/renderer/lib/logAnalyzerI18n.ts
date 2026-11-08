@@ -5,9 +5,6 @@ export const LOG_ANALYZER_CATEGORY_LABEL_KEYS: Record<string, string> = {
   'renderer-unresponsive': 'logAnalyzer.categories.renderer-unresponsive.label',
   'database-persistence': 'logAnalyzer.categories.database-persistence.label',
   'meshtastic-tcp': 'logAnalyzer.categories.meshtastic-tcp.label',
-  'reticulum-sidecar': 'logAnalyzer.categories.reticulum-sidecar.label',
-  'reticulum-delivery': 'logAnalyzer.categories.reticulum-delivery.label',
-  'reticulum-backpressure': 'logAnalyzer.categories.reticulum-backpressure.label',
   'firmware-flash': 'logAnalyzer.categories.firmware-flash.label',
   unclassified: 'logAnalyzer.categories.unclassified.label',
   'ble-connection': 'logAnalyzer.categories.ble-connection.label',
@@ -32,16 +29,12 @@ export const LOG_ANALYZER_CATEGORY_LABEL_KEYS: Record<string, string> = {
   'serial-reconnect': 'logAnalyzer.categories.serial-reconnect.label',
   'sdk-meshtastic': 'logAnalyzer.categories.sdk-meshtastic.label',
   'sdk-meshcore': 'logAnalyzer.categories.sdk-meshcore.label',
-  'reticulum-nomad-hosting': 'logAnalyzer.categories.reticulum-nomad-hosting.label',
 };
 
 export const LOG_ANALYZER_CATEGORY_RECOMMENDATION_KEYS: Partial<Record<string, string>> = {
   'renderer-unresponsive': 'logAnalyzer.categories.renderer-unresponsive.recommendation',
   'database-persistence': 'logAnalyzer.categories.database-persistence.recommendation',
   'meshtastic-tcp': 'logAnalyzer.categories.meshtastic-tcp.recommendation',
-  'reticulum-sidecar': 'logAnalyzer.categories.reticulum-sidecar.recommendation',
-  'reticulum-delivery': 'logAnalyzer.categories.reticulum-delivery.recommendation',
-  'reticulum-backpressure': 'logAnalyzer.categories.reticulum-backpressure.recommendation',
   'firmware-flash': 'logAnalyzer.categories.firmware-flash.recommendation',
   unclassified: 'logAnalyzer.categories.unclassified.recommendation',
   'serial-reconnect': 'logAnalyzer.categories.serial-reconnect.recommendation',
@@ -67,7 +60,6 @@ export const LOG_ANALYZER_CATEGORY_RECOMMENDATION_KEYS: Partial<Record<string, s
   'store-forward': 'logAnalyzer.categories.store-forward.recommendation',
   'sdk-meshtastic': 'logAnalyzer.categories.sdk-meshtastic.recommendation',
   'sdk-meshcore': 'logAnalyzer.categories.sdk-meshcore.recommendation',
-  'reticulum-nomad-hosting': 'logAnalyzer.categories.reticulum-nomad-hosting.recommendation',
 };
 
 /** Used only by unit tests merging synthetic categories in `dedupeRecommendations`. */

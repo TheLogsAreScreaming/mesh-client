@@ -580,7 +580,6 @@
     "dms": "DM",
     "receivedViaTcp": "Přijato prostřednictvím TCP",
     "receivedViaNetwork": "Přijato prostřednictvím sítě",
-    "reticulumSendFailed": "Odeslání se nezdařilo",
     "dmPeerInfoAria": "Informace o vrstevníkovi DM",
     "clearDateAria": "Vymazat datum",
     "readOnlyDisconnected": "Nepřipojeno — zprávy jsou pouze pro čtení",
@@ -628,18 +627,10 @@
     "emojiButton": "Emoji",
     "hopCountRefinedFromRf": "Aktualizováno z RF cesty",
     "waitingMessagesSilentFetched": "Načteno {{processed}} z rádia…",
-    "reticulumSendTimeout": "Odeslání vypršelo. Zásobník Reticulum se možná spouští nebo je zaneprázdněný — zkuste to znovu.",
     "meshcoreFastSend": {
       "warning": "Odesíláte rychleji, než může síť přenést. Na zaneprázdněné síti mohou opakovače zahodit zprávy odeslané blízko sebe — mezi zprávami nechte několik sekund."
     },
     "outboxLegacyMultipartBlocked": "Tato zpráva ve frontě používala vícedílné rozdělení MeshCore, které se již neodesílá. Zrušte jej a odešlete kratší zprávu (nebo několik samostatných kratších zpráv).",
-    "voiceMemo": {
-      "recordAria": "Nahrát hlasovou poznámku",
-      "sendAria": "Odeslat hlasovou poznámku",
-      "recordTooltip": "Hlasová poznámka LXMF — nahrává krátký klip Opus pro tuto přímou zprávu. Podporováno Mesh Hub, Ratspeak a Sideband (FIELD_AUDIO). Není to stejné jako LXST Call.",
-      "sendTooltip": "Odeslat nahranou hlasovou poznámku LXMF",
-      "sendAriaWithElapsed": "Odeslat hlasovou poznámku ({{seconds}} zaznamenaných sekund)"
-    },
     "heardByRepeaters_one": "Slyšeno {{count}}",
     "heardByRepeaters_other": "Slyšeno {{count}}",
     "heardByNetwork": "Slyšen sítí",
@@ -1004,8 +995,7 @@
         "chooserCancelledHint": "Pokud jste to nezrušili, ujistěte se, že je Bluetooth zapnuto (systemctl status bluetooth), potom znovu klepněte na Připojit. Na Flatpak přeinstalujte sestavení s povoleným Bluetooth nebo použijte AppImage/.deb/.rpm.",
         "bluetoothctlMissingHint": "Nástroje pro párování OS Bluetooth nejsou v tomto prostředí dostupné (běžné ve Flatpak). Použijte oficiální AppImage, .deb nebo .rpm, nebo spárujte rádio s hostitelským bluetoothctl a poté znovu zkuste Connect.",
         "stackUnresponsiveGeneric": "Bluetooth se zasekl při dřívějším pokusu o připojení. Vypněte a zapněte Bluetooth, v případě potřeby rádio znovu spárujte a poté restartujte Mesh Hub.",
-        "stackUnresponsiveWindowsRePair": "Systém Windows Bluetooth se zasekl při dřívějším pokusu o připojení, obvykle proto, že rádio není správně spárováno. Stiskněte Odebrat a znovu spárovat zařízení a zadejte PIN zobrazený v rádiu. Pokud je připojení stále odmítnuto, restartujte Mesh Hub a zkuste to znovu.",
-        "rnodeBondRecoveryHold": "Bluetooth je pozastaveno pro Meshtastic a MeshCore, protože Reticulum RNode má přerušené párování Bluetooth. Nejprve opravte RNode: zapomeňte na něj v nastavení Bluetooth systému a poté jej znovu spárujte s → administrátorem Reticulum. Chcete-li okamžitě používat rádia Bluetooth, zastavte zásobník Reticulum nebo přepněte tento RNode na USB nebo Wi-Fi."
+        "stackUnresponsiveWindowsRePair": "Systém Windows Bluetooth se zasekl při dřívějším pokusu o připojení, obvykle proto, že rádio není správně spárováno. Stiskněte Odebrat a znovu spárovat zařízení a zadejte PIN zobrazený v rádiu. Pokud je připojení stále odmítnuto, restartujte Mesh Hub a zkuste to znovu."
       }
     },
     "error": {
@@ -1036,8 +1026,7 @@
     "stageAutoConnectingBle": "Připojení k {{deviceName}}…",
     "bleOwner": {
       "meshtastic": "Meshtastic",
-      "meshcore": "MeshCore",
-      "reticulum": "Reticulum"
+      "meshcore": "MeshCore"
     },
     "topicPrefixHelp": {
       "meshtastic": "msh/[Země]/[Stát], např. msh/CO/US",
@@ -1584,10 +1573,6 @@
         "label": "Sériové připojení USB",
         "recommendation": "Sériový port USB nelze znovu otevřít nebo je jeho předchozí proud stále uzamčen. Zavřete ostatní aplikace pomocí rádia, znovu připojte kabel a znovu se připojte v aplikaci. Pokud se opakuje, zahrňte sériové řádky protokolu do hlášení o chybě."
       },
-      "reticulum-nomad-hosting": {
-        "label": "Problémy s hostitelstvím na stránce Nomad",
-        "recommendation": "Hostování služby Nomad My Pages se nezdařilo nebo složka s obsahem není k dispozici. Otevřete Nomad Network → My Pages, znovu vyberte složku stránek, pokud se přesunula, a poté Spustit zobrazování. Podrobnosti se v protokolu zobrazí jako [nomad-serving] / [NomadHosting]."
-      },
       "renderer-unresponsive": {
         "label": "Aplikace přestala reagovat",
         "recommendation": "Aplikace přestala odesílat srdeční tep uživatelského rozhraní. Pokud se zotavil, všimněte si, co jste dělali v blízkosti uvedeného času. Pokud zůstanou zamrzlé, restartujte aplikaci a při hlášení opakovaného zablokování zahrňte tuto zprávu."
@@ -1599,18 +1584,6 @@
       "meshtastic-tcp": {
         "label": "Meshtastic TCP spojení selhalo",
         "recommendation": "Připojení TCP k rádiu Meshtastic se nezdařilo. Před opětovným připojením zkontrolujte rádiovou adresu a port, dosažitelnost místní sítě a zda připojení používá jiný klient."
-      },
-      "reticulum-sidecar": {
-        "label": "Služba Reticulum byla přerušena",
-        "recommendation": "Místní služba Reticulum se nepodařilo spustit, odpovědět nebo zachovat připojení k události. Zkontrolujte jeho stav v Připojení a níže uvedených řádcích protokolu. Pokud se neobnovil, restartujte připojení Reticulum. Chybějící zabalený postranní vozík může vyžadovat přeinstalování aplikace."
-      },
-      "reticulum-delivery": {
-        "label": "Doručení nebo synchronizace Reticulum se nezdařila",
-        "recommendation": "Pokus o synchronizaci doručení nebo propagace zprávy se nezdařil. Před opakováním zkontrolujte aktuální stav zprávy, prozkoumejte cíl a zkontrolujte povolená rozhraní. Pro propagaci zkontrolujte vybraný uzel a stav synchronizace v části Síť; uložená zpráva není dokladem o doručení příjemcem."
-      },
-      "reticulum-backpressure": {
-        "label": "Zahozené události nebo pakety Reticulum",
-        "recommendation": "Místní služba Reticulum upustila od událostí nebo paketů, protože fronta byla naplněna, účastník zaostal nebo užitečné zatížení překročilo limit. Snižte souběžné hromadné přenosy a před opakováním zkontrolujte stav zprávy. Opakované kapky při nečinnosti stojí za to hlásit s těmito vzorky protokolů."
       },
       "firmware-flash": {
         "label": "Přenos firmwaru se zastavil",

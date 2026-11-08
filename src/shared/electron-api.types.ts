@@ -249,12 +249,6 @@ export interface BleRegisteredConnection {
 export interface BleCoexistenceState {
   connections: BleRegisteredConnection[];
   scanOwner: BleScanOwner | null;
-  /**
-   * True while main has decided a Reticulum BLE RNode Noble yield is required but has not yet
-   * finished acquire/skip. RF auto-connect must wait so it does not race fire-and-forget yield.
-   * Optional on older IPC shapes; treat missing as false.
-   */
-  nobleYieldDecisionPending?: boolean;
 }
 
 /** Result of bleCoexistence:acquireScan — busy is a normal Result, not an IPC throw. */
@@ -772,10 +766,6 @@ export interface ElectronAPI {
   stopGattScanning: (sessionId: GattBleSessionId) => Promise<void>;
   connectGatt: (sessionId: GattBleSessionId, peripheralId: string) => Promise<GattBleConnectResult>;
   disconnectGatt: (sessionId: GattBleSessionId) => Promise<void>;
-  /** Drop LoRa GATT sessions + sidecar CBCentralManager for RNode bond recovery. */
-  releaseGattBleCentral: () => Promise<void>;
-  /** End exclusive RNode bond-recovery hold so LoRa GATT may scan/connect again. */
-  clearGattBondRecoveryExclusive: () => Promise<void>;
   isGattConnected: (sessionId: GattBleSessionId) => Promise<boolean>;
   gattToRadio: (sessionId: GattBleSessionId, bytes: Uint8Array) => Promise<void>;
   /** Windows: whether the OS holds a pairing for this radio (WinRT, via sidecar). */
@@ -1031,7 +1021,6 @@ export interface ElectronAPI {
    */
   hostLink: {
     probeHttpRtt: (host: string, tls: boolean) => Promise<number | null>;
-    probeTcpRtt: (host: string, port: number) => Promise<number | null>;
     getSessionMeter: (
       protocol: 'meshtastic' | 'meshcore',
     ) => Promise<{ rttMs: number | null } | null>;

@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 
-import { parseHttpProbeTarget, parseTcpProbeTarget, rttToSignalLevel } from './hostLinkQuality';
+import { parseHttpProbeTarget, rttToSignalLevel } from './hostLinkQuality';
 
 describe('rttToSignalLevel', () => {
   it('maps latency buckets to 0–4 bars', () => {
@@ -36,18 +36,5 @@ describe('parseHttpProbeTarget', () => {
   it('returns null for empty input', () => {
     expect(parseHttpProbeTarget('')).toBeNull();
     expect(parseHttpProbeTarget('   ')).toBeNull();
-  });
-});
-
-describe('parseTcpProbeTarget', () => {
-  it('defaults Meshtastic to 4403 and MeshCore to 5000', () => {
-    expect(parseTcpProbeTarget('10.0.0.5', 'meshtastic')).toEqual({
-      host: '10.0.0.5',
-      port: 4403,
-    });
-    expect(parseTcpProbeTarget('10.0.0.5', 'meshcore')).toEqual({
-      host: '10.0.0.5',
-      port: 5000,
-    });
   });
 });
