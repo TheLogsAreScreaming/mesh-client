@@ -28,7 +28,7 @@ import { app, dialog, shell } from 'electron';
 import { getDatabase } from './database';
 import { sanitizeLogMessage } from './log-service';
 
-const REPO_OWNER = 'charlottemeshtastic';
+const REPO_OWNER = 'TheLogsAreScreaming';
 const REPO_NAME = 'mesh-client';
 const ISSUE_TEMPLATE = 'crash_report.md';
 

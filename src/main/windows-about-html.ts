@@ -6,7 +6,7 @@
 import { APP_ABOUT_TAGLINE } from '../shared/appTagline';
 import { escapeXmlAttr } from '../shared/xmlEscape';
 
-const ABOUT_URL_GITHUB = 'https://github.com/charlottemeshtastic/mesh-client';
+const ABOUT_URL_GITHUB = 'https://github.com/TheLogsAreScreaming/mesh-client';
 const ABOUT_URL_UPSTREAM = 'https://github.com/Colorado-Mesh/mesh-client';
 
 export function escapeHtmlText(s: string): string {

@@ -43,7 +43,7 @@ function deviceStateFromConnection(conn: ReturnType<typeof useConnectionByProtoc
 /**
  * RF connect: MeshCore uses the runtime session `connect()` (full success path including TCP
  * burst-complete deferred reconnect). Meshtastic keeps prepare → ConnectionDriver → attach
- * ([#375](https://github.com/charlottemeshtastic/mesh-client/issues/375)).
+ * ([#375](https://github.com/TheLogsAreScreaming/mesh-client/issues/375)).
  */
 export function useProtocolConnect(): (
   protocol: MeshProtocol,

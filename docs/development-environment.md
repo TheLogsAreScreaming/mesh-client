@@ -10,7 +10,7 @@ These requirements apply to all platforms.
 
 - Git
 - Node.js **22.15.0+** and pnpm **12+** (`package.json` `engines`; the repo pins **`packageManager`** to a specific pnpm release — use [Corepack](https://nodejs.org/api/corepack.html) when available, or `npm install -g corepack@latest` / `npm install -g pnpm@<pin>` on Node 25+ where Corepack is not bundled). `pnpm install` fails on engine mismatch. After pulling a pnpm major bump, `preinstall` and `pnpm run dev` print an upgrade banner with the exact install command if your local pnpm is too old or the wrong major.
-- [CI](https://github.com/charlottemeshtastic/mesh-client/blob/main/.github/workflows/ci.yaml) uses Node 22
+- [CI](https://github.com/TheLogsAreScreaming/mesh-client/blob/main/.github/workflows/ci.yaml) uses Node 22
 - Python 3 + `pip` (needed for MkDocs documentation build and yamllint)
 
 Verify:
@@ -62,7 +62,7 @@ If `pnpm run docs:install` fails with `externally-managed-environment`, activate
 ### 2) Clone and install
 
 ```bash
-git clone https://github.com/charlottemeshtastic/mesh-client
+git clone https://github.com/TheLogsAreScreaming/mesh-client
 cd mesh-client
 node scripts/check-environment.mjs # optional but recommended on first clone
 pnpm install
@@ -701,7 +701,7 @@ Electron **44** (this repo’s runtime) requires **macOS 13 Ventura** or later f
 ### Build/run flow
 
 ```bash
-git clone https://github.com/charlottemeshtastic/mesh-client
+git clone https://github.com/TheLogsAreScreaming/mesh-client
 cd mesh-client
 pnpm install
 pnpm run dev
@@ -748,7 +748,7 @@ If a downloaded app reports "Mesh Hub is damaged and can't be opened", see [macO
 ### Build/run flow
 
 ```powershell
-git clone https://github.com/charlottemeshtastic/mesh-client
+git clone https://github.com/TheLogsAreScreaming/mesh-client
 cd mesh-client
 pnpm install
 pnpm run dev
@@ -799,7 +799,7 @@ sudo dnf install python3 nspr nss
 ### Build/run flow
 
 ```bash
-git clone https://github.com/charlottemeshtastic/mesh-client
+git clone https://github.com/TheLogsAreScreaming/mesh-client
 cd mesh-client
 pnpm install
 pnpm run dev

@@ -1,9 +1,9 @@
 site_name: Mesh Hub
-site_url: https://charlottemeshtastic.github.io/mesh-client/
+site_url: https://thelogsarescreaming.github.io/mesh-client/
 site_description: >-
   Cross-platform desktop client for Meshtastic and MeshCore mesh networks.
-repo_url: https://github.com/charlottemeshtastic/mesh-client
-repo_name: charlottemeshtastic/mesh-client
+repo_url: https://github.com/TheLogsAreScreaming/mesh-client
+repo_name: TheLogsAreScreaming/mesh-client
 edit_uri: edit/main/docs/
 copyright: Copyright &copy; Colorado Mesh volunteers and Mesh Hub contributors. Mesh Hub is GPL-3.0-or-later.
 
@@ -56,7 +56,7 @@ extra_css:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/charlottemeshtastic/mesh-client
+      link: https://github.com/TheLogsAreScreaming/mesh-client
       name: GitHub
 
 plugins:

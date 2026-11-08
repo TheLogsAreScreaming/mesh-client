@@ -1009,15 +1009,15 @@ describe('ConnectionPanel status i18n and pulse', () => {
     expect(screen.getByText('Bluetooth')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Docs ↗' })).toHaveAttribute(
       'href',
-      'https://charlottemeshtastic.github.io/mesh-client/troubleshooting/',
+      'https://thelogsarescreaming.github.io/mesh-client/troubleshooting/',
     );
     expect(screen.queryByText('configured')).not.toBeInTheDocument();
     expect(screen.queryByText('ble')).not.toBeInTheDocument();
   });
 
   it.each([
-    ['meshtastic', 'https://charlottemeshtastic.github.io/mesh-client/troubleshooting/'],
-    ['meshcore', 'https://charlottemeshtastic.github.io/mesh-client/troubleshooting-meshcore/'],
+    ['meshtastic', 'https://thelogsarescreaming.github.io/mesh-client/troubleshooting/'],
+    ['meshcore', 'https://thelogsarescreaming.github.io/mesh-client/troubleshooting-meshcore/'],
   ] as const)('links %s Docs to its troubleshooting page on the docs site', (protocol, href) => {
     renderWithFirmware(undefined, undefined, protocol);
     expect(screen.getByRole('link', { name: 'Docs ↗' })).toHaveAttribute('href', href);

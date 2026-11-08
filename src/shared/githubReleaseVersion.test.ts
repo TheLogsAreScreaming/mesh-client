@@ -58,7 +58,8 @@ describe('githubReleaseVersion', () => {
         name: '5.29.0',
         draft: false,
         prerelease: false,
-        html_url: 'https://github.com/charlottemeshtastic/mesh-client/releases/tag/v5.29.0',
+        html_url:
+          'https://github.com/TheLogsAreScreaming/mesh-client-releases/releases/tag/v5.29.0',
       },
       {
         tag_name: 'untagged-deadbeef',
@@ -66,14 +67,14 @@ describe('githubReleaseVersion', () => {
         draft: false,
         prerelease: false,
         html_url:
-          'https://github.com/charlottemeshtastic/mesh-client/releases/tag/untagged-deadbeef',
+          'https://github.com/TheLogsAreScreaming/mesh-client-releases/releases/tag/untagged-deadbeef',
       },
     ]);
     expect(picked).toEqual({
       tag: 'v5.30.0',
       version: '5.30.0',
       releaseUrl:
-        'https://github.com/charlottemeshtastic/mesh-client/releases/tag/untagged-deadbeef',
+        'https://github.com/TheLogsAreScreaming/mesh-client-releases/releases/tag/untagged-deadbeef',
     });
   });
 

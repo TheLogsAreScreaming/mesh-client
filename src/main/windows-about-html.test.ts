@@ -19,7 +19,7 @@ describe('windows-about-html', () => {
     expect(html).toContain('>GitHub</a>');
     expect(html).toContain('>Upstream</a>');
     expect(html).toContain('>Close</button>');
-    expect(html).toContain('href="https://github.com/charlottemeshtastic/mesh-client"');
+    expect(html).toContain('href="https://github.com/TheLogsAreScreaming/mesh-client"');
     expect(html).toContain('href="https://github.com/Colorado-Mesh/mesh-client"');
     expect(html).toContain('aria-label="Close About window"');
     expect(html).not.toContain('<script');

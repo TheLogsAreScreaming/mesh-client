@@ -1,7 +1,7 @@
 import type { MeshProtocol } from './meshProtocol';
 
 /** Published MkDocs site (built from `docs/` by `.github/workflows/docs.yml`). */
-export const DOCS_SITE_URL = 'https://charlottemeshtastic.github.io/mesh-client/';
+export const DOCS_SITE_URL = 'https://thelogsarescreaming.github.io/mesh-client/';
 
 /**
  * URL of a page on the docs site. `page` is the `docs/<page>.md` basename without

@@ -243,7 +243,7 @@ if (process.platform === 'win32') {
 }
 
 /** Trusted Help menu / About credits URLs (static, not user-controlled). */
-const HELP_URL_GITHUB = 'https://github.com/charlottemeshtastic/mesh-client';
+const HELP_URL_GITHUB = 'https://github.com/TheLogsAreScreaming/mesh-client';
 /** Upstream project Mesh Hub is forked from (GPL attribution). */
 const HELP_URL_UPSTREAM = 'https://github.com/Colorado-Mesh/mesh-client';
 

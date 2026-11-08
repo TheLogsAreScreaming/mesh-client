@@ -120,7 +120,7 @@ const NEWER_RELEASE_ROW = {
   tag_name: 'v9.9.9',
   draft: false,
   prerelease: false,
-  html_url: 'https://github.com/charlottemeshtastic/mesh-client/releases/tag/v9.9.9',
+  html_url: 'https://github.com/TheLogsAreScreaming/mesh-client-releases/releases/tag/v9.9.9',
 };
 
 function setPlatform(platform: 'darwin' | 'win32' | 'linux'): void {
@@ -235,7 +235,8 @@ describe('updater behavior (electron-updater path)', () => {
       emitUpdaterEvent('update-available', { version: '9.9.9' });
       expect(harness.send).toHaveBeenCalledWith('update:available', {
         version: '9.9.9',
-        releaseUrl: 'https://github.com/charlottemeshtastic/mesh-client/releases/tag/v9.9.9',
+        releaseUrl:
+          'https://github.com/TheLogsAreScreaming/mesh-client-releases/releases/tag/v9.9.9',
         isPackaged: true,
         isMac: platform === 'darwin',
       });
@@ -313,7 +314,7 @@ describe('updater behavior (electron-updater path)', () => {
     await flushMicrotasks();
     expect(harness.send).toHaveBeenCalledWith('update:available', {
       version: '9.9.9',
-      releaseUrl: 'https://github.com/charlottemeshtastic/mesh-client/releases/tag/v9.9.9',
+      releaseUrl: 'https://github.com/TheLogsAreScreaming/mesh-client-releases/releases/tag/v9.9.9',
       isPackaged: true,
       isMac,
     });
@@ -438,16 +439,16 @@ describe('updater behavior (electron-updater path)', () => {
     setup('darwin');
     await handler('update:open-releases')(
       trustedEvent,
-      'https://github.com/charlottemeshtastic/mesh-client/releases/tag/v9.9.9',
+      'https://github.com/TheLogsAreScreaming/mesh-client-releases/releases/tag/v9.9.9',
     );
     expect(harness.openExternal).toHaveBeenCalledWith(
-      'https://github.com/charlottemeshtastic/mesh-client/releases/tag/v9.9.9',
+      'https://github.com/TheLogsAreScreaming/mesh-client-releases/releases/tag/v9.9.9',
     );
 
     harness.openExternal.mockClear();
     await handler('update:open-releases')(trustedEvent, 'https://evil.example/clone');
     expect(harness.openExternal).toHaveBeenCalledWith(
-      'https://github.com/charlottemeshtastic/mesh-client/releases',
+      'https://github.com/TheLogsAreScreaming/mesh-client-releases/releases',
     );
   });
 
@@ -477,14 +478,14 @@ describe('updater behavior (GitHub Releases API fallback)', () => {
     await handler('update:check')(trustedEvent);
     expect(harness.send).toHaveBeenCalledWith('update:available', {
       version: '9.9.9',
-      releaseUrl: 'https://github.com/charlottemeshtastic/mesh-client/releases/tag/v9.9.9',
+      releaseUrl: 'https://github.com/TheLogsAreScreaming/mesh-client-releases/releases/tag/v9.9.9',
       isPackaged: true,
       isMac: false,
     });
 
     await handler('update:download')(trustedEvent);
     expect(harness.openExternal).toHaveBeenCalledWith(
-      'https://github.com/charlottemeshtastic/mesh-client/releases/tag/v9.9.9',
+      'https://github.com/TheLogsAreScreaming/mesh-client-releases/releases/tag/v9.9.9',
     );
     expect(harness.autoUpdater.downloadUpdate).not.toHaveBeenCalled();
   });

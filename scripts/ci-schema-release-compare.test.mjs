@@ -181,7 +181,7 @@ describe('parseGithubLinkNext / fetchAllGithubReleases', () => {
       return new Response(JSON.stringify(page1), {
         status: 200,
         headers: {
-          link: '<https://api.github.com/repos/charlottemeshtastic/mesh-client/releases?page=2>; rel="next"',
+          link: '<https://api.github.com/repos/TheLogsAreScreaming/mesh-client/releases?page=2>; rel="next"',
         },
       });
     });

@@ -10,7 +10,7 @@
 !macro customInstall
   IfFileExists "$INSTDIR\Mesh Hub.exe" finish_ok 0
     SetErrorLevel 2
-    MessageBox MB_ICONSTOP|MB_OK "Installation incomplete: Mesh Hub.exe is missing from $INSTDIR.$\r$\nPlease report this at github.com/charlottemeshtastic/mesh-client/issues." /SD IDOK
+    MessageBox MB_ICONSTOP|MB_OK "Installation incomplete: Mesh Hub.exe is missing from $INSTDIR.$\r$\nPlease report this at github.com/TheLogsAreScreaming/mesh-client/issues." /SD IDOK
     Abort
   finish_ok:
   !ifdef MESH_CLIENT_SCHEMA_UPGRADE_NOTICE

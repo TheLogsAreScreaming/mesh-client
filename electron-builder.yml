@@ -13,8 +13,8 @@ asarUnpack:
   # Native BLE lives in the ble-sidecar helper (btleplug); @stoprocent/noble removed.
 publish:
   provider: github
-  owner: charlottemeshtastic
-  repo: mesh-client
+  owner: TheLogsAreScreaming
+  repo: mesh-client-releases
   # Keep GitHub Releases as drafts until a maintainer publishes manually.
   releaseType: draft
 beforePack: scripts/electron-builder-before-pack.mjs

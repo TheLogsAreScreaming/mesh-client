@@ -1123,7 +1123,7 @@ describe('App accessibility', () => {
 
     expect(screen.getByRole('link', { name: 'GitHub' })).toHaveAttribute(
       'href',
-      'https://github.com/charlottemeshtastic/mesh-client',
+      'https://github.com/TheLogsAreScreaming/mesh-client',
     );
     expect(screen.queryByRole('link', { name: 'Discord' })).toBeNull();
   });

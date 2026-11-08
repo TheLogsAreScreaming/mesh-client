@@ -31,7 +31,7 @@ export function getCheckNowFromMenu(): (() => void) | null {
   return checkFromMenu;
 }
 
-const REPO = 'charlottemeshtastic/mesh-client';
+const REPO = 'TheLogsAreScreaming/mesh-client-releases';
 const RELEASES_URL = `https://github.com/${REPO}/releases`;
 
 /** `app_settings` key backing the App → Updates "download automatically" toggle. */

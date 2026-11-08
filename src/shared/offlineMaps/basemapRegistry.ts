@@ -45,7 +45,7 @@ const USGS_TOPO_TILE_BASE =
 
 /** Identifying User-Agent for tile policy compliance. */
 export function meshTilesUserAgent(appVersion: string): string {
-  return `mesh-client/${appVersion} (+https://github.com/charlottemeshtastic/mesh-client)`;
+  return `mesh-client/${appVersion} (+https://github.com/TheLogsAreScreaming/mesh-client)`;
 }
 
 /** Referer expected by OSM tile servers for packaged Electron loads. */

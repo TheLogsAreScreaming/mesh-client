@@ -120,7 +120,7 @@ describe('DiagnosticsPanel accessibility', () => {
     );
     expect(screen.getByRole('link', { name: 'Docs ↗' })).toHaveAttribute(
       'href',
-      'https://charlottemeshtastic.github.io/mesh-client/diagnostics/',
+      'https://thelogsarescreaming.github.io/mesh-client/diagnostics/',
     );
   });
 

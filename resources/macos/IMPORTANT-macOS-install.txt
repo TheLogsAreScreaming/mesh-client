@@ -30,4 +30,4 @@ Quick check (optional)
 Squirrel and Versions/Current should be symlinks; Versions/A/Squirrel should
 be a Mach-O dylib (not a tiny text file).
 
-More help: https://charlottemeshtastic.github.io/mesh-client/troubleshooting/#macos-library-not-loaded-squirrelframework-after-zip-extract
+More help: https://thelogsarescreaming.github.io/mesh-client/troubleshooting/#macos-library-not-loaded-squirrelframework-after-zip-extract

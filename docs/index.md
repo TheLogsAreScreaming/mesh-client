@@ -7,7 +7,7 @@ hide:
 
 **One desktop app for Meshtastic and MeshCore mesh networks** on macOS, Linux, and Windows. Connect over Bluetooth, USB serial, Wi-Fi/TCP, or MQTT, keep your full message history locally, and see what your mesh is actually doing with built-in routing diagnostics.
 
-[Download Mesh Hub](https://github.com/charlottemeshtastic/mesh-client/releases/latest){ .md-button .md-button--primary }
+[Download Mesh Hub](https://github.com/TheLogsAreScreaming/mesh-client-releases/releases/latest){ .md-button .md-button--primary }
 [Install guide](install.md){ .md-button }
 [All features](features.md){ .md-button }
 
@@ -76,7 +76,7 @@ Companion radios over BLE, USB serial, or TCP. Contacts, channels, Rooms (BBS), 
 - **Something not working?** Start with [Troubleshooting](troubleshooting.md) or the [MeshCore](troubleshooting-meshcore.md) page.
 - **Reporting a bug:** use **App → Export for GitHub** and attach the file. See [Reporting bugs](troubleshooting.md#reporting-bugs-export-for-github-app-tab).
 - **Unfamiliar term?** Check the [Glossary](glossary.md).
-- **Talk to people:** [GitHub issues](https://github.com/charlottemeshtastic/mesh-client/issues).
+- **Talk to people:** [GitHub issues](https://github.com/TheLogsAreScreaming/mesh-client/issues).
 
 ## Frequently asked questions
 
@@ -90,4 +90,4 @@ Prefer the **`.dmg`**. If you use the **`.zip`**, extract it with **[Keka](https
 
 ## Protocol scope
 
-Mesh Hub focuses on RF mesh (LoRa and related). Additional protocols are in scope when they support that RF mesh path; internet-only stacks are out of scope. Mesh Hub is for everyone, everywhere, not only licensed amateurs. See [README: Why](https://github.com/charlottemeshtastic/mesh-client/blob/main/README.md#why).
+Mesh Hub focuses on RF mesh (LoRa and related). Additional protocols are in scope when they support that RF mesh path; internet-only stacks are out of scope. Mesh Hub is for everyone, everywhere, not only licensed amateurs. See [README: Why](https://github.com/TheLogsAreScreaming/mesh-client/blob/main/README.md#why).
