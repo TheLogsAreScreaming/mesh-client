@@ -75,6 +75,14 @@ describe('theme surfaces and accents', () => {
     expect(contrastRatio('#ffffff', c.readableGreen)).toBeGreaterThanOrEqual(4.5);
   });
 
+  it('field borders (ink-500) reach 3:1 against panels and field backgrounds on every surface', () => {
+    for (const surface of THEME_SURFACES) {
+      const s = surface.scale;
+      expect(contrastRatio(s[500], s[900]), surface.id).toBeGreaterThanOrEqual(3);
+      expect(contrastRatio(s[500], s[950]), surface.id).toBeGreaterThanOrEqual(3);
+    }
+  });
+
   it('High contrast field borders reach 3:1 against panels and field backgrounds', () => {
     const surface = themeSurface('highContrast');
     const c = surfaceThemeColors(surface);

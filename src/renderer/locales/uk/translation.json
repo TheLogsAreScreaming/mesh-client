@@ -1157,7 +1157,7 @@
     "errors": {
       "ble": {
         "adapter_missing": "Адаптер Bluetooth не знайдено. Увімкніть Bluetooth у системних налаштуваннях і повторіть спробу.",
-        "permission_denied": "Bluetooth permission was denied. Allow Mesh Hub to use Bluetooth, then try again.",
+        "permission_denied": "У дозволі Bluetooth відмовлено. Дозвольте Mesh Hub використовувати Bluetooth, а потім повторіть спробу.",
         "scan_busy": "Триває ще одне сканування Bluetooth. Зачекайте хвилинку й спробуйте ще раз.",
         "mac_conflict": "This Bluetooth device is already connected to another protocol. Disconnect it there first.",
         "connect_timeout": "Час очікування підключення Bluetooth минув. Тримайте радіо в активному режимі та тримайте його поруч, а потім повторіть спробу.",
@@ -3079,9 +3079,9 @@
     "paFanDisabledDesc": "Вимкніть вентилятор охолодження підсилювача потужності (апаратно залежний).",
     "rebroadcastModeLabel": "Rebroadcast Mode",
     "nodeInfoBroadcastSecsLabel": "Node Info Broadcast Interval",
-    "nodeInfoBroadcastSecsDesc": "How often to broadcast node info in seconds (0 = firmware default ~15 min).",
+    "nodeInfoBroadcastSecsDesc": "Як часто транслювати інформацію про вузол за секунди (0 = прошивка за замовчуванням ~15 хв).",
     "doubleTapAsButtonPressLabel": "Double-tap as Button Press",
-    "doubleTapAsButtonPressDesc": "Treat an accelerometer double-tap as a user button press (hardware-dependent).",
+    "doubleTapAsButtonPressDesc": "Вважати подвійний дотик, виявлений акселерометром, натисканням кнопки користувача (залежить від обладнання).",
     "disableTripleClickLabel": "Disable Triple-click",
     "disableTripleClickDesc": "Вимкніть дію потрійного клацання на кнопці користувача.",
     "ledHeartbeatDisabledLabel": "Disable LED Heartbeat",
@@ -3119,7 +3119,7 @@
       }
     },
     "autoScreenCarouselSecsLabel": "Screen Carousel Interval",
-    "autoScreenCarouselSecsDesc": "Seconds between automatic screen page changes. 0 to disable.",
+    "autoScreenCarouselSecsDesc": "Секунди між автоматичними змінами сторінки екрана. 0, щоб вимкнути.",
     "oledTypeLabel": "OLED Type",
     "flipScreenLabel": "Flip Screen",
     "flipScreenDesc": "Поверніть дисплей на 180 градусів.",
@@ -3129,7 +3129,7 @@
     "wakeOnTapOrMotionDesc": "Пробуджуйте екран, коли пристрій натиснуто або переміщено.",
     "use12hClockLabel": "12-Hour Clock",
     "useLongNodeNameLabel": "Use Long Node Name",
-    "useLongNodeNameDesc": "Show full node name instead of short name on screen.",
+    "useLongNodeNameDesc": "Показувати повну назву вузла замість короткої назви на екрані.",
     "enableMessageBubblesLabel": "Message Bubbles",
     "enableMessageBubblesDesc": "Показувати вхідні повідомлення в бульбашці на дисплеї.",
     "oledTypes": {
@@ -3540,7 +3540,7 @@
     "transportBadgeMqttTooltip": "Отримано через MQTT",
     "transportBadgeLocalTooltip": "Місцева самотелеметрія",
     "payloadTypeTooltip": "Тип корисного навантаження: {{type}}",
-    "portLabelTooltip": "Meshtastic port: {{port}}",
+    "portLabelTooltip": "Meshtastic порт: {{port}}",
     "pathSegmentTooltip": "Хеш шляху {{hex}}",
     "pathSegmentResolvedTooltip": "Хеш шляху {{hex}} ({{name}})",
     "pathChainTooltip": "Шлях в ефірі: {{path}}",

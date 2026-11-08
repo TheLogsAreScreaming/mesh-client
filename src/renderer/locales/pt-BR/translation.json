@@ -1125,7 +1125,7 @@
     "errors": {
       "ble": {
         "adapter_missing": "Nenhum adaptador Bluetooth foi encontrado. Ative o Bluetooth nas configurações do sistema e tente novamente.",
-        "permission_denied": "Bluetooth permission was denied. Allow Mesh Hub to use Bluetooth, then try again.",
+        "permission_denied": "A permissão de Bluetooth foi negada. Permita que o Mesh Hub use Bluetooth e tente novamente.",
         "scan_busy": "Outra verificação Bluetooth está em andamento. Aguarde um momento e tente novamente.",
         "mac_conflict": "This Bluetooth device is already connected to another protocol. Disconnect it there first.",
         "connect_timeout": "A conexão Bluetooth expirou. Mantenha o rádio acordado e por perto e tente novamente.",
@@ -3015,9 +3015,9 @@
     "paFanDisabledDesc": "Desative o ventilador de refrigeração do amplificador de potência (dependente do hardware).",
     "rebroadcastModeLabel": "Rebroadcast Mode",
     "nodeInfoBroadcastSecsLabel": "Node Info Broadcast Interval",
-    "nodeInfoBroadcastSecsDesc": "How often to broadcast node info in seconds (0 = firmware default ~15 min).",
+    "nodeInfoBroadcastSecsDesc": "Com que frequência transmitir informações do nó em segundos (0 = padrão de firmware ~15 min).",
     "doubleTapAsButtonPressLabel": "Double-tap as Button Press",
-    "doubleTapAsButtonPressDesc": "Treat an accelerometer double-tap as a user button press (hardware-dependent).",
+    "doubleTapAsButtonPressDesc": "Tratar um toque duplo no acelerômetro como um pressionamento do botão do usuário (depende do hardware).",
     "disableTripleClickLabel": "Disable Triple-click",
     "disableTripleClickDesc": "Desative a ação de clique triplo no botão do usuário.",
     "ledHeartbeatDisabledLabel": "Disable LED Heartbeat",
@@ -3055,7 +3055,7 @@
       }
     },
     "autoScreenCarouselSecsLabel": "Screen Carousel Interval",
-    "autoScreenCarouselSecsDesc": "Seconds between automatic screen page changes. 0 to disable.",
+    "autoScreenCarouselSecsDesc": "Segundos entre as alterações automáticas da página da tela. 0 para desativar.",
     "oledTypeLabel": "OLED Type",
     "flipScreenLabel": "Flip Screen",
     "flipScreenDesc": "Gire o visor 180 graus.",
@@ -3065,7 +3065,7 @@
     "wakeOnTapOrMotionDesc": "Acorde a tela quando o dispositivo for tocado ou movido.",
     "use12hClockLabel": "12-Hour Clock",
     "useLongNodeNameLabel": "Use Long Node Name",
-    "useLongNodeNameDesc": "Show full node name instead of short name on screen.",
+    "useLongNodeNameDesc": "Mostre o nome completo do nó em vez do nome curto na tela.",
     "enableMessageBubblesLabel": "Message Bubbles",
     "enableMessageBubblesDesc": "Mostre as mensagens recebidas em uma bolha no visor.",
     "oledTypes": {
@@ -3476,7 +3476,7 @@
     "transportBadgeMqttTooltip": "Recebido via MQTT",
     "transportBadgeLocalTooltip": "Auto-telemetria local",
     "payloadTypeTooltip": "Tipo de carga útil: {{type}}",
-    "portLabelTooltip": "Meshtastic port: {{port}}",
+    "portLabelTooltip": "Porta Meshtastic: {{port}}",
     "pathSegmentTooltip": "Hash do caminho {{hex}}",
     "pathSegmentResolvedTooltip": "Hash do caminho {{hex}} ({{name}})",
     "pathChainTooltip": "Caminho no ar: {{path}}",

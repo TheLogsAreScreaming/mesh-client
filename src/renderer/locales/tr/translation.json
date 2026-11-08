@@ -1125,7 +1125,7 @@
     "errors": {
       "ble": {
         "adapter_missing": "Bluetooth adaptörü bulunamadı. Sistem ayarlarında Bluetooth'u etkinleştirin ve tekrar deneyin.",
-        "permission_denied": "Bluetooth permission was denied. Allow Mesh Hub to use Bluetooth, then try again.",
+        "permission_denied": "Bluetooth izni reddedildi. Mesh Hub'ın Bluetooth kullanmasına izin verin, ardından tekrar deneyin.",
         "scan_busy": "Başka bir Bluetooth taraması sürüyor. Bir süre bekleyip tekrar deneyin.",
         "mac_conflict": "This Bluetooth device is already connected to another protocol. Disconnect it there first.",
         "connect_timeout": "Bluetooth bağlantısı zaman aşımına uğradı. Radyoyu uyanık ve yakınınızda tutun, ardından tekrar deneyin.",
@@ -3017,7 +3017,7 @@
     "nodeInfoBroadcastSecsLabel": "Düğüm Bilgisi Yayın Aralığı",
     "nodeInfoBroadcastSecsDesc": "Düğüm bilgilerinin saniye cinsinden yayınlanma sıklığı (0 = donanım yazılımı varsayılanı ~15 dakika).",
     "doubleTapAsButtonPressLabel": "Düğmeye Basarken iki kez hafifçe vurun",
-    "doubleTapAsButtonPressDesc": "İvme ölçere çift dokunmayı kullanıcı düğmesine basmak gibi değerlendirin (donanımdan bağımsız).",
+    "doubleTapAsButtonPressDesc": "İvmeölçerle algılanan çift dokunmayı kullanıcı düğmesine basma olarak say (donanıma bağlı).",
     "disableTripleClickLabel": "Üç Tıklamayı Devre Dışı Bırak",
     "disableTripleClickDesc": "Kullanıcı düğmesindeki üç tıklama eylemini devre dışı bırakın.",
     "ledHeartbeatDisabledLabel": "LED Kalp Atışını Devre Dışı Bırak",
@@ -3476,7 +3476,7 @@
     "transportBadgeMqttTooltip": "MQTT ile alındı",
     "transportBadgeLocalTooltip": "Yerel kendi kendine telemetri",
     "payloadTypeTooltip": "Yük tipi: {{type}}",
-    "portLabelTooltip": "Meshtastic port: {{port}}",
+    "portLabelTooltip": "Meshtastic bağlantı noktası: {{port}}",
     "pathSegmentTooltip": "Yol hash {{hex}}",
     "pathSegmentResolvedTooltip": "Yol karması {{hex}} ({{name}})",
     "pathChainTooltip": "Yayındaki yol: {{path}}",
@@ -4269,7 +4269,7 @@
       "severity": "Severity",
       "category": "Category",
       "codes": "Codes",
-      "removeCode": "Remove code {{code}}",
+      "removeCode": "{{code}} kodunu kaldırın",
       "freetext": "Free text (pax, GPS, notes)",
       "addPax": "Add 1pax",
       "attachGps": "Attach GPS",
@@ -4286,14 +4286,14 @@
     "rebroadcast": {
       "title": "MECP RF rebroadcast",
       "hint": "İsteğe bağlı olarak bir protokol kanalında duyulan MECP'yi diğerine köprüleyin. Varsayılan olarak kapalıdır. Yolu tersine çevirmek için Çift Yönlü seçeneğini etkinleştirin.",
-      "add": "Add bridge rule",
-      "remove": "Remove bridge rule",
+      "add": "Köprü kuralı ekle",
+      "remove": "Köprü kuralını kaldır",
       "enableRule": "Enabled",
       "bidirectional": "Bidirectional",
       "endpointA": "Listen / source (A)",
       "endpointB": "Forward / destination (B)",
       "protocol": "Protocol",
-      "channelIndex": "Channel index"
+      "channelIndex": "Kanal dizini"
     },
     "exportLogSuccess": "MECP günlüğü dışa aktarıldı",
     "exportLogSuccessPath": "MECP günlüğü {{path}} 'a dışa aktarıldı",

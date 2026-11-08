@@ -1125,7 +1125,7 @@
     "errors": {
       "ble": {
         "adapter_missing": "Es wurde kein Bluetooth-Adapter gefunden. Aktivieren Sie Bluetooth in den Systemeinstellungen und versuchen Sie es erneut.",
-        "permission_denied": "Bluetooth permission was denied. Allow Mesh Hub to use Bluetooth, then try again.",
+        "permission_denied": "Bluetooth-Berechtigung wurde verweigert. Erlauben Sie Mesh Hub, Bluetooth zu verwenden, und versuchen Sie es dann erneut.",
         "scan_busy": "Ein weiterer Bluetooth-Scan ist im Gange. Warten Sie einen Moment und versuchen Sie es erneut.",
         "mac_conflict": "This Bluetooth device is already connected to another protocol. Disconnect it there first.",
         "connect_timeout": "Zeitüberschreitung der Bluetooth-Verbindung. Halten Sie das Radio wach und in der Nähe und versuchen Sie es dann erneut.",
@@ -3015,9 +3015,9 @@
     "paFanDisabledDesc": "Deaktivieren Sie den Leistungsverstärker-Kühllüfter (hardwareabhängig).",
     "rebroadcastModeLabel": "Rebroadcast Mode",
     "nodeInfoBroadcastSecsLabel": "Node Info Broadcast Interval",
-    "nodeInfoBroadcastSecsDesc": "How often to broadcast node info in seconds (0 = firmware default ~15 min).",
+    "nodeInfoBroadcastSecsDesc": "Wie oft Knoteninformationen in Sekunden übertragen werden sollen (0 = Firmware-Standard ~15 Minuten).",
     "doubleTapAsButtonPressLabel": "Double-tap as Button Press",
-    "doubleTapAsButtonPressDesc": "Treat an accelerometer double-tap as a user button press (hardware-dependent).",
+    "doubleTapAsButtonPressDesc": "Doppeltippen (Beschleunigungssensor) wie einen Tastendruck behandeln (hardwareabhängig).",
     "disableTripleClickLabel": "Disable Triple-click",
     "disableTripleClickDesc": "Deaktivieren Sie die Dreifachklick-Aktion auf der Benutzerschaltfläche.",
     "ledHeartbeatDisabledLabel": "Disable LED Heartbeat",
@@ -3055,7 +3055,7 @@
       }
     },
     "autoScreenCarouselSecsLabel": "Screen Carousel Interval",
-    "autoScreenCarouselSecsDesc": "Seconds between automatic screen page changes. 0 to disable.",
+    "autoScreenCarouselSecsDesc": "Sekunden zwischen den automatischen Änderungen der Bildschirmseite. 0 zum Deaktivieren.",
     "oledTypeLabel": "OLED Type",
     "flipScreenLabel": "Flip Screen",
     "flipScreenDesc": "Drehen Sie das Display um 180 Grad.",
@@ -3065,7 +3065,7 @@
     "wakeOnTapOrMotionDesc": "Wecken Sie den Bildschirm, wenn das Gerät angetippt oder bewegt wird.",
     "use12hClockLabel": "12-Hour Clock",
     "useLongNodeNameLabel": "Use Long Node Name",
-    "useLongNodeNameDesc": "Show full node name instead of short name on screen.",
+    "useLongNodeNameDesc": "Vollständigen Knotennamen anstelle des Kurznamens auf dem Bildschirm anzeigen.",
     "enableMessageBubblesLabel": "Message Bubbles",
     "enableMessageBubblesDesc": "Eingehende Nachrichten in einer Blase auf dem Display anzeigen.",
     "oledTypes": {
@@ -3989,7 +3989,7 @@
     "remotePortError": "Port muss zwischen 1 und 65535 liegen",
     "remoteVerifyServer": "Überprüfen Sie das Serverzertifikat (empfohlen)",
     "remoteAutoConnect": "Beim Start der Anwendung verbinden",
-    "remoteCertificates": "Zeugnisse",
+    "remoteCertificates": "Zertifikate",
     "remoteCaSummary": "Vertrauenswürdige CA: {{names}}",
     "remoteNoCa": "Keine CA importiert. Der Server wird mit dem Systemvertrauensspeicher verglichen.",
     "remoteClientSummary": "Kundenzertifikat: {{subject}}, gültig bis {{date}}",
