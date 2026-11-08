@@ -2641,7 +2641,7 @@
 <li>Works at 1024x768 and at phone width (390px); same on Linux, macOS and Windows.</li>
 </ul>
 <h2 id="color">Color<a class="headerlink" href="#color" title="Permanent link">&para;</a></h2>
-<p>Everything uses Tailwind utility classes. Theme tokens (below) are CSS variables users can change in App &gt; Appearance &gt; Colors (<code>src/renderer/lib/themeColors.ts</code>); hard-coded hex ignores their choice and is only allowed in canvas drawing and Leaflet marker HTML.</p>
+<p>Everything uses Tailwind utility classes. Theme tokens (below) are CSS variables users can change in App &gt; Appearance &gt; Colors (<code>src/renderer/lib/themeColors.ts</code>); hard-coded hex ignores their choice and is only allowed in Leaflet marker HTML drawn on the basemap. Charts and other SVG / canvas views take their colors from <code>useChartPalette()</code> (<code>lib/chartPalette.ts</code>), which has a dark and a Daylight set and follows the active theme.</p>
 <p><code>themeColors.ts</code> writes the theme tokens onto <code>:root</code> as inline styles at boot, which overrides the <code>@theme</code> block in <code>styles.css</code>. A changed default must change in both <code>styles.css</code> and <code>DEFAULT_THEME_COLORS</code>; <code>styleTokens.test.ts</code> fails when they drift.</p>
 <h3 id="neutrals-ink">Neutrals (ink)<a class="headerlink" href="#neutrals-ink" title="Permanent link">&para;</a></h3>
 <p>Neutrals come from the Mesh Hub palette: Off-Black <code>#1b1b1b</code> (950), Dark Charcoal <code>#292929</code> (900), Light Charcoal / Grey <code>#808080</code> (500) and Pure White <code>#ffffff</code> (50). The other steps are neutral greys between them. The scale is <code>--color-ink-*</code> in <code>styles.css</code>, and a <a href="#themes">theme</a> surface swaps all eleven steps at runtime.</p>
@@ -3175,7 +3175,7 @@
 <li>Label and value pairs: <code>LabelValueGrid</code> inside their card, about 560px wide at most.</li>
 <li>Cards: <code>Panel</code> (<code>bg-deep-black</code>, <code>border-ink-800</code>, <code>rounded-card</code>, level 1). Settings sections: <code>bg-deep-black rounded-xl border border-ink-800</code>.</li>
 <li>Notices: <code>Callout</code> (<code>tone</code>, optional <code>title</code> and <code>action</code>, its own icon per tone, <code>role</code> alert / status / none). <code>NOTICE_CLASS</code> is the class-string form.</li>
-<li>Dialogs: <code>Dialog</code> (<code>ui/Dialog.tsx</code>): backdrop, focus trap, Escape, focus return, entry motion. <code>ConfirmModal</code> is built on it; cancel comes first and has focus.</li>
+<li>Dialogs: <code>Dialog</code> (<code>ui/Dialog.tsx</code>) gives the standard title, body and footer. It sits on <code>DialogFrame</code> (<code>ui/DialogFrame.tsx</code>): backdrop, Level 3 surface, focus trap, Escape, focus return, entry motion, and nesting, so only the topmost dialog answers Tab and Escape. Dialogs with their own toolbars or several views (node detail, contact groups, macros, MECP compose, log analysis) render inside <code>DialogFrame</code> directly; <code>onEscape</code> steps back a view and <code>focusKey</code> re-focuses when the view changes. <code>ConfirmModal</code> is built on <code>Dialog</code>; cancel comes first and has focus.</li>
 <li>Empty and first-run views: <code>EmptyState</code> (icon, title, what to do next, action).</li>
 <li>Toasts: <code>pushAppToast()</code> / <code>useToast()</code>. Errors and emergencies are <code>role="alert"</code>; others are <code>role="status"</code>. Hover or focus pauses the timer.</li>
 <li>Map overlays: <code>MAP_CONTROL_CLASS</code>, <code>MAP_CHIP_CLASS</code>, <code>MAP_OVERLAY_PANEL_CLASS</code> (<code>map/mapControlClasses.ts</code>); Leaflet's own controls are restyled in <code>styles.css</code>.</li>
@@ -3219,7 +3219,7 @@
 </tr>
 <tr>
 <td>Modal</td>
-<td><code>Dialog</code>, <code>ConfirmModal</code></td>
+<td><code>Dialog</code>, <code>ConfirmModal</code>, <code>DialogFrame</code> (custom layouts)</td>
 </tr>
 <tr>
 <td>Empty / first-run view</td>
@@ -3353,13 +3353,11 @@
 <li>From the designer's Figma: the status Light-BG and Dark-Text steps, and the exact Level 1 to 4 shadows. Protocol scales, status Main colors and type are already exact.</li>
 <li>Neutrals: the Mesh Hub palette gives four fixed steps (950, 900, 500, 50); the steps between are plain greys. Exact values from a designer drop into <code>--color-ink-*</code>.</li>
 <li>Protocol colors outside <code>protocolTheme.ts</code> (for example some data ramps) still use Tailwind's <code>emerald</code> / <code>cyan</code> / <code>yellow</code> classes; move the ones that mark a protocol to the scale tokens.</li>
-<li>About 360 <code>&lt;button&gt;</code> elements still carry hand-written classes; move them to <code>Button</code> / <code>buttonClassName</code> as their panels are touched.</li>
-<li>Some modals (node detail, contact groups, macros, MECP compose, log analyze) keep their own shells; move them into <code>Dialog</code>.</li>
-<li>Daylight: data ramps with inline hex (charts, SNR, packet distribution) and the dark basemap are not tuned for light backgrounds yet.</li>
+<li>Action buttons all use <code>Button</code> / <code>buttonClassName</code>. About 320 other <code>&lt;button&gt;</code> elements are list rows, tabs, segmented controls, chips and icon toggles with their own styling; <code>Button</code> is not meant for those. The back-to-top pill and the MECP emergency Send keep their own look on purpose.</li>
+<li>Daylight: map overlays (node markers, MGRS grid, sensor and utilization colors) are drawn for the basemap, not the app surface, and <code>getMapOverlayColors()</code> already switches them for light and dark basemaps; the map does not follow the app theme.</li>
 <li>The Main success green (<code>#34d399</code>) sits close to the Meshtastic base (<code>#67e8b4</code>); status dots always come with text, so "online" is never color alone.</li>
 <li>Field borders (<code>border-secondary-dark</code> on panels) are about 1.7:1 in every surface except High contrast, under the 3:1 WCAG 1.4.11 asks of a control boundary. Raising them changes the look, so it is a design call.</li>
 <li>A night vision field mode for eyes adjusted to the dark: red color surfaces rather than a whole-window filter (a filter costs CPU and battery on every repaint), with MAYDAY, URGENT and info badges still telling apart by more than brightness.</li>
-<li>A light theme.</li>
 <li>Per-protocol automatic theming (today the protocol accents are opt-in presets).</li>
 </ul>
 
@@ -3382,7 +3380,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 7, 2026 20:47:29 UTC">November 7, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 7, 2026 22:17:55 UTC">November 7, 2026</span>
   </span>
 
     
