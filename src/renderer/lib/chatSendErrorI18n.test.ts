@@ -22,7 +22,6 @@ const EN: Record<string, string> = {
   [CHAT_SEND_ERROR_FALLBACK_KEY]: 'Send failed',
   [CHAT_SEND_ERROR_MQTT_ORIGIN_REACTION_KEY]:
     'Reactions to MQTT-only messages are not supported. Send a normal reply instead.',
-  'chatPanel.reticulumSendFailed': 'Failed to send',
   'meshcore.errors.requestTimedOutApprox': 'Request timed out (~{{seconds}}s)',
 };
 
@@ -43,19 +42,14 @@ describe('chatSendErrorI18n', () => {
     ['radio busy', CHAT_SEND_ERROR_FALLBACK_KEY],
     ['sync boom', CHAT_SEND_ERROR_FALLBACK_KEY],
     ['timeout', CHAT_SEND_ERROR_TIMEOUT_KEY],
-    ['chatPanel.reticulumSendTimeout', 'chatPanel.reticulumSendTimeout'],
     ['meshcore.errors.notConnected', 'meshcore.errors.notConnected'],
+    // Legacy outbox text from the removed Reticulum stack degrades to live keys.
     [
       'Send timed out. The Reticulum stack may be starting or busy — try again.',
-      'chatPanel.reticulumSendTimeout',
+      CHAT_SEND_ERROR_TIMEOUT_KEY,
     ],
-    ['Failed to send', 'chatPanel.reticulumSendFailed'],
-    ['Gagal mengirim', 'chatPanel.reticulumSendFailed'],
-    ["Échec d'envoi", 'chatPanel.reticulumSendFailed'],
-    [
-      'Waktu pengiriman habis. Stack Reticulum mungkin sedang mulai atau sibuk — coba lagi.',
-      'chatPanel.reticulumSendTimeout',
-    ],
+    ['Failed to send', CHAT_SEND_ERROR_FALLBACK_KEY],
+    ["Échec d'envoi", CHAT_SEND_ERROR_FALLBACK_KEY],
     ['timeout while initializing encryption', CHAT_SEND_ERROR_TIMEOUT_KEY],
     ['delivered; outbox remove failed: db locked', CHAT_OUTBOX_REMOVE_FAILED_KEY],
     ['User denied Geolocation', 'chatPanel.shareLocationUnavailable'],
@@ -109,8 +103,8 @@ describe('chatSendErrorI18n', () => {
       t(CHAT_SEND_ERROR_FALLBACK_KEY),
     );
     expect(translateChatSendError(t, new Error('radio busy'))).not.toBe('radio busy');
-    expect(translateChatSendError(t, 'chatPanel.reticulumSendFailed')).toBe(
-      t('chatPanel.reticulumSendFailed'),
+    expect(translateChatSendError(t, CHAT_SEND_ERROR_NOT_CONNECTED_KEY)).toBe(
+      t(CHAT_SEND_ERROR_NOT_CONNECTED_KEY),
     );
   });
 

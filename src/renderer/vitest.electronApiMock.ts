@@ -195,8 +195,6 @@ export function createElectronAPIMock(): ElectronAPI {
     stopGattScanning: vi.fn().mockResolvedValue(undefined),
     connectGatt: vi.fn().mockResolvedValue({ ok: true }),
     disconnectGatt: vi.fn().mockResolvedValue(undefined),
-    releaseGattBleCentral: vi.fn().mockResolvedValue(undefined),
-    clearGattBondRecoveryExclusive: vi.fn().mockResolvedValue(undefined),
     isGattConnected: vi.fn().mockResolvedValue(true),
     gattToRadio: vi.fn().mockResolvedValue(undefined),
     gattPairState: vi.fn().mockResolvedValue({ ok: false, code: 'unsupported', error: 'mock' }),
@@ -368,7 +366,6 @@ export function createElectronAPIMock(): ElectronAPI {
     },
     hostLink: {
       probeHttpRtt: vi.fn().mockResolvedValue(null),
-      probeTcpRtt: vi.fn().mockResolvedValue(null),
       getSessionMeter: vi.fn().mockResolvedValue(null),
     },
     meshtastic: {
@@ -471,33 +468,27 @@ export function createElectronAPIMock(): ElectronAPI {
       register: vi.fn().mockResolvedValue({
         connections: [],
         scanOwner: null,
-        nobleYieldDecisionPending: false,
       }),
       unregister: vi.fn().mockResolvedValue({
         connections: [],
         scanOwner: null,
-        nobleYieldDecisionPending: false,
       }),
       assertCanConnect: vi.fn().mockResolvedValue({
         connections: [],
         scanOwner: null,
-        nobleYieldDecisionPending: false,
       }),
       getState: vi.fn().mockResolvedValue({
         connections: [],
         scanOwner: null,
-        nobleYieldDecisionPending: false,
       }),
       acquireScan: vi.fn().mockResolvedValue({
         ok: true,
         connections: [],
         scanOwner: 'gatt',
-        nobleYieldDecisionPending: false,
       }),
       releaseScan: vi.fn().mockResolvedValue({
         connections: [],
         scanOwner: null,
-        nobleYieldDecisionPending: false,
       }),
     },
     deepLink: {

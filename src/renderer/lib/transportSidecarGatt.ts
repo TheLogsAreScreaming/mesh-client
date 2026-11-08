@@ -4,7 +4,7 @@ import type { GattBleSessionId } from './types';
 
 /**
  * Sidecar GATT Transport for Meshtastic MeshDevice.
- * BLE runs in reticulum-sidecar (btleplug); Electron main proxies via gatt:* IPC.
+ * BLE runs in the Bluetooth helper sidecar (mesh-hub-ble, btleplug); Electron main proxies via gatt:* IPC.
  */
 export class TransportSidecarGatt implements Types.Transport {
   private readonly sessionId: GattBleSessionId;

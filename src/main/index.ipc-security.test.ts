@@ -542,8 +542,6 @@ describe('privileged IPC sender validation (source contract)', () => {
     'hostLink:getSessionMeter',
     'gatt:connect',
     'gatt:disconnect',
-    'gatt:release-ble-central',
-    'gatt:clear-bond-recovery-exclusive',
     'notify:message',
     'chat:outbox:add',
     'chat:outbox:remove',

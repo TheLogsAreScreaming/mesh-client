@@ -9,7 +9,7 @@ const PAIRING_PIN_RE = /^\d{4,6}$/;
 const MAX_PERIPHERAL_ID_LENGTH = 64;
 
 export interface GattPairingIpcDeps {
-  proxy: Pick<GattSidecarProxy, 'pairState' | 'pair' | 'unpair' | 'isRnodeBondRecoveryExclusive'>;
+  proxy: Pick<GattSidecarProxy, 'pairState' | 'pair' | 'unpair'>;
   /** Serialize with GATT scans/connects (`bleCoexistenceCoordinator.withScan('gatt', …)`). */
   withGattScan: <T>(operation: () => Promise<T>) => Promise<T>;
   isQuitting: () => boolean;
@@ -47,9 +47,6 @@ export function registerGattPairingIpcHandlers(deps: GattPairingIpcDeps): void {
       throw new Error(`${channel}: peripheralId must be a non-empty string`);
     }
     if (deps.isQuitting()) return failure('app_quitting', 'App is quitting');
-    if (deps.proxy.isRnodeBondRecoveryExclusive()) {
-      return failure('rnode_bond_recovery', 'RNode bond recovery holds the Bluetooth adapter');
-    }
     return null;
   };
 

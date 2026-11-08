@@ -574,7 +574,6 @@
     "dms": "DM",
     "receivedViaTcp": "TCP経由で受信",
     "receivedViaNetwork": "ネットワーク経由で受信",
-    "reticulumSendFailed": "送信に失敗しました。",
     "dmPeerInfoAria": "DMピア情報",
     "clearDateAria": "クリア日付",
     "readOnlyDisconnected": "接続されていません - メッセージは読み取り専用です",
@@ -619,18 +618,10 @@
     "notificationMessageTitle": "{{sender}}からのメッセージ",
     "hopCountRefinedFromRf": "RFパスから更新されました",
     "waitingMessagesSilentFetched": "ラジオから{{processed}}を取得しました…",
-    "reticulumSendTimeout": "送信がタイムアウトしました。Reticulum スタックが起動中またはビジーの可能性があります — 再試行してください。",
     "meshcoreFastSend": {
       "warning": "メッシュが中継できるよりも速く送信しています。ビジーメッシュでは、リピーターが近くに送信されたメッセージをドロップすることがあります。メッセージの間に数秒残します。"
     },
     "outboxLegacyMultipartBlocked": "このキューに入れられたメッセージでは、マルチパート MeshCore 分割が使用されていましたが、現在は送信されません。それをキャンセルして、より短いメッセージ (または複数の別個の短いメッセージ) を送信します。",
-    "voiceMemo": {
-      "recordAria": "ボイスメモを録音する",
-      "sendAria": "ボイスメモを送信",
-      "recordTooltip": "LXMFボイスメモ—このダイレクトメッセージの短いOpusクリップを記録します。Mesh Hub、Ratspeak、Sideband (FIELD_AUDIO) でサポートされています。LXST Callとは異なります。",
-      "sendTooltip": "録音したLXMFボイスメモを送信する",
-      "sendAriaWithElapsed": "ボイスメモを送信（ {{seconds}}秒録音）"
-    },
     "heardByRepeaters_one": "{{count}}件で受信",
     "heardByRepeaters_other": "{{count}}件で受信",
     "heardByNetwork": "ネットワークで聞いた",
@@ -987,8 +978,7 @@
         "chooserCancelledHint": "キャンセルしなかった場合は、Bluetooth がオンになっていることを確認し (systemctl status bluetooth)、もう一度「接続」をタップします。 Flatpak では、Bluetooth を許可してビルドを再インストールするか、AppImage/.deb/.rpm を使用します。",
         "bluetoothctlMissingHint": "この環境では、OS Bluetooth ペアリング ツールを利用できません (Flatpak で一般的)。公式の AppImage、.deb、または .rpm を使用するか、無線をホスト bluetoothctl とペアリングしてから、接続を再試行します。",
         "stackUnresponsiveGeneric": "以前の接続試行でBluetoothが停止しています。Bluetoothの電源をオフまたはオンにし、必要に応じてラジオを再ペアリングしてから、Mesh Hubを再起動します。",
-        "stackUnresponsiveWindowsRePair": "Windows Bluetoothは、通常、無線が適切にペアリングされていないため、以前の接続試行で立ち往生しています。[デバイスの削除と再ペアリング]を押し、ラジオに表示されている暗証番号を入力します。それでも接続が拒否された場合は、Mesh Hubを再起動してもう一度お試しください。",
-        "rnodeBondRecoveryHold": "Reticulum RNodeのBluetoothペアリングが壊れているため、MeshtasticとMeshCoreでBluetoothが一時停止しています。最初にRNodeを修正してください。システムのBluetooth設定でこのデバイスを削除してから、Reticulum → Adminから再ペアリングしてください。Bluetoothラジオをすぐに使用するには、Reticulumスタックを停止するか、そのRNodeをUSBまたはWi-Fiに切り替えます。"
+        "stackUnresponsiveWindowsRePair": "Windows Bluetoothは、通常、無線が適切にペアリングされていないため、以前の接続試行で立ち往生しています。[デバイスの削除と再ペアリング]を押し、ラジオに表示されている暗証番号を入力します。それでも接続が拒否された場合は、Mesh Hubを再起動してもう一度お試しください。"
       }
     },
     "error": {
@@ -1019,8 +1009,7 @@
     "stageAutoConnectingBle": "{{deviceName}} に接続中…",
     "bleOwner": {
       "meshtastic": "Meshtastic",
-      "meshcore": "MeshCore",
-      "reticulum": "Reticulum"
+      "meshcore": "MeshCore"
     },
     "topicPrefixHelp": {
       "meshtastic": "msh/[国]/[州]、例: msh/コロラド州/米国",
@@ -1559,10 +1548,6 @@
         "label": "USBシリアル再接続",
         "recommendation": "USBシリアルポートを再度開くことができなかったか、以前のストリームがロックされています。ラジオを使用して他のアプリを閉じ、ケーブルを再接続し、アプリで再接続します。それが繰り返される場合は、バグレポートにシリアルログ行を含めます。"
       },
-      "reticulum-nomad-hosting": {
-        "label": "Nomadページのホスティングに関する問題",
-        "recommendation": "Nomad My Pages のホスティングに失敗したか、コンテンツフォルダーを利用できません。Nomad Network → My Pages を開き、移動した場合は pages フォルダーを選び直してから Start serving してください。詳細はログに [nomad-serving] / [NomadHosting] と表示されます。"
-      },
       "renderer-unresponsive": {
         "label": "アプリが応答を停止しました",
         "recommendation": "アプリはUIハートビートの送信を停止しました。回復した場合は、表示された時間の近くで何をしていたかを記録してください。フリーズしたままの場合は、アプリを再起動し、定期的なハングアップを報告する際にこのレポートを含めます。"
@@ -1574,18 +1559,6 @@
       "meshtastic-tcp": {
         "label": "Meshtastic TCP接続に失敗しました",
         "recommendation": "Meshtastic無線へのTCP接続に失敗しました。再接続する前に、無線アドレスとポート、ローカルネットワークの到達可能性、および他のクライアントが接続を使用しているかどうかを確認します。"
-      },
-      "reticulum-sidecar": {
-        "label": "Reticulumサービスが中断されました",
-        "recommendation": "ローカルReticulumサービスは、イベント接続の開始、応答、または維持に失敗しました。Connectionと以下のログ行でステータスを確認してください。回復していない場合は、Reticulum接続を再起動します。パッケージ化されたサイドカーが見つからない場合は、アプリの再インストールが必要な場合があります。"
-      },
-      "reticulum-delivery": {
-        "label": "Reticulumの配信または同期に失敗しました",
-        "recommendation": "メッセージの配信または伝播の同期に失敗しました。再試行する前に現在のメッセージステータスを確認し、宛先を調べ、有効なインターフェイスを確認します。伝播については、[ネットワーク]で選択したノードと同期ステータスを確認します。保存されたメッセージは、受信者の配信の証明ではありません。"
-      },
-      "reticulum-backpressure": {
-        "label": "Reticulumイベントまたはパケットがドロップされました",
-        "recommendation": "ローカルReticulumサービスは、キューがいっぱいになった、加入者が遅れた、またはペイロードが制限を超えたため、イベントまたはパケットをドロップしました。同時一括転送を減らし、再試行する前にメッセージのステータスを確認してください。アイドリング中に繰り返される落下は、これらのログサンプルで報告する価値があります。"
       },
       "firmware-flash": {
         "label": "ファームウェア転送が停止しました",

@@ -732,7 +732,6 @@ describe('Host link quality IPC (source contract)', () => {
   it('forwards GATT link RSSI and registers HTTP/TCP RTT probes', () => {
     expect(INDEX_SOURCE).toContain("webContents.send('gatt-link-rssi'");
     expect(INDEX_SOURCE).toContain("ipcMain.handle('hostLink:probeHttpRtt'");
-    expect(INDEX_SOURCE).toContain("ipcMain.handle('hostLink:probeTcpRtt'");
     expect(INDEX_SOURCE).toContain("ipcMain.handle('hostLink:getSessionMeter'");
   });
 
@@ -759,7 +758,6 @@ describe('Host link quality preload surface (source contract)', () => {
     expect(PRELOAD_SOURCE).toContain("ipcRenderer.on('gatt-link-rssi'");
     expect(PRELOAD_SOURCE).toContain('hostLink:');
     expect(PRELOAD_SOURCE).toContain("ipcRenderer.invoke('hostLink:probeHttpRtt'");
-    expect(PRELOAD_SOURCE).toContain("ipcRenderer.invoke('hostLink:probeTcpRtt'");
     expect(PRELOAD_SOURCE).toContain("ipcRenderer.invoke('hostLink:getSessionMeter'");
   });
 });

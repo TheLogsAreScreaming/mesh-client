@@ -690,9 +690,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('gatt:connect', sessionId, peripheralId),
   disconnectGatt: (sessionId: GattBleSessionId): Promise<void> =>
     ipcRenderer.invoke('gatt:disconnect', sessionId),
-  releaseGattBleCentral: (): Promise<void> => ipcRenderer.invoke('gatt:release-ble-central'),
-  clearGattBondRecoveryExclusive: (): Promise<void> =>
-    ipcRenderer.invoke('gatt:clear-bond-recovery-exclusive'),
   isGattConnected: (sessionId: GattBleSessionId): Promise<boolean> =>
     ipcRenderer.invoke('gatt:is-connected', sessionId),
   gattToRadio: (sessionId: GattBleSessionId, bytes: Uint8Array): Promise<void> =>
@@ -1109,8 +1106,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   hostLink: {
     probeHttpRtt: (host: string, tls: boolean): Promise<number | null> =>
       ipcRenderer.invoke('hostLink:probeHttpRtt', host, tls),
-    probeTcpRtt: (host: string, port: number): Promise<number | null> =>
-      ipcRenderer.invoke('hostLink:probeTcpRtt', host, port),
     getSessionMeter: (
       protocol: 'meshtastic' | 'meshcore',
     ): Promise<{ rttMs: number | null } | null> =>

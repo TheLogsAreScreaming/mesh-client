@@ -60,14 +60,7 @@ vi.mock('react-i18next', () => ({
         'chatPanel.floodScopeOverrideCustomApply': 'Use scope',
         'chatPanel.floodScopeOverrideCustomInvalid': 'Enter a valid region hashtag',
         'common.cancel': 'Cancel',
-        'chatPanel.voiceMemo.recordAria': 'Record voice memo',
-        'chatPanel.voiceMemo.sendAria': 'Send voice memo',
-        'chatPanel.voiceMemo.recordTooltip': 'Record voice memo tooltip',
-        'chatPanel.voiceMemo.sendTooltip': 'Send voice memo tooltip',
       };
-      if (key === 'chatPanel.voiceMemo.sendAriaWithElapsed') {
-        return `Send voice memo (${opts?.seconds}s recorded)`;
-      }
       if (key === 'chatPanel.composeLimit.approaching') {
         return `${opts?.count} / ${opts?.limit}`;
       }

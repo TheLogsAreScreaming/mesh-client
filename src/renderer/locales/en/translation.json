@@ -554,8 +554,6 @@
     "routeRelaysPredicted": "Route: ~{{count}} relays via {{hop}}",
     "routeRelaysPredictedHopsOnly": "Route: ~{{count}} relays",
     "routeViaPredicted": "Route: via {{hop}}",
-    "reticulumSendFailed": "Failed to send",
-    "reticulumSendTimeout": "Send timed out. The Reticulum stack may be starting or busy — try again.",
     "closeDm": "Close DM",
     "resendMessage": "Resend message",
     "replyButton": "Reply",
@@ -707,13 +705,6 @@
     "starredDm": "DM: {{name}}",
     "starredChannel": "ch{{channel}}",
     "mentionSuggestionsAria": "Mention suggestions",
-    "voiceMemo": {
-      "recordAria": "Record voice memo",
-      "sendAria": "Send voice memo",
-      "recordTooltip": "LXMF voice memo — records a short Opus clip for this direct message. Supported by Mesh Hub, Ratspeak, and Sideband (FIELD_AUDIO). Not the same as LXST Call.",
-      "sendTooltip": "Send the recorded LXMF voice memo",
-      "sendAriaWithElapsed": "Send voice memo ({{seconds}} seconds recorded)"
-    },
     "channelSwitcher": {
       "trigger": "All channels ({{total}})",
       "triggerWithUnread": "All channels ({{total}}), {{unread}} unread",
@@ -992,8 +983,7 @@
     "radioConnection": "Radio Connection",
     "bleOwner": {
       "meshtastic": "Meshtastic",
-      "meshcore": "MeshCore",
-      "reticulum": "Reticulum"
+      "meshcore": "MeshCore"
     },
     "connectionType": "Connection Type",
     "bluetoothMac": "Bluetooth MAC",
@@ -1139,7 +1129,6 @@
         "macWakeRecoveryHint": "After your computer wakes from sleep, quit Mesh Hub (Cmd+Q), toggle Bluetooth off and on in System Settings, wait a few seconds, then Connect again. With two radios, connect MeshCore before Meshtastic.",
         "dualProtocolContentionHint": "The other protocol may still be connecting over Bluetooth. Wait a few seconds and try again, or switch to the other protocol tab to check its connection status.",
         "sameDeviceConflict": "This Bluetooth device is already connected to {{owner}}.",
-        "rnodeBondRecoveryHold": "Bluetooth is paused for Meshtastic and MeshCore because a Reticulum RNode has a broken Bluetooth pairing. Fix the RNode first: forget it in your system Bluetooth settings, then re-pair it from Reticulum → Admin. To use Bluetooth radios right away, stop the Reticulum stack or switch that RNode to USB or Wi-Fi.",
         "chooserCancelledHint": " If you did not cancel, ensure Bluetooth is on (systemctl status bluetooth), then tap Connect again. On Flatpak, reinstall a build with Bluetooth allowed, or use the AppImage/.deb/.rpm.",
         "bluetoothctlMissingHint": " OS Bluetooth pairing tools are unavailable in this environment (common in Flatpak). Use the official AppImage, .deb, or .rpm, or pair the radio with host bluetoothctl, then retry Connect."
       }
@@ -1601,10 +1590,6 @@
         "label": "MeshCore SDK Warnings/Errors",
         "recommendation": "MeshCore stack reported a warning or error. If it repeats, check BLE pairing, MQTT settings, and reconnect."
       },
-      "reticulum-nomad-hosting": {
-        "label": "Nomad Page Hosting Issues",
-        "recommendation": "Nomad My Pages hosting failed or the content folder is unavailable. Open Nomad Network → My Pages, re-choose the pages folder if it moved, then Start serving. Details appear as [nomad-serving] / [NomadHosting] in the log."
-      },
       "renderer-unresponsive": {
         "label": "App stopped responding",
         "recommendation": "The app stopped sending UI heartbeats. If it has recovered, note what you were doing near the listed time. If it remains frozen, restart the app and include this report when reporting a recurring hang."
@@ -1616,18 +1601,6 @@
       "meshtastic-tcp": {
         "label": "Meshtastic TCP connection failed",
         "recommendation": "The TCP connection to the Meshtastic radio failed. Check the radio address and port, local network reachability, and whether another client is using the connection before reconnecting."
-      },
-      "reticulum-sidecar": {
-        "label": "Reticulum service interrupted",
-        "recommendation": "The local Reticulum service failed to start, respond, or maintain its event connection. Check its status in Connection and the log lines below. If it has not recovered, restart the Reticulum connection. A missing packaged sidecar may require reinstalling the app."
-      },
-      "reticulum-delivery": {
-        "label": "Reticulum delivery or sync failed",
-        "recommendation": "A message delivery or propagation sync attempt failed. Check the current message status before retrying, probe the destination, and check enabled interfaces. For propagation, check the selected node and sync status under Network; a stored message is not proof of recipient delivery."
-      },
-      "reticulum-backpressure": {
-        "label": "Reticulum events or packets dropped",
-        "recommendation": "The local Reticulum service dropped events or packets because a queue filled, a subscriber fell behind, or a payload exceeded a limit. Reduce concurrent bulk transfers, then check message status before retrying. Repeated drops while idle are worth reporting with these log samples."
       },
       "firmware-flash": {
         "label": "Firmware transfer stalled",

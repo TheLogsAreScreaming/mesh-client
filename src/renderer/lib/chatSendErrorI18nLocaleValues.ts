@@ -67,19 +67,13 @@ export const CHAT_SEND_ERROR_LOCALE_TEXT_TO_KEY: Record<string, string> = {
   'Dit bericht in de wachtrij maakte gebruik van meerdelige MeshCore-splitsing, die niet langer wordt verzonden. Annuleer het en stuur een korter bericht (of meerdere afzonderlijke kortere berichten).':
     'chatPanel.outboxLegacyMultipartBlocked',
   'Düğüm bulunamadı (şifreleme anahtarı yok)': 'meshcore.errors.nodeNotFound',
-  "Échec d'envoi": 'chatPanel.reticulumSendFailed',
   "Échec de l'envoi": 'chatPanel.sendFailed',
   'Échec de la publication dans la salle': 'roomsPanel.postFailed',
   'El Bluetooth no está listo. Vuelve a conectarte e inténtalo de nuevo.':
     'chatPanel.sendErrors.bleUnavailable',
   'El envío ha caducado. Inténtalo de nuevo.': 'chatPanel.sendErrors.timeout',
-  'El envío ha caducado. La pila Reticulum puede estar iniciándose o ocupada; inténtelo de nuevo.':
-    'chatPanel.reticulumSendTimeout',
   'Envío Fallido': 'chatPanel.sendFailed',
-  'Envoi expiré. La pile Reticulum est peut-être en cours de démarrage ou occupée — réessayez.':
-    'chatPanel.reticulumSendTimeout',
   'Envoi expiré. Réessayez.': 'chatPanel.sendErrors.timeout',
-  'Error al enviar': 'chatPanel.reticulumSendFailed',
   'Esa reacción no es válida.': 'chatPanel.sendErrors.invalidReaction',
   'Essa reação não é válida.': 'chatPanel.sendErrors.invalidReaction',
   'Esta mensagem na fila usava divisão MeshCore em várias partes, que não é mais enviada. Cancele e envie uma mensagem mais curta (ou várias mensagens mais curtas separadas).':
@@ -87,19 +81,14 @@ export const CHAT_SEND_ERROR_LOCALE_TEXT_TO_KEY: Record<string, string> = {
   'Este mensaje en cola utilizó la división MeshCore de varias partes, que ya no se envía. Cancélelo y envíe un mensaje más corto (o varios mensajes más cortos por separado).':
     'chatPanel.outboxLegacyMultipartBlocked',
   'Failed to post to room': 'roomsPanel.postFailed',
-  'Failed to send': 'chatPanel.reticulumSendFailed',
-  'Falha ao enviar': 'chatPanel.reticulumSendFailed',
   'Falha ao publicar na sala': 'roomsPanel.postFailed',
   'Falha no envio': 'chatPanel.sendFailed',
   'Fehler beim Posten im Raum': 'roomsPanel.postFailed',
   'Gagal mengeposkan ke ruangan': 'roomsPanel.postFailed',
-  'Gagal mengirim': 'chatPanel.reticulumSendFailed',
   'Geen opgeslagen kamerwachtwoord. Log eerst in op de kamer.':
     'chatPanel.sendErrors.noSavedRoomCredential',
   Gönderilemedi: 'chatPanel.sendFailed',
   'Gönderilemiyor — şifreleme anahtarı eksik.': 'chatPanel.sendErrors.encryptionBlocked',
-  'Gönderim zaman aşımına uğradı. Reticulum yığını başlıyor veya meşgul olabilir — tekrar deneyin.':
-    'chatPanel.reticulumSendTimeout',
   'Gönderme zaman aşımına uğradı. Tekrar deneyin.': 'chatPanel.sendErrors.timeout',
   'Het bericht om op te reageren is niet gevonden.': 'chatPanel.sendErrors.reactionTargetMissing',
   'Il Bluetooth non è pronto. Riconnettiti e riprova.': 'chatPanel.sendErrors.bleUnavailable',
@@ -107,7 +96,6 @@ export const CHAT_SEND_ERROR_LOCALE_TEXT_TO_KEY: Record<string, string> = {
   'Il messaggio è stato inviato, ma la rimozione dalla posta in uscita non è riuscita. Annullare la copia in coda.':
     'chatPanel.outboxRemoveFailed',
   'Il testo del messaggio è obbligatorio': 'chatPanel.sendErrors.emptyPayload',
-  'Impossibile inviare': 'chatPanel.reticulumSendFailed',
   'Impossibile inviare — chiave di crittografia mancante.':
     'chatPanel.sendErrors.encryptionBlocked',
   'Impossibile inviare questo messaggio diretto: manca la chiave di crittografia del destinatario. Attendere la sincronizzazione o la riconnessione del contatto.':
@@ -181,7 +169,6 @@ export const CHAT_SEND_ERROR_LOCALE_TEXT_TO_KEY: Record<string, string> = {
     'chatPanel.sendErrors.missingDestinationKey',
   'Nie podłączony — podłącz radio i spróbuj ponownie.': 'chatPanel.sendErrors.notConnected',
   'Nie udało się opublikować w pokoju': 'roomsPanel.postFailed',
-  'Nie udało się wysłać': 'chatPanel.reticulumSendFailed',
   'Nie znaleziono węzła (brak klucza szyfrowania)': 'meshcore.errors.nodeNotFound',
   'Nie znaleziono wiadomości, na którą należy zareagować.':
     'chatPanel.sendErrors.reactionTargetMissing',
@@ -211,16 +198,12 @@ export const CHAT_SEND_ERROR_LOCALE_TEXT_TO_KEY: Record<string, string> = {
   'Not connected to device': 'meshcore.errors.notConnected',
   'O Bluetooth não está pronto. Reconecte-se e tente novamente.':
     'chatPanel.sendErrors.bleUnavailable',
-  'O envio expirou. A pilha Reticulum pode estar iniciando ou ocupada — tente novamente.':
-    'chatPanel.reticulumSendTimeout',
   'O envio expirou. Tente novamente.': 'chatPanel.sendErrors.timeout',
   'O texto da mensagem é obrigatório.': 'chatPanel.sendErrors.emptyPayload',
   'Oda oturumunun süresi doldu — yayınlamak için tekrar giriş yapın.':
     'chatPanel.sendErrors.roomSessionExpired',
   'Odaya gönderilemedi': 'roomsPanel.postFailed',
   'Odeslání se nezdařilo': 'chatPanel.sendFailed',
-  'Odeslání vypršelo. Zásobník Reticulum se možná spouští nebo je zaneprázdněný — zkuste to znovu.':
-    'chatPanel.reticulumSendTimeout',
   'Odpověď vyžaduje ID RF paketu zprávy (počkejte na odeslání ack nebo obnovení chatu).':
     'chatPanel.replyRequiresPacketId',
   'Odpowiedź wymaga identyfikatora pakietu RF wiadomości (poczekaj na potwierdzenie wysłania lub odśwież czat).':
@@ -235,8 +218,6 @@ export const CHAT_SEND_ERROR_LOCALE_TEXT_TO_KEY: Record<string, string> = {
   'Posizione non disponibile: controlla le impostazioni GPS': 'chatPanel.shareLocationUnavailable',
   'Posten naar ruimte mislukt': 'roomsPanel.postFailed',
   'Przekroczono limit czasu wysyłania. Spróbuj ponownie.': 'chatPanel.sendErrors.timeout',
-  'Przekroczono limit czasu wysyłania. Stos Reticulum może się uruchamiać lub być zajęty — spróbuj ponownie.':
-    'chatPanel.reticulumSendTimeout',
   'Questa reazione non è valida.': 'chatPanel.sendErrors.invalidReaction',
   'Questo messaggio in coda utilizzava la suddivisione MeshCore in più parti, che non viene più inviata. Annullalo e invia un messaggio più breve (o più messaggi brevi separati).':
     'chatPanel.outboxLegacyMultipartBlocked',
@@ -251,12 +232,7 @@ export const CHAT_SEND_ERROR_LOCALE_TEXT_TO_KEY: Record<string, string> = {
     'chatPanel.outboxRemoveFailed',
   'Se requiere un texto de mensaje.': 'chatPanel.sendErrors.emptyPayload',
   'Send failed': 'chatPanel.sendFailed',
-  'Send timed out. The Reticulum stack may be starting or busy — try again.':
-    'chatPanel.reticulumSendTimeout',
   'Send timed out. Try again.': 'chatPanel.sendErrors.timeout',
-  'Senden abgelaufen. Der Reticulum-Stack startet möglicherweise oder ist beschäftigt — bitte erneut versuchen.':
-    'chatPanel.reticulumSendTimeout',
-  'Senden fehlgeschlagen': 'chatPanel.reticulumSendFailed',
   'Senden fehlgeschlagen.': 'chatPanel.sendFailed',
   'Sendezeit abgelaufen. Versuchen Sie es erneut.': 'chatPanel.sendErrors.timeout',
   'Sesi kamar kedaluwarsa — masuk lagi untuk memposting.':
@@ -289,21 +265,14 @@ export const CHAT_SEND_ERROR_LOCALE_TEXT_TO_KEY: Record<string, string> = {
   'Tidak terhubung ke perangkat': 'meshcore.errors.notConnected',
   'Tidak tersambung — hubungkan radio dan coba lagi.': 'chatPanel.sendErrors.notConnected',
   'Time-out bij verzenden. Probeer het opnieuw.': 'chatPanel.sendErrors.timeout',
-  'Time-out voor verzenden. De Reticulum-stack is mogelijk aan het starten of bezet — probeer het opnieuw.':
-    'chatPanel.reticulumSendTimeout',
-  "Timeout dell'invio. Lo stack Reticulum potrebbe essere in avvio o occupato. Riprova.":
-    'chatPanel.reticulumSendTimeout',
   'Tuto přímou zprávu nelze odeslat — chybí šifrovací klíč příjemce. Počkejte na synchronizaci nebo opětovné připojení kontaktu.':
     'chatPanel.sendErrors.missingDestinationKey',
   'Ubicación no disponible: verifique la configuración del GPS':
     'chatPanel.shareLocationUnavailable',
   'Un texte pour le message est requis': 'chatPanel.sendErrors.emptyPayload',
   'Uzel nenalezen (žádný šifrovací klíč)': 'meshcore.errors.nodeNotFound',
-  'Versturen mislukt': 'chatPanel.reticulumSendFailed',
   'Verzenden mislukt': 'chatPanel.sendFailed',
   'Waktu pengiriman habis. Coba lagi.': 'chatPanel.sendErrors.timeout',
-  'Waktu pengiriman habis. Stack Reticulum mungkin sedang mulai atau sibuk — coba lagi.':
-    'chatPanel.reticulumSendTimeout',
   'Wiadomość została wysłana, ale usunięcie jej ze skrzynki nadawczej nie powiodło się. Anuluj kopię w kolejce.':
     'chatPanel.outboxRemoveFailed',
   'Wymagany jest tekst wiadomości': 'chatPanel.sendErrors.emptyPayload',
@@ -320,8 +289,6 @@ export const CHAT_SEND_ERROR_LOCALE_TEXT_TO_KEY: Record<string, string> = {
   'В этом сообщении в очереди использовалось разделение MeshCore на несколько частей, которое больше не отправляется. Отмените его и отправьте более короткое сообщение (или несколько отдельных более коротких сообщений).':
     'chatPanel.outboxLegacyMultipartBlocked',
   'Время ожидания отправки истекло. Повторите попытку.': 'chatPanel.sendErrors.timeout',
-  'Время ожидания отправки истекло. Стек Reticulum, возможно, запускается или занят — повторите попытку.':
-    'chatPanel.reticulumSendTimeout',
   'Вузол не знайдено (немає ключа шифрування)': 'meshcore.errors.nodeNotFound',
   'Для відповіді потрібен ідентифікатор радіочастотного пакета повідомлення (дочекайтеся надсилання або оновлення чату).':
     'chatPanel.replyRequiresPacketId',
@@ -330,7 +297,6 @@ export const CHAT_SEND_ERROR_LOCALE_TEXT_TO_KEY: Record<string, string> = {
   'Местоположение недоступно — проверьте настройки GPS.': 'chatPanel.shareLocationUnavailable',
   'Місцезнаходження недоступне — перевірте налаштування GPS': 'chatPanel.shareLocationUnavailable',
   'Не вдалося надіслати': 'chatPanel.sendFailed',
-  'Не вдалося надіслати.': 'chatPanel.reticulumSendFailed',
   'Не вдалося опублікувати до кімнати': 'roomsPanel.postFailed',
   'Не підключено — підключіть радіоприймач і повторіть спробу.':
     'chatPanel.sendErrors.notConnected',
@@ -338,7 +304,6 @@ export const CHAT_SEND_ERROR_LOCALE_TEXT_TO_KEY: Record<string, string> = {
   'Не подключен к устройству': 'meshcore.errors.notConnected',
   'Не подключено — подключите радио и повторите попытку.': 'chatPanel.sendErrors.notConnected',
   'Не удалось опубликовать в комнате': 'roomsPanel.postFailed',
-  'Не удалось отправить': 'chatPanel.reticulumSendFailed',
   'Невозможно отправить — отсутствует ключ шифрования.': 'chatPanel.sendErrors.encryptionBlocked',
   'Невозможно отправить это прямое сообщение — отсутствует ключ шифрования получателя. Дождитесь синхронизации контактов или повторного подключения.':
     'chatPanel.sendErrors.missingDestinationKey',
@@ -364,8 +329,6 @@ export const CHAT_SEND_ERROR_LOCALE_TEXT_TO_KEY: Record<string, string> = {
     'chatPanel.outboxRemoveFailed',
   'Сообщение, на которое нужно отреагировать, не найдено.':
     'chatPanel.sendErrors.reactionTargetMissing',
-  'Тайм-аут надсилання. Стек Reticulum може запускатися або бути зайнятий — спробуйте ще раз.':
-    'chatPanel.reticulumSendTimeout',
   'Узел не найден (нет ключа шифрования)': 'meshcore.errors.nodeNotFound',
   'Це повідомлення в черзі використовувало розділення MeshCore на кілька частин, яке більше не надсилається. Скасуйте його та надішліть коротше повідомлення (або кілька окремих коротших повідомлень).':
     'chatPanel.outboxLegacyMultipartBlocked',
@@ -380,7 +343,6 @@ export const CHAT_SEND_ERROR_LOCALE_TEXT_TO_KEY: Record<string, string> = {
   '메시지가 전송되었지만 보낸 편지함에서 제거하지 못했습니다. 대기 중인 사본을 취소합니다.':
     'chatPanel.outboxRemoveFailed',
   '메시지는 필수 입력 사항입니다': 'chatPanel.sendErrors.emptyPayload',
-  '보내지 못했습니다': 'chatPanel.reticulumSendFailed',
   '보낼 수 없음 — 암호화 키가 없습니다.': 'chatPanel.sendErrors.encryptionBlocked',
   '블루투스가 준비되지 않았습니다. 다시 연결하고 다시 시도하세요.':
     'chatPanel.sendErrors.bleUnavailable',
@@ -391,8 +353,6 @@ export const CHAT_SEND_ERROR_LOCALE_TEXT_TO_KEY: Record<string, string> = {
     'chatPanel.sendErrors.missingDestinationKey',
   '저장된 객실 비밀번호가 없습니다. 먼저 방에 로그인하세요.':
     'chatPanel.sendErrors.noSavedRoomCredential',
-  '전송 시간이 초과되었습니다. Reticulum 스택이 시작 중이거나 사용 중일 수 있습니다 — 다시 시도하세요.':
-    'chatPanel.reticulumSendTimeout',
   '전송 시간이 초과되었습니다. 다시 시도하세요.': 'chatPanel.sendErrors.timeout',
   '전송 실패': 'chatPanel.sendFailed',
   '해당 반응은 유효하지 않습니다.': 'chatPanel.sendErrors.invalidReaction',
@@ -419,7 +379,6 @@ export const CHAT_SEND_ERROR_LOCALE_TEXT_TO_KEY: Record<string, string> = {
     'chatPanel.sendErrors.noSavedRoomCredential',
   发布到聊天室失败: 'roomsPanel.postFailed',
   发送失败: 'chatPanel.sendFailed',
-  '发送超时。Reticulum 堆栈可能正在启动或忙碌—请重试。': 'chatPanel.reticulumSendTimeout',
   '发送超时。请重试。': 'chatPanel.sendErrors.timeout',
   '回复需要消息RF数据包ID （等待发送确认或刷新聊天）。': 'chatPanel.replyRequiresPacketId',
   必须填写消息文本: 'chatPanel.sendErrors.emptyPayload',
@@ -442,12 +401,9 @@ export const CHAT_SEND_ERROR_LOCALE_TEXT_TO_KEY: Record<string, string> = {
   '该反应无效。': 'chatPanel.sendErrors.invalidReaction',
   '该排队消息使用了多部分MeshCore分裂，不再发送。取消它并发送一条较短的消息（或多个单独的较短消息）。':
     'chatPanel.outboxLegacyMultipartBlocked',
-  '送信がタイムアウトしました。Reticulum スタックが起動中またはビジーの可能性があります — 再試行してください。':
-    'chatPanel.reticulumSendTimeout',
   '送信がタイムアウトしました。もう一度お試しください。': 'chatPanel.sendErrors.timeout',
   '送信できません—暗号化キーがありません。': 'chatPanel.sendErrors.encryptionBlocked',
   送信に失敗しました: 'chatPanel.sendFailed',
-  '送信に失敗しました。': 'chatPanel.reticulumSendFailed',
   'Las reacciones a los mensajes solo MQTT no son compatibles. En su lugar, envía una respuesta normal.':
     'chatPanel.sendErrors.mqttOriginReactionUnsupported',
   'Le reazioni ai messaggi solo MQTT non sono supportate. Invia invece una risposta normale.':

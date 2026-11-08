@@ -24,7 +24,6 @@ function setup(platform: NodeJS.Platform, overrides: Partial<GattPairingIpcDeps>
     pairState: vi.fn().mockResolvedValue({ ok: true, paired: true }),
     pair: vi.fn().mockResolvedValue({ ok: true }),
     unpair: vi.fn().mockResolvedValue({ ok: true }),
-    isRnodeBondRecoveryExclusive: vi.fn().mockReturnValue(false),
   };
   const withGattScan = vi.fn((op: () => Promise<unknown>) => op());
   registerGattPairingIpcHandlers({
@@ -124,7 +123,7 @@ describe('gatt-pairing-handlers', () => {
 
   it('maps scan-busy and thrown errors to failures', async () => {
     const { get } = setup('win32', {
-      withGattScan: () => Promise.reject(new BleScanBusyError('reticulum')),
+      withGattScan: () => Promise.reject(new BleScanBusyError('gatt')),
     });
     await expect(get('gatt:pair')({}, 'ef:4f:4f:1c:23:73', '123456')).resolves.toMatchObject({
       ok: false,
@@ -132,17 +131,11 @@ describe('gatt-pairing-handlers', () => {
     });
   });
 
-  it('blocks during quit and RNode bond recovery', async () => {
+  it('blocks during quit', async () => {
     const quitting = setup('win32', { isQuitting: () => true });
     await expect(quitting.get('gatt:pair-state')({}, 'ef:4f:4f:1c:23:73')).resolves.toMatchObject({
       ok: false,
       code: 'app_quitting',
     });
-    const recovering = setup('win32');
-    recovering.proxy.isRnodeBondRecoveryExclusive.mockReturnValue(true);
-    await expect(
-      recovering.get('gatt:pair')({}, 'ef:4f:4f:1c:23:73', '123456'),
-    ).resolves.toMatchObject({ ok: false, code: 'rnode_bond_recovery' });
-    expect(recovering.proxy.pair).not.toHaveBeenCalled();
   });
 });
