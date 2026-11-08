@@ -93,26 +93,33 @@ overrides:
   # asks for ^0.16) — scoped floor >=0.18.2; markdownlint only parses math syntax.
   # extract-zip (GHSA-7pqw-9j4j-h8q3): no patched release; Electron replaced it
   # with hardened @electron-internal/extract-zip (not the vulnerable package).
+  # Nov 2026 audit: dompurify GHSA-cg2g-xh64-v4q7 / GHSA-mrv2-3pqr-j5jr (direct ^3.4.17),
+  # markdown-it GHSA-r7fv-28h4-cvq7 / GHSA-gfr2-rv44-r23c (markdownlint-cli2) — floor 15.0.3,
+  # zod GHSA-mrhx-c7xc-m3w5 (eslint-plugin-react-hooks) — floor 4.6.6,
+  # undici GHSA-xjj6-f33q-929c — 7.x floor 7.30.1, direct 8.x ^8.12.2,
+  # electron GHSA-jr5w-w6x2-84p9 — floor 44.9.1, pinned to 44.10.2 (same major).
   # electron: deliberate major pin — bump with Flatpak sync + native rebuild smoke.
   '@xmldom/xmldom': ^0.8.15
   app-builder-lib: ^26.15.0
   baseline-browser-mapping: ^2.11.0
   brace-expansion: ^5.0.9
   builder-util-runtime: ^9.7.0
-  electron: ^44.1.0
+  electron: ^44.10.2
   fast-uri: ^3.1.6
   ip-address: ^10.7.1
   js-yaml: ^4.3.2
   katex@<0.18.2: '>=0.18.2 <0.19'
   markdown-it@<=14.1.1: '>=14.2.0 <15'
+  markdown-it@>=15.0.0 <15.0.3: ^15.0.3
   postcss: ^8.5.25
   shell-quote: ^1.9.0
   smol-toml: ^1.9.0
   tar: ^7.5.18
   tmp: ^0.2.6
-  undici@<7.29.0: ^7.29.0
+  undici@<7.30.1: ^7.30.1
   undici-types: ^7.29.0
   ws: ^8.21.0
+  zod@<4.6.6: ^4.6.6
 patchedDependencies:
   '@jsr/meshtastic__core@2.6.6': patches/@jsr__meshtastic__core@2.6.6.patch
   '@jsr/meshtastic__transport-web-serial@0.2.5': patches/@jsr__meshtastic__transport-web-serial@0.2.5.patch
@@ -121,20 +128,3 @@ patchedDependencies:
   debug@4.4.3: patches/debug@4.4.3.patch
   mqtt-packet@9.0.2: patches/mqtt-packet@9.0.2.patch
   readable-stream@4.8.0: patches/readable-stream@4.8.0.patch
-auditConfig:
-  ignoreGhsas:
-    # node-forge GHSA-86w9-cpqp-85rv (<=1.4.0, no patched release): RSA PKCS#1 v1.5
-    # signature verification accepts extra nested DigestAlgorithm elements. TAK
-    # (src/main/tak/) only generates certs/keys and builds/parses PKCS#12; it never
-    # verifies RSA signatures with node-forge. Remove once a patched release lands
-    # (`pnpm run update` / `check:audit-ignores` warns when it does).
-    - GHSA-86w9-cpqp-85rv
-    # braces GHSA-vfj7-8cjw-p6xm (<=3.0.3, no patched release): stack exhaustion on deeply
-    # nested patterns. Only reached via markdownlint-cli2 (dev lint) expanding repo-owned
-    # globs; never shipped in the app. Remove once a patched release lands.
-    - GHSA-vfj7-8cjw-p6xm
-    # sprintf-js GHSA-hp3w-g68c-fv3c (<=1.1.3, no patched release): unbounded precision
-    # specifiers can stall formatting. Only reached via electron-builder → @electron/get →
-    # global-agent → roarr while downloading Electron binaries at build time, with
-    # library-owned format strings; never shipped in the app. Remove once a patched release lands.
-    - GHSA-hp3w-g68c-fv3c
