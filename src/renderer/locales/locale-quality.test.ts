@@ -11,5 +11,7 @@ describe('locale translation files', () => {
       cwd: projectRoot,
     });
     expect(output).toContain('check:i18n passed');
-  });
+    // Spawns the full check (every key in 15 locales); 5s is too tight while the pre-commit
+    // hook or a parallel suite is running alongside it.
+  }, 30_000);
 });
