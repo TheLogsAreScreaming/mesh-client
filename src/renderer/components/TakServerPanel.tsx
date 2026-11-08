@@ -285,7 +285,7 @@ export default function TakServerPanel({
               type="button"
               onClick={handleStop}
               disabled={isLoading}
-              className="rounded-card bg-danger-700 text-body-lg hover:bg-danger-600 px-4 py-2 font-medium text-white transition-colors disabled:opacity-50"
+              className={buttonClassName('destructive', 'lg')}
             >
               {isLoading ? t('takServerPanel.stopping') : t('takServerPanel.stopServer')}
             </button>

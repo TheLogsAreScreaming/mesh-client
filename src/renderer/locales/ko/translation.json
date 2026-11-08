@@ -194,7 +194,6 @@
     "meshcorePathHashDeviceReported": "연결된 라디오 보고서: {{mode}}",
     "meshcorePathHashModeHint": "경로상 v1.14.0+ 동반 펌웨어와 v1.14+ 리피터가 필요합니다. v1.14 이전 리피터는 멀티바이트 패킷을 조용히 드롭합니다. 리피터 및 룸 서버는 CLI에서 set path.hash.mode {0|1|2}를 사용할 수도 있습니다.",
     "meshcorePathHashApplyFailed": "경로 해시 모드 실패: {{message}}",
-    "logPanelHelp": "활성화되면 실시간 로그 스트림이 오른쪽에 나타납니다. Reticulum 탭의 장치 라인에는 사이드카 출력 및 로컬 인터페이스 상태가 포함됩니다. 디버그 라인에는 로그 패널 내부의 확인란이 필요합니다.",
     "autoPruneUnheardContactsDaysAria": "시작 시 {{days}}일 이상 경과한 확인되지 않은 연락처 자동 정리",
     "capTotalContactsCountAria": "총 연락처 수를 제한하고 가장 최근에 본 연락처를 {{count}}개로 유지합니다.",
     "unknownError": "알 수 없는 오류",
@@ -364,7 +363,6 @@
     "messageActionsBarBgVisible": "배경 표시",
     "shareMyLocation": "내 위치 공유",
     "shareMyLocationOffInfo": "위치 공유가 꺼져 있음 — 호스트 GPS 새로 고침 및 메시 전송이 비활성화되었습니다. 자동 새로 고침을 사용하거나 위치를 보내려면 위의 내 위치 공유를 활성화하십시오.",
-    "shareMyLocationHint": "활성화되면 이 앱이 이 컴퓨터에서 사용자의 위치를 검색하여 Meshtastic, MeshCore 또는 Reticulum (채팅 공유, 라디오 푸시, RMAP) 을 통해 전송할 수 있습니다. 비활성화되면 호스트 GPS 조회 및 앱 전송이 꺼집니다. 정적 좌표는 현지 지도에서만 작동합니다. 자체 GPS가 있는 라디오는 여전히 로컬에서 위치를 표시할 수 있습니다. 라디오 또는 모듈 설정을 조정할 때까지 장치 펌웨어가 계속 브로드캐스트될 수 있습니다.",
     "fontSize": "폰트 크기",
     "fontSizeDesc": "앱에서 텍스트 크기를 조정하세요. 지도, 차트 및 터미널은 영향을 받지 않습니다.",
     "decreaseFontSize": "글꼴 작게",
@@ -421,7 +419,9 @@
     "updatesSection": "업데이트",
     "autoUpdateDownload": "자동으로 업데이트 다운로드",
     "autoUpdateDownloadDesc": "각 확인 후 백그라운드에서 최신 업데이트를 다운로드합니다. 꺼져 있으면 업데이트가 여전히 감지되지만 다운로드 버튼을 누를 때만 다운로드됩니다. 패키지 관리자가 설치를 처리할 때 유용합니다.",
-    "autoUpdateDownloadSaveFailed": "자동 업데이트 다운로드 설정을 저장할 수 없습니다."
+    "autoUpdateDownloadSaveFailed": "자동 업데이트 다운로드 설정을 저장할 수 없습니다.",
+    "shareMyLocationHint": "이 앱이 활성화되면 이 컴퓨터에서 사용자의 위치를 검색하여 Meshtastic 또는 MeshCore (채팅 공유, 라디오 푸시) 을 통해 전송할 수 있습니다. 비활성화되면 호스트 GPS 조회 및 앱 전송이 꺼집니다. 정적 좌표는 현지 지도에서만 작동합니다. 자체 GPS가 있는 라디오는 여전히 로컬에서 위치를 표시할 수 있습니다. 라디오 또는 모듈 설정을 조정할 때까지 장치 펌웨어가 계속 브로드캐스트될 수 있습니다.",
+    "logPanelHelp": "활성화되면 오른쪽에 라이브 로그 스트림이 나타납니다. 디버그 라인에는 로그 패널 내부의 확인란이 필요합니다."
   },
   "aria": {
     "closeDialog": "대화상자 닫기",

@@ -85,6 +85,7 @@ import NodeInfoBody, { formatSecondsAgo } from './NodeInfoBody';
 import QrCodeImage from './QrCodeImage';
 import SnrIndicator from './SnrIndicator';
 import { Button, buttonClassName } from './ui/Button';
+import { DialogFrame } from './ui/DialogFrame';
 import { INPUT_BOX_SM_CLASS, NOTICE_CLASS, TEXTAREA_BOX_SM_CLASS } from './ui/formClasses';
 import { Switch } from './ui/Switch';
 
@@ -402,18 +403,6 @@ export default function NodeDetailModal({
       }
     };
   }, [node?.node_id]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Close on Escape (modal only)
-  useEffect(() => {
-    if (variant === 'pane') return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      document.removeEventListener('keydown', handleKey);
-    };
-  }, [onClose, variant]);
 
   // Reset all state when node changes
   useEffect(() => {
@@ -2361,25 +2350,16 @@ export default function NodeDetailModal({
 
   return (
     <>
-      <div
-        className="fixed inset-0 flex items-center justify-center p-4"
-        style={{ zIndex: Z_NODE_DETAIL_MODAL }}
+      {/* Escape and Tab go to the remote-auth dialog while it is open (DialogFrame nesting). */}
+      <DialogFrame
+        labelledBy="node-modal-title"
+        onClose={onClose}
+        backdropLabel={t('aria.closeDialog')}
+        zIndex={Z_NODE_DETAIL_MODAL}
+        panelClassName="max-h-[90vh] min-h-0 w-full max-w-lg overflow-hidden"
       >
-        <button
-          type="button"
-          aria-label={t('aria.closeDialog')}
-          className="absolute inset-0 cursor-pointer border-0 bg-black/50 p-0"
-          onClick={onClose}
-        />
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="node-modal-title"
-          className="bg-deep-black rounded-modal shadow-level-3 border-ink-800 relative z-10 flex max-h-[90vh] min-h-0 w-full max-w-lg flex-col overflow-hidden border"
-        >
-          {detailContent}
-        </div>
-      </div>
+        {detailContent}
+      </DialogFrame>
       {RemoteAuthModal}
     </>
   );

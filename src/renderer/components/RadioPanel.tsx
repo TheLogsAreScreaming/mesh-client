@@ -4097,7 +4097,7 @@ function ChannelSection({
             type="button"
             onClick={resetChannel}
             disabled={disabled || saving}
-            className="bg-ink-700 text-ink-300 hover:bg-ink-600 text-label rounded px-3 py-1.5 font-medium transition-colors disabled:opacity-50"
+            className={buttonClassName('secondary', 'sm')}
             title={
               selectedIndex === 0
                 ? t('radioPanel.resetChannelDefaults')

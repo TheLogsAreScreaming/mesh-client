@@ -14,6 +14,7 @@ import {
   saveMeshcoreFloodScopePresets,
 } from '@/renderer/lib/meshcoreFloodScopePresetsStorage';
 
+import { buttonClassName } from './ui/Button';
 import { INPUT_BOX_CLASS, SELECT_BOX_CLASS } from './ui/formClasses';
 
 export interface MeshcoreFloodScopeHandle {
@@ -166,7 +167,7 @@ export const MeshcoreFloodScopeSection = forwardRef<MeshcoreFloodScopeHandle, Pr
             />
             <button
               type="button"
-              className="border-ink-700 text-ink-200 hover:bg-ink-800 rounded-control text-label border px-3 py-1.5 disabled:opacity-40"
+              className={buttonClassName('secondary', 'sm')}
               aria-label={t('radioPanel.floodScopeAddSaved')}
               disabled={!presetDraft.trim()}
               onClick={() => {

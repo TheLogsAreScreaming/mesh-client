@@ -2097,7 +2097,7 @@ export default function AppPanel({
                 type="button"
                 onClick={handleSaveThemeSnapshot}
                 aria-label={t('appPanel.saveTheme')}
-                className="bg-deep-black border-ink-600 text-ink-300 hover:bg-ink-700 rounded-card text-body-lg flex-1 border px-3 py-2 font-medium transition-colors"
+                className={buttonClassName('secondary', 'lg', 'flex-1')}
               >
                 {t('appPanel.saveThemeButton')}
               </button>
@@ -2107,7 +2107,7 @@ export default function AppPanel({
                 disabled={!hasSavedThemeSnapshot}
                 aria-label={t('appPanel.restoreTheme')}
                 title={hasSavedThemeSnapshot ? undefined : t('appPanel.noSavedThemeTooltip')}
-                className="bg-deep-black border-ink-600 text-ink-300 hover:bg-ink-700 rounded-card text-body-lg flex-1 border px-3 py-2 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                className={buttonClassName('secondary', 'lg', 'flex-1')}
               >
                 {t('appPanel.restoreThemeButton')}
               </button>
@@ -2115,7 +2115,7 @@ export default function AppPanel({
                 type="button"
                 onClick={handleResetThemeColors}
                 aria-label={t('appPanel.resetAllColors')}
-                className="bg-deep-black border-ink-600 text-ink-300 hover:bg-ink-700 rounded-card text-body-lg flex-1 border px-3 py-2 font-medium transition-colors"
+                className={buttonClassName('secondary', 'lg', 'flex-1')}
               >
                 {t('appPanel.resetAllColorsButton')}
               </button>
@@ -2323,7 +2323,7 @@ export default function AppPanel({
             data-setting-anchor="app.mecp.exportLog"
             type="button"
             disabled={mecpExportBusy}
-            className="border-ink-600 bg-ink-900/60 text-ink-200 hover:bg-ink-800 rounded-card text-body-lg border px-3 py-2 disabled:opacity-50"
+            className={buttonClassName('secondary', 'lg')}
             aria-label={t('mecp.exportLog')}
             onClick={() => {
               if (mecpExportBusy) return;

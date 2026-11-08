@@ -477,7 +477,7 @@ function RemoteRelayForm({ initial, relay }: FormProps) {
             onClick={relay.disconnect}
             aria-label={t('takServerPanel.remoteDisconnect')}
             disabled={isBusy}
-            className="rounded-card bg-danger-700 text-body-lg hover:bg-danger-600 px-4 py-2 font-medium text-white transition-colors disabled:opacity-50"
+            className={buttonClassName('destructive', 'lg')}
           >
             {t('takServerPanel.remoteDisconnect')}
           </button>

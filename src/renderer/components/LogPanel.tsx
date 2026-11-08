@@ -16,6 +16,7 @@ import { formatLogTimeOfDay } from '../../shared/formatLogTimestamp';
 import { parseStoredJson } from '../lib/parseStoredJson';
 import type { MeshProtocol } from '../lib/types';
 import LogAnalyzeModal from './LogAnalyzeModal';
+import { buttonClassName } from './ui/Button';
 
 const LOG_LEVEL_FILTERS_KEY = 'mesh-client:logLevelFilters';
 const LOG_PANEL_WIDTH_KEY = 'mesh-client:logPanelWidth';
@@ -460,7 +461,7 @@ export default function LogPanel({
               type="button"
               onClick={narrow}
               aria-label={t('logPanel.narrowLogPanel')}
-              className="border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700 text-label rounded border px-2 py-1"
+              className={buttonClassName('secondary', 'sm')}
             >
               −
             </button>
@@ -468,7 +469,7 @@ export default function LogPanel({
               type="button"
               onClick={widen}
               aria-label={t('logPanel.widenLogPanel')}
-              className="border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700 text-label rounded border px-2 py-1"
+              className={buttonClassName('secondary', 'sm')}
             >
               +
             </button>
@@ -491,7 +492,7 @@ export default function LogPanel({
               type="button"
               onClick={handleExport}
               aria-label={t('logPanel.exportLog')}
-              className="border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700 text-label rounded border px-2 py-1"
+              className={buttonClassName('secondary', 'sm')}
             >
               {t('logPanel.export')}
             </button>
@@ -499,7 +500,7 @@ export default function LogPanel({
               type="button"
               onClick={handleDelete}
               aria-label={t('logPanel.deleteLog')}
-              className="border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700 text-label rounded border px-2 py-1"
+              className={buttonClassName('secondary', 'sm')}
             >
               {t('logPanel.delete')}
             </button>

@@ -8,6 +8,8 @@ import {
 } from '@/renderer/lib/decodeQrFromImageSource';
 import { errLikeToLogString } from '@/renderer/lib/errLikeToLogString';
 
+import { buttonClassName } from './ui/Button';
+
 export interface QrIngestControlProps {
   /** Decoded QR text — parent owns parse/apply. */
   onDecoded: (text: string) => void;
@@ -236,7 +238,7 @@ export default function QrIngestControl({
         <button
           type="button"
           disabled={disabled}
-          className="border-ink-600 text-ink-300 hover:bg-ink-800 text-label rounded border px-2 py-1 disabled:opacity-40"
+          className={buttonClassName('secondary', 'sm')}
           aria-label={t('qrIngest.chooseImageAria')}
           onClick={() => fileInputRef.current?.click()}
         >
@@ -245,7 +247,7 @@ export default function QrIngestControl({
         <button
           type="button"
           disabled={disabled || scanning || starting}
-          className="border-ink-600 text-ink-300 hover:bg-ink-800 text-label rounded border px-2 py-1 disabled:opacity-40"
+          className={buttonClassName('secondary', 'sm')}
           aria-label={t('qrIngest.scanCameraAria')}
           onClick={() => {
             void startCamera();
@@ -256,7 +258,7 @@ export default function QrIngestControl({
         {scanning ? (
           <button
             type="button"
-            className="border-ink-600 text-ink-300 hover:bg-ink-800 text-label rounded border px-2 py-1"
+            className={buttonClassName('secondary', 'sm')}
             aria-label={t('qrIngest.stopCameraAria')}
             onClick={stopCamera}
           >

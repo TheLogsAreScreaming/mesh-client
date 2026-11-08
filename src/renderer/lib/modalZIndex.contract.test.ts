@@ -22,7 +22,8 @@ describe('modal z-index layering contract', () => {
   it('NodeDetailModal uses Z_NODE_DETAIL_MODAL (not a stale hard-coded class)', () => {
     const src = readRenderer('components/NodeDetailModal.tsx');
     expect(src).toContain('Z_NODE_DETAIL_MODAL');
-    expect(src).toMatch(/style=\{\{\s*zIndex:\s*Z_NODE_DETAIL_MODAL\s*\}\}/);
+    // Rendered through DialogFrame, which applies `zIndex` as an inline style.
+    expect(src).toMatch(/zIndex=\{Z_NODE_DETAIL_MODAL\}/);
     expect(src).not.toMatch(/z-\[10000\]/);
   });
 
@@ -32,7 +33,7 @@ describe('modal z-index layering contract', () => {
     // Rendered through the shared Dialog, which applies `zIndex` as an inline style.
     expect(src).toMatch(/zIndex=\{Z_NESTED_AUTH_OVERLAY\}/);
     expect(src).not.toMatch(/z-\[200\]/);
-    const dialog = readRenderer('components/ui/Dialog.tsx');
+    const dialog = readRenderer('components/ui/DialogFrame.tsx');
     expect(dialog).toMatch(/style=\{zIndex == null \? undefined : \{ zIndex \}\}/);
   });
 

@@ -194,7 +194,6 @@
     "meshcorePathHashDeviceReported": "Informes de radio conectados: {{mode}}",
     "meshcorePathHashModeHint": "Requiere firmware complementario v1.14.0+ y repetidores en v1.14+ a lo largo de la ruta. Los repetidores pre-1.14 dejan caer silenciosamente paquetes multibyte. Los servidores de sala y repetidores también pueden usar CLI: set path.hash.mode {0|1|2}.",
     "meshcorePathHashApplyFailed": "Error en el modo hash de ruta: {{message}}",
-    "logPanelHelp": "Cuando está habilitado, aparece una transmisión de registro en vivo a la derecha. En la pestaña Reticulum, las líneas de dispositivos incluyen la salida del sidecar y el estado de la interfaz local. Las líneas de depuración requieren la casilla de verificación dentro del panel de registro.",
     "autoPruneUnheardContactsDaysAria": "Eliminación automática de contactos no escuchados al inicio, con más de {{days}} días",
     "capTotalContactsCountAria": "Limitar el total de contactos, mantener los contactos {{count}} vistos más recientemente",
     "unknownError": "Error desconocido",
@@ -364,7 +363,6 @@
     "messageActionsBarBgVisible": "Mostrar fondo",
     "shareMyLocation": "Compartir mi Ubicación",
     "shareMyLocationOffInfo": "El uso compartido de la ubicación está desactivado: la actualización del GPS del anfitrión y el envío en malla están desactivados. Habilite Compartir mi ubicación arriba para usar la actualización automática o enviar su posición.",
-    "shareMyLocationHint": "Cuando está habilitada, esta aplicación puede buscar tu ubicación en este ordenador y enviarla a través de Meshtastic, MeshCore o Reticulum (chat compartido, radio push, RMAP). Cuando está desactivado, las búsquedas de GPS del anfitrión y el envío de aplicaciones están desactivados; las coordenadas estáticas siguen funcionando solo para tu mapa local. Una radio con su propio GPS aún puede mostrar su posición localmente. El firmware del dispositivo aún puede transmitirse hasta que ajuste la configuración de Radio o Módulos.",
     "fontSize": "Tamaño de letra",
     "fontSizeDesc": "Ajusta el tamaño del texto en la app. Los mapas, gráficos y la terminal no se ven afectados.",
     "decreaseFontSize": "Reducir el tamaño de letra",
@@ -421,7 +419,9 @@
     "updatesSection": "Actualizaciones",
     "autoUpdateDownload": "Descargar actualizaciones automáticamente",
     "autoUpdateDownloadDesc": "Descarga la última actualización en segundo plano después de cada comprobación. Cuando está desactivado, las actualizaciones aún se detectan, pero solo se descargan cuando se pulsa el botón Descargar, útil cuando un gestor de paquetes se encarga de la instalación.",
-    "autoUpdateDownloadSaveFailed": "No se ha podido guardar la configuración de descarga de actualización automática."
+    "autoUpdateDownloadSaveFailed": "No se ha podido guardar la configuración de descarga de actualización automática.",
+    "shareMyLocationHint": "Cuando está activada, esta aplicación puede buscar tu ubicación en este ordenador y enviarla a través de Meshtastic o MeshCore (chat compartido, radio push). Cuando está desactivado, las búsquedas de GPS del anfitrión y el envío de aplicaciones están desactivados; las coordenadas estáticas siguen funcionando solo para tu mapa local. Una radio con su propio GPS aún puede mostrar su posición localmente. El firmware del dispositivo aún puede transmitirse hasta que ajuste la configuración de Radio o Módulos.",
+    "logPanelHelp": "Cuando está habilitado, aparece una transmisión de registro en vivo a la derecha. Las líneas de depuración requieren la casilla de verificación dentro del panel de registro."
   },
   "aria": {
     "closeDialog": "Cerrar cuadro de diálogo",

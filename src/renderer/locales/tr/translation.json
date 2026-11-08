@@ -194,7 +194,6 @@
     "meshcorePathHashDeviceReported": "Bağlı radyo raporları: {{mode}}",
     "meshcorePathHashModeHint": "Yol boyunca v1.14+ üzerinde tamamlayıcı ürün yazılımı v1.14.0+ ve tekrarlayıcılar gerektirir. Ön 1.14 tekrarlayıcılar çok baytlı paketleri sessizce düşürür. Tekrarlayıcı ve oda sunucuları da CLI: set path.hash.mode {0|1|2} kullanabilir.",
     "meshcorePathHashApplyFailed": "Yol karma modu başarısız oldu: {{message}}",
-    "logPanelHelp": "Etkinleştirildiğinde sağda canlı bir günlük akışı görünür. Reticulum sekmesinde, cihaz hatları sepet çıkışını ve yerel arayüz durumunu içerir. Hata ayıklama satırları, günlük panelinin içindeki onay kutusunun işaretlenmesini gerektirir.",
     "autoPruneUnheardContactsDaysAria": "Başlangıçta {{days}} günden eski, duyulmamış kişileri otomatik olarak buda",
     "capTotalContactsCountAria": "Toplam kişileri sınırlandırın, en son görülen {{count}} kişileri koruyun",
     "unknownError": "Bilinmeyen hata",
@@ -364,7 +363,6 @@
     "messageActionsBarBgVisible": "Arka planı göster",
     "shareMyLocation": "Bulunduğum yeri paylaş",
     "shareMyLocationOffInfo": "Konum paylaşımı kapalı — ana bilgisayar GPS yenileme ve mesh gönderme devre dışı. Otomatik yenilemeyi kullanmak veya konumunuzu göndermek için yukarıdaki Konumumu paylaş'ı etkinleştirin.",
-    "shareMyLocationHint": "Etkinleştirildiğinde, bu uygulama bu bilgisayardaki konumunuzu arayabilir ve Meshtastic, MeshCore veya Reticulum (sohbet paylaşımı, radyo iletisi, RMAP) üzerinden gönderebilir. Devre dışı bırakıldığında, ev sahibi GPS aramaları ve uygulama gönderme kapalıdır; statik koordinatlar yalnızca yerel haritanız için çalışmaya devam eder. Kendi GPS'ine sahip bir radyo yine de konumunuzu yerel olarak gösterebilir. Radyo veya Modül ayarlarını yapana kadar cihaz bellenimi yayınlanmaya devam edebilir.",
     "fontSize": "Yazı boyutu",
     "fontSizeDesc": "Uygulama genelinde metin boyutunu ayarlayın. Haritalar, çizelgeler ve terminal etkilenmez.",
     "decreaseFontSize": "Yazı tipi boyutunu küçült",
@@ -421,7 +419,9 @@
     "updatesSection": "Güncellemeler",
     "autoUpdateDownload": "~Güncellemeleri otomatik olarak indir",
     "autoUpdateDownloadDesc": "Her kontrolden sonra arka plandaki en son güncellemeyi indirir. Kapalıyken, güncellemeler hala algılanır, ancak yalnızca İndir düğmesine bastığınızda indirilir — bir paket yöneticisi kurulumu gerçekleştirdiğinde kullanışlıdır.",
-    "autoUpdateDownloadSaveFailed": "Otomatik güncelleme indirme ayarı kaydedilemedi."
+    "autoUpdateDownloadSaveFailed": "Otomatik güncelleme indirme ayarı kaydedilemedi.",
+    "shareMyLocationHint": "Etkinleştirildiğinde, bu uygulama bu bilgisayardaki konumunuzu arayabilir ve Meshtastic veya MeshCore (sohbet paylaşımı, radyo iletisi) üzerinden gönderebilir. Devre dışı bırakıldığında, ev sahibi GPS aramaları ve uygulama gönderme kapalıdır; statik koordinatlar yalnızca yerel haritanız için çalışmaya devam eder. Kendi GPS'ine sahip bir radyo yine de konumunuzu yerel olarak gösterebilir. Radyo veya Modül ayarlarını yapana kadar cihaz bellenimi yayınlanmaya devam edebilir.",
+    "logPanelHelp": "Etkinleştirildiğinde, sağda canlı bir günlük akışı görünür. Hata ayıklama satırları, günlük panelinin içindeki onay kutusunu gerektirir."
   },
   "aria": {
     "closeDialog": "İletişim kutusunu kapat",

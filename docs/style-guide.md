@@ -40,7 +40,7 @@ Principles:
 
 ## Color
 
-Everything uses Tailwind utility classes. Theme tokens (below) are CSS variables users can change in App > Appearance > Colors (`src/renderer/lib/themeColors.ts`); hard-coded hex ignores their choice and is only allowed in canvas drawing and Leaflet marker HTML.
+Everything uses Tailwind utility classes. Theme tokens (below) are CSS variables users can change in App > Appearance > Colors (`src/renderer/lib/themeColors.ts`); hard-coded hex ignores their choice and is only allowed in Leaflet marker HTML drawn on the basemap. Charts and other SVG / canvas views take their colors from `useChartPalette()` (`lib/chartPalette.ts`), which has a dark and a Daylight set and follows the active theme.
 
 `themeColors.ts` writes the theme tokens onto `:root` as inline styles at boot, which overrides the `@theme` block in `styles.css`. A changed default must change in both `styles.css` and `DEFAULT_THEME_COLORS`; `styleTokens.test.ts` fails when they drift.
 
@@ -260,7 +260,7 @@ Use the class strings and primitives; do not restyle native elements per panel.
 - Label and value pairs: `LabelValueGrid` inside their card, about 560px wide at most.
 - Cards: `Panel` (`bg-deep-black`, `border-ink-800`, `rounded-card`, level 1). Settings sections: `bg-deep-black rounded-xl border border-ink-800`.
 - Notices: `Callout` (`tone`, optional `title` and `action`, its own icon per tone, `role` alert / status / none). `NOTICE_CLASS` is the class-string form.
-- Dialogs: `Dialog` (`ui/Dialog.tsx`): backdrop, focus trap, Escape, focus return, entry motion. `ConfirmModal` is built on it; cancel comes first and has focus.
+- Dialogs: `Dialog` (`ui/Dialog.tsx`) gives the standard title, body and footer. It sits on `DialogFrame` (`ui/DialogFrame.tsx`): backdrop, Level 3 surface, focus trap, Escape, focus return, entry motion, and nesting, so only the topmost dialog answers Tab and Escape. Dialogs with their own toolbars or several views (node detail, contact groups, macros, MECP compose, log analysis) render inside `DialogFrame` directly; `onEscape` steps back a view and `focusKey` re-focuses when the view changes. `ConfirmModal` is built on `Dialog`; cancel comes first and has focus.
 - Empty and first-run views: `EmptyState` (icon, title, what to do next, action).
 - Toasts: `pushAppToast()` / `useToast()`. Errors and emergencies are `role="alert"`; others are `role="status"`. Hover or focus pauses the timer.
 - Map overlays: `MAP_CONTROL_CLASS`, `MAP_CHIP_CLASS`, `MAP_OVERLAY_PANEL_CLASS` (`map/mapControlClasses.ts`); Leaflet's own controls are restyled in `styles.css`.
@@ -275,7 +275,7 @@ Use the class strings and primitives; do not restyle native elements per panel.
 | Card with header                              | `Panel`, or `Card` + `CardHeader`                           |
 | Banner / inline notice                        | `Callout`                                                   |
 | Status pill                                   | `Badge`                                                     |
-| Modal                                         | `Dialog`, `ConfirmModal`                                    |
+| Modal                                         | `Dialog`, `ConfirmModal`, `DialogFrame` (custom layouts)    |
 | Empty / first-run view                        | `EmptyState`                                                |
 | Link status                                   | `StatusTile`, `StatusDot`                                   |
 | Label and value pairs                         | `LabelValueGrid`, `LabelValue`                              |
@@ -343,11 +343,9 @@ Source-policy rules in `src/architecture/sourcePolicyRules.ts` (Vitest, pre-comm
 - From the designer's Figma: the status Light-BG and Dark-Text steps, and the exact Level 1 to 4 shadows. Protocol scales, status Main colors and type are already exact.
 - Neutrals: the Mesh Hub palette gives four fixed steps (950, 900, 500, 50); the steps between are plain greys. Exact values from a designer drop into `--color-ink-*`.
 - Protocol colors outside `protocolTheme.ts` (for example some data ramps) still use Tailwind's `emerald` / `cyan` / `yellow` classes; move the ones that mark a protocol to the scale tokens.
-- About 360 `<button>` elements still carry hand-written classes; move them to `Button` / `buttonClassName` as their panels are touched.
-- Some modals (node detail, contact groups, macros, MECP compose, log analyze) keep their own shells; move them into `Dialog`.
-- Daylight: data ramps with inline hex (charts, SNR, packet distribution) and the dark basemap are not tuned for light backgrounds yet.
+- Action buttons all use `Button` / `buttonClassName`. About 320 other `<button>` elements are list rows, tabs, segmented controls, chips and icon toggles with their own styling; `Button` is not meant for those. The back-to-top pill and the MECP emergency Send keep their own look on purpose.
+- Daylight: map overlays (node markers, MGRS grid, sensor and utilization colors) are drawn for the basemap, not the app surface, and `getMapOverlayColors()` already switches them for light and dark basemaps; the map does not follow the app theme.
 - The Main success green (`#34d399`) sits close to the Meshtastic base (`#67e8b4`); status dots always come with text, so "online" is never color alone.
 - Field borders (`border-secondary-dark` on panels) are about 1.7:1 in every surface except High contrast, under the 3:1 WCAG 1.4.11 asks of a control boundary. Raising them changes the look, so it is a design call.
 - A night vision field mode for eyes adjusted to the dark: red color surfaces rather than a whole-window filter (a filter costs CPU and battery on every repaint), with MAYDAY, URGENT and info badges still telling apart by more than brightness.
-- A light theme.
 - Per-protocol automatic theming (today the protocol accents are opt-in presets).

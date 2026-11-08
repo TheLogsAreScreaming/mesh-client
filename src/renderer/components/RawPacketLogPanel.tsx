@@ -48,6 +48,7 @@ import {
   sortMeshtasticPackets,
 } from '../lib/rawPacketLogSort';
 import { RawPacketPathChain } from './RawPacketPathChain';
+import { buttonClassName } from './ui/Button';
 import { INPUT_BOX_SM_CLASS } from './ui/formClasses';
 
 const ROUTE_LABEL: Record<string, string> = {
@@ -905,7 +906,7 @@ export default function RawPacketLogPanel(props: Props) {
           onClick={handleClear}
           disabled={packets.length === 0}
           aria-label={t('rawPacketLog.clearPacketLog')}
-          className="border-ink-600 bg-ink-800 text-ink-300 hover:bg-ink-700 text-label shrink-0 rounded border px-2 py-1 disabled:opacity-40"
+          className={buttonClassName('secondary', 'sm', 'shrink-0')}
         >
           {t('common.clear')}
         </button>

@@ -1,6 +1,7 @@
 import { type SyntheticEvent, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { buttonClassName } from './ui/Button';
 import { INPUT_BOX_SM_CLASS, SELECT_BOX_SM_CLASS } from './ui/formClasses';
 
 interface Props {
@@ -68,7 +69,7 @@ export function MeshcoreRoomAclControls({ disabled, onApply }: Props) {
       <button
         type="submit"
         disabled={disabled || pending || !/^[0-9a-f]{64}$/i.test(aclPubkey.trim())}
-        className="border-ink-600 bg-ink-700 text-ink-200 text-label rounded border px-3 py-1 disabled:opacity-40"
+        className={buttonClassName('secondary', 'sm')}
       >
         {t('roomsPanel.aclApply')}
       </button>

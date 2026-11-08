@@ -194,7 +194,6 @@
     "meshcorePathHashDeviceReported": "已连接的无线电报告： {{mode}}",
     "meshcorePathHashModeHint": "需要配套固件v1.14.0+和路径上v1.14+的中继器。v1.14之前的中继器会静默丢弃多字节数据包。中继器和房间服务器也可以使用CLI：set path.hash.mode {0|1|2}。",
     "meshcorePathHashApplyFailed": "路径哈希模式失败： {{message}}",
-    "logPanelHelp": "启用后，实时日志流将显示在右侧。在 Reticulum 选项卡上，设备行包括 sidecar 输出和本地接口运行状况。调试行需要日志面板内的复选框。",
     "autoPruneUnheardContactsDaysAria": "启动时自动删除未听过的、超过 {{days}} 天的联系人",
     "capTotalContactsCountAria": "联系人总数上限，保留最近查看的 {{count}} 联系人",
     "unknownError": "未知错误",
@@ -364,7 +363,6 @@
     "messageActionsBarBgVisible": "显示背景",
     "shareMyLocation": "分享我的位置",
     "shareMyLocationOffInfo": "位置共享已关闭—主机GPS刷新和网格发送已禁用。启用在上方分享我的位置，以使用自动刷新或发送您的位置。",
-    "shareMyLocationHint": "启用后，此应用可能会在此计算机上查找您的位置，并通过Meshtastic、MeshCore或Reticulum （聊天共享、无线电推送、RMAP ）发送。禁用后，主机GPS查找和应用程序发送将关闭；静态坐标仍然仅适用于您的本地地图。带有GPS的收音机可能仍会在本地显示您的位置。在您调整收音机或模块设置之前，设备固件仍可能进行广播。",
     "fontSize": "字体大小",
     "fontSizeDesc": "在应用中调整文字大小。地图、海图和航站楼不受影响。",
     "decreaseFontSize": "减小字体大小",
@@ -421,7 +419,9 @@
     "updatesSection": "更新",
     "autoUpdateDownload": "自动下载更新",
     "autoUpdateDownloadDesc": "每次检查后在后台下载最新更新。关闭时，仍会检测到更新，但只有在按下“下载”按钮时才会下载，这在程序包管理器处理安装时非常有用。",
-    "autoUpdateDownloadSaveFailed": "无法保存自动更新下载设置。"
+    "autoUpdateDownloadSaveFailed": "无法保存自动更新下载设置。",
+    "shareMyLocationHint": "启用后，此应用程序可能会在此计算机上查找您的位置，并通过Meshtastic或MeshCore （聊天共享、无线电推送）发送给您。禁用后，主机GPS查找和应用程序发送将关闭；静态坐标仍然仅适用于您的本地地图。带有GPS的收音机可能仍会在本地显示您的位置。在您调整收音机或模块设置之前，设备固件仍可能进行广播。",
+    "logPanelHelp": "启用后，右侧将显示实时日志流。调试行需要日志面板内的复选框。"
   },
   "aria": {
     "closeDialog": "关闭对话框",
