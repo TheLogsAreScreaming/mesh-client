@@ -194,7 +194,6 @@
     "meshcorePathHashDeviceReported": "Подключенные радиоотчеты: {{mode}}",
     "meshcorePathHashModeHint": "Требуется сопутствующая прошивка v1.14.0+ и повторители на v1.14+ вдоль пути. Повторители Pre-1.14 бесшумно сбрасывают многобайтовые пакеты. Серверы повторителей и комнат также могут использовать CLI: set path.hash.mode {0|1|2}.",
     "meshcorePathHashApplyFailed": "Сбой режима хеширования пути: {{message}}",
-    "logPanelHelp": "Если этот параметр включен, справа отображается поток журнала в реальном времени. На вкладке Reticulum строки устройства включают вывод дополнительных данных и состояние локального интерфейса. Строки отладки требуют наличия флажка внутри панели журнала.",
     "autoPruneUnheardContactsDaysAria": "Автоматическое удаление непрослушанных контактов при запуске, старше {{days}} дн.",
     "capTotalContactsCountAria": "Ограничить общее количество контактов, сохранить последние просмотренные контакты {{count}}",
     "unknownError": "Неизвестная ошибка",
@@ -364,7 +363,6 @@
     "messageActionsBarBgVisible": "Показать фон",
     "shareMyLocation": "Показывать моё местоположение",
     "shareMyLocationOffInfo": "Совместное использование местоположения выключено — обновление GPS хоста и отправка сетки отключены. Включите опцию Поделиться своим местоположением выше, чтобы использовать автообновление или отправить свою позицию.",
-    "shareMyLocationHint": "Если включено, это приложение может искать ваше местоположение на этом компьютере и отправлять его по Meshtastic, MeshCore или Reticulum (общий чат, радио push, RMAP). Когда функция отключена, GPS-поиск хоста и отправка приложения выключены; статические координаты по-прежнему работают только для вашей локальной карты. Радиоприемник с собственным GPS может по-прежнему показывать ваше местоположение локально. Прошивка устройства может продолжать транслироваться до тех пор, пока вы не настроите радио или модули.",
     "deleteOldNodesConfirm_few": "Это приведет к безвозвратному удалению всех узлов, которые не были услышаны за последние {{days}} дня. Они будут вновь обнаружены, когда снова начнут трансляцию.",
     "deleteOldNodesConfirm_many": "Это приведет к безвозвратному удалению всех узлов, которые не были услышаны за последние {{days}} дней. Они будут вновь обнаружены, когда снова начнут трансляцию.",
     "pruneDistantDeleteConfirm_few": "Удалить {{count}} узла",
@@ -406,7 +404,8 @@
       "deepSea": "Глубина",
       "dusk": "Сумерки",
       "evergreen": "Хвоя",
-      "highContrast": "Высокая контрастность"
+      "highContrast": "Высокая контрастность",
+      "daylight": "Дневной свет"
     },
     "themeAccents": {
       "heading": "Акцент",
@@ -434,7 +433,9 @@
     "updatesSection": "Обновления",
     "autoUpdateDownload": "Загрузить обновления автоматически",
     "autoUpdateDownloadDesc": "Загружает последние обновления в фоновом режиме после каждой проверки. Когда выключено, обновления все еще обнаруживаются, но загружаются только при нажатии кнопки «Загрузить» — полезно, когда менеджер пакетов обрабатывает установку.",
-    "autoUpdateDownloadSaveFailed": "Не удалось сохранить параметр автоматической загрузки обновлений."
+    "autoUpdateDownloadSaveFailed": "Не удалось сохранить параметр автоматической загрузки обновлений.",
+    "shareMyLocationHint": "Если эта функция включена, приложение может найти ваше местоположение на этом компьютере и отправить его по телефону Meshtastic или MeshCore (общая переписка в чате, отправка по радио). Когда функция отключена, GPS-поиск хоста и отправка приложения выключены; статические координаты по-прежнему работают только для вашей локальной карты. Радиоприемник с собственным GPS может по-прежнему показывать ваше местоположение локально. Прошивка устройства может продолжать транслироваться до тех пор, пока вы не настроите радио или модули.",
+    "logPanelHelp": "При включении справа отображается поток журнала в реальном времени. Для строк отладки требуется флажок внутри панели журнала."
   },
   "aria": {
     "closeDialog": "Закрыть диалог",
@@ -1145,7 +1146,7 @@
     "errors": {
       "ble": {
         "adapter_missing": "Bluetooth-адаптер не найден. Включите Bluetooth в настройках системы и повторите попытку.",
-        "permission_denied": "Bluetooth permission was denied. Allow Mesh Hub to use Bluetooth, then try again.",
+        "permission_denied": "В разрешении Bluetooth отказано. Разрешите Mesh Hub использовать Bluetooth, а затем повторите попытку.",
         "scan_busy": "Выполняется еще одно сканирование Bluetooth. Подождите немного и попробуйте еще раз.",
         "mac_conflict": "This Bluetooth device is already connected to another protocol. Disconnect it there first.",
         "connect_timeout": "Время ожидания соединения Bluetooth истекло. Держите радио включенным и поблизости, а затем повторите попытку.",
@@ -3051,9 +3052,9 @@
     "paFanDisabledDesc": "Отключите вентилятор охлаждения усилителя мощности (зависит от аппаратного обеспечения).",
     "rebroadcastModeLabel": "Rebroadcast Mode",
     "nodeInfoBroadcastSecsLabel": "Node Info Broadcast Interval",
-    "nodeInfoBroadcastSecsDesc": "How often to broadcast node info in seconds (0 = firmware default ~15 min).",
+    "nodeInfoBroadcastSecsDesc": "Как часто транслировать информацию об узле в секундах (0 = прошивка по умолчанию ~15 минут).",
     "doubleTapAsButtonPressLabel": "Double-tap as Button Press",
-    "doubleTapAsButtonPressDesc": "Treat an accelerometer double-tap as a user button press (hardware-dependent).",
+    "doubleTapAsButtonPressDesc": "Считать двойное касание, обнаруженное акселерометром, нажатием пользовательской кнопки (зависит от оборудования).",
     "disableTripleClickLabel": "Disable Triple-click",
     "disableTripleClickDesc": "Отключите действие тройного щелчка на пользовательской кнопке.",
     "ledHeartbeatDisabledLabel": "Disable LED Heartbeat",
@@ -3091,7 +3092,7 @@
       }
     },
     "autoScreenCarouselSecsLabel": "Screen Carousel Interval",
-    "autoScreenCarouselSecsDesc": "Seconds between automatic screen page changes. 0 to disable.",
+    "autoScreenCarouselSecsDesc": "Секунды между автоматическими изменениями страницы экрана. 0 для отключения.",
     "oledTypeLabel": "OLED Type",
     "flipScreenLabel": "Flip Screen",
     "flipScreenDesc": "Поверните дисплей на 180 градусов.",
@@ -3101,7 +3102,7 @@
     "wakeOnTapOrMotionDesc": "Включение экрана при касании или перемещении устройства.",
     "use12hClockLabel": "12-Hour Clock",
     "useLongNodeNameLabel": "Use Long Node Name",
-    "useLongNodeNameDesc": "Show full node name instead of short name on screen.",
+    "useLongNodeNameDesc": "Показать полное имя узла вместо короткого имени на экране.",
     "enableMessageBubblesLabel": "Message Bubbles",
     "enableMessageBubblesDesc": "Показывать входящие сообщения в виде пузырьков на дисплее.",
     "oledTypes": {
@@ -3512,7 +3513,7 @@
     "transportBadgeMqttTooltip": "Получено через MQTT",
     "transportBadgeLocalTooltip": "Местная самотелеметрия",
     "payloadTypeTooltip": "Тип полезной нагрузки: {{type}}",
-    "portLabelTooltip": "Meshtastic port: {{port}}",
+    "portLabelTooltip": "Meshtastic порт: {{port}}",
     "pathSegmentTooltip": "Хеш пути {{hex}}",
     "pathSegmentResolvedTooltip": "Хеш пути {{hex}} ({{name}})",
     "pathChainTooltip": "Воздушный тракт: {{path}}",
@@ -4311,7 +4312,7 @@
       "severity": "Severity",
       "category": "Category",
       "codes": "Codes",
-      "removeCode": "Remove code {{code}}",
+      "removeCode": "Удалить код {{code}}",
       "freetext": "Free text (pax, GPS, notes)",
       "addPax": "Add 1pax",
       "attachGps": "Attach GPS",
@@ -4328,14 +4329,14 @@
     "rebroadcast": {
       "title": "MECP RF rebroadcast",
       "hint": "Опционально можно соединить MECP, услышанный на одном канале протокола, с другим. По умолчанию выключено. Включите двунаправленный режим, чтобы также изменить путь.",
-      "add": "Add bridge rule",
-      "remove": "Remove bridge rule",
+      "add": "Добавить правило моста",
+      "remove": "Удалить правило моста",
       "enableRule": "Enabled",
       "bidirectional": "Bidirectional",
       "endpointA": "Listen / source (A)",
       "endpointB": "Forward / destination (B)",
       "protocol": "Protocol",
-      "channelIndex": "Channel index"
+      "channelIndex": "Индекс канала"
     },
     "exportLogSuccess": "Журнал MECP экспортирован",
     "exportLogSuccessPath": "Журнал MECP экспортирован в {{path}}",

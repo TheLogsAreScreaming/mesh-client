@@ -194,7 +194,6 @@
     "meshcorePathHashDeviceReported": "연결된 라디오 보고서: {{mode}}",
     "meshcorePathHashModeHint": "경로상 v1.14.0+ 동반 펌웨어와 v1.14+ 리피터가 필요합니다. v1.14 이전 리피터는 멀티바이트 패킷을 조용히 드롭합니다. 리피터 및 룸 서버는 CLI에서 set path.hash.mode {0|1|2}를 사용할 수도 있습니다.",
     "meshcorePathHashApplyFailed": "경로 해시 모드 실패: {{message}}",
-    "logPanelHelp": "활성화되면 실시간 로그 스트림이 오른쪽에 나타납니다. Reticulum 탭의 장치 라인에는 사이드카 출력 및 로컬 인터페이스 상태가 포함됩니다. 디버그 라인에는 로그 패널 내부의 확인란이 필요합니다.",
     "autoPruneUnheardContactsDaysAria": "시작 시 {{days}}일 이상 경과한 확인되지 않은 연락처 자동 정리",
     "capTotalContactsCountAria": "총 연락처 수를 제한하고 가장 최근에 본 연락처를 {{count}}개로 유지합니다.",
     "unknownError": "알 수 없는 오류",
@@ -364,7 +363,6 @@
     "messageActionsBarBgVisible": "배경 표시",
     "shareMyLocation": "내 위치 공유",
     "shareMyLocationOffInfo": "위치 공유가 꺼져 있음 — 호스트 GPS 새로 고침 및 메시 전송이 비활성화되었습니다. 자동 새로 고침을 사용하거나 위치를 보내려면 위의 내 위치 공유를 활성화하십시오.",
-    "shareMyLocationHint": "활성화되면 이 앱이 이 컴퓨터에서 사용자의 위치를 검색하여 Meshtastic, MeshCore 또는 Reticulum (채팅 공유, 라디오 푸시, RMAP) 을 통해 전송할 수 있습니다. 비활성화되면 호스트 GPS 조회 및 앱 전송이 꺼집니다. 정적 좌표는 현지 지도에서만 작동합니다. 자체 GPS가 있는 라디오는 여전히 로컬에서 위치를 표시할 수 있습니다. 라디오 또는 모듈 설정을 조정할 때까지 장치 펌웨어가 계속 브로드캐스트될 수 있습니다.",
     "fontSize": "폰트 크기",
     "fontSizeDesc": "앱에서 텍스트 크기를 조정하세요. 지도, 차트 및 터미널은 영향을 받지 않습니다.",
     "decreaseFontSize": "글꼴 작게",
@@ -392,7 +390,8 @@
       "deepSea": "딥 시",
       "dusk": "황혼",
       "evergreen": "에버그린",
-      "highContrast": "고대비"
+      "highContrast": "고대비",
+      "daylight": "햇빛"
     },
     "themeAccents": {
       "heading": "강조색",
@@ -420,7 +419,9 @@
     "updatesSection": "업데이트",
     "autoUpdateDownload": "자동으로 업데이트 다운로드",
     "autoUpdateDownloadDesc": "각 확인 후 백그라운드에서 최신 업데이트를 다운로드합니다. 꺼져 있으면 업데이트가 여전히 감지되지만 다운로드 버튼을 누를 때만 다운로드됩니다. 패키지 관리자가 설치를 처리할 때 유용합니다.",
-    "autoUpdateDownloadSaveFailed": "자동 업데이트 다운로드 설정을 저장할 수 없습니다."
+    "autoUpdateDownloadSaveFailed": "자동 업데이트 다운로드 설정을 저장할 수 없습니다.",
+    "shareMyLocationHint": "이 앱이 활성화되면 이 컴퓨터에서 사용자의 위치를 검색하여 Meshtastic 또는 MeshCore (채팅 공유, 라디오 푸시) 을 통해 전송할 수 있습니다. 비활성화되면 호스트 GPS 조회 및 앱 전송이 꺼집니다. 정적 좌표는 현지 지도에서만 작동합니다. 자체 GPS가 있는 라디오는 여전히 로컬에서 위치를 표시할 수 있습니다. 라디오 또는 모듈 설정을 조정할 때까지 장치 펌웨어가 계속 브로드캐스트될 수 있습니다.",
+    "logPanelHelp": "활성화되면 오른쪽에 라이브 로그 스트림이 나타납니다. 디버그 라인에는 로그 패널 내부의 확인란이 필요합니다."
   },
   "aria": {
     "closeDialog": "대화상자 닫기",
@@ -1113,7 +1114,7 @@
     "errors": {
       "ble": {
         "adapter_missing": "Bluetooth 어댑터를 찾을 수 없습니다. 시스템 설정에서 블루투스를 활성화하고 다시 시도해 보세요.",
-        "permission_denied": "Bluetooth permission was denied. Allow Mesh Hub to use Bluetooth, then try again.",
+        "permission_denied": "블루투스 권한이 거부되었습니다. Mesh Hub가 블루투스를 사용하도록 허용한 다음 다시 시도하세요.",
         "scan_busy": "다른 Bluetooth 검색이 진행 중입니다. 잠시 기다렸다가 다시 시도해 보세요.",
         "mac_conflict": "This Bluetooth device is already connected to another protocol. Disconnect it there first.",
         "connect_timeout": "블루투스 연결 시간이 초과되었습니다. 라디오를 깨어 있는 상태로 근처에 두고 다시 시도하십시오.",
@@ -2987,9 +2988,9 @@
     "paFanDisabledDesc": "파워 앰프 냉각 팬을 비활성화합니다(하드웨어에 따라 다름).",
     "rebroadcastModeLabel": "Rebroadcast Mode",
     "nodeInfoBroadcastSecsLabel": "Node Info Broadcast Interval",
-    "nodeInfoBroadcastSecsDesc": "How often to broadcast node info in seconds (0 = firmware default ~15 min).",
+    "nodeInfoBroadcastSecsDesc": "노드 정보를 초 단위로 브로드캐스트하는 빈도 (0 = 펌웨어 기본값 ~ 15분).",
     "doubleTapAsButtonPressLabel": "Double-tap as Button Press",
-    "doubleTapAsButtonPressDesc": "Treat an accelerometer double-tap as a user button press (hardware-dependent).",
+    "doubleTapAsButtonPressDesc": "가속도계 두 번 탭을 사용자 버튼 누름으로 처리합니다(하드웨어에 따라 다름).",
     "disableTripleClickLabel": "Disable Triple-click",
     "disableTripleClickDesc": "사용자 버튼의 삼중 클릭 동작을 비활성화합니다.",
     "ledHeartbeatDisabledLabel": "Disable LED Heartbeat",
@@ -3027,7 +3028,7 @@
       }
     },
     "autoScreenCarouselSecsLabel": "Screen Carousel Interval",
-    "autoScreenCarouselSecsDesc": "Seconds between automatic screen page changes. 0 to disable.",
+    "autoScreenCarouselSecsDesc": "자동 화면 페이지 변경 사이의 시간 (초). 비활성화하려면 0.",
     "oledTypeLabel": "OLED Type",
     "flipScreenLabel": "Flip Screen",
     "flipScreenDesc": "디스플레이를 180도 회전합니다.",
@@ -3037,7 +3038,7 @@
     "wakeOnTapOrMotionDesc": "장치를 탭하거나 움직일 때 화면을 깨웁니다.",
     "use12hClockLabel": "12-Hour Clock",
     "useLongNodeNameLabel": "Use Long Node Name",
-    "useLongNodeNameDesc": "Show full node name instead of short name on screen.",
+    "useLongNodeNameDesc": "화면에 짧은 이름 대신 전체 노드 이름을 표시합니다.",
     "enableMessageBubblesLabel": "Message Bubbles",
     "enableMessageBubblesDesc": "수신 메시지를 디스플레이에 풍선으로 표시합니다.",
     "oledTypes": {
@@ -4241,7 +4242,7 @@
       "severity": "Severity",
       "category": "Category",
       "codes": "Codes",
-      "removeCode": "Remove code {{code}}",
+      "removeCode": "코드 {{code}} 삭제",
       "freetext": "Free text (pax, GPS, notes)",
       "addPax": "Add 1pax",
       "attachGps": "Attach GPS",
@@ -4258,14 +4259,14 @@
     "rebroadcast": {
       "title": "MECP RF rebroadcast",
       "hint": "선택적으로 한 프로토콜 채널에서 다른 프로토콜 채널로 들리는 MECP를 브리지합니다. 기본적으로 꺼져 있습니다. 경로를 반대로 바꾸려면 양방향을 활성화하세요.",
-      "add": "Add bridge rule",
-      "remove": "Remove bridge rule",
+      "add": "브리지 규칙 추가",
+      "remove": "브리지 규칙 제거",
       "enableRule": "Enabled",
       "bidirectional": "Bidirectional",
       "endpointA": "Listen / source (A)",
       "endpointB": "Forward / destination (B)",
       "protocol": "Protocol",
-      "channelIndex": "Channel index"
+      "channelIndex": "채널 인덱스"
     },
     "exportLogSuccess": "MECP 로그 내보내기 완료",
     "exportLogSuccessPath": "{{path}} 로 내보낸 MECP 로그",

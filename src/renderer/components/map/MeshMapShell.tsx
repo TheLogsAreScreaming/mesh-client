@@ -143,7 +143,7 @@ export function MeshMapShell({
   // dialog opened over this tab draws above them.
   return (
     <div
-      className={`border-ink-700/50 relative isolate overflow-hidden rounded-lg border ${frameClassName}`}
+      className={`border-ink-700/50 rounded-card relative isolate overflow-hidden border ${frameClassName}`}
       aria-label={ariaLabel}
     >
       <div className="absolute top-3 right-3 z-[1000] flex flex-col items-end gap-2">

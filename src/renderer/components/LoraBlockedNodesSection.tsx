@@ -28,12 +28,12 @@ export function LoraBlockedNodesSection({
 
   return (
     <div className="space-y-2">
-      <h3 className="text-ink-300 text-sm font-medium">{t('appPanel.loraBlocklist.title')}</h3>
-      <p className="text-muted text-xs leading-relaxed">
+      <h3 className="text-ink-300 text-body-lg font-medium">{t('appPanel.loraBlocklist.title')}</h3>
+      <p className="text-muted text-label leading-relaxed">
         {t('appPanel.loraBlocklist.description')}
       </p>
       {entries.length === 0 ? (
-        <p className="text-muted text-xs italic">{t('appPanel.loraBlocklist.empty')}</p>
+        <p className="text-muted text-label italic">{t('appPanel.loraBlocklist.empty')}</p>
       ) : (
         <ul className="space-y-1" aria-label={t('appPanel.loraBlocklist.title')}>
           {entries.map((entry) => {
@@ -43,8 +43,8 @@ export function LoraBlockedNodesSection({
                 key={entry.hash}
                 className="border-ink-700/70 bg-ink-900/40 flex items-center justify-between gap-2 rounded border px-2 py-1"
               >
-                <span className="text-ink-300 min-w-0 truncate font-mono text-xs">{label}</span>
-                <span className="text-muted shrink-0 text-xs">
+                <span className="text-ink-300 text-label min-w-0 truncate font-mono">{label}</span>
+                <span className="text-muted text-label shrink-0">
                   {new Date(entry.createdAt).toLocaleDateString()}
                 </span>
                 <button
@@ -60,7 +60,7 @@ export function LoraBlockedNodesSection({
                       },
                     );
                   }}
-                  className="border-ink-600 text-ink-300 hover:bg-ink-700 shrink-0 rounded border px-2 py-0.5 text-xs"
+                  className="border-ink-600 text-ink-300 hover:bg-ink-700 text-label shrink-0 rounded border px-2 py-0.5"
                 >
                   {t('nodeDetailModal.unblockContact')}
                 </button>

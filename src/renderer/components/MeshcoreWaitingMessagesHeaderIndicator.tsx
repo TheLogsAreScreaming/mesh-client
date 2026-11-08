@@ -17,7 +17,7 @@ export interface MeshcoreWaitingMessagesHeaderIndicatorProps extends MeshcoreWai
 function WaitingMessagesSpinner() {
   return (
     <span
-      className="inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-orange-400 border-t-transparent"
+      className="border-warning-400 inline-block h-3.5 w-3.5 shrink-0 animate-spin rounded-full border-2 border-t-transparent"
       aria-hidden
     />
   );
@@ -26,7 +26,7 @@ function WaitingMessagesSpinner() {
 function WaitingMessagesDeferredIcon() {
   return (
     <span
-      className="motion-status inline-block h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-orange-400"
+      className="motion-status bg-warning-400 inline-block h-2.5 w-2.5 shrink-0 animate-pulse rounded-full"
       aria-hidden
     />
   );
@@ -35,7 +35,7 @@ function WaitingMessagesDeferredIcon() {
 function WaitingMessagesQueuedPill({ count }: { count: number }) {
   return (
     <span
-      className="text-2xs flex shrink-0 items-center rounded border border-orange-700 bg-orange-900/60 px-1.5 py-0.5 font-medium text-orange-200"
+      className="text-2xs border-warning-700 bg-warning-900/60 text-warning-200 flex shrink-0 items-center rounded border px-1.5 py-0.5 font-medium"
       aria-hidden
     >
       {count}

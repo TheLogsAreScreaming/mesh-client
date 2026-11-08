@@ -98,7 +98,7 @@ export function SavedLocationForm({ approximatePosition, onSaved, onCancel }: Lo
       </div>
       <p
         id={`${idBase}-coords-hint`}
-        className={error ? 'text-label text-red-400' : 'text-muted text-label'}
+        className={error ? 'text-label text-danger-400' : 'text-muted text-label'}
       >
         {error ?? t('locationPrompt.coordsHintFormats')}
       </p>
@@ -214,17 +214,17 @@ export default function SetLocationCard({
   return (
     <section
       aria-labelledby={headingId}
-      className="rounded-card border border-orange-500/40 bg-orange-500/10 px-4 py-3"
+      className="rounded-card border-warning-500/40 bg-warning-500/10 border px-4 py-3"
     >
       <div className="flex items-start gap-2.5">
-        <MapPin aria-hidden size={16} className="mt-0.5 h-4 w-4 shrink-0 text-orange-400" />
+        <MapPin aria-hidden size={16} className="text-warning-400 mt-0.5 h-4 w-4 shrink-0" />
         <div className="min-w-0 flex-1 space-y-2">
-          <h3 id={headingId} className="text-body font-medium text-orange-200">
+          <h3 id={headingId} className="text-body text-warning-200 font-medium">
             {title}
           </h3>
-          <p className="text-body text-orange-200">{body}</p>
+          <p className="text-body text-warning-200">{body}</p>
           {variant === 'diagnostics' && (
-            <p className="text-label text-orange-300">{t('locationPrompt.diagnosticsPaused')}</p>
+            <p className="text-label text-warning-300">{t('locationPrompt.diagnosticsPaused')}</p>
           )}
 
           {confirming ? (
@@ -271,7 +271,7 @@ export default function SetLocationCard({
             <>
               {saved.locations.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-label text-orange-300">
+                  <span className="text-label text-warning-300">
                     {t('locationPrompt.savedLocationsLabel')}
                   </span>
                   {saved.locations.map((location) => (

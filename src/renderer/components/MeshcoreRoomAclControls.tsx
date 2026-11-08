@@ -1,6 +1,7 @@
 import { type SyntheticEvent, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { buttonClassName } from './ui/Button';
 import { INPUT_BOX_SM_CLASS, SELECT_BOX_SM_CLASS } from './ui/formClasses';
 
 interface Props {
@@ -35,7 +36,7 @@ export function MeshcoreRoomAclControls({ disabled, onApply }: Props) {
   return (
     <form className="mb-2 flex flex-wrap items-end gap-2" onSubmit={(e) => void handleSubmit(e)}>
       <label className="min-w-[12rem] flex-1 space-y-1">
-        <span className="text-ink-400 text-xs">{t('roomsPanel.aclPubkeyLabel')}</span>
+        <span className="text-ink-400 text-label">{t('roomsPanel.aclPubkeyLabel')}</span>
         <input
           type="text"
           value={aclPubkey}
@@ -49,7 +50,7 @@ export function MeshcoreRoomAclControls({ disabled, onApply }: Props) {
         />
       </label>
       <label className="space-y-1">
-        <span className="text-ink-400 text-xs">{t('roomsPanel.aclLevelLabel')}</span>
+        <span className="text-ink-400 text-label">{t('roomsPanel.aclLevelLabel')}</span>
         <select
           value={aclLevel}
           onChange={(e) => {
@@ -68,7 +69,7 @@ export function MeshcoreRoomAclControls({ disabled, onApply }: Props) {
       <button
         type="submit"
         disabled={disabled || pending || !/^[0-9a-f]{64}$/i.test(aclPubkey.trim())}
-        className="border-ink-600 bg-ink-700 text-ink-200 rounded border px-3 py-1 text-xs disabled:opacity-40"
+        className={buttonClassName('secondary', 'sm')}
       >
         {t('roomsPanel.aclApply')}
       </button>

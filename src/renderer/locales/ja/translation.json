@@ -194,7 +194,6 @@
     "meshcorePathHashDeviceReported": "接続された無線レポート： {{mode}}",
     "meshcorePathHashModeHint": "パス上にv1.14.0以降のコンパニオンファームウェアとv1.14以降のリピーターが必要です。v1.14未満のリピーターはマルチバイトパケットを黙って破棄します。リピーターとルームサーバーはCLIでも利用できます: set path.hash.mode {0|1|2}.",
     "meshcorePathHashApplyFailed": "パスハッシュモードに失敗しました： {{message}}",
-    "logPanelHelp": "有効にすると、ライブ ログ ストリームが右側に表示されます。 Reticulum タブのデバイス行には、サイドカー出力とローカル インターフェイスの状態が含まれます。デバッグ行では、ログ パネル内のチェックボックスが必要です。",
     "autoPruneUnheardContactsDaysAria": "起動時に、{{days}} 日より古い、聞いていない連絡先を自動的に削除します",
     "capTotalContactsCountAria": "連絡先の総数を制限し、最近確認された {{count}} 連絡先を保持します",
     "unknownError": "不明なエラー",
@@ -364,7 +363,6 @@
     "messageActionsBarBgVisible": "背景を表示",
     "shareMyLocation": "現在位置を共有",
     "shareMyLocationOffInfo": "位置情報の共有がオフになっています。ホストのGPSリフレッシュとメッシュ送信は無効になっています。自動更新を使用するか、ポジションを送信するには、上の「現在地を共有」を有効にします。",
-    "shareMyLocationHint": "有効にすると、このアプリはこのコンピューター上の現在地を検索し、Meshtastic、MeshCore、またはReticulum （チャット共有、ラジオプッシュ、RMAP ）を介して送信する場合があります。無効にすると、ホストのGPSルックアップとアプリの送信がオフになります。静的座標はローカルマップでのみ機能します。独自のGPSを備えたラジオは、依然としてあなたの位置をローカルに表示している可能性があります。ラジオまたはモジュールの設定を調整するまで、デバイスファームウェアがブロードキャストされることがあります。",
     "fontSize": "フォントサイズ",
     "fontSizeDesc": "アプリ全体でテキストのサイズを調整します。地図、チャート、ターミナルは影響を受けません。",
     "decreaseFontSize": "フォントサイズを小さく",
@@ -392,7 +390,8 @@
       "deepSea": "ディープシー",
       "dusk": "ダスク",
       "evergreen": "エバーグリーン",
-      "highContrast": "ハイコントラスト"
+      "highContrast": "ハイコントラスト",
+      "daylight": "Daylight"
     },
     "themeAccents": {
       "heading": "アクセント",
@@ -420,7 +419,9 @@
     "updatesSection": "更新",
     "autoUpdateDownload": "自動的に更新をダウンロード",
     "autoUpdateDownloadDesc": "各チェック後にバックグラウンドで最新のアップデートをダウンロードします。オフの場合、アップデートは検出されますが、ダウンロードボタンを押したときにのみダウンロードされます。これは、パッケージマネージャーがインストールを処理する場合に便利です。",
-    "autoUpdateDownloadSaveFailed": "自動更新ダウンロード設定を保存できませんでした。"
+    "autoUpdateDownloadSaveFailed": "自動更新ダウンロード設定を保存できませんでした。",
+    "shareMyLocationHint": "有効にすると、このアプリはこのパソコンで位置情報を検索し、MeshtasticまたはMeshCore （チャット共有、ラジオプッシュ）で送信する場合があります。無効にすると、ホストのGPSルックアップとアプリの送信がオフになります。静的座標はローカルマップでのみ機能します。独自のGPSを備えたラジオは、依然としてあなたの位置をローカルに表示している可能性があります。ラジオまたはモジュールの設定を調整するまで、デバイスファームウェアがブロードキャストされることがあります。",
+    "logPanelHelp": "有効にすると、ライブログストリームが右側に表示されます。デバッグラインには、ログパネル内のチェックボックスが必要です。"
   },
   "aria": {
     "closeDialog": "ダイアログを閉じる",
@@ -1113,7 +1114,7 @@
     "errors": {
       "ble": {
         "adapter_missing": "Bluetooth アダプターが見つかりませんでした。システム設定で Bluetooth を有効にして、もう一度試してください。",
-        "permission_denied": "Bluetooth permission was denied. Allow Mesh Hub to use Bluetooth, then try again.",
+        "permission_denied": "Bluetoothの許可が拒否されました。Mesh HubがBluetoothを使用できるようにしてから、もう一度お試しください。",
         "scan_busy": "別の Bluetooth スキャンが進行中です。しばらく待ってからもう一度試してください。",
         "mac_conflict": "This Bluetooth device is already connected to another protocol. Disconnect it there first.",
         "connect_timeout": "Bluetooth 接続がタイムアウトしました。無線を起動した状態で近くに置いてから、もう一度試してください。",
@@ -2987,9 +2988,9 @@
     "paFanDisabledDesc": "パワーアンプの冷却ファンを無効にします (ハードウェアに依存します)。",
     "rebroadcastModeLabel": "Rebroadcast Mode",
     "nodeInfoBroadcastSecsLabel": "Node Info Broadcast Interval",
-    "nodeInfoBroadcastSecsDesc": "How often to broadcast node info in seconds (0 = firmware default ~15 min).",
+    "nodeInfoBroadcastSecsDesc": "ノード情報を秒単位でブロードキャストする頻度（ 0 =ファームウェアのデフォルト~ 15分）。",
     "doubleTapAsButtonPressLabel": "Double-tap as Button Press",
-    "doubleTapAsButtonPressDesc": "Treat an accelerometer double-tap as a user button press (hardware-dependent).",
+    "doubleTapAsButtonPressDesc": "加速度計ダブルタップをユーザーボタン押下として扱う（ハードウェア依存）。",
     "disableTripleClickLabel": "Disable Triple-click",
     "disableTripleClickDesc": "ユーザー ボタンのトリプルクリック アクションを無効にします。",
     "ledHeartbeatDisabledLabel": "Disable LED Heartbeat",
@@ -3027,7 +3028,7 @@
       }
     },
     "autoScreenCarouselSecsLabel": "Screen Carousel Interval",
-    "autoScreenCarouselSecsDesc": "Seconds between automatic screen page changes. 0 to disable.",
+    "autoScreenCarouselSecsDesc": "自動的に画面ページが変更されるまでの秒数。無効にするには0。",
     "oledTypeLabel": "OLED Type",
     "flipScreenLabel": "Flip Screen",
     "flipScreenDesc": "ディスプレイを 180 度回転します。",
@@ -3037,7 +3038,7 @@
     "wakeOnTapOrMotionDesc": "デバイスがタップまたは移動されたときに画面をスリープ解除します。",
     "use12hClockLabel": "12-Hour Clock",
     "useLongNodeNameLabel": "Use Long Node Name",
-    "useLongNodeNameDesc": "Show full node name instead of short name on screen.",
+    "useLongNodeNameDesc": "画面に短い名前の代わりに完全なノード名を表示します。",
     "enableMessageBubblesLabel": "Message Bubbles",
     "enableMessageBubblesDesc": "受信メッセージをディスプレイ上のバブル内に表示します。",
     "oledTypes": {
@@ -3094,7 +3095,7 @@
     "applyStatusFailed": "失敗: {{message}}",
     "applyUserApplying": "ユーザーIDを適用しています…",
     "applyUserSuccess": "ユーザーIDが正常に適用されました！",
-    "applyLoraSuccess": "LoRa settings applied successfully!",
+    "applyLoraSuccess": "LoRa設定を適用しました。",
     "offloading": "オフロードしています…",
     "offloadingProgress": "{{total}}件中{{current}}件を削除しています…",
     "offloadCancelled": "オフロードがキャンセルされました。",
@@ -4241,7 +4242,7 @@
       "severity": "Severity",
       "category": "Category",
       "codes": "Codes",
-      "removeCode": "Remove code {{code}}",
+      "removeCode": "コード{{code}}を削除",
       "freetext": "Free text (pax, GPS, notes)",
       "addPax": "Add 1pax",
       "attachGps": "Attach GPS",
@@ -4258,14 +4259,14 @@
     "rebroadcast": {
       "title": "MECP RF rebroadcast",
       "hint": "オプションで、あるプロトコル チャネルで受信した MECP を別のプロトコル チャネルにブリッジします。デフォルトではオフです。パスを逆方向にするには、双方向を有効にします。",
-      "add": "Add bridge rule",
-      "remove": "Remove bridge rule",
+      "add": "ブリッジルールを追加",
+      "remove": "ブリッジルールを削除",
       "enableRule": "Enabled",
       "bidirectional": "Bidirectional",
       "endpointA": "Listen / source (A)",
       "endpointB": "Forward / destination (B)",
       "protocol": "Protocol",
-      "channelIndex": "Channel index"
+      "channelIndex": "チャンネルインデックス"
     },
     "exportLogSuccess": "MECPログがエクスポートされました",
     "exportLogSuccessPath": "MECPログを{{path}}にエクスポートしました",

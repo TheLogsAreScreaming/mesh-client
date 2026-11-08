@@ -194,7 +194,6 @@
     "meshcorePathHashDeviceReported": "Verbonden radioreportages: {{mode}}",
     "meshcorePathHashModeHint": "Vereist begeleidende firmware v1.14.0+ en repeaters op v1.14+ langs het pad. Pre-1.14 repeaters laten geruisloos multibyte-pakketten vallen. Repeater- en roomservers kunnen ook CLI: set path.hash.mode {0|1|2} gebruiken.",
     "meshcorePathHashApplyFailed": "Pad hash-modus mislukt: {{message}}",
-    "logPanelHelp": "Indien ingeschakeld, verschijnt er aan de rechterkant een live logstream. Op het tabblad Reticulum omvatten apparaatregels zijspanuitvoer en lokale interfacestatus. Voor foutopsporingsregels is het selectievakje in het logpaneel vereist.",
     "autoPruneUnheardContactsDaysAria": "Ongehoorde contacten automatisch opschonen bij het opstarten, ouder dan {{days}} dagen",
     "capTotalContactsCountAria": "Beperk het totale aantal contacten, bewaar de meest recent geziene {{count}} contacten",
     "unknownError": "Onbekende fout",
@@ -364,7 +363,6 @@
     "messageActionsBarBgVisible": "Achtergrond tonen",
     "shareMyLocation": "Deel mijn locatie",
     "shareMyLocationOffInfo": "Locatie delen is uitgeschakeld — host GPS verversen en mesh verzenden zijn uitgeschakeld. Schakel Mijn locatie hierboven delen in om automatisch vernieuwen te gebruiken of uw positie te verzenden.",
-    "shareMyLocationHint": "Indien ingeschakeld, kan deze app uw locatie op deze computer opzoeken en deze via Meshtastic, MeshCore of Reticulum verzenden (chat share, radio push, RMAP). Wanneer uitgeschakeld, zijn de GPS-zoekopdrachten van de host en het verzenden van de app uitgeschakeld; statische coördinaten werken nog steeds alleen voor je lokale kaart. Een radio met een eigen GPS kan uw positie nog steeds lokaal weergeven. Apparaatfirmware kan nog steeds uitzenden totdat u de radio- of module-instellingen aanpast.",
     "fontSize": "Lettertypegrootte",
     "fontSizeDesc": "Pas de tekstgrootte in de app aan. Kaarten, grafieken en de terminal worden niet beïnvloed.",
     "decreaseFontSize": "Lettertype verkleinen",
@@ -392,7 +390,8 @@
       "deepSea": "Diepzee",
       "dusk": "Schemering",
       "evergreen": "Groenblijvend",
-      "highContrast": "Hoog contrast"
+      "highContrast": "Hoog contrast",
+      "daylight": "Daylight"
     },
     "themeAccents": {
       "heading": "Accent",
@@ -420,7 +419,9 @@
     "updatesSection": "Updates",
     "autoUpdateDownload": "Updates automatisch downloaden",
     "autoUpdateDownloadDesc": "Download de laatste update op de achtergrond na elke controle. Wanneer uitgeschakeld, worden updates nog steeds gedetecteerd, maar alleen gedownload wanneer u op de knop Downloaden drukt — handig wanneer een pakketbeheerder de installatie afhandelt.",
-    "autoUpdateDownloadSaveFailed": "Kon de instelling voor het automatisch downloaden van updates niet opslaan."
+    "autoUpdateDownloadSaveFailed": "Kon de instelling voor het automatisch downloaden van updates niet opslaan.",
+    "shareMyLocationHint": "Indien ingeschakeld, kan deze app je locatie op deze computer opzoeken en deze via Meshtastic of MeshCore verzenden (chat share, radio push). Wanneer uitgeschakeld, zijn de GPS-zoekopdrachten van de host en het verzenden van de app uitgeschakeld; statische coördinaten werken nog steeds alleen voor je lokale kaart. Een radio met een eigen GPS kan uw positie nog steeds lokaal weergeven. Apparaatfirmware kan nog steeds uitzenden totdat u de radio- of module-instellingen aanpast.",
+    "logPanelHelp": "Wanneer ingeschakeld, verschijnt er een live logstream aan de rechterkant. Debugregels vereisen het selectievakje in het logpaneel."
   },
   "aria": {
     "closeDialog": "Dialoogvenster sluiten",
@@ -1113,7 +1114,7 @@
     "errors": {
       "ble": {
         "adapter_missing": "Er is geen Bluetooth-adapter gevonden. Schakel Bluetooth in de systeeminstellingen in en probeer het opnieuw.",
-        "permission_denied": "Bluetooth permission was denied. Allow Mesh Hub to use Bluetooth, then try again.",
+        "permission_denied": "Bluetooth-machtiging is geweigerd. Laat Mesh Hub Bluetooth gebruiken en probeer het opnieuw.",
         "scan_busy": "Er wordt een nieuwe Bluetooth-scan uitgevoerd. Wacht even en probeer het opnieuw.",
         "mac_conflict": "This Bluetooth device is already connected to another protocol. Disconnect it there first.",
         "connect_timeout": "Er is een time-out opgetreden in de Bluetooth-verbinding. Houd de radio wakker en dichtbij en probeer het opnieuw.",
@@ -2273,7 +2274,7 @@
     "uptimeLabel": "Uptime",
     "txQueueLabel": "TX-wachtrij",
     "floodDirectSentLabel": "Flood / Direct verzonden",
-    "floodDirectRecvLabel": "Flood / Direct recv",
+    "floodDirectRecvLabel": "Flood / direct ontv.",
     "errorsLabel": "Fouten",
     "dupsDirectFloodLabel": "Dups (direct / flood)",
     "radioStatsLocalHeading": "Radiostatistieken (lokaal)",
@@ -2987,9 +2988,9 @@
     "paFanDisabledDesc": "Schakel de koelventilator van de eindversterker uit (hardwareafhankelijk).",
     "rebroadcastModeLabel": "Rebroadcast Mode",
     "nodeInfoBroadcastSecsLabel": "Node Info Broadcast Interval",
-    "nodeInfoBroadcastSecsDesc": "How often to broadcast node info in seconds (0 = firmware default ~15 min).",
+    "nodeInfoBroadcastSecsDesc": "Hoe vaak node-info wordt uitgezonden, in seconden (0 = firmware-standaard, ~15 min).",
     "doubleTapAsButtonPressLabel": "Double-tap as Button Press",
-    "doubleTapAsButtonPressDesc": "Treat an accelerometer double-tap as a user button press (hardware-dependent).",
+    "doubleTapAsButtonPressDesc": "Behandel een dubbeltik op de versnellingsmeter als een druk op de gebruikersknop (afhankelijk van de hardware).",
     "disableTripleClickLabel": "Disable Triple-click",
     "disableTripleClickDesc": "Schakel de drievoudige klikactie op de gebruikersknop uit.",
     "ledHeartbeatDisabledLabel": "Disable LED Heartbeat",
@@ -3027,7 +3028,7 @@
       }
     },
     "autoScreenCarouselSecsLabel": "Screen Carousel Interval",
-    "autoScreenCarouselSecsDesc": "Seconds between automatic screen page changes. 0 to disable.",
+    "autoScreenCarouselSecsDesc": "Seconden tussen automatische schermpaginawijzigingen. 0 om uit te schakelen.",
     "oledTypeLabel": "OLED Type",
     "flipScreenLabel": "Flip Screen",
     "flipScreenDesc": "Draai het scherm 180 graden.",
@@ -3037,7 +3038,7 @@
     "wakeOnTapOrMotionDesc": "Activeer het scherm wanneer het apparaat wordt aangetikt of verplaatst.",
     "use12hClockLabel": "12-Hour Clock",
     "useLongNodeNameLabel": "Use Long Node Name",
-    "useLongNodeNameDesc": "Show full node name instead of short name on screen.",
+    "useLongNodeNameDesc": "Toon volledige knooppuntnaam in plaats van korte naam op het scherm.",
     "enableMessageBubblesLabel": "Message Bubbles",
     "enableMessageBubblesDesc": "Toon inkomende berichten in een ballon op het display.",
     "oledTypes": {
@@ -4241,7 +4242,7 @@
       "severity": "Severity",
       "category": "Category",
       "codes": "Codes",
-      "removeCode": "Remove code {{code}}",
+      "removeCode": "Code {{code}} verwijderen",
       "freetext": "Free text (pax, GPS, notes)",
       "addPax": "Add 1pax",
       "attachGps": "Attach GPS",
@@ -4258,14 +4259,14 @@
     "rebroadcast": {
       "title": "MECP RF rebroadcast",
       "hint": "Optioneel kunt u MECP die op het ene protocolkanaal wordt gehoord, overbruggen naar het andere. Standaard uitgeschakeld. Schakel Bidirectioneel in om het pad ook om te keren.",
-      "add": "Add bridge rule",
-      "remove": "Remove bridge rule",
+      "add": "Brugregel toevoegen",
+      "remove": "Brugregel verwijderen",
       "enableRule": "Enabled",
       "bidirectional": "Bidirectional",
       "endpointA": "Listen / source (A)",
       "endpointB": "Forward / destination (B)",
       "protocol": "Protocol",
-      "channelIndex": "Channel index"
+      "channelIndex": "Kanaalindex"
     },
     "exportLogSuccess": "MECP-logboek geëxporteerd",
     "exportLogSuccessPath": "MECP-logboek geëxporteerd naar {{path}}",

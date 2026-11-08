@@ -53,20 +53,20 @@ describe('StatusBar', () => {
 
   it('keeps the label text class on the text, not the button', () => {
     render(
-      <StatusBarButton icon={null} ariaLabel="MQTT error" textClass="text-red-400">
+      <StatusBarButton icon={null} ariaLabel="MQTT error" textClass="text-danger-400">
         MQTT error
       </StatusBarButton>,
     );
     const button = screen.getByRole('button', { name: 'MQTT error' });
-    expect(button).not.toHaveClass('text-red-400');
-    expect(button.querySelector('span')).toHaveClass('text-red-400');
+    expect(button).not.toHaveClass('text-danger-400');
+    expect(button.querySelector('span')).toHaveClass('text-danger-400');
   });
 
   it('has no axe violations', async () => {
     const { container } = render(
       <StatusBar liveStatus="Configured (BLE)" stats="3 nodes | 12 messages" update="Up to date">
         <StatusBarButton
-          icon={<span aria-hidden="true" className="h-2 w-2 rounded-full bg-green-500" />}
+          icon={<span aria-hidden="true" className="bg-success-500 h-2 w-2 rounded-full" />}
           ariaLabel="Radio: Configured (BLE), node Longmont Base"
         >
           Longmont Base, BLE

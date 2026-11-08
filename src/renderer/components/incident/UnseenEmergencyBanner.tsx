@@ -25,25 +25,25 @@ export function UnseenEmergencyBanner({ onView }: { onView: () => void }) {
       role="alert"
       aria-label={t('incidentPanel.standingAlertRegion')}
       data-unseen-incident-id={current.id}
-      className="flex shrink-0 items-center gap-3 border-b border-red-700 bg-red-900 px-4 py-2"
+      className="border-danger-700 bg-danger-900 flex shrink-0 items-center gap-3 border-b px-4 py-2"
     >
       <span className="relative inline-flex h-6 w-6 shrink-0 items-center justify-center">
         <span
-          className="motion-status absolute inset-0 animate-pulse rounded-full bg-red-600"
+          className="motion-status bg-danger-600 absolute inset-0 animate-pulse rounded-full"
           aria-hidden
         />
         <Siren aria-hidden className={`${ICON_MD} relative text-white`} />
       </span>
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
         <MecpSeverityBadge severity={current.severity} />
-        <span className="text-sm font-semibold text-red-50">
+        <span className="text-body-lg text-danger-50 font-semibold">
           {t('incidentPanel.standingAlertTitle', { sender: current.senderName })}
         </span>
-        <span className="text-sm text-red-100">
+        <span className="text-body-lg text-danger-100">
           {t('incidentPanel.standingAlertHeard', { time: heardAt })}
         </span>
         {more > 0 ? (
-          <span className="text-sm text-red-100">
+          <span className="text-body-lg text-danger-100">
             {t('incidentPanel.standingAlertMore', { count: more })}
           </span>
         ) : null}
@@ -53,7 +53,7 @@ export function UnseenEmergencyBanner({ onView }: { onView: () => void }) {
           type="button"
           onClick={onView}
           aria-label={t('incidentPanel.standingAlertViewAria')}
-          className="rounded-control bg-white px-2 py-1 text-xs font-semibold text-red-900 hover:bg-red-50"
+          className="rounded-control text-label text-danger-900 hover:bg-danger-50 bg-white px-2 py-1 font-semibold"
         >
           {t('incidentPanel.standingAlertView')}
         </button>
@@ -63,7 +63,7 @@ export function UnseenEmergencyBanner({ onView }: { onView: () => void }) {
             useIncidentStore.getState().markSeen(current.id);
           }}
           aria-label={t('incidentPanel.standingAlertDismissAria', { sender: current.senderName })}
-          className="rounded-control border border-red-300 px-2 py-1 text-xs font-medium text-red-50 hover:bg-red-800"
+          className="rounded-control border-danger-300 text-label text-danger-50 hover:bg-danger-800 border px-2 py-1 font-medium"
         >
           {t('incidentPanel.standingAlertDismiss')}
         </button>

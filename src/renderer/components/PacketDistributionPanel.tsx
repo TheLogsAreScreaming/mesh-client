@@ -3,6 +3,8 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 
+import { type ChartPalette, useChartPalette } from '@/renderer/lib/chartPalette';
+
 import type { RxPacketEntry } from '../lib/meshcore/meshcoreHookTypes';
 import type { MeshtasticRawPacketEntry } from '../lib/rawPacketLogConstants';
 import { SELECT_BOX_SM_CLASS } from './ui/formClasses';
@@ -43,28 +45,35 @@ interface SliceData {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const COLORS = [
-  '#22d3ee', // cyan-400
-  '#4ade80', // green-400
-  '#facc15', // yellow-400
-  '#fb923c', // orange-400
-  '#f87171', // red-400
-  '#c084fc', // purple-400
-  '#60a5fa', // blue-400
-  '#f472b6', // pink-400
-];
-const OTHER_COLOR = '#808080'; // gray-500
+/** Slice colours: eight series hues, then grey for "Other" (theme-aware via chartPalette). */
+function sliceColors(chart: ChartPalette): { series: string[]; other: string } {
+  return {
+    series: [
+      chart.cyan400,
+      chart.green400,
+      chart.yellow400,
+      chart.orange400,
+      chart.red400,
+      chart.purple400,
+      chart.blue400,
+      chart.pink400,
+    ],
+    other: chart.axis,
+  };
+}
 const OTHER_THRESHOLD = 0.02; // < 2% → "Other"
 
 const TIME_FILTER_VALUES: TimeFilter[] = ['hour', 'day', 'all'];
 
-const TOOLTIP_STYLE = {
-  backgroundColor: '#292929',
-  border: '1px solid #424242',
-  borderRadius: '6px',
-  color: '#e0e0e0',
-  fontSize: '12px',
-};
+function tooltipStyle(chart: ChartPalette) {
+  return {
+    backgroundColor: chart.tooltipBg,
+    border: `1px solid ${chart.tooltipBorder}`,
+    borderRadius: '6px',
+    color: chart.text,
+    fontSize: '12px',
+  };
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -111,6 +120,7 @@ function buildSlices(
   items: { key: string; count: number }[],
   labelFn: (key: string) => string,
   otherLabel: string,
+  colors: { series: string[]; other: string },
 ): SliceData[] {
   const total = items.reduce((s, i) => s + i.count, 0);
   if (total === 0) return [];
@@ -123,13 +133,17 @@ function buildSlices(
     if (count / total < OTHER_THRESHOLD) {
       otherCount += count;
     } else {
-      main.push({ name: labelFn(key), value: count, fill: COLORS[colorIdx % COLORS.length] });
+      main.push({
+        name: labelFn(key),
+        value: count,
+        fill: colors.series[colorIdx % colors.series.length],
+      });
       colorIdx++;
     }
   }
 
   if (otherCount > 0) {
-    main.push({ name: otherLabel, value: otherCount, fill: OTHER_COLOR });
+    main.push({ name: otherLabel, value: otherCount, fill: colors.other });
   }
 
   return main;
@@ -175,7 +189,7 @@ interface LegendEntryProps {
 function LegendEntry({ name, value, total, fill }: LegendEntryProps) {
   const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
   return (
-    <div className="flex items-center gap-2 text-xs">
+    <div className="text-label flex items-center gap-2">
       <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: fill }} />
       <span className="text-ink-300">
         {name}:{' '}
@@ -195,21 +209,22 @@ interface DonutProps {
 }
 
 function DonutChart({ title, slices }: DonutProps) {
+  const chart = useChartPalette();
   const { t } = useTranslation();
   const total = slices.reduce((s, d) => s + d.value, 0);
 
   if (slices.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-2">
-        <p className="text-ink-400 text-sm font-medium">{title}</p>
-        <p className="text-ink-600 text-xs">{t('packetDistribution.noData')}</p>
+        <p className="text-ink-400 text-body-lg font-medium">{title}</p>
+        <p className="text-ink-600 text-label">{t('packetDistribution.noData')}</p>
       </div>
     );
   }
 
   return (
     <div className="flex flex-1 flex-col gap-3">
-      <p className="text-ink-300 text-center text-sm font-medium">{title}</p>
+      <p className="text-ink-300 text-body-lg text-center font-medium">{title}</p>
       <div className="flex flex-col items-center gap-4 md:flex-row md:items-start">
         <div className="h-44 w-44 shrink-0">
           <ResponsiveContainer width="100%" height={176}>
@@ -224,7 +239,7 @@ function DonutChart({ title, slices }: DonutProps) {
                 strokeWidth={0}
               />
               <Tooltip
-                contentStyle={TOOLTIP_STYLE}
+                contentStyle={tooltipStyle(chart)}
                 formatter={(value) => tooltipFormatter(value, total)}
               />
             </PieChart>
@@ -252,6 +267,8 @@ export default function PacketDistributionPanel({
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('all');
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all');
   const [selectedType, setSelectedType] = useState<string>('');
+  const chart = useChartPalette();
+  const colors = useMemo(() => sliceColors(chart), [chart]);
 
   const normalized = useMemo(() => normalize(variant, packets as never), [variant, packets]);
 
@@ -272,16 +289,17 @@ export default function PacketDistributionPanel({
       sorted,
       (k) => resolveNodeKey(k, getNodeLabel, variant, t),
       t('packetDistribution.other'),
+      colors,
     );
-  }, [filtered, getNodeLabel, variant, t]);
+  }, [filtered, getNodeLabel, variant, t, colors]);
 
   const typeSlices = useMemo(() => {
     const counts = countBy(filtered, 'packetType');
     const sorted = [...counts.entries()]
       .map(([k, count]) => ({ key: k, count }))
       .sort((a, b) => b.count - a.count);
-    return buildSlices(sorted, (k) => k, t('packetDistribution.other'));
-  }, [filtered, t]);
+    return buildSlices(sorted, (k) => k, t('packetDistribution.other'), colors);
+  }, [filtered, t, colors]);
 
   // ── Distribution by Type data ─────────────────────────────────────────────
 
@@ -308,8 +326,9 @@ export default function PacketDistributionPanel({
       sorted,
       (k) => resolveNodeKey(k, getNodeLabel, variant, t),
       t('packetDistribution.other'),
+      colors,
     );
-  }, [filtered, effectiveType, getNodeLabel, variant, t]);
+  }, [filtered, effectiveType, getNodeLabel, variant, t, colors]);
 
   const typeDeviceTotal = typeDeviceSlices.reduce((s, d) => s + d.value, 0);
 
@@ -321,7 +340,7 @@ export default function PacketDistributionPanel({
       <div className="flex flex-wrap items-center gap-3">
         {/* Main view toggle */}
         <div
-          className="border-ink-700 flex rounded border text-xs"
+          className="border-ink-700 text-label flex rounded border"
           data-setting-anchor="stats.packets.view"
         >
           {(
@@ -366,7 +385,7 @@ export default function PacketDistributionPanel({
         {/* Time filter — Overall view only */}
         {mainView === 'overall' && (
           <div
-            className="border-ink-700 flex rounded border text-xs"
+            className="border-ink-700 text-label flex rounded border"
             data-setting-anchor="stats.packets.timeRange"
           >
             {TIME_FILTER_VALUES.map((value) => {
@@ -416,7 +435,7 @@ export default function PacketDistributionPanel({
           </select>
         )}
 
-        <span className="text-muted ml-auto text-xs">
+        <span className="text-muted text-label ml-auto">
           {t('packetDistribution.packets', { count: filtered.length })}
         </span>
       </div>
@@ -431,7 +450,7 @@ export default function PacketDistributionPanel({
         <div className="flex min-h-0 flex-1 flex-col gap-4">
           {effectiveType ? (
             <>
-              <p className="text-ink-400 text-sm">
+              <p className="text-ink-400 text-body-lg">
                 {t('packetDistribution.devicesTransmitting')}{' '}
                 <span className="text-ink-200 font-mono">{effectiveType}</span>
                 {' — '}
@@ -454,7 +473,7 @@ export default function PacketDistributionPanel({
                           strokeWidth={0}
                         />
                         <Tooltip
-                          contentStyle={TOOLTIP_STYLE}
+                          contentStyle={tooltipStyle(chart)}
                           formatter={(value) => tooltipFormatter(value, typeDeviceTotal)}
                         />
                       </PieChart>
@@ -475,7 +494,7 @@ export default function PacketDistributionPanel({
               </div>
             </>
           ) : (
-            <p className="text-ink-600 text-sm">{t('packetDistribution.noPacketsYet')}</p>
+            <p className="text-ink-600 text-body-lg">{t('packetDistribution.noPacketsYet')}</p>
           )}
         </div>
       )}

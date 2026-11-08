@@ -20,9 +20,9 @@ import {
 } from '@/renderer/lib/signalReportParse';
 
 const SIGNAL_QUALITY_CLASS: Record<SignalQuality, string> = {
-  good: 'text-green-400',
-  fair: 'text-orange-400',
-  poor: 'text-red-400',
+  good: 'text-success-400',
+  fair: 'text-warning-400',
+  poor: 'text-danger-400',
 };
 
 /** Compact hop / SNR / RSSI readout for a recognized ping-bot reply. */
@@ -60,7 +60,7 @@ export function SignalReportChip({ report }: Readonly<{ report: ParsedSignalRepo
       role="group"
       aria-label={t('chatPayload.signalReport.label')}
       title={titleLines.length > 0 ? titleLines.join('\n') : undefined}
-      className="rounded-badge border-ink-700 bg-ink-900 text-ink-200 mt-1 inline-flex max-w-full flex-wrap items-center gap-x-2 border px-2 py-0.5 text-xs"
+      className="rounded-badge border-ink-700 bg-ink-900 text-ink-200 text-label mt-1 inline-flex max-w-full flex-wrap items-center gap-x-2 border px-2 py-0.5"
       data-testid="signal-report-chip"
     >
       <Signal aria-hidden className="h-3.5 w-3.5 shrink-0" />
@@ -81,7 +81,7 @@ export function HealthCheckCodeChip({ code }: Readonly<{ code: string }>) {
       role="group"
       aria-label={t('chatPayload.healthCheck.label')}
       title={t('chatPayload.healthCheck.tooltip')}
-      className="rounded-badge border-ink-700 bg-ink-900 text-ink-200 mt-1 inline-flex max-w-full items-center gap-x-2 border px-2 py-0.5 text-xs"
+      className="rounded-badge border-ink-700 bg-ink-900 text-ink-200 text-label mt-1 inline-flex max-w-full items-center gap-x-2 border px-2 py-0.5"
       data-testid="health-check-code-chip"
       data-code={code}
     >
@@ -101,7 +101,7 @@ function DroneCoordRow({
   openLabel,
 }: Readonly<{ label: string; coords: DroneReportCoords; openLabel: string }>) {
   return (
-    <div className="flex flex-wrap items-center gap-x-2 text-xs text-cyan-100/90">
+    <div className="text-label flex flex-wrap items-center gap-x-2 text-cyan-100/90">
       <MapPin aria-hidden className="h-3.5 w-3.5 shrink-0" />
       <span className="font-medium">{label}</span>
       <span>{formatCoords(coords)}</span>
@@ -134,7 +134,7 @@ export function DroneReportCard({
 
   return (
     <div
-      className="space-y-1 rounded-lg border border-cyan-500/30 bg-cyan-500/10 p-2"
+      className="rounded-card space-y-1 border border-cyan-500/30 bg-cyan-500/10 p-2"
       data-testid="drone-report-card"
     >
       {center && tileUrl && !tileFailed && (
@@ -151,17 +151,17 @@ export function DroneReportCard({
           }}
         />
       )}
-      <div className="flex flex-wrap items-center gap-x-2 text-sm font-semibold text-cyan-100">
+      <div className="text-body-lg flex flex-wrap items-center gap-x-2 font-semibold text-cyan-100">
         <Plane aria-hidden className="h-4 w-4 shrink-0" />
         <span>{t('chatPayload.droneReport.title')}</span>
         {report.rssi != null && (
-          <span className="text-xs font-normal text-cyan-100/80">
+          <span className="text-label font-normal text-cyan-100/80">
             {t('chatPayload.droneReport.rssi', { rssi: report.rssi })}
           </span>
         )}
       </div>
       {report.mac && (
-        <div className="text-xs text-cyan-100/80">
+        <div className="text-label text-cyan-100/80">
           {t('chatPayload.droneReport.mac', { mac: report.mac })}
         </div>
       )}
@@ -180,14 +180,14 @@ export function DroneReportCard({
         />
       )}
       {Number.isFinite(distanceKm) && (
-        <div className="text-xs text-cyan-100/80">
+        <div className="text-label text-cyan-100/80">
           {t('chatPayload.droneReport.pilotDistance', {
             distance: formatDroneDistance(distanceKm, getDistanceUnit(), i18n.language),
           })}
         </div>
       )}
       {!report.drone && !report.pilot && (
-        <div className="text-xs text-cyan-100/80">{t('chatPayload.droneReport.noPosition')}</div>
+        <div className="text-label text-cyan-100/80">{t('chatPayload.droneReport.noPosition')}</div>
       )}
     </div>
   );
@@ -238,7 +238,7 @@ function firmwareBotReplyParts(
               sent: reply.sent,
               fail: reply.fail,
             }),
-            ...(reply.fail > 0 ? { className: 'text-orange-400' } : {}),
+            ...(reply.fail > 0 ? { className: 'text-warning-400' } : {}),
           },
         ],
       };
@@ -323,7 +323,7 @@ function firmwareBotReplyParts(
               {
                 key: 'timeout',
                 text: t('chatPayload.firmwareBot.trace.timeout'),
-                className: 'text-orange-400',
+                className: 'text-warning-400',
               },
               {
                 key: 'hops',
@@ -413,7 +413,7 @@ export function FirmwareBotReplyCard({ reply }: Readonly<{ reply: ParsedFirmware
     <div
       role="group"
       aria-label={t('chatPayload.firmwareBot.label')}
-      className="rounded-badge border-ink-700 bg-ink-900 text-ink-200 mt-1 inline-flex max-w-full flex-col gap-0.5 border px-2 py-1 text-xs"
+      className="rounded-badge border-ink-700 bg-ink-900 text-ink-200 text-label mt-1 inline-flex max-w-full flex-col gap-0.5 border px-2 py-1"
       data-testid="firmware-bot-reply-card"
       data-kind={reply.kind}
     >

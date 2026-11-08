@@ -1,10 +1,14 @@
-const BAR_HEIGHTS = [3, 6, 9];
-const UNFILLED_COLOR = '#424242';
+import { type ChartPalette, useChartPalette } from '@/renderer/lib/chartPalette';
 
-function snrLevel(snr: number): { level: number; color: string; textClass: string } {
-  if (snr >= 5) return { level: 3, color: '#4ade80', textClass: 'text-green-400' };
-  if (snr >= 0) return { level: 2, color: '#facc15', textClass: 'text-yellow-400' };
-  return { level: 1, color: '#f87171', textClass: 'text-red-400' };
+const BAR_HEIGHTS = [3, 6, 9];
+
+function snrLevel(
+  snr: number,
+  chart: ChartPalette,
+): { level: number; color: string; textClass: string } {
+  if (snr >= 5) return { level: 3, color: chart.green400, textClass: 'text-success-400' };
+  if (snr >= 0) return { level: 2, color: chart.yellow400, textClass: 'text-yellow-400' };
+  return { level: 1, color: chart.red400, textClass: 'text-danger-400' };
 }
 
 interface Props {
@@ -13,7 +17,8 @@ interface Props {
 }
 
 export default function SnrIndicator({ snr, className }: Props) {
-  const { level, color, textClass } = snrLevel(snr);
+  const chart = useChartPalette();
+  const { level, color, textClass } = snrLevel(snr, chart);
   return (
     <span className={`inline-flex items-center gap-1 font-mono ${textClass} ${className ?? ''}`}>
       <svg viewBox="0 0 12 9" width="12" height="9">
@@ -24,7 +29,7 @@ export default function SnrIndicator({ snr, className }: Props) {
             y={9 - h}
             width="3"
             height={h}
-            fill={i < level ? color : UNFILLED_COLOR}
+            fill={i < level ? color : chart.grid}
             rx="0.5"
           />
         ))}

@@ -32,12 +32,12 @@ export default function ConnectionLinkMeter({
   if (kind === 'unavailable') {
     return (
       <div
-        className={`flex items-center justify-between text-sm ${className ?? ''}`}
+        className={`text-body-lg flex items-center justify-between ${className ?? ''}`}
         role="group"
         aria-label={t('connectionPanel.hostSignal')}
       >
         <span className="text-muted">{t('connectionPanel.hostSignal')}</span>
-        <span className="text-ink-400 inline-flex items-center gap-1.5 text-xs">
+        <span className="text-ink-400 text-label inline-flex items-center gap-1.5">
           <SignalBars noData className="h-3 w-4" />
           {t('connectionPanel.hostSignalUnavailable')}
         </span>
@@ -49,12 +49,12 @@ export default function ConnectionLinkMeter({
     const hasRtt = rttMs != null && Number.isFinite(rttMs);
     return (
       <div
-        className={`flex items-center justify-between text-sm ${className ?? ''}`}
+        className={`text-body-lg flex items-center justify-between ${className ?? ''}`}
         role="group"
         aria-label={t('connectionPanel.linkQuality')}
       >
         <span className="text-muted">{t('connectionPanel.linkQuality')}</span>
-        <span className="text-ink-300 inline-flex items-center gap-1.5 text-xs">
+        <span className="text-ink-300 text-label inline-flex items-center gap-1.5">
           <SignalBars level={hasRtt ? (level ?? 0) : null} noData={!hasRtt} className="h-3 w-4" />
           {hasRtt
             ? t('connectionPanel.linkQualityMs', { ms: Math.round(rttMs) })
@@ -67,12 +67,12 @@ export default function ConnectionLinkMeter({
   const hasRssi = rssi != null && Number.isFinite(rssi);
   return (
     <div
-      className={`flex items-center justify-between text-sm ${className ?? ''}`}
+      className={`text-body-lg flex items-center justify-between ${className ?? ''}`}
       role="group"
       aria-label={t('connectionPanel.hostSignal')}
     >
       <span className="text-muted">{t('connectionPanel.hostSignal')}</span>
-      <span className="text-ink-300 inline-flex items-center gap-1.5 text-xs">
+      <span className="text-ink-300 text-label inline-flex items-center gap-1.5">
         <SignalBars rssi={hasRssi ? rssi : null} className="h-3 w-4" />
         {hasRssi
           ? t('connectionPanel.bleRssiDbm', { rssi: Math.round(rssi) })

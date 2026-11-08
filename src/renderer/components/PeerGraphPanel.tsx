@@ -6,6 +6,7 @@ import {
   type MeshPeerTopologyGraph,
   type MeshPeerTopologyGraphNode,
 } from '@/renderer/lib/buildMeshPeerTopologyGraph';
+import { type ChartPalette, useChartPalette } from '@/renderer/lib/chartPalette';
 import {
   FORCE_GRAPH_DEFAULTS,
   type ForceEdge,
@@ -42,14 +43,14 @@ interface RenderSnapshot {
   demotedDirectCount: number;
 }
 
-const TIER_FILL: Record<RenderNode['tier'], string> = {
-  good: '#22c55e',
-  warn: '#eab308',
-  poor: '#ef4444',
-};
+function tierFill(chart: ChartPalette, tier: RenderNode['tier']): string {
+  if (tier === 'good') return chart.green500;
+  if (tier === 'warn') return chart.yellow500;
+  return chart.red500;
+}
 
-function relaySpokeColor(online: boolean): string {
-  return online ? '#22c55e' : '#ef4444';
+function relaySpokeColor(chart: ChartPalette, online: boolean): string {
+  return online ? chart.green500 : chart.red500;
 }
 
 function graphSizes(nodeCount: number): {
@@ -72,6 +73,7 @@ function stopPanZoomPointer(e: React.PointerEvent): void {
 }
 
 export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGraphPanelProps) {
+  const chart = useChartPalette();
   const { t } = useTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
   const simRef = useRef<SimNodeState[]>([]);
@@ -223,7 +225,7 @@ export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGra
 
   return (
     <div className="flex h-full flex-col">
-      <div className="text-ink-400 flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2 text-xs">
+      <div className="text-ink-400 text-label flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2">
         <span className="text-ink-300 font-medium">{t('peerGraph.title')}</span>
         <TopologyHopFilterControls
           includeDistantPeers={includeDistantPeers}
@@ -276,7 +278,7 @@ export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGra
         </span>
       </div>
       {!hasGraph ? (
-        <div className="text-muted flex flex-1 items-center justify-center text-xs">
+        <div className="text-muted text-label flex flex-1 items-center justify-center">
           {t('peerGraph.noConnectedNodes')}
         </div>
       ) : (
@@ -294,7 +296,7 @@ export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGra
           >
             <defs>
               <pattern id="peer-graph-bg" width="40" height="40" patternUnits="userSpaceOnUse">
-                <circle cx="20" cy="20" r="0.5" fill="#424242" />
+                <circle cx="20" cy="20" r="0.5" fill={chart.grid} />
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#peer-graph-bg)" />
@@ -305,7 +307,7 @@ export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGra
                 const b = nodeById.get(edge.target);
                 if (!a || !b) return null;
                 const isDirectSpoke = a.kind === 'self' && b.kind === 'relay';
-                const stroke = isDirectSpoke ? relaySpokeColor(b.online) : '#a3a3a3';
+                const stroke = isDirectSpoke ? relaySpokeColor(chart, b.online) : chart.label;
                 const strokeWidth = isDirectSpoke ? 3 : 1;
                 return (
                   <line
@@ -324,7 +326,7 @@ export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGra
 
               {renderNodes.map((node) => {
                 if (node.kind === 'self') {
-                  const fill = TIER_FILL[node.tier];
+                  const fill = tierFill(chart, node.tier);
                   return (
                     <g
                       key={node.id}
@@ -339,7 +341,7 @@ export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGra
                       <circle
                         r={sizes.centerR + 6}
                         fill="none"
-                        stroke="#c4b5fd"
+                        stroke={chart.violet300}
                         strokeWidth={1}
                         strokeOpacity={0.4}
                       />
@@ -347,13 +349,13 @@ export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGra
                         r={sizes.centerR}
                         fill={fill}
                         fillOpacity={0.9}
-                        stroke="#c4b5fd"
+                        stroke={chart.violet300}
                         strokeWidth={2}
                       />
                       <text
                         y={4}
                         textAnchor="middle"
-                        fill="#ffffff"
+                        fill={chart.textOnMark}
                         fontSize={11}
                         fontWeight={600}
                         style={{ pointerEvents: 'none', userSelect: 'none' }}
@@ -363,7 +365,7 @@ export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGra
                       <text
                         y={sizes.centerR + 14}
                         textAnchor="middle"
-                        fill="#e0e0e0"
+                        fill={chart.text}
                         fontSize={10}
                         style={{ pointerEvents: 'none', userSelect: 'none' }}
                       >
@@ -375,7 +377,7 @@ export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGra
 
                 if (node.kind === 'relay') {
                   const r = sizes.relayR;
-                  const fill = TIER_FILL[node.tier];
+                  const fill = tierFill(chart, node.tier);
                   return (
                     <g
                       key={node.id}
@@ -395,13 +397,13 @@ export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGra
                         rx={4}
                         fill={fill}
                         fillOpacity={node.online ? 0.85 : 0.55}
-                        stroke={relaySpokeColor(node.online)}
+                        stroke={relaySpokeColor(chart, node.online)}
                         strokeWidth={1.5}
                       />
                       <text
                         y={r + 12}
                         textAnchor="middle"
-                        fill="#c7c7c7"
+                        fill={chart.textMuted}
                         fontSize={10}
                         style={{ pointerEvents: 'none', userSelect: 'none' }}
                       >
@@ -412,7 +414,7 @@ export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGra
                 }
 
                 const r = sizes.peerR;
-                const fill = node.online ? TIER_FILL[node.tier] : '#48556a';
+                const fill = node.online ? tierFill(chart, node.tier) : chart.inactive;
                 return (
                   <g
                     key={node.id}
@@ -427,15 +429,21 @@ export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGra
                     <circle
                       r={r + 2}
                       fill="none"
-                      stroke={relaySpokeColor(node.online)}
+                      stroke={relaySpokeColor(chart, node.online)}
                       strokeWidth={1.5}
                       strokeOpacity={node.online ? 0.9 : 0.5}
                     />
-                    <circle r={r} fill={fill} fillOpacity={0.92} stroke="#333333" strokeWidth={1} />
+                    <circle
+                      r={r}
+                      fill={fill}
+                      fillOpacity={0.92}
+                      stroke={chart.gridSubtle}
+                      strokeWidth={1}
+                    />
                     <text
                       y={r + 12}
                       textAnchor="middle"
-                      fill="#c7c7c7"
+                      fill={chart.textMuted}
                       fontSize={10}
                       style={{ pointerEvents: 'none', userSelect: 'none' }}
                     >
@@ -445,7 +453,7 @@ export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGra
                       <text
                         y={4}
                         textAnchor="middle"
-                        fill="#fbbf24"
+                        fill={chart.amber400}
                         fontSize={8}
                         style={{ pointerEvents: 'none', userSelect: 'none' }}
                       >
@@ -459,17 +467,17 @@ export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGra
           </svg>
         </div>
       )}
-      <div className="text-muted flex flex-wrap gap-x-4 gap-y-1 px-4 py-2 text-xs">
+      <div className="text-muted text-label flex flex-wrap gap-x-4 gap-y-1 px-4 py-2">
         <span className="flex items-center gap-1">
           <span className="inline-block h-2 w-2 rounded-full bg-violet-500" />
           {t('peerGraph.me')}
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-2 w-2 rounded-sm bg-green-500" />
+          <span className="rounded-control bg-success-500 inline-block h-2 w-2" />
           {t('peerGraph.relayHub')}
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
+          <span className="bg-success-500 inline-block h-2 w-2 rounded-full" />
           {t('peerGraph.good')}
         </span>
         <span className="flex items-center gap-1">
@@ -477,12 +485,12 @@ export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGra
           {t('peerGraph.warn')}
         </span>
         <span className="flex items-center gap-1">
-          <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
+          <span className="bg-danger-500 inline-block h-2 w-2 rounded-full" />
           {t('peerGraph.poor')}
         </span>
         <span className="flex items-center gap-1.5">
           <svg width="24" height="8" aria-hidden>
-            <line x1="0" y1="4" x2="24" y2="4" stroke="#22c55e" strokeWidth="3" />
+            <line x1="0" y1="4" x2="24" y2="4" stroke={chart.green500} strokeWidth="3" />
           </svg>
           {t('peerGraph.directLink')}
         </span>
@@ -493,7 +501,7 @@ export default function PeerGraphPanel({ nodes, myNodeId, onNodeClick }: PeerGra
               y1="4"
               x2="24"
               y2="4"
-              stroke="#a3a3a3"
+              stroke={chart.label}
               strokeWidth="1"
               strokeDasharray="4 4"
             />

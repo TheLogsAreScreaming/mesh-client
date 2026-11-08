@@ -13,6 +13,10 @@ import {
 import AppPanel from './AppPanel';
 import { ToastProvider } from './Toast';
 
+// App settings is the largest panel; a render plus axe pass sits near the 5s default and times
+// out whenever the pre-commit hook or a parallel suite loads the machine.
+vi.setConfig({ testTimeout: 20_000 });
+
 describe('AppPanel accessibility', () => {
   const defaultProps = {
     protocol: 'meshtastic' as const,
@@ -372,17 +376,19 @@ describe('AppPanel: auto-download updates toggle', () => {
     act(() => {
       fireEvent.click(checkbox);
     });
-    await waitFor(() => {
-      expect(checkbox).toBeChecked();
-    });
-    const parsed = JSON.parse(localStorage.getItem(APP_SETTINGS_STORAGE_KEY) ?? '{}') as Record<
-      string,
-      unknown
-    >;
-    expect(parsed.autoUpdateDownloadEnabled).toBe(true);
+    // The box starts checked, so wait for the error (shown with the rollback) before asserting;
+    // waiting on `toBeChecked()` alone can pass before the click has been rolled back.
     expect(
       await screen.findByText('Could not save the automatic update download setting.'),
     ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(checkbox).toBeChecked();
+      const parsed = JSON.parse(localStorage.getItem(APP_SETTINGS_STORAGE_KEY) ?? '{}') as Record<
+        string,
+        unknown
+      >;
+      expect(parsed.autoUpdateDownloadEnabled).toBe(true);
+    });
     expect(warn).toHaveBeenCalledWith(
       expect.stringContaining('[AppPanel] autoUpdateDownloadEnabled persist failed'),
     );

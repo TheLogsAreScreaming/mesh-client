@@ -15,11 +15,17 @@ const AXE_BG_CLASS_TO_CSS: Record<string, string> = {
   'bg-cyan-700': '#0e7490',
   'bg-meshtastic-700': '#047857',
   'bg-meshcore-700': '#0e7490',
-  'bg-orange-700': '#c2410c',
-  'bg-orange-800': '#9a3412',
+  'bg-warning-700': '#b45309',
+  'bg-warning-800': '#92400e',
+  'bg-danger-700': '#b91c1c',
+  'bg-success-700': '#15803d',
+  'bg-info-700': '#4338ca',
+  'bg-deep-black': '--color-deep-black',
+  'bg-danger-900': '#7f1d1d',
 };
 
 const AXE_TEXT_CLASS_TO_CSS: Record<string, string> = {
+  'text-ink-100': '#f2f2f2',
   'text-ink-300': '#c7c7c7',
   'text-white': '#ffffff',
   'text-app-bg': '#1b1b1b',

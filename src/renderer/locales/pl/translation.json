@@ -194,7 +194,6 @@
     "meshcorePathHashDeviceReported": "Połączone raporty radiowe: {{mode}}",
     "meshcorePathHashModeHint": "Wymaga towarzyszącego oprogramowania sprzętowego v1.14.0+ i wtórników w v1.14+ wzdłuż ścieżki. Wzmacniacze Pre-1.14 cicho upuszczają pakiety wielobajtowe. Serwery repeater i room mogą również używać CLI: set path.hash.mode {0|1|2}.",
     "meshcorePathHashApplyFailed": "Tryb skrótu ścieżki nie powiódł się: {{message}}",
-    "logPanelHelp": "Po włączeniu po prawej stronie pojawia się strumień dziennika na żywo. Na karcie Reticulum linie urządzeń obejmują wyjście wózka bocznego i stan interfejsu lokalnego. Linie debugowania wymagają pola wyboru w panelu dziennika.",
     "autoPruneUnheardContactsDaysAria": "Automatycznie usuwaj niesłyszane kontakty przy uruchomieniu, starsze niż {{days}} dni",
     "capTotalContactsCountAria": "Ogranicz wszystkie kontakty, zachowaj ostatnio widziane kontakty {{count}}",
     "unknownError": "Nieznany błąd",
@@ -364,7 +363,6 @@
     "messageActionsBarBgVisible": "Pokaż tło",
     "shareMyLocation": "Udostępnij moją lokalizację",
     "shareMyLocationOffInfo": "Udostępnianie lokalizacji jest wyłączone — odświeżanie GPS hosta i wysyłanie siatki są wyłączone. Włącz opcję Udostępnij moją lokalizację powyżej, aby użyć automatycznego odświeżania lub wysłać swoją pozycję.",
-    "shareMyLocationHint": "Po włączeniu ta aplikacja może wyszukać Twoją lokalizację na tym komputerze i wysłać ją przez Meshtastic, MeshCore lub Reticulum (udostępnianie czatu, push radiowy, RMAP). Gdy ta opcja jest wyłączona, wyszukiwanie GPS hosta i wysyłanie aplikacji są wyłączone; współrzędne statyczne nadal działają tylko dla Twojej lokalnej mapy. Radio z własnym GPS może nadal lokalnie pokazywać Twoją pozycję. Oprogramowanie sprzętowe urządzenia może nadal nadawać, dopóki nie dostosujesz ustawień radia lub modułów.",
     "deleteOldNodesConfirm_few": "Spowoduje to trwałe usunięcie wszystkich węzłów, które nie były słyszane w ciągu ostatnich {{days}} dni. Zostaną ponownie odkryte, gdy zostaną ponownie nadane.",
     "deleteOldNodesConfirm_many": "Spowoduje to trwałe usunięcie wszystkich węzłów, które nie były słyszane w ciągu ostatnich {{days}} dni. Zostaną ponownie odkryte, gdy zostaną ponownie nadane.",
     "pruneDistantDeleteConfirm_few": "Usuń {{count}} węzły",
@@ -406,7 +404,8 @@
       "deepSea": "Głębia",
       "dusk": "Zmierzch",
       "evergreen": "Wiecznie zielony",
-      "highContrast": "Wysoki kontrast"
+      "highContrast": "Wysoki kontrast",
+      "daylight": "Światło dzienne"
     },
     "themeAccents": {
       "heading": "Akcent",
@@ -434,7 +433,9 @@
     "updatesSection": "Aktualizacje",
     "autoUpdateDownload": "Pobieraj aktualizacje automatycznie",
     "autoUpdateDownloadDesc": "Pobiera najnowszą aktualizację w tle po każdej kontroli. Gdy wyłączone, aktualizacje są nadal wykrywane, ale pobierane tylko po naciśnięciu przycisku Pobierz — przydatne, gdy menedżer pakietów obsługuje instalację.",
-    "autoUpdateDownloadSaveFailed": "Nie można zapisać ustawienia automatycznego pobierania aktualizacji."
+    "autoUpdateDownloadSaveFailed": "Nie można zapisać ustawienia automatycznego pobierania aktualizacji.",
+    "shareMyLocationHint": "Po włączeniu ta aplikacja może wyszukać Twoją lokalizację na tym komputerze i wysłać ją przez Meshtastic lub MeshCore (udostępnianie czatu, push radiowy). Gdy ta opcja jest wyłączona, wyszukiwanie GPS hosta i wysyłanie aplikacji są wyłączone; współrzędne statyczne nadal działają tylko dla Twojej lokalnej mapy. Radio z własnym GPS może nadal lokalnie pokazywać Twoją pozycję. Oprogramowanie sprzętowe urządzenia może nadal nadawać, dopóki nie dostosujesz ustawień radia lub modułów.",
+    "logPanelHelp": "Po włączeniu po prawej stronie pojawi się strumień dziennika na żywo. Wiersze debugowania wymagają pola wyboru wewnątrz panelu dziennika."
   },
   "aria": {
     "closeDialog": "Zamknij okno dialogowe",
@@ -1145,7 +1146,7 @@
     "errors": {
       "ble": {
         "adapter_missing": "Nie znaleziono adaptera Bluetooth. Włącz Bluetooth w ustawieniach systemu i spróbuj ponownie.",
-        "permission_denied": "Bluetooth permission was denied. Allow Mesh Hub to use Bluetooth, then try again.",
+        "permission_denied": "Odmowa dostępu do Bluetooth. Zezwól Mesh Hub na korzystanie z Bluetooth, a następnie spróbuj ponownie.",
         "scan_busy": "Trwa kolejne skanowanie Bluetooth. Poczekaj chwilę i spróbuj ponownie.",
         "mac_conflict": "This Bluetooth device is already connected to another protocol. Disconnect it there first.",
         "connect_timeout": "Upłynął limit czasu połączenia Bluetooth. Nie wyłączaj radia i trzymaj je w pobliżu, a następnie spróbuj ponownie.",
@@ -2323,7 +2324,7 @@
     "uptimeLabel": "Czas pracy",
     "txQueueLabel": "Kolejka TX",
     "floodDirectSentLabel": "Powódź / wysłane bezpośrednio",
-    "floodDirectRecvLabel": "Powódź / Odbiór bezpośredni",
+    "floodDirectRecvLabel": "Flood / bezpośredni odb.",
     "errorsLabel": "Błędy",
     "dupsDirectFloodLabel": "Dups (bezpośrednie / floodowe)",
     "radioStatsLocalHeading": "Statystyki radiowe (lokalne)",
@@ -3051,9 +3052,9 @@
     "paFanDisabledDesc": "Wyłącz wentylator chłodzący wzmacniacza mocy (w zależności od sprzętu).",
     "rebroadcastModeLabel": "Rebroadcast Mode",
     "nodeInfoBroadcastSecsLabel": "Node Info Broadcast Interval",
-    "nodeInfoBroadcastSecsDesc": "How often to broadcast node info in seconds (0 = firmware default ~15 min).",
+    "nodeInfoBroadcastSecsDesc": "Jak często wysyłać informacje o węźle, w sekundach (0 = domyślna wartość firmware, ~15 min).",
     "doubleTapAsButtonPressLabel": "Double-tap as Button Press",
-    "doubleTapAsButtonPressDesc": "Treat an accelerometer double-tap as a user button press (hardware-dependent).",
+    "doubleTapAsButtonPressDesc": "Traktuj podwójne dotknięcie akcelerometru jako naciśnięcie przycisku użytkownika (zależne od sprzętu).",
     "disableTripleClickLabel": "Disable Triple-click",
     "disableTripleClickDesc": "Wyłącz akcję potrójnego kliknięcia na przycisku użytkownika.",
     "ledHeartbeatDisabledLabel": "Disable LED Heartbeat",
@@ -3091,7 +3092,7 @@
       }
     },
     "autoScreenCarouselSecsLabel": "Screen Carousel Interval",
-    "autoScreenCarouselSecsDesc": "Seconds between automatic screen page changes. 0 to disable.",
+    "autoScreenCarouselSecsDesc": "Sekundy między automatycznymi zmianami strony ekranu. 0, aby wyłączyć.",
     "oledTypeLabel": "OLED Type",
     "flipScreenLabel": "Flip Screen",
     "flipScreenDesc": "Obróć wyświetlacz o 180 stopni.",
@@ -3101,7 +3102,7 @@
     "wakeOnTapOrMotionDesc": "Wybudzanie ekranu po dotknięciu lub poruszeniu urządzenia.",
     "use12hClockLabel": "12-Hour Clock",
     "useLongNodeNameLabel": "Use Long Node Name",
-    "useLongNodeNameDesc": "Show full node name instead of short name on screen.",
+    "useLongNodeNameDesc": "Pokaż pełną nazwę węzła zamiast krótkiej nazwy na ekranie.",
     "enableMessageBubblesLabel": "Message Bubbles",
     "enableMessageBubblesDesc": "Wyświetlaj wiadomości przychodzące w dymku na wyświetlaczu.",
     "oledTypes": {
@@ -3512,7 +3513,7 @@
     "transportBadgeMqttTooltip": "Otrzymano przez MQTT",
     "transportBadgeLocalTooltip": "Lokalna autotelemetria",
     "payloadTypeTooltip": "Typ ładunku: {{type}}",
-    "portLabelTooltip": "Meshtastic port: {{port}}",
+    "portLabelTooltip": "Port Meshtastic: {{port}}",
     "pathSegmentTooltip": "Ścieżka hash {{hex}}",
     "pathSegmentResolvedTooltip": "Ścieżka hash {{hex}} ({{name}})",
     "pathChainTooltip": "Ścieżka na żywo: {{path}}",
@@ -4311,7 +4312,7 @@
       "severity": "Severity",
       "category": "Category",
       "codes": "Codes",
-      "removeCode": "Remove code {{code}}",
+      "removeCode": "Usuń kod {{code}}",
       "freetext": "Free text (pax, GPS, notes)",
       "addPax": "Add 1pax",
       "attachGps": "Attach GPS",
@@ -4328,14 +4329,14 @@
     "rebroadcast": {
       "title": "MECP RF rebroadcast",
       "hint": "Opcjonalnie mostkuj MECP słyszany na jednym kanale protokołu z innym. Domyślnie wyłączone. Włącz opcję Dwukierunkowy, aby także odwrócić ścieżkę.",
-      "add": "Add bridge rule",
-      "remove": "Remove bridge rule",
+      "add": "Dodaj regułę mostu",
+      "remove": "Usuń regułę mostu",
       "enableRule": "Enabled",
       "bidirectional": "Bidirectional",
       "endpointA": "Listen / source (A)",
       "endpointB": "Forward / destination (B)",
       "protocol": "Protocol",
-      "channelIndex": "Channel index"
+      "channelIndex": "Indeks kanałów"
     },
     "exportLogSuccess": "Wyeksportowano dziennik MECP",
     "exportLogSuccessPath": "Dziennik MECP wyeksportowany do {{path}}",

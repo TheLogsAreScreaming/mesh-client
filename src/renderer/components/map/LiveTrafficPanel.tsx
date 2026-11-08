@@ -608,7 +608,7 @@ export default function LiveTrafficPanel({
                 <>
                   <span className={`h-1.5 w-1.5 rounded-full ${sourceStatusColor}`} aria-hidden />
                   <span
-                    className={`${beacon.directoryLimited ? 'text-status-warning' : 'text-muted'} max-w-28 truncate text-xs`}
+                    className={`${beacon.directoryLimited ? 'text-status-warning' : 'text-muted'} text-label max-w-28 truncate`}
                     title={beacon.directoryLimited ? t('liveTraffic.directoryLimited') : undefined}
                     role="status"
                   >
@@ -635,7 +635,7 @@ export default function LiveTrafficPanel({
                     aria-label={t('liveTraffic.beacon.configure')}
                   >
                     <div className="flex items-center justify-between px-3 pt-2">
-                      <span className="text-ink-200 text-xs font-medium">
+                      <span className="text-ink-200 text-label font-medium">
                         {t('liveTraffic.beacon.configure')}
                       </span>
                       <IconButton
@@ -683,7 +683,7 @@ export default function LiveTrafficPanel({
       {filtersOpen && (
         <div className="border-ink-700 bg-deep-black shadow-level-2 flex flex-wrap items-end gap-3 border-b px-4 py-3">
           {!meshtastic && !regional && (
-            <label className="text-muted flex min-w-36 flex-1 flex-col gap-1 text-xs sm:flex-none">
+            <label className="text-muted text-label flex min-w-36 flex-1 flex-col gap-1 sm:flex-none">
               {t('liveTraffic.transportScope')}
               <input
                 aria-label={t('liveTraffic.transportScope')}
@@ -706,7 +706,7 @@ export default function LiveTrafficPanel({
               </datalist>
             </label>
           )}
-          <label className="text-muted flex min-w-32 flex-1 flex-col gap-1 text-xs sm:flex-none">
+          <label className="text-muted text-label flex min-w-32 flex-1 flex-col gap-1 sm:flex-none">
             {t('liveTraffic.packetType')}
             <select
               aria-label={t('liveTraffic.packetType')}
@@ -723,7 +723,7 @@ export default function LiveTrafficPanel({
               ))}
             </select>
           </label>
-          <label className="text-muted flex flex-col gap-1 text-xs">
+          <label className="text-muted text-label flex flex-col gap-1">
             {t('liveTraffic.speed')}
             <select
               aria-label={t('liveTraffic.speed')}
@@ -737,7 +737,7 @@ export default function LiveTrafficPanel({
               <option value="2">{t('liveTraffic.speedFast')}</option>
             </select>
           </label>
-          <label className="text-muted flex flex-col gap-1 text-xs">
+          <label className="text-muted text-label flex flex-col gap-1">
             {t('liveTraffic.basemap')}
             <select
               aria-label={t('liveTraffic.basemap')}
@@ -821,8 +821,8 @@ export default function LiveTrafficPanel({
               <div className="pointer-events-none absolute inset-0 z-[450] flex items-center justify-center p-5">
                 <div className="border-ink-700 bg-deep-black/95 rounded-card shadow-level-2 max-w-xs border p-5 text-center">
                   <Radio aria-hidden className="text-muted mx-auto mb-3 h-6 w-6" />
-                  <h3 className="mb-1 text-sm font-medium">{t('liveTraffic.waiting')}</h3>
-                  <p className="text-muted text-xs leading-relaxed">
+                  <h3 className="text-body-lg mb-1 font-medium">{t('liveTraffic.waiting')}</h3>
+                  <p className="text-muted text-label leading-relaxed">
                     {t(
                       regional
                         ? beacon.status === 'live'
@@ -848,14 +848,14 @@ export default function LiveTrafficPanel({
                 }}
                 icon={<Info aria-hidden className="h-3.5 w-3.5" />}
               />
-              <span className="bg-deep-black/85 text-muted rounded-control px-2 py-1 text-xs">
+              <span className="bg-deep-black/85 text-muted rounded-control text-label px-2 py-1">
                 {t('liveTraffic.observationCount', { count: filteredEvents.length })}
               </span>
               {infoOpen && (
                 <div
                   role="note"
                   aria-label={t('liveTraffic.aboutMap')}
-                  className="border-ink-700 bg-deep-black/95 shadow-level-2 rounded-card absolute bottom-9 left-0 w-64 space-y-2 border p-3 text-xs"
+                  className="border-ink-700 bg-deep-black/95 shadow-level-2 rounded-card text-label absolute bottom-9 left-0 w-64 space-y-2 border p-3"
                 >
                   <p>
                     {t(
@@ -918,7 +918,7 @@ export default function LiveTrafficPanel({
                 onClick={() => {
                   setFeedOpen(!feedOpen);
                 }}
-                className="text-ink-200 focus-visible:outline-brand-green rounded-control flex flex-1 items-center gap-2 text-left text-xs font-medium focus-visible:outline-2"
+                className="text-ink-200 focus-visible:outline-brand-green rounded-control text-label flex flex-1 items-center gap-2 text-left font-medium focus-visible:outline-2"
               >
                 {feedOpen ? (
                   <ChevronDown aria-hidden className="h-3.5 w-3.5" />
@@ -926,7 +926,7 @@ export default function LiveTrafficPanel({
                   <ChevronUp aria-hidden className="h-3.5 w-3.5" />
                 )}
                 {t('liveTraffic.feed')}
-                <span className="text-muted ml-auto font-mono text-xs">{feed.length}</span>
+                <span className="text-muted text-label ml-auto font-mono">{feed.length}</span>
               </button>
               {floatingFeed.position && (
                 <IconButton
@@ -959,7 +959,7 @@ export default function LiveTrafficPanel({
               <>
                 <div className="min-h-20 flex-1 overflow-y-auto">
                   {feed.length === 0 ? (
-                    <p className="text-muted p-4 text-xs leading-relaxed">
+                    <p className="text-muted text-label p-4 leading-relaxed">
                       {t(events.length ? 'liveTraffic.noFilterMatches' : 'liveTraffic.emptyFeed')}
                     </p>
                   ) : (
@@ -990,22 +990,22 @@ export default function LiveTrafficPanel({
                                     ).line,
                                   }}
                                 />
-                                <span className="truncate font-mono text-xs">{event.kind}</span>
+                                <span className="text-label truncate font-mono">{event.kind}</span>
                                 {event.source !== 'Beacon' && event.source !== 'CoreScope' && (
-                                  <span className="text-muted shrink-0 text-xs">
+                                  <span className="text-muted text-label shrink-0">
                                     {t(`liveTraffic.sources.${event.source}`)}
                                   </span>
                                 )}
                               </span>
                               <time
                                 dateTime={new Date(event.ts).toISOString()}
-                                className="text-muted shrink-0 font-mono text-xs"
+                                className="text-muted text-label shrink-0 font-mono"
                               >
                                 {formatDisplayTime(event.ts, { withSeconds: true, use24Hour })}
                               </time>
                             </div>
                             <div id={`${packetDescriptionId}-${eventIndex}`}>
-                              <div className="text-ink-300 flex items-center gap-1.5 text-xs">
+                              <div className="text-ink-300 text-label flex items-center gap-1.5">
                                 <span className="truncate">
                                   {event.senderLabel ??
                                     (event.kind === 'CONTROL'
@@ -1017,17 +1017,17 @@ export default function LiveTrafficPanel({
                                       : t('weatherForecast.unknownSender'))}
                                 </span>{' '}
                                 {event.reportCount > 1 && (
-                                  <span className="text-muted ml-auto shrink-0 font-mono text-xs">
+                                  <span className="text-muted text-label ml-auto shrink-0 font-mono">
                                     {t('liveTraffic.reports', { count: event.reportCount })}
                                   </span>
                                 )}
                               </div>
                               {event.messageText ? (
-                                <p className="text-ink-100 mt-1 truncate text-xs leading-relaxed">
+                                <p className="text-ink-100 text-label mt-1 truncate leading-relaxed">
                                   {event.messageText}
                                 </p>
                               ) : packetCategory(event.kind) === 'message' ? (
-                                <p className="text-muted mt-1 text-xs">
+                                <p className="text-muted text-label mt-1">
                                   {t(
                                     event.contentStatus === 'encrypted'
                                       ? 'liveTraffic.encryptedContent'
@@ -1045,7 +1045,7 @@ export default function LiveTrafficPanel({
                 {selected && (
                   <div className="border-ink-700 bg-app-bg/90 max-h-[13rem] shrink-0 overflow-y-auto border-t px-4 py-3">
                     <div className="mb-3 flex items-center justify-between gap-2">
-                      <h3 className="inline-flex items-center gap-2 text-sm font-medium">
+                      <h3 className="text-body-lg inline-flex items-center gap-2 font-medium">
                         <Route aria-hidden className="h-4 w-4" />
                         {t('liveTraffic.inspector')}
                       </h3>
@@ -1059,7 +1059,7 @@ export default function LiveTrafficPanel({
                         icon={<X aria-hidden className="h-3.5 w-3.5" />}
                       />
                     </div>
-                    <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 text-xs">
+                    <dl className="text-label grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2">
                       <dt className="text-muted">{t('liveTraffic.reportsLabel')}</dt>
                       <dd>{t('liveTraffic.reports', { count: selected.reportCount })}</dd>
                       <dt className="text-muted">{t('liveTraffic.route')}</dt>
@@ -1089,16 +1089,16 @@ export default function LiveTrafficPanel({
                       )}
                     </dl>
                     {selected.routeStatus === 'estimated' && (
-                      <p className="text-status-warning mt-3 text-xs">
+                      <p className="text-status-warning text-label mt-3">
                         {t('liveTraffic.estimatedRouteHint')}
                       </p>
                     )}
                     {selected.messageText ? (
-                      <p className="text-ink-100 border-ink-800 mt-3 border-t pt-3 text-xs leading-relaxed break-words whitespace-pre-wrap">
+                      <p className="text-ink-100 border-ink-800 text-label mt-3 border-t pt-3 leading-relaxed break-words whitespace-pre-wrap">
                         {selected.messageText}
                       </p>
                     ) : packetCategory(selected.kind) === 'message' ? (
-                      <p className="text-muted mt-3 text-xs">
+                      <p className="text-muted text-label mt-3">
                         {t(
                           selected.contentStatus === 'encrypted'
                             ? 'liveTraffic.encryptedContent'
@@ -1107,7 +1107,7 @@ export default function LiveTrafficPanel({
                       </p>
                     ) : null}
                     {selected.segments.length > 0 && (
-                      <div className="border-ink-800 mt-3 border-t pt-3 text-xs">
+                      <div className="border-ink-800 text-label mt-3 border-t pt-3">
                         <p className="text-muted mb-2">
                           {t(
                             selected.routeStatus === 'estimated'
@@ -1144,7 +1144,7 @@ export default function LiveTrafficPanel({
                       </div>
                     )}
                     {selected.points.length > 0 && (
-                      <div className="border-ink-800 mt-3 border-t pt-3 text-xs">
+                      <div className="border-ink-800 text-label mt-3 border-t pt-3">
                         <p className="text-muted mb-2">{t('liveTraffic.knownLocations')}</p>
                         <div className="flex flex-wrap gap-1.5">
                           {selected.points
@@ -1168,7 +1168,7 @@ export default function LiveTrafficPanel({
                       </div>
                     )}
                     {selected.routeStatus !== 'estimated' && (
-                      <p className="text-muted mt-3 text-xs leading-relaxed">
+                      <p className="text-muted text-label mt-3 leading-relaxed">
                         {t(
                           meshtastic
                             ? 'liveTraffic.meshtasticInspector'

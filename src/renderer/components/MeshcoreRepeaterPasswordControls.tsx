@@ -32,7 +32,7 @@ export function MeshcoreRepeaterPasswordControls({
   const summary = getMeshcoreRepeaterSavedSecretsSummary(nodeId);
 
   return (
-    <div className="border-ink-700 bg-ink-950/40 mt-3 space-y-2 rounded-lg border p-3 text-xs">
+    <div className="border-ink-700 bg-ink-950/40 rounded-card text-label mt-3 space-y-2 border p-3">
       {summary.hasCredential ? (
         <p className="text-ink-400 flex items-center gap-1.5">
           <span className="text-sky-400" aria-hidden>
@@ -58,7 +58,7 @@ export function MeshcoreRepeaterPasswordControls({
                 );
               });
           }}
-          className="border-ink-600 bg-ink-800 text-ink-200 hover:bg-ink-700 rounded border px-2 py-1 text-xs"
+          className="border-ink-600 bg-ink-800 text-ink-200 hover:bg-ink-700 text-label rounded border px-2 py-1"
           aria-label={
             summary.hasCredential
               ? t('repeatersPanel.changePassword')
@@ -84,7 +84,7 @@ export function MeshcoreRepeaterPasswordControls({
                   );
                 });
             }}
-            className="rounded border border-red-900/50 bg-red-950/40 px-2 py-1 text-xs text-red-300 hover:bg-red-900/30"
+            className="border-danger-900/50 bg-danger-950/40 text-label text-danger-300 hover:bg-danger-900/30 rounded border px-2 py-1"
             aria-label={t('repeatersPanel.forgetPasswordAria')}
           >
             {t('repeatersPanel.forgetPassword')}

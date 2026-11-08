@@ -57,7 +57,7 @@ function MeshcoreHeardLine({ coverage }: { coverage: RelayCoverage }): ReactElem
   const detailLabel = parts.join(' · ') || label;
 
   return (
-    <span className="text-xs text-green-400" aria-label={detailLabel} title={detailLabel}>
+    <span className="text-label text-success-400" aria-label={detailLabel} title={detailLabel}>
       {label}
     </span>
   );
@@ -68,7 +68,7 @@ function MeshtasticHeardLine({ coverage }: { coverage: RelayCoverage }): ReactEl
   if (coverage.broadcastHeard === true) {
     const label = t('chatPanel.heardByNetwork');
     return (
-      <span className="text-xs text-green-400" aria-label={label} title={label}>
+      <span className="text-label text-success-400" aria-label={label} title={label}>
         {label}
       </span>
     );
@@ -76,7 +76,7 @@ function MeshtasticHeardLine({ coverage }: { coverage: RelayCoverage }): ReactEl
   if (coverage.broadcastHeard === false) {
     const label = t('chatPanel.notHeardTimeout');
     return (
-      <span className="text-xs text-orange-400" aria-label={label} title={label}>
+      <span className="text-label text-warning-400" aria-label={label} title={label}>
         {label}
       </span>
     );
@@ -97,7 +97,7 @@ function ReticulumRouteLine({ coverage }: { coverage: RelayCoverage }): ReactEle
           count: coverage.predictedRelayHops,
         });
     return (
-      <span className="text-xs text-cyan-400" aria-label={label} title={label}>
+      <span className="text-label text-cyan-400" aria-label={label} title={label}>
         {label}
       </span>
     );
@@ -105,7 +105,7 @@ function ReticulumRouteLine({ coverage }: { coverage: RelayCoverage }): ReactEle
   if (hop) {
     const label = t('chatPanel.routeViaPredicted', { hop });
     return (
-      <span className="text-xs text-cyan-400" aria-label={label} title={label}>
+      <span className="text-label text-cyan-400" aria-label={label} title={label}>
         {label}
       </span>
     );

@@ -36,7 +36,7 @@ export function InstantTooltipBubble({ text, pos }: { text: string; pos: Instant
         transform: TRANSFORM[pos.placement],
         zIndex: Z_INSTANT_TOOLTIP,
       }}
-      className="shadow-level-3 border-ink-600 bg-ink-800 text-ink-200 pointer-events-none w-max max-w-64 rounded border px-2.5 py-1.5 text-xs whitespace-pre-wrap"
+      className="shadow-level-3 border-ink-600 bg-ink-800 text-ink-200 text-label pointer-events-none w-max max-w-64 rounded border px-2.5 py-1.5 whitespace-pre-wrap"
     >
       {text}
     </span>

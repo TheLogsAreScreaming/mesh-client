@@ -98,7 +98,7 @@ export function ConversationLayout({
 
   return (
     <div
-      className="bg-deep-black border-ink-800 relative flex h-full min-h-0 w-full min-w-0 overflow-hidden rounded-xl border"
+      className="bg-deep-black border-ink-800 rounded-container relative flex h-full min-h-0 w-full min-w-0 overflow-hidden border"
       data-layout={compact ? 'compact' : sideOverlay ? 'medium' : 'wide'}
     >
       {showList && (

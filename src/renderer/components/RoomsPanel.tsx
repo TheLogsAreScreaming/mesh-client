@@ -143,11 +143,11 @@ import { Switch } from './ui/Switch';
 function RoomUnreadDivider({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3 py-2">
-      <div className="flex-1 border-t border-red-500/50" />
-      <span className="text-label shrink-0 rounded-full border border-red-500/30 bg-red-500/10 px-2.5 py-0.5 font-semibold text-red-300">
+      <div className="border-danger-500/50 flex-1 border-t" />
+      <span className="text-label border-danger-500/30 bg-danger-500/10 text-danger-300 shrink-0 rounded-full border px-2.5 py-0.5 font-semibold">
         {label}
       </span>
-      <div className="flex-1 border-t border-red-500/50" />
+      <div className="border-danger-500/50 flex-1 border-t" />
     </div>
   );
 }
@@ -1476,7 +1476,7 @@ export default function RoomsPanel({
               <span
                 title={markerTitle}
                 className={`inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full ${
-                  showAutoLoginFailed ? 'ring-1 ring-red-500' : ''
+                  showAutoLoginFailed ? 'ring-danger-500 ring-1' : ''
                 }`}
                 {...(showAutoLoginFailed
                   ? {
@@ -1496,12 +1496,12 @@ export default function RoomsPanel({
               {room.long_name}
             </span>
             {unread > 0 && (
-              <span className="text-2xs flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-red-600 px-1 leading-none font-semibold text-white">
+              <span className="text-2xs bg-danger-600 flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 leading-none font-semibold text-white">
                 {unreadLabel}
               </span>
             )}
           </span>
-          <span className="text-muted pl-5.5 text-xs">
+          <span className="text-muted text-label pl-5.5">
             {t('roomsPanel.postCount', { count })}
             {unread > 0 && (
               <>
@@ -1538,7 +1538,7 @@ export default function RoomsPanel({
   const listColumn = (
     <>
       <div className="border-ink-800 flex min-h-14 shrink-0 items-center gap-2 border-b pr-2 pl-3">
-        <h2 className="text-ink-100 min-w-0 flex-1 truncate text-sm font-semibold">
+        <h2 className="text-ink-100 text-body-lg min-w-0 flex-1 truncate font-semibold">
           {t('roomsPanel.title')}{' '}
           <span className="text-muted font-normal tabular-nums">({roomServers.length})</span>
         </h2>
@@ -1571,7 +1571,7 @@ export default function RoomsPanel({
       {roomServers.length > 0 && (
         <ul
           aria-label={t('roomsPanel.sidebarLegendTitle')}
-          className="text-muted border-ink-800 flex shrink-0 flex-wrap gap-x-3 gap-y-1 border-b px-3 py-2 text-xs"
+          className="text-muted border-ink-800 text-label flex shrink-0 flex-wrap gap-x-3 gap-y-1 border-b px-3 py-2"
         >
           <li className="flex items-center gap-1.5">
             <StatusDot tone="ok" size="md" />
@@ -1597,7 +1597,7 @@ export default function RoomsPanel({
             onClick={() => {
               setSavedPasswordsOpen((open) => !open);
             }}
-            className="hover:bg-secondary-dark/40 text-ink-300 flex w-full items-center gap-1.5 px-3 py-2 text-left text-xs font-medium"
+            className="hover:bg-secondary-dark/40 text-ink-300 text-label flex w-full items-center gap-1.5 px-3 py-2 text-left font-medium"
             aria-expanded={savedPasswordsOpen}
             aria-labelledby="rooms-saved-passwords-heading"
           >
@@ -1629,12 +1629,12 @@ export default function RoomsPanel({
                     {(summary.autoLoginOnConnect || summary.syncEnabled) && (
                       <div className="flex flex-wrap items-center gap-1">
                         {summary.autoLoginOnConnect && (
-                          <span className="bg-secondary-dark text-label text-ink-300 rounded-md px-1.5 py-0.5">
+                          <span className="bg-secondary-dark text-label text-ink-300 rounded-card px-1.5 py-0.5">
                             {t('roomsPanel.badgeAutoLogin')}
                           </span>
                         )}
                         {summary.syncEnabled && (
-                          <span className="bg-secondary-dark text-label text-ink-300 rounded-md px-1.5 py-0.5">
+                          <span className="bg-secondary-dark text-label text-ink-300 rounded-card px-1.5 py-0.5">
                             {t('roomsPanel.badgeAutoSync')}
                           </span>
                         )}
@@ -1672,7 +1672,7 @@ export default function RoomsPanel({
       )}
       <div className="min-h-0 flex-1 overflow-y-auto">
         {roomServers.length === 0 ? (
-          <p className="text-muted px-3 py-4 text-sm">{t('roomsPanel.noRoomsYet')}</p>
+          <p className="text-muted text-body-lg px-3 py-4">{t('roomsPanel.noRoomsYet')}</p>
         ) : (
           <ul aria-label={t('roomsPanel.title')}>{roomRows}</ul>
         )}
@@ -1702,11 +1702,11 @@ export default function RoomsPanel({
       <header className="border-ink-800 flex min-h-14 shrink-0 flex-wrap items-center gap-2 border-b px-3 py-2">
         {listToggle}
         <div className="min-w-0 flex-1">
-          <h2 className="text-ink-100 truncate text-sm font-semibold">
+          <h2 className="text-ink-100 text-body-lg truncate font-semibold">
             {activeRoom?.long_name ?? resolveRoomDisplayName(selectedRoomId)}
           </h2>
           {loggedIn && (
-            <p className="text-muted flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+            <p className="text-muted text-label flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5">
               <span
                 className="inline-flex items-center gap-1.5"
                 title={t('roomsPanel.statusLoggedInSessionTooltip')}
@@ -1715,7 +1715,7 @@ export default function RoomsPanel({
                 {t('roomsPanel.statusLoggedInSession')}
               </span>
               {sessionRole === 'readonly' && (
-                <span className="text-label rounded-md border border-orange-700/50 bg-orange-950/40 px-1.5 text-orange-200">
+                <span className="text-label rounded-card border-warning-700/50 bg-warning-950/40 text-warning-200 border px-1.5">
                   {t('roomsPanel.readOnlyBadge')}
                 </span>
               )}
@@ -1808,9 +1808,9 @@ export default function RoomsPanel({
 
   const loginCard = selectedRoomId != null && !loggedIn && !selectedRoomLoginLoading && (
     <div className="flex min-h-0 flex-1 justify-center overflow-y-auto p-4 sm:items-center">
-      <div className="bg-app-bg border-ink-800 h-fit w-full max-w-sm space-y-3 rounded-xl border p-4">
-        <h3 className="text-ink-100 text-base font-semibold">{t('roomsPanel.loginTitle')}</h3>
-        <p className="text-muted text-xs">{t('roomsPanel.loginHelp')}</p>
+      <div className="bg-app-bg border-ink-800 rounded-container h-fit w-full max-w-sm space-y-3 border p-4">
+        <h3 className="text-ink-100 text-title font-semibold">{t('roomsPanel.loginTitle')}</h3>
+        <p className="text-muted text-label">{t('roomsPanel.loginHelp')}</p>
         <input
           type="password"
           value={loginPassword}
@@ -1825,7 +1825,7 @@ export default function RoomsPanel({
           className={INPUT_CLASS}
           aria-label={t('roomsPanel.guestPasswordLabel')}
         />
-        <label className="text-ink-300 flex items-center gap-2 text-xs">
+        <label className="text-ink-300 text-label flex items-center gap-2">
           <input
             type="checkbox"
             className={CHECKBOX_CLASS}
@@ -1838,7 +1838,7 @@ export default function RoomsPanel({
           {t('roomsPanel.rememberPassword')}
         </label>
         {guestFieldEmpty && (
-          <p className="text-xs text-orange-200">{t('roomsPanel.emptyGuestLoginHint')}</p>
+          <p className="text-label text-warning-200">{t('roomsPanel.emptyGuestLoginHint')}</p>
         )}
         {showLoginSavedSecretsControls && selectedRoomSecretsSummary && (
           <div className={`${NOTICE_CLASS.info} space-y-2`}>
@@ -1903,9 +1903,9 @@ export default function RoomsPanel({
             {t('roomsPanel.continueReadOnly')}
           </Button>
         </div>
-        {loginError && <p className="text-sm text-red-400">{loginError}</p>}
+        {loginError && <p className="text-body-lg text-danger-400">{loginError}</p>}
         {autoLoginFailureDisplay && !loginError && (
-          <p className="text-sm text-red-400" role="alert">
+          <p className="text-body-lg text-danger-400" role="alert">
             {t('roomsPanel.autoLoginFailed', {
               error: autoLoginFailureDisplay,
             })}
@@ -1919,7 +1919,7 @@ export default function RoomsPanel({
     selectedRoomId != null && loggedIn ? (
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="border-ink-800 flex min-h-14 shrink-0 items-center gap-2 border-b pr-2 pl-3">
-          <h3 className="text-ink-100 min-w-0 flex-1 truncate text-sm font-semibold">
+          <h3 className="text-ink-100 text-body-lg min-w-0 flex-1 truncate font-semibold">
             {t('roomsPanel.details')}
           </h3>
           <IconButton
@@ -1933,7 +1933,7 @@ export default function RoomsPanel({
         </div>
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-3">
           <section aria-labelledby="rooms-details-sync-heading" className="space-y-3">
-            <h4 id="rooms-details-sync-heading" className="text-ink-300 text-xs font-semibold">
+            <h4 id="rooms-details-sync-heading" className="text-ink-300 text-label font-semibold">
               {t('roomsPanel.loginAndSyncHeading')}
             </h4>
             <div data-setting-anchor="rooms.sync.autoLogin">
@@ -1992,7 +1992,7 @@ export default function RoomsPanel({
                 {t('roomsPanel.saveSyncConfig')}
               </Button>
             )}
-            <p className="text-muted text-xs">{t('roomsPanel.historyLocalHint')}</p>
+            <p className="text-muted text-label">{t('roomsPanel.historyLocalHint')}</p>
             {storedRoomIds.has(selectedRoomId) && (
               <Button
                 size="sm"
@@ -2008,7 +2008,10 @@ export default function RoomsPanel({
           </section>
 
           <section aria-labelledby="rooms-details-members-heading" className="space-y-3">
-            <h4 id="rooms-details-members-heading" className="text-ink-300 text-xs font-semibold">
+            <h4
+              id="rooms-details-members-heading"
+              className="text-ink-300 text-label font-semibold"
+            >
               {recognizedPosters.length > 0
                 ? t('roomsPanel.membersHeadingWithCount', { count: recognizedPosters.length })
                 : t('roomsPanel.membersHeading')}
@@ -2016,13 +2019,13 @@ export default function RoomsPanel({
             <div className="space-y-1">
               <p className={FIELD_LABEL_CLASS}>{t('roomsPanel.membersRecognizedHeading')}</p>
               {recognizedPosters.length === 0 ? (
-                <p className="text-muted text-xs">{t('roomsPanel.membersRecognizedEmpty')}</p>
+                <p className="text-muted text-label">{t('roomsPanel.membersRecognizedEmpty')}</p>
               ) : (
                 <ul className="space-y-0.5">
                   {recognizedPosters.map((p) => (
                     <li
                       key={p.senderId}
-                      className="hover:bg-secondary-dark/40 flex min-h-8 items-center gap-2 rounded-lg px-2"
+                      className="hover:bg-secondary-dark/40 rounded-card flex min-h-8 items-center gap-2 px-2"
                     >
                       <span className="text-body text-ink-200 min-w-0 flex-1 truncate">
                         {p.senderName}
@@ -2062,28 +2065,28 @@ export default function RoomsPanel({
                       : t('roomsPanel.membersRefreshAcl')}
                   </Button>
                 </div>
-                <p className="text-muted text-xs">{t('roomsPanel.membersAclRemoteHint')}</p>
+                <p className="text-muted text-label">{t('roomsPanel.membersAclRemoteHint')}</p>
                 {aclError && <p className={NOTICE_CLASS.error}>{aclError}</p>}
                 {aclFetchedAt != null && (
-                  <p className="text-muted text-xs">
+                  <p className="text-muted text-label">
                     {t('roomsPanel.membersAclLastFetched', {
                       time: formatTimestamp(aclFetchedAt),
                     })}
                   </p>
                 )}
                 {aclEntries.length === 0 && !aclLoading ? (
-                  <p className="text-muted text-xs">{t('roomsPanel.membersAclEmpty')}</p>
+                  <p className="text-muted text-label">{t('roomsPanel.membersAclEmpty')}</p>
                 ) : (
                   <ul className="space-y-1">
                     {aclEntries.map((entry) => (
                       <li
                         key={`${entry.pubkeyHex}:${entry.permissionLevel}`}
-                        className="bg-app-bg border-ink-800 space-y-1 rounded-lg border px-2 py-1.5"
+                        className="bg-app-bg border-ink-800 rounded-card space-y-1 border px-2 py-1.5"
                       >
                         <span className="text-label text-ink-300 block font-mono break-all">
                           {entry.pubkeyHex}
                         </span>
-                        <span className="text-xs text-orange-200">
+                        <span className="text-label text-warning-200">
                           {meshcoreRoomAclLevelLabel(entry.permissionLevel, t)}
                         </span>
                       </li>
@@ -2103,13 +2106,13 @@ export default function RoomsPanel({
 
       {selectedRoomId == null && (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
-          <p className="text-muted text-sm">{t('roomsPanel.selectRoom')}</p>
+          <p className="text-muted text-body-lg">{t('roomsPanel.selectRoom')}</p>
           {listToggle}
         </div>
       )}
 
       {loginAllInProgress && (
-        <div className="bg-brand-green/10 text-bright-green border-ink-800 border-b px-3 py-2 text-xs">
+        <div className="bg-brand-green/10 text-bright-green border-ink-800 text-label border-b px-3 py-2">
           {t('roomsPanel.loginAllInProgress', {
             count: Math.max(loginQueueCount, localLoginRoomIds.size),
           })}
@@ -2117,7 +2120,7 @@ export default function RoomsPanel({
       )}
 
       {selectedRoomId != null && !loggedIn && otherRoomLoginInProgress && (
-        <div className="flex flex-wrap items-center gap-2 border-b border-orange-700/50 bg-orange-950/40 px-3 py-2 text-xs text-orange-200">
+        <div className="border-warning-700/50 bg-warning-950/40 text-label text-warning-200 flex flex-wrap items-center gap-2 border-b px-3 py-2">
           <p className="min-w-0 flex-1">
             {loginQueueCount > 1
               ? t('roomsPanel.loggingInQueue', {
@@ -2135,12 +2138,12 @@ export default function RoomsPanel({
       {loginCard}
 
       {selectedRoomId != null && !loggedIn && selectedRoomLoginLoading && (
-        <div className="text-ink-300 flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center text-sm">
+        <div className="text-ink-300 text-body-lg flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
           <p className="inline-flex items-center gap-2">
             <StatusDot tone="warn" pulse size="md" />
             {t('roomsPanel.loggingIn')}
           </p>
-          <p className="text-muted max-w-xs text-xs">{t('roomsPanel.cancelLoginHint')}</p>
+          <p className="text-muted text-label max-w-xs">{t('roomsPanel.cancelLoginHint')}</p>
           <Button onClick={handleCancelLogin} aria-label={t('roomsPanel.cancelLogin')}>
             {t('roomsPanel.cancelLogin')}
           </Button>
@@ -2176,7 +2179,7 @@ export default function RoomsPanel({
                 )}
               </div>
               {searchQuery && (
-                <div className="text-muted mt-1 text-xs">
+                <div className="text-muted text-label mt-1">
                   {t('chatPanel.searchResults', { count: filteredRoomPosts.length })}
                 </div>
               )}
@@ -2207,7 +2210,7 @@ export default function RoomsPanel({
             </div>
           )}
           {filterSender != null && streamView === 'posts' && (
-            <div className="bg-app-bg border-ink-800 text-ink-300 flex shrink-0 items-center justify-between gap-2 border-b px-3 py-1.5 text-xs">
+            <div className="bg-app-bg border-ink-800 text-ink-300 text-label flex shrink-0 items-center justify-between gap-2 border-b px-3 py-1.5">
               <span className="min-w-0 truncate">
                 {t('chatPanel.filteringBySender', {
                   name:
@@ -2226,15 +2229,18 @@ export default function RoomsPanel({
           )}
 
           {leaveError && (
-            <p role="alert" className="border-ink-800 border-b px-3 py-2 text-sm text-red-400">
+            <p
+              role="alert"
+              className="border-ink-800 text-body-lg text-danger-400 border-b px-3 py-2"
+            >
               {leaveError}
             </p>
           )}
 
           {selectedRoomLeaveLoading && (
-            <div className="bg-app-bg/85 text-ink-300 absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 p-6 text-center text-sm">
+            <div className="bg-app-bg/85 text-ink-300 text-body-lg absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 p-6 text-center">
               <p>{t('roomsPanel.leaveRoomInProgress')}</p>
-              <p className="text-muted max-w-xs text-xs">{t('roomsPanel.leaveRoomHint')}</p>
+              <p className="text-muted text-label max-w-xs">{t('roomsPanel.leaveRoomHint')}</p>
             </div>
           )}
 
@@ -2247,7 +2253,7 @@ export default function RoomsPanel({
             >
               {streamView === 'starred' ? (
                 roomStarred.length === 0 ? (
-                  <p className="text-muted text-sm">{t('chatPanel.noStarredMessages')}</p>
+                  <p className="text-muted text-body-lg">{t('chatPanel.noStarredMessages')}</p>
                 ) : (
                   roomStarred.map((s) => {
                     const roomLabel = s.viewKey.startsWith('room:')
@@ -2256,12 +2262,12 @@ export default function RoomsPanel({
                     return (
                       <div
                         key={s.starId}
-                        className="bg-app-bg border-ink-800 mb-2 rounded-lg border px-3 py-2 text-sm"
+                        className="bg-app-bg border-ink-800 rounded-card text-body-lg mb-2 border px-3 py-2"
                       >
-                        <div className="text-ink-400 mb-1 flex items-baseline gap-2 text-xs">
+                        <div className="text-ink-400 text-label mb-1 flex items-baseline gap-2">
                           <span className="text-ink-300 font-medium">{s.sender_name}</span>
                           <span>{formatTimestamp(s.timestamp)}</span>
-                          <span className="bg-secondary-dark text-label text-ink-300 rounded-md px-1.5">
+                          <span className="bg-secondary-dark text-label text-ink-300 rounded-card px-1.5">
                             {roomLabel}
                           </span>
                         </div>
@@ -2279,7 +2285,7 @@ export default function RoomsPanel({
                             setStreamView('posts');
                             setScrollToRowKey(s.starId);
                           }}
-                          className="text-bright-green mt-2 text-xs hover:underline"
+                          className="text-bright-green text-label mt-2 hover:underline"
                           aria-label={t('chatPanel.goToMessage')}
                         >
                           {t('chatPanel.goToMessage')}
@@ -2289,7 +2295,7 @@ export default function RoomsPanel({
                   })
                 )
               ) : filteredRoomPosts.length === 0 ? (
-                <p className="text-muted text-sm">
+                <p className="text-muted text-body-lg">
                   {searchQuery.trim() || filterSender != null
                     ? t('chatPanel.emptyNoSearchMatches')
                     : t('roomsPanel.noPostsYet')}
@@ -2313,7 +2319,7 @@ export default function RoomsPanel({
                     const daySeparator = daySeparatorIndices.has(index) ? (
                       <div className="flex items-center gap-3 py-2">
                         <div className="border-ink-700 flex-1 border-t" />
-                        <span className="text-muted shrink-0 text-xs font-medium">
+                        <span className="text-muted text-label shrink-0 font-medium">
                           {formatDayLabel(m.timestamp, t)}
                         </span>
                         <div className="border-ink-700 flex-1 border-t" />
@@ -2352,7 +2358,7 @@ export default function RoomsPanel({
                         )}
                         <div className={isContinuation ? '!mt-0' : undefined}>
                           <div
-                            className={`group/msg rounded-lg px-3 text-sm ${
+                            className={`group/msg rounded-card text-body-lg px-3 ${
                               compactMode ? 'py-1' : 'py-2'
                             } ${
                               isOwn
@@ -2368,7 +2374,7 @@ export default function RoomsPanel({
                                 : ''
                             }`}
                           >
-                            <div className="text-ink-400 mb-1 flex items-baseline gap-2 text-xs">
+                            <div className="text-ink-400 text-label mb-1 flex items-baseline gap-2">
                               <button
                                 type="button"
                                 onClick={() => {
@@ -2377,7 +2383,7 @@ export default function RoomsPanel({
                                   );
                                 }}
                                 className={`font-medium hover:underline ${
-                                  filterSender === m.sender_id ? 'text-indigo-300' : 'text-ink-300'
+                                  filterSender === m.sender_id ? 'text-info-300' : 'text-ink-300'
                                 }`}
                                 aria-pressed={filterSender === m.sender_id}
                               >
@@ -2518,7 +2524,7 @@ export default function RoomsPanel({
               <button
                 type="button"
                 onClick={scrollToTop}
-                className="bg-deep-black hover:bg-sidebar-active-bg shadow-level-3 border-ink-700 text-ink-200 absolute top-2 right-2 z-10 flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                className="bg-deep-black hover:bg-sidebar-active-bg shadow-level-3 border-ink-700 text-ink-200 text-label absolute top-2 right-2 z-10 flex items-center gap-1.5 rounded-full border px-3 py-1.5 font-medium transition-colors"
                 aria-label={t('aria.backToTop')}
               >
                 <ArrowUp aria-hidden className="h-3.5 w-3.5" size={14} />
@@ -2532,7 +2538,7 @@ export default function RoomsPanel({
                   scrollToUnreadOrBottom();
                 }}
                 {...{ [PARENT_HOVER_ATTR]: '' }}
-                className="bg-deep-black hover:bg-sidebar-active-bg shadow-level-3 border-ink-700 text-ink-200 absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors"
+                className="bg-deep-black hover:bg-sidebar-active-bg shadow-level-3 border-ink-700 text-ink-200 text-label absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-full border px-3 py-1.5 font-medium transition-colors"
                 aria-label={
                   unreadDividerTimestamp > 0
                     ? t('roomsPanel.jumpToUnread')
@@ -2558,8 +2564,10 @@ export default function RoomsPanel({
           >
             {!canPost ? (
               <div className="space-y-2">
-                <p className="text-xs text-orange-200">{t('roomsPanel.readOnlyHint')}</p>
-                <p className="text-ink-300 text-xs font-medium">{t('roomsPanel.upgradeAccess')}</p>
+                <p className="text-label text-warning-200">{t('roomsPanel.readOnlyHint')}</p>
+                <p className="text-ink-300 text-label font-medium">
+                  {t('roomsPanel.upgradeAccess')}
+                </p>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                   <input
                     type="password"
@@ -2586,7 +2594,7 @@ export default function RoomsPanel({
                       : t('roomsPanel.upgradeAccess')}
                   </Button>
                 </div>
-                <label className="text-ink-300 flex items-center gap-2 text-xs">
+                <label className="text-ink-300 text-label flex items-center gap-2">
                   <input
                     type="checkbox"
                     className={CHECKBOX_CLASS}
@@ -2599,9 +2607,11 @@ export default function RoomsPanel({
                   {t('roomsPanel.rememberPassword')}
                 </label>
                 {guestFieldEmpty && (
-                  <p className="text-xs text-orange-200">{t('roomsPanel.emptyGuestLoginHint')}</p>
+                  <p className="text-label text-warning-200">
+                    {t('roomsPanel.emptyGuestLoginHint')}
+                  </p>
                 )}
-                {loginError && <p className="text-sm text-red-400">{loginError}</p>}
+                {loginError && <p className="text-body-lg text-danger-400">{loginError}</p>}
               </div>
             ) : (
               <ChatComposer

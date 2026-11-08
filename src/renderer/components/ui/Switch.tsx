@@ -21,7 +21,7 @@ export function Switch({ checked, onChange, label, description, disabled }: Swit
           {label}
         </span>
         {description && (
-          <span id={descriptionId} className="text-muted text-xs">
+          <span id={descriptionId} className="text-muted text-label">
             {description}
           </span>
         )}

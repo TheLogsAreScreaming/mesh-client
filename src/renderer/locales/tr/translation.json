@@ -194,7 +194,6 @@
     "meshcorePathHashDeviceReported": "Bağlı radyo raporları: {{mode}}",
     "meshcorePathHashModeHint": "Yol boyunca v1.14+ üzerinde tamamlayıcı ürün yazılımı v1.14.0+ ve tekrarlayıcılar gerektirir. Ön 1.14 tekrarlayıcılar çok baytlı paketleri sessizce düşürür. Tekrarlayıcı ve oda sunucuları da CLI: set path.hash.mode {0|1|2} kullanabilir.",
     "meshcorePathHashApplyFailed": "Yol karma modu başarısız oldu: {{message}}",
-    "logPanelHelp": "Etkinleştirildiğinde sağda canlı bir günlük akışı görünür. Reticulum sekmesinde, cihaz hatları sepet çıkışını ve yerel arayüz durumunu içerir. Hata ayıklama satırları, günlük panelinin içindeki onay kutusunun işaretlenmesini gerektirir.",
     "autoPruneUnheardContactsDaysAria": "Başlangıçta {{days}} günden eski, duyulmamış kişileri otomatik olarak buda",
     "capTotalContactsCountAria": "Toplam kişileri sınırlandırın, en son görülen {{count}} kişileri koruyun",
     "unknownError": "Bilinmeyen hata",
@@ -364,7 +363,6 @@
     "messageActionsBarBgVisible": "Arka planı göster",
     "shareMyLocation": "Bulunduğum yeri paylaş",
     "shareMyLocationOffInfo": "Konum paylaşımı kapalı — ana bilgisayar GPS yenileme ve mesh gönderme devre dışı. Otomatik yenilemeyi kullanmak veya konumunuzu göndermek için yukarıdaki Konumumu paylaş'ı etkinleştirin.",
-    "shareMyLocationHint": "Etkinleştirildiğinde, bu uygulama bu bilgisayardaki konumunuzu arayabilir ve Meshtastic, MeshCore veya Reticulum (sohbet paylaşımı, radyo iletisi, RMAP) üzerinden gönderebilir. Devre dışı bırakıldığında, ev sahibi GPS aramaları ve uygulama gönderme kapalıdır; statik koordinatlar yalnızca yerel haritanız için çalışmaya devam eder. Kendi GPS'ine sahip bir radyo yine de konumunuzu yerel olarak gösterebilir. Radyo veya Modül ayarlarını yapana kadar cihaz bellenimi yayınlanmaya devam edebilir.",
     "fontSize": "Yazı boyutu",
     "fontSizeDesc": "Uygulama genelinde metin boyutunu ayarlayın. Haritalar, çizelgeler ve terminal etkilenmez.",
     "decreaseFontSize": "Yazı tipi boyutunu küçült",
@@ -392,7 +390,8 @@
       "deepSea": "Derin deniz",
       "dusk": "Alacakaranlık",
       "evergreen": "Her dem yeşil",
-      "highContrast": "Yüksek kontrast"
+      "highContrast": "Yüksek kontrast",
+      "daylight": "Gün Işığı"
     },
     "themeAccents": {
       "heading": "Vurgu",
@@ -420,7 +419,9 @@
     "updatesSection": "Güncellemeler",
     "autoUpdateDownload": "~Güncellemeleri otomatik olarak indir",
     "autoUpdateDownloadDesc": "Her kontrolden sonra arka plandaki en son güncellemeyi indirir. Kapalıyken, güncellemeler hala algılanır, ancak yalnızca İndir düğmesine bastığınızda indirilir — bir paket yöneticisi kurulumu gerçekleştirdiğinde kullanışlıdır.",
-    "autoUpdateDownloadSaveFailed": "Otomatik güncelleme indirme ayarı kaydedilemedi."
+    "autoUpdateDownloadSaveFailed": "Otomatik güncelleme indirme ayarı kaydedilemedi.",
+    "shareMyLocationHint": "Etkinleştirildiğinde, bu uygulama bu bilgisayardaki konumunuzu arayabilir ve Meshtastic veya MeshCore (sohbet paylaşımı, radyo iletisi) üzerinden gönderebilir. Devre dışı bırakıldığında, ev sahibi GPS aramaları ve uygulama gönderme kapalıdır; statik koordinatlar yalnızca yerel haritanız için çalışmaya devam eder. Kendi GPS'ine sahip bir radyo yine de konumunuzu yerel olarak gösterebilir. Radyo veya Modül ayarlarını yapana kadar cihaz bellenimi yayınlanmaya devam edebilir.",
+    "logPanelHelp": "Etkinleştirildiğinde, sağda canlı bir günlük akışı görünür. Hata ayıklama satırları, günlük panelinin içindeki onay kutusunu gerektirir."
   },
   "aria": {
     "closeDialog": "İletişim kutusunu kapat",
@@ -1113,7 +1114,7 @@
     "errors": {
       "ble": {
         "adapter_missing": "Bluetooth adaptörü bulunamadı. Sistem ayarlarında Bluetooth'u etkinleştirin ve tekrar deneyin.",
-        "permission_denied": "Bluetooth permission was denied. Allow Mesh Hub to use Bluetooth, then try again.",
+        "permission_denied": "Bluetooth izni reddedildi. Mesh Hub'ın Bluetooth kullanmasına izin verin, ardından tekrar deneyin.",
         "scan_busy": "Başka bir Bluetooth taraması sürüyor. Bir süre bekleyip tekrar deneyin.",
         "mac_conflict": "This Bluetooth device is already connected to another protocol. Disconnect it there first.",
         "connect_timeout": "Bluetooth bağlantısı zaman aşımına uğradı. Radyoyu uyanık ve yakınınızda tutun, ardından tekrar deneyin.",
@@ -2989,7 +2990,7 @@
     "nodeInfoBroadcastSecsLabel": "Düğüm Bilgisi Yayın Aralığı",
     "nodeInfoBroadcastSecsDesc": "Düğüm bilgilerinin saniye cinsinden yayınlanma sıklığı (0 = donanım yazılımı varsayılanı ~15 dakika).",
     "doubleTapAsButtonPressLabel": "Düğmeye Basarken iki kez hafifçe vurun",
-    "doubleTapAsButtonPressDesc": "İvme ölçere çift dokunmayı kullanıcı düğmesine basmak gibi değerlendirin (donanımdan bağımsız).",
+    "doubleTapAsButtonPressDesc": "İvmeölçerle algılanan çift dokunmayı kullanıcı düğmesine basma olarak say (donanıma bağlı).",
     "disableTripleClickLabel": "Üç Tıklamayı Devre Dışı Bırak",
     "disableTripleClickDesc": "Kullanıcı düğmesindeki üç tıklama eylemini devre dışı bırakın.",
     "ledHeartbeatDisabledLabel": "LED Kalp Atışını Devre Dışı Bırak",
@@ -3448,7 +3449,7 @@
     "transportBadgeMqttTooltip": "MQTT ile alındı",
     "transportBadgeLocalTooltip": "Yerel kendi kendine telemetri",
     "payloadTypeTooltip": "Yük tipi: {{type}}",
-    "portLabelTooltip": "Meshtastic port: {{port}}",
+    "portLabelTooltip": "Meshtastic bağlantı noktası: {{port}}",
     "pathSegmentTooltip": "Yol hash {{hex}}",
     "pathSegmentResolvedTooltip": "Yol karması {{hex}} ({{name}})",
     "pathChainTooltip": "Yayındaki yol: {{path}}",
@@ -4241,7 +4242,7 @@
       "severity": "Severity",
       "category": "Category",
       "codes": "Codes",
-      "removeCode": "Remove code {{code}}",
+      "removeCode": "{{code}} kodunu kaldırın",
       "freetext": "Free text (pax, GPS, notes)",
       "addPax": "Add 1pax",
       "attachGps": "Attach GPS",
@@ -4258,14 +4259,14 @@
     "rebroadcast": {
       "title": "MECP RF rebroadcast",
       "hint": "İsteğe bağlı olarak bir protokol kanalında duyulan MECP'yi diğerine köprüleyin. Varsayılan olarak kapalıdır. Yolu tersine çevirmek için Çift Yönlü seçeneğini etkinleştirin.",
-      "add": "Add bridge rule",
-      "remove": "Remove bridge rule",
+      "add": "Köprü kuralı ekle",
+      "remove": "Köprü kuralını kaldır",
       "enableRule": "Enabled",
       "bidirectional": "Bidirectional",
       "endpointA": "Listen / source (A)",
       "endpointB": "Forward / destination (B)",
       "protocol": "Protocol",
-      "channelIndex": "Channel index"
+      "channelIndex": "Kanal dizini"
     },
     "exportLogSuccess": "MECP günlüğü dışa aktarıldı",
     "exportLogSuccessPath": "MECP günlüğü {{path}} 'a dışa aktarıldı",

@@ -194,7 +194,6 @@
     "meshcorePathHashDeviceReported": "Rapporti radio collegati: {{mode}}",
     "meshcorePathHashModeHint": "Richiede il firmware companion v1.14.0+ e i ripetitori su v1.14+ lungo il percorso. I ripetitori pre-1.14 rilasciano silenziosamente pacchetti multibyte. I server ripetitori e room possono anche utilizzare l'interfaccia CLI: set path.hash.mode {0|1|2}.",
     "meshcorePathHashApplyFailed": "Modalità hash percorso non riuscita: {{message}}",
-    "logPanelHelp": "Se abilitato, sulla destra viene visualizzato un flusso di registro in tempo reale. Nella scheda Reticulum, le righe del dispositivo includono l'output collaterale e l'integrità dell'interfaccia locale. Le righe di debug richiedono la casella di controllo all'interno del pannello di registro.",
     "autoPruneUnheardContactsDaysAria": "Elimina automaticamente i contatti non ascoltati all'avvio, più vecchi di {{days}} giorni",
     "capTotalContactsCountAria": "Limita i contatti totali, conserva i contatti {{count}} visti più di recente",
     "unknownError": "Errore sconosciuto",
@@ -364,7 +363,6 @@
     "messageActionsBarBgVisible": "Mostra lo sfondo",
     "shareMyLocation": "Condividi la mia posizione",
     "shareMyLocationOffInfo": "La condivisione della posizione è disattivata: l'aggiornamento GPS dell'host e l'invio mesh sono disabilitati. Abilita Condividi la mia posizione qui sopra per utilizzare l'aggiornamento automatico o inviare la tua posizione.",
-    "shareMyLocationHint": "Se abilitata, questa app potrebbe cercare la tua posizione su questo computer e inviarla tramite Meshtastic, MeshCore o Reticulum (chat share, radio push, RMAP). Se disabilitato, le ricerche GPS degli host e l'invio delle app sono disattivati; le coordinate statiche funzionano ancora solo per la tua mappa locale. Una radio con il proprio GPS può ancora mostrare la tua posizione a livello locale. Il firmware del dispositivo potrebbe continuare a trasmettere fino a quando non si regolano le impostazioni Radio o Moduli.",
     "fontSize": "Dimensioni font",
     "fontSizeDesc": "Regola le dimensioni del testo nell'app. Le mappe, i grafici e il terminale non sono interessati.",
     "decreaseFontSize": "Diminuisci dimensioni carattere",
@@ -392,7 +390,8 @@
       "deepSea": "Abissi",
       "dusk": "Crepuscolo",
       "evergreen": "Sempreverde",
-      "highContrast": "Contrasto elevato"
+      "highContrast": "Contrasto elevato",
+      "daylight": "Daylight"
     },
     "themeAccents": {
       "heading": "Accento",
@@ -420,7 +419,9 @@
     "updatesSection": "Aggiornamenti",
     "autoUpdateDownload": "Scarica automaticamente gli aggiornamenti",
     "autoUpdateDownloadDesc": "Scarica l'ultimo aggiornamento in background dopo ogni controllo. Quando è spento, gli aggiornamenti vengono ancora rilevati ma scaricati solo quando si preme il pulsante Download, utile quando un gestore di pacchetti gestisce l'installazione.",
-    "autoUpdateDownloadSaveFailed": "Impossibile salvare l'impostazione di download dell'aggiornamento automatico."
+    "autoUpdateDownloadSaveFailed": "Impossibile salvare l'impostazione di download dell'aggiornamento automatico.",
+    "shareMyLocationHint": "Se abilitata, questa app potrebbe cercare la tua posizione su questo computer e inviarla tramite Meshtastic o MeshCore (chat share, radio push). Se disabilitato, le ricerche GPS degli host e l'invio delle app sono disattivati; le coordinate statiche funzionano ancora solo per la tua mappa locale. Una radio con il proprio GPS può ancora mostrare la tua posizione a livello locale. Il firmware del dispositivo potrebbe continuare a trasmettere fino a quando non si regolano le impostazioni Radio o Moduli.",
+    "logPanelHelp": "Se abilitato, sulla destra viene visualizzato un flusso di log live. Le linee di debug richiedono la casella di controllo all'interno del pannello di registro."
   },
   "aria": {
     "closeDialog": "Chiudi finestra",
@@ -1113,7 +1114,7 @@
     "errors": {
       "ble": {
         "adapter_missing": "Non è stato trovato alcun adattatore Bluetooth. Abilita il Bluetooth nelle impostazioni di sistema e riprova.",
-        "permission_denied": "Bluetooth permission was denied. Allow Mesh Hub to use Bluetooth, then try again.",
+        "permission_denied": "L'autorizzazione Bluetooth è stata negata. Consenti a Mesh Hub di utilizzare il Bluetooth, quindi riprova.",
         "scan_busy": "È in corso un'altra scansione Bluetooth. Attendi un momento e riprova.",
         "mac_conflict": "This Bluetooth device is already connected to another protocol. Disconnect it there first.",
         "connect_timeout": "Connessione Bluetooth scaduta. Tieni la radio sveglia e nelle vicinanze, quindi riprova.",
@@ -2987,9 +2988,9 @@
     "paFanDisabledDesc": "Disabilitare la ventola di raffreddamento dell'amplificatore di potenza (dipendente dall'hardware).",
     "rebroadcastModeLabel": "Rebroadcast Mode",
     "nodeInfoBroadcastSecsLabel": "Node Info Broadcast Interval",
-    "nodeInfoBroadcastSecsDesc": "How often to broadcast node info in seconds (0 = firmware default ~15 min).",
+    "nodeInfoBroadcastSecsDesc": "Con quale frequenza trasmettere le informazioni sul nodo in secondi (0 = firmware predefinito ~15 min).",
     "doubleTapAsButtonPressLabel": "Double-tap as Button Press",
-    "doubleTapAsButtonPressDesc": "Treat an accelerometer double-tap as a user button press (hardware-dependent).",
+    "doubleTapAsButtonPressDesc": "Considera un doppio tocco rilevato dall’accelerometro come una pressione del pulsante utente (dipende dall’hardware).",
     "disableTripleClickLabel": "Disable Triple-click",
     "disableTripleClickDesc": "Disabilita l'azione del triplo clic sul pulsante utente.",
     "ledHeartbeatDisabledLabel": "Disable LED Heartbeat",
@@ -3027,7 +3028,7 @@
       }
     },
     "autoScreenCarouselSecsLabel": "Screen Carousel Interval",
-    "autoScreenCarouselSecsDesc": "Seconds between automatic screen page changes. 0 to disable.",
+    "autoScreenCarouselSecsDesc": "Secondi tra le modifiche automatiche della schermata. 0 per disabilitare.",
     "oledTypeLabel": "OLED Type",
     "flipScreenLabel": "Flip Screen",
     "flipScreenDesc": "Ruotare il display di 180 gradi.",
@@ -3037,7 +3038,7 @@
     "wakeOnTapOrMotionDesc": "Riattiva lo schermo quando il dispositivo viene toccato o spostato.",
     "use12hClockLabel": "12-Hour Clock",
     "useLongNodeNameLabel": "Use Long Node Name",
-    "useLongNodeNameDesc": "Show full node name instead of short name on screen.",
+    "useLongNodeNameDesc": "Mostra il nome completo del nodo invece del nome breve sullo schermo.",
     "enableMessageBubblesLabel": "Message Bubbles",
     "enableMessageBubblesDesc": "Mostra i messaggi in arrivo in una bolla sul display.",
     "oledTypes": {
@@ -4241,7 +4242,7 @@
       "severity": "Severity",
       "category": "Category",
       "codes": "Codes",
-      "removeCode": "Remove code {{code}}",
+      "removeCode": "Rimuovi il codice {{code}}",
       "freetext": "Free text (pax, GPS, notes)",
       "addPax": "Add 1pax",
       "attachGps": "Attach GPS",
@@ -4258,14 +4259,14 @@
     "rebroadcast": {
       "title": "MECP RF rebroadcast",
       "hint": "Facoltativamente, collega i MeCP ascoltati su un canale di protocollo a un altro. OFF per impostazione predefinita. Abilita Bidirezionale per invertire anche il percorso.",
-      "add": "Add bridge rule",
-      "remove": "Remove bridge rule",
+      "add": "Aggiungi regola bridge",
+      "remove": "Rimuovi regola di bridge",
       "enableRule": "Enabled",
       "bidirectional": "Bidirectional",
       "endpointA": "Listen / source (A)",
       "endpointB": "Forward / destination (B)",
       "protocol": "Protocol",
-      "channelIndex": "Channel index"
+      "channelIndex": "Indice dei canali"
     },
     "exportLogSuccess": "Registro MeCP esportato",
     "exportLogSuccessPath": "Registro MeCP esportato in {{path}}",

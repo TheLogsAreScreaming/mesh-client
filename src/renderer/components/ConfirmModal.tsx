@@ -1,5 +1,10 @@
-import { useEffect, useId, useRef } from 'react';
+import { TriangleAlert } from 'lucide-react-motion';
 import { useTranslation } from 'react-i18next';
+
+import { ICON_LG } from '@/renderer/lib/icons/iconClass';
+
+import { Button } from './ui/Button';
+import { Dialog } from './ui/Dialog';
 
 export interface ConfirmModalProps {
   title: string;
@@ -18,9 +23,12 @@ export interface ConfirmModalProps {
   confirmDisabled?: boolean;
 }
 
-const FOCUSABLE_SELECTOR =
-  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
+/**
+ * Yes / no confirmation in the shared Dialog shell. Destructive confirms (`danger`) get a warning
+ * icon and a solid red confirm button; others confirm with the primary accent button. Cancel is
+ * always first in tab order and focused on open, so Enter never triggers a destructive action by
+ * accident.
+ */
 export function ConfirmModal({
   title,
   message,
@@ -36,132 +44,52 @@ export function ConfirmModal({
   confirmDisabled,
 }: ConfirmModalProps) {
   const { t } = useTranslation();
-  const titleId = useId();
-  const messageId = useId();
-  const panelRef = useRef<HTMLDivElement>(null);
-  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const resolvedCancelLabel = cancelLabel ?? t('common.cancel');
 
-  useEffect(() => {
-    const panel = panelRef.current;
-    if (!panel) return;
-
-    previouslyFocusedRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
-
-    const focusables = () =>
-      [...panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)].filter(
-        (el) => el.offsetParent !== null || el === document.activeElement,
-      );
-
-    const focusFirst = () => {
-      const nodes = focusables();
-      nodes[0]?.focus();
-    };
-
-    focusFirst();
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onCancel();
-        return;
-      }
-      if (e.key !== 'Tab') return;
-
-      const nodes = focusables();
-      if (nodes.length === 0) return;
-
-      const first = nodes[0];
-      const last = nodes[nodes.length - 1];
-      const active = document.activeElement;
-
-      if (e.shiftKey) {
-        if (active === first || !panel.contains(active)) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else if (active === last || !panel.contains(active)) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      const prev = previouslyFocusedRef.current;
-      if (prev && document.contains(prev)) {
-        prev.focus();
-      }
-    };
-  }, [onCancel]);
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <button
-        type="button"
-        aria-label={t('common.cancel')}
-        className="absolute inset-0 cursor-pointer border-0 bg-black/60 p-0 backdrop-blur-sm"
-        onClick={onCancel}
-      />
-      <div
-        ref={panelRef}
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={messageId}
-        className="bg-deep-black rounded-modal shadow-level-3 border-ink-600 relative mx-4 w-full max-w-sm space-y-4 border p-6"
-      >
-        <h3 id={titleId} className="text-ink-200 text-lg font-semibold">
-          {title}
-        </h3>
-        <p id={messageId} className="text-muted text-sm leading-relaxed">
-          {message}
-        </p>
-        {onPreserveFavoritesChange != null && (
-          <label className="text-ink-300 flex cursor-pointer items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={preserveFavorites ?? false}
-              onChange={(e) => {
-                onPreserveFavoritesChange(e.target.checked);
-              }}
-              className="accent-brand-green"
-              aria-label={t('radioPanel.resetNodeDbPreserveFavorites')}
-            />
-            {t('radioPanel.resetNodeDbPreserveFavorites')}
-          </label>
-        )}
-        <div className="flex gap-3 pt-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="bg-secondary-dark text-ink-300 hover:bg-ink-600 flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
-          >
+    <Dialog
+      role="alertdialog"
+      title={title}
+      description={message}
+      onClose={onCancel}
+      icon={
+        danger ? <TriangleAlert aria-hidden className={`${ICON_LG} text-danger-400`} /> : undefined
+      }
+      footer={
+        <>
+          <Button variant="secondary" size="lg" onClick={onCancel}>
             {resolvedCancelLabel}
-          </button>
+          </Button>
           {altActionLabel != null && onAltAction != null && (
-            <button
-              type="button"
-              onClick={onAltAction}
-              className="flex-1 rounded-lg bg-cyan-700 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-cyan-600"
-            >
+            <Button variant="secondary" size="lg" onClick={onAltAction}>
               {altActionLabel}
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
+          <Button
+            variant={danger ? 'destructive' : 'primary'}
+            size="lg"
             onClick={onConfirm}
             disabled={confirmDisabled}
-            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors disabled:opacity-50 ${
-              danger ? 'bg-red-600 hover:bg-red-500' : 'bg-orange-600 hover:bg-orange-500'
-            }`}
           >
             {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </>
+      }
+    >
+      {onPreserveFavoritesChange != null && (
+        <label className="text-ink-300 text-body-lg flex cursor-pointer items-center gap-2">
+          <input
+            type="checkbox"
+            checked={preserveFavorites ?? false}
+            onChange={(e) => {
+              onPreserveFavoritesChange(e.target.checked);
+            }}
+            className="accent-brand-green h-4 w-4"
+            aria-label={t('radioPanel.resetNodeDbPreserveFavorites')}
+          />
+          {t('radioPanel.resetNodeDbPreserveFavorites')}
+        </label>
+      )}
+    </Dialog>
   );
 }

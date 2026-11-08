@@ -37,9 +37,9 @@ export function LabelValue({
 }) {
   return (
     <div className={`min-w-0 ${span ? 'sm:col-span-2' : ''}`}>
-      <dt className="text-muted text-xs">{label}</dt>
+      <dt className="text-muted text-label">{label}</dt>
       <dd
-        className={`text-ink-200 mt-1.5 min-w-0 break-words ${mono ? 'text-body-lg font-mono' : 'text-sm'}`}
+        className={`text-ink-200 mt-1.5 min-w-0 break-words ${mono ? 'text-body-lg font-mono' : 'text-body-lg'}`}
       >
         {children}
       </dd>

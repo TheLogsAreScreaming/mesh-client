@@ -55,8 +55,8 @@ export default function MeshCongestionAttributionBlock({
   if (lines.length === 0 && originators.length === 0) return null;
 
   return (
-    <div className={`${className} bg-primary-dark rounded-lg border border-orange-500/20 p-3`}>
-      <div className="mb-2 text-xs font-medium text-orange-300">
+    <div className={`${className} bg-primary-dark rounded-card border-warning-500/20 border p-3`}>
+      <div className="text-label text-warning-300 mb-2 font-medium">
         {t('meshCongestion.blockTitle')}
       </div>
       {scopeSubtitle && <div className="text-muted text-2xs mb-2">{scopeSubtitle}</div>}
@@ -70,8 +70,8 @@ export default function MeshCongestionAttributionBlock({
         </div>
       )}
       {originators.length > 0 && (
-        <div className={lines.length > 0 ? 'mt-3 border-t border-orange-500/20 pt-2' : ''}>
-          <div className="text-2xs mb-1.5 font-medium text-orange-200/90">
+        <div className={lines.length > 0 ? 'border-warning-500/20 mt-3 border-t pt-2' : ''}>
+          <div className="text-2xs text-warning-200/90 mb-1.5 font-medium">
             {t('meshCongestion.mostDuplicateProneTitle')}
           </div>
           <ul className="space-y-1">

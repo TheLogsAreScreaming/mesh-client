@@ -94,7 +94,7 @@ describe('AppRail', () => {
     );
     const chat = screen.getByRole('button', { name: 'Chat, 6 unread' });
     expect(chat).toHaveTextContent('6');
-    expect(chat.querySelector('.bg-red-600')).not.toBeNull();
+    expect(chat.querySelector('.bg-danger-600')).not.toBeNull();
   });
 
   it('shows the Incident badge with the open-incident label', () => {

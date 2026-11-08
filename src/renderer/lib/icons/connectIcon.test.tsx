@@ -16,7 +16,7 @@ describe('connectIcon', () => {
   });
 
   it('renders when animated for connecting header state', () => {
-    renderWithMotion(<ConnectIcon animated className="text-orange-400" size={16} />);
+    renderWithMotion(<ConnectIcon animated className="text-warning-400" size={16} />);
     expect(document.querySelector('svg')).toBeInTheDocument();
   });
 });

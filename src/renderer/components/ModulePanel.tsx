@@ -28,6 +28,7 @@ import { ConfirmModal } from './ConfirmModal';
 import { HelpTooltip } from './HelpTooltip';
 import { useToast } from './Toast';
 import { buttonClassName } from './ui/Button';
+import { Callout } from './ui/Callout';
 import { INPUT_BOX_CLASS, SELECT_BOX_CLASS, TEXTAREA_BOX_SM_CLASS } from './ui/formClasses';
 
 interface PacketMessage {
@@ -97,7 +98,7 @@ function ConfigSelect({
 }) {
   return (
     <div data-setting-anchor={anchorId} className="space-y-1">
-      <label className="text-muted text-sm">{label}</label>
+      <label className="text-muted text-body-lg">{label}</label>
       <select
         value={value}
         onChange={(e) => {
@@ -114,7 +115,7 @@ function ConfigSelect({
           </option>
         ))}
       </select>
-      {description && <p className="text-muted text-xs">{description}</p>}
+      {description && <p className="text-muted text-label">{description}</p>}
     </div>
   );
 }
@@ -137,7 +138,7 @@ function ConfigToggle({
   return (
     <div data-setting-anchor={anchorId} className="space-y-1">
       <div className="flex items-center justify-between">
-        <span className="text-ink-300 text-sm">{label}</span>
+        <span className="text-ink-300 text-body-lg">{label}</span>
         <button
           type="button"
           role="switch"
@@ -157,7 +158,7 @@ function ConfigToggle({
           />
         </button>
       </div>
-      {description && <p className="text-muted text-xs">{description}</p>}
+      {description && <p className="text-muted text-label">{description}</p>}
     </div>
   );
 }
@@ -188,7 +189,7 @@ function ConfigNumber({
   return (
     <div data-setting-anchor={anchorId} className="space-y-1">
       <div className="flex items-center gap-1.5">
-        <label className="text-muted text-sm">{label}</label>
+        <label className="text-muted text-body-lg">{label}</label>
         {tooltip && <HelpTooltip text={tooltip} />}
       </div>
       <div className="flex items-center gap-2">
@@ -205,9 +206,9 @@ function ConfigNumber({
           disabled={disabled}
           className={`${INPUT_BOX_CLASS} w-28`}
         />
-        {unit && <span className="text-muted text-sm">{unit}</span>}
+        {unit && <span className="text-muted text-body-lg">{unit}</span>}
       </div>
-      {description && <p className="text-muted text-xs">{description}</p>}
+      {description && <p className="text-muted text-label">{description}</p>}
     </div>
   );
 }
@@ -233,7 +234,7 @@ function ConfigText({
   const [show, setShow] = useState(false);
   return (
     <div data-setting-anchor={anchorId} className="space-y-1">
-      <label className="text-muted text-sm">{label}</label>
+      <label className="text-muted text-body-lg">{label}</label>
       <div className="flex items-center gap-1">
         <input
           type={password && !show ? 'password' : 'text'}
@@ -250,13 +251,13 @@ function ConfigText({
             onClick={() => {
               setShow((s) => !s);
             }}
-            className="text-muted hover:text-ink-300 px-2 py-2 text-xs"
+            className="text-muted hover:text-ink-300 text-label px-2 py-2"
           >
             {show ? t('common.hide') : t('common.show')}
           </button>
         )}
       </div>
-      {description && <p className="text-muted text-xs">{description}</p>}
+      {description && <p className="text-muted text-label">{description}</p>}
     </div>
   );
 }
@@ -290,15 +291,15 @@ function ModuleSection({
   return (
     <details
       data-setting-anchor={anchorId}
-      className="group bg-deep-black/50 border-ink-700 rounded-lg border"
+      className="group bg-deep-black/50 border-ink-700 rounded-card border"
     >
-      <summary className="text-ink-200 hover:bg-ink-800 flex cursor-pointer items-center justify-between rounded-lg px-4 py-3 font-medium transition-colors">
+      <summary className="text-ink-200 hover:bg-ink-800 rounded-card flex cursor-pointer items-center justify-between px-4 py-3 font-medium transition-colors">
         <span>{title}</span>
         <DetailsChevron />
       </summary>
       <div className="space-y-4 px-4 pb-4">
         {showSliceWaiting && !sliceReady && (
-          <p className="text-xs text-orange-300/90">
+          <p className="text-label text-warning-300/90">
             {t('radioPanel.waitingForConfigSection', { section: title })}
           </p>
         )}
@@ -320,8 +321,8 @@ function ModuleSection({
 
 function StatusOnlySection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <details className="group bg-deep-black/50 border-ink-700 rounded-lg border">
-      <summary className="text-ink-200 hover:bg-ink-800 flex cursor-pointer items-center justify-between rounded-lg px-4 py-3 font-medium transition-colors">
+    <details className="group bg-deep-black/50 border-ink-700 rounded-card border">
+      <summary className="text-ink-200 hover:bg-ink-800 rounded-card flex cursor-pointer items-center justify-between px-4 py-3 font-medium transition-colors">
         <span>{title}</span>
         <DetailsChevron />
       </summary>
@@ -374,7 +375,7 @@ function ModuleStatus({
   const { t } = useTranslation();
   if (!packets || packets.size === 0) {
     return (
-      <div className="bg-ink-800/50 rounded px-3 py-2 text-xs">
+      <div className="bg-ink-800/50 text-label rounded px-3 py-2">
         <span className="text-muted">{t('modulePanel.statusNoPackets', { label })}</span>
       </div>
     );
@@ -385,7 +386,7 @@ function ModuleStatus({
   );
   const lastSeen = formatTimeAgo(latest, t);
   return (
-    <div className="bg-ink-800/50 rounded px-3 py-2 text-xs">
+    <div className="bg-ink-800/50 text-label rounded px-3 py-2">
       <span className="text-ink-400">
         {t('modulePanel.statusLine', {
           count: packets.size,
@@ -949,26 +950,26 @@ export default function ModulePanel({
 
   return (
     <div className="w-full space-y-4">
-      <h2 className="text-ink-200 text-xl font-semibold">{t('modulePanel.title')}</h2>
+      <h2 className="text-ink-200 text-display font-semibold">{t('modulePanel.title')}</h2>
 
       {!isConnected && (
-        <div className="rounded-lg border border-orange-700 bg-orange-900/30 px-4 py-2 text-sm text-orange-300">
+        <Callout tone="warning" role="none">
           {t('modulePanel.connectToDevice')}
-        </div>
+        </Callout>
       )}
 
       {configTarget?.mode === 'remote' && configTarget.isLoading && (
-        <p className="text-muted text-sm">{t('configureNode.loading')}</p>
+        <p className="text-muted text-body-lg">{t('configureNode.loading')}</p>
       )}
 
       {configTarget?.mode === 'remote' && configTarget.error && (
-        <p className="text-sm text-red-400">{t(configTarget.error)}</p>
+        <p className="text-body-lg text-danger-400">{t(configTarget.error)}</p>
       )}
 
       <ConfigApplyNotice />
 
       {Object.keys(moduleConfigs).length === 0 && isConnected && (
-        <div className="bg-deep-black/50 text-muted border-ink-700 rounded-lg border px-4 py-3 text-sm">
+        <div className="bg-deep-black/50 text-muted border-ink-700 rounded-card text-body-lg border px-4 py-3">
           {t('modulePanel.waitingForModuleConfig')}
         </div>
       )}
@@ -1009,7 +1010,7 @@ export default function ModulePanel({
           description={t('modulePanel.fields.mqttProxyToClientEnabledDesc')}
         />
         {mqttProxyToClientChecked && !remoteTarget && (
-          <p className="text-muted text-xs">{t('modulePanel.fields.mqttProxyGatewayHint')}</p>
+          <p className="text-muted text-label">{t('modulePanel.fields.mqttProxyGatewayHint')}</p>
         )}
         <ConfigText
           label={t('modulePanel.fields.serverAddress')}
@@ -1084,7 +1085,7 @@ export default function ModulePanel({
         applying={applyingSection === 'mqtt'}
         disabled={disabled}
       >
-        <p className="text-muted text-xs">{t('modulePanel.sectionMapReportHint')}</p>
+        <p className="text-muted text-label">{t('modulePanel.sectionMapReportHint')}</p>
         <ConfigToggle
           label={t('modulePanel.fields.mapReportingEnabled')}
           checked={mqttMapReporting}
@@ -1731,7 +1732,7 @@ export default function ModulePanel({
           description={t('modulePanel.fields.cannedSendBellDesc')}
         />
         <div data-setting-anchor="modules.cannedMessages.messages" className="space-y-1">
-          <label htmlFor="module-canned-messages" className="text-muted text-sm">
+          <label htmlFor="module-canned-messages" className="text-muted text-body-lg">
             {t('modulePanel.fields.messagesOnePerLine')}
           </label>
           <textarea
@@ -1746,7 +1747,7 @@ export default function ModulePanel({
             spellCheck={false}
             className={`${TEXTAREA_BOX_SM_CLASS} w-full resize-y font-mono`}
           />
-          <p className="text-muted text-xs">{t('modulePanel.fields.cannedMessagesHint')}</p>
+          <p className="text-muted text-label">{t('modulePanel.fields.cannedMessagesHint')}</p>
         </div>
       </ModuleSection>
 
@@ -1825,7 +1826,7 @@ export default function ModulePanel({
           description={t('modulePanel.fields.ledEnabledDesc')}
         />
         <div className="space-y-1">
-          <label htmlFor="module-ambient-color" className="text-muted text-sm">
+          <label htmlFor="module-ambient-color" className="text-muted text-body-lg">
             {t('modulePanel.fields.color')}
           </label>
           <div className="flex items-center gap-3">
@@ -1839,8 +1840,8 @@ export default function ModulePanel({
               disabled={disabled || !ambientLedState}
               className="bg-secondary-dark border-ink-600 h-9 w-16 cursor-pointer rounded border p-0.5 disabled:opacity-50"
             />
-            <span className="text-ink-400 font-mono text-sm">{ambientHex.toUpperCase()}</span>
-            <span className="text-muted text-xs">
+            <span className="text-ink-400 text-body-lg font-mono">{ambientHex.toUpperCase()}</span>
+            <span className="text-muted text-label">
               {t('modulePanel.ambientColors.rgbComponents', {
                 red: ambientRed,
                 green: ambientGreen,
@@ -1850,7 +1851,7 @@ export default function ModulePanel({
           </div>
         </div>
         <div className="space-y-1">
-          <label htmlFor="module-ambient-current" className="text-muted text-sm">
+          <label htmlFor="module-ambient-current" className="text-muted text-body-lg">
             {t('modulePanel.fields.brightnessCurrent', { value: ambientCurrent })}
           </label>
           <input
@@ -1865,7 +1866,7 @@ export default function ModulePanel({
             disabled={disabled || !ambientLedState}
             className="accent-brand-green w-full disabled:opacity-50"
           />
-          <p className="text-muted text-xs">{t('modulePanel.fields.brightnessHint')}</p>
+          <p className="text-muted text-label">{t('modulePanel.fields.brightnessHint')}</p>
         </div>
       </ModuleSection>
 
@@ -2011,7 +2012,7 @@ export default function ModulePanel({
             disabled={disabled || !remoteHardwareEnabled}
             description={t('modulePanel.fields.remoteHardwareAllowUndefinedPinsDesc')}
           />
-          <p className="text-muted text-xs">{t('modulePanel.fields.remoteHardwareHint')}</p>
+          <p className="text-muted text-label">{t('modulePanel.fields.remoteHardwareHint')}</p>
         </ModuleSection>
       )}
 
@@ -2230,7 +2231,7 @@ export default function ModulePanel({
       {!remoteTarget && ipTunnelMessages != null && (
         <StatusOnlySection title={t('modulePanel.sectionIpTunnel')}>
           <ModuleStatus packets={ipTunnelMessages} label={t('modulePanel.statusLabels.ipTunnel')} />
-          <p className="text-muted text-xs">{t('modulePanel.fields.ipTunnelHint')}</p>
+          <p className="text-muted text-label">{t('modulePanel.fields.ipTunnelHint')}</p>
         </StatusOnlySection>
       )}
 
@@ -2266,7 +2267,7 @@ export default function ModulePanel({
           globalApplyLocked={applyingSection !== null}
         >
           <div className="space-y-1">
-            <label htmlFor="module-rtttl-preset" className="text-muted text-sm">
+            <label htmlFor="module-rtttl-preset" className="text-muted text-body-lg">
               {t('modulePanel.fields.loadPreset')}
             </label>
             <select
@@ -2287,7 +2288,7 @@ export default function ModulePanel({
             </select>
           </div>
           <div className="space-y-1">
-            <label htmlFor="module-rtttl-ringtone" className="text-muted text-sm">
+            <label htmlFor="module-rtttl-ringtone" className="text-muted text-body-lg">
               {t('modulePanel.fields.ringtoneStringLabel')}
             </label>
             <textarea
@@ -2302,10 +2303,10 @@ export default function ModulePanel({
               spellCheck={false}
               className={`${TEXTAREA_BOX_SM_CLASS} w-full resize-y font-mono`}
             />
-            <div className="text-muted flex justify-between text-xs">
+            <div className="text-muted text-label flex justify-between">
               <span>
                 {ringtoneText.length > 0 && !isValidRtttl(ringtoneText) && (
-                  <span className="text-red-400">{t('modulePanel.fields.invalidRtttl')}</span>
+                  <span className="text-danger-400">{t('modulePanel.fields.invalidRtttl')}</span>
                 )}
               </span>
               <span>{ringtoneText.length}/230</span>

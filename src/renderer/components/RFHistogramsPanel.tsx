@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
+import { useChartPalette } from '@/renderer/lib/chartPalette';
+
 import type { MeshNode } from '../lib/types';
 
 interface RFHistogramsPanelProps {
@@ -65,30 +67,31 @@ function HistogramChart({
   xlabel: string;
   color: string;
 }) {
+  const chart = useChartPalette();
   return (
     <ResponsiveContainer width="100%" height={180}>
       <BarChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 20 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#424242" />
+        <CartesianGrid strokeDasharray="3 3" stroke={chart.grid} />
         <XAxis
           dataKey="label"
-          tick={{ fill: '#a3a3a3', fontSize: 11 }}
+          tick={{ fill: chart.label, fontSize: 11 }}
           label={{
             value: xlabel,
             position: 'insideBottom',
             offset: -12,
-            fill: '#a3a3a3',
+            fill: chart.label,
             fontSize: 11,
           }}
         />
-        <YAxis tick={{ fill: '#a3a3a3', fontSize: 11 }} allowDecimals={false} width={32} />
+        <YAxis tick={{ fill: chart.label, fontSize: 11 }} allowDecimals={false} width={32} />
         <Tooltip
           contentStyle={{
-            backgroundColor: '#333333',
-            border: '1px solid #424242',
+            backgroundColor: chart.gridSubtle,
+            border: `1px solid ${chart.tooltipBorder}`,
             borderRadius: 6,
           }}
-          labelStyle={{ color: '#e0e0e0' }}
-          itemStyle={{ color: '#a3a3a3' }}
+          labelStyle={{ color: chart.text }}
+          itemStyle={{ color: chart.label }}
           formatter={(value) => [value as number, 'Nodes']}
         />
         <Bar dataKey="count" fill={color} radius={[3, 3, 0, 0]} />
@@ -98,6 +101,7 @@ function HistogramChart({
 }
 
 export default function RFHistogramsPanel({ nodes }: RFHistogramsPanelProps) {
+  const chart = useChartPalette();
   const { t } = useTranslation();
 
   const { snrData, rssiData, hopData, nodeCount } = useMemo(() => {
@@ -130,23 +134,27 @@ export default function RFHistogramsPanel({ nodes }: RFHistogramsPanelProps) {
   return (
     <div className="flex flex-col gap-6 p-4">
       <div>
-        <h2 className="text-ink-200 text-base font-semibold">{t('rfHistograms.title')}</h2>
-        <p className="text-ink-400 text-xs">{t('rfHistograms.subtitle', { count: nodeCount })}</p>
+        <h2 className="text-ink-200 text-title font-semibold">{t('rfHistograms.title')}</h2>
+        <p className="text-ink-400 text-label">
+          {t('rfHistograms.subtitle', { count: nodeCount })}
+        </p>
       </div>
 
       <section>
-        <h3 className="text-ink-300 mb-1 text-sm font-medium">{t('rfHistograms.snrTitle')}</h3>
-        <HistogramChart data={snrData} xlabel={t('rfHistograms.snrAxis')} color="#22c55e" />
+        <h3 className="text-ink-300 text-body-lg mb-1 font-medium">{t('rfHistograms.snrTitle')}</h3>
+        <HistogramChart data={snrData} xlabel={t('rfHistograms.snrAxis')} color={chart.green500} />
       </section>
 
       <section>
-        <h3 className="text-ink-300 mb-1 text-sm font-medium">{t('rfHistograms.rssiTitle')}</h3>
-        <HistogramChart data={rssiData} xlabel={t('rfHistograms.rssiAxis')} color="#3b82f6" />
+        <h3 className="text-ink-300 text-body-lg mb-1 font-medium">
+          {t('rfHistograms.rssiTitle')}
+        </h3>
+        <HistogramChart data={rssiData} xlabel={t('rfHistograms.rssiAxis')} color={chart.blue500} />
       </section>
 
       <section>
-        <h3 className="text-ink-300 mb-1 text-sm font-medium">{t('rfHistograms.hopTitle')}</h3>
-        <HistogramChart data={hopData} xlabel={t('rfHistograms.hopAxis')} color="#f59e0b" />
+        <h3 className="text-ink-300 text-body-lg mb-1 font-medium">{t('rfHistograms.hopTitle')}</h3>
+        <HistogramChart data={hopData} xlabel={t('rfHistograms.hopAxis')} color={chart.amber500} />
       </section>
     </div>
   );

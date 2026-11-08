@@ -6,9 +6,9 @@
 
 export type QueueBadgeColorMode = 'absolute' | 'ratio';
 
-export const QUEUE_BADGE_GREEN = 'bg-green-900/60 text-green-300 border border-green-700';
-export const QUEUE_BADGE_AMBER = 'bg-orange-900/60 text-orange-300 border border-orange-700';
-export const QUEUE_BADGE_RED = 'bg-red-900/60 text-red-300 border border-red-700';
+export const QUEUE_BADGE_GREEN = 'bg-success-900/60 text-success-300 border border-success-700';
+export const QUEUE_BADGE_AMBER = 'bg-warning-900/60 text-warning-300 border border-warning-700';
+export const QUEUE_BADGE_RED = 'bg-danger-900/60 text-danger-300 border border-danger-700';
 
 /** Absolute used slots (Meshtastic ~16 maxlen; MeshCore reuses same thresholds). */
 export function queueBadgeColorClassAbsolute(used: number): string {

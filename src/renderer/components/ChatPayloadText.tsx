@@ -161,7 +161,7 @@ function LinkPreview({
   }
 
   return (
-    <div className="mt-2 flex max-w-sm gap-3 rounded-md border border-cyan-500/20 bg-cyan-500/5 p-3">
+    <div className="rounded-card mt-2 flex max-w-sm gap-3 border border-cyan-500/20 bg-cyan-500/5 p-3">
       {preview.image && (
         <img
           src={preview.image}
@@ -173,11 +173,13 @@ function LinkPreview({
         />
       )}
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-semibold text-cyan-100">{preview.title}</div>
+        <div className="text-body-lg truncate font-semibold text-cyan-100">{preview.title}</div>
         {preview.description && (
-          <div className="mt-0.5 line-clamp-2 text-xs text-cyan-100/70">{preview.description}</div>
+          <div className="text-label mt-0.5 line-clamp-2 text-cyan-100/70">
+            {preview.description}
+          </div>
         )}
-        {hostname && <div className="mt-1 truncate text-xs text-cyan-100/50">{hostname}</div>}
+        {hostname && <div className="text-label mt-1 truncate text-cyan-100/50">{hostname}</div>}
       </div>
     </div>
   );
@@ -249,7 +251,7 @@ function LocationCard({
   const coordLabel = `${lat}, ${lon}`;
 
   return (
-    <div className="space-y-1 rounded-lg border border-cyan-500/30 bg-cyan-500/10 p-2">
+    <div className="rounded-card space-y-1 border border-cyan-500/30 bg-cyan-500/10 p-2">
       {!tileFailed && (
         <img
           key={tileUrl}
@@ -264,7 +266,7 @@ function LocationCard({
           }}
         />
       )}
-      <div className="flex items-center gap-1 text-xs text-cyan-100/90">
+      <div className="text-label flex items-center gap-1 text-cyan-100/90">
         <MapPin aria-hidden className="h-3.5 w-3.5 shrink-0" />
         <span>{highlightCaseInsensitive(coordLabel, query)}</span>
       </div>
@@ -272,7 +274,7 @@ function LocationCard({
         href={mapUrl}
         target="_blank"
         rel="noreferrer"
-        className="text-xs text-cyan-400 underline hover:text-cyan-300"
+        className="text-label text-cyan-400 underline hover:text-cyan-300"
       >
         {t('chatPayload.locationCard.openMaps')}
       </a>
@@ -350,7 +352,7 @@ export function ChatPayloadText({
             seg.label ? (
               <span
                 key={`m-${i}`}
-                className="mx-0.5 inline-flex max-w-full rounded-md border border-cyan-500/35 bg-cyan-500/15 px-1 py-px align-baseline text-[0.92em] leading-snug font-medium text-cyan-100/95 first:ml-0"
+                className="rounded-card mx-0.5 inline-flex max-w-full border border-cyan-500/35 bg-cyan-500/15 px-1 py-px align-baseline text-[0.92em] leading-snug font-medium text-cyan-100/95 first:ml-0"
                 title={`@${seg.label}`}
                 aria-label={t('chatPayload.mention', { label: seg.label })}
               >

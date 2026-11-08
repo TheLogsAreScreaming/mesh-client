@@ -62,7 +62,7 @@ export default function IncidentPanel({
   return (
     <section aria-labelledby="incident-panel-title" className="flex flex-col gap-2 p-3">
       <div className="flex items-center justify-between gap-2">
-        <h2 id="incident-panel-title" className="text-ink-100 text-base font-semibold">
+        <h2 id="incident-panel-title" className="text-ink-100 text-title font-semibold">
           {t('incidentPanel.title')}
         </h2>
         <LabeledMenuButton
@@ -77,11 +77,11 @@ export default function IncidentPanel({
           ]}
         />
       </div>
-      <p className="text-ink-300 max-w-prose text-sm">{t('incidentPanel.intro')}</p>
+      <p className="text-ink-300 text-body-lg max-w-prose">{t('incidentPanel.intro')}</p>
       {open.length === 0 ? (
         <div className="flex flex-col gap-1">
-          <p className="text-ink-300 text-sm">{t('incidentPanel.empty')}</p>
-          <p className="text-ink-400 max-w-prose text-xs">{t('incidentPanel.emptyHint')}</p>
+          <p className="text-ink-300 text-body-lg">{t('incidentPanel.empty')}</p>
+          <p className="text-ink-400 text-label max-w-prose">{t('incidentPanel.emptyHint')}</p>
         </div>
       ) : (
         <ul aria-label={t('incidentPanel.listAria')} className="flex flex-col gap-2">

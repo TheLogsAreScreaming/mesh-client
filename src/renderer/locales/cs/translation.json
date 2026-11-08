@@ -194,7 +194,6 @@
     "meshcorePathHashDeviceReported": "Připojené rádiové zprávy: {{mode}}",
     "meshcorePathHashModeHint": "Vyžaduje doprovodný firmware v1.14.0+ a opakovače na v1.14+ podél cesty. Pre-1.14 opakovače tiše upouštějí vícebajtové pakety. Servery opakovače a místnosti mohou také používat CLI: set path.hash.mode {0|1|2}.",
     "meshcorePathHashApplyFailed": "Režim hash cesty se nezdařil: {{message}}",
-    "logPanelHelp": "Je-li povoleno, na pravé straně se zobrazí živý záznam protokolu. Na kartě Reticulum řádky zařízení zahrnují výstup postranního vozíku a stav místního rozhraní. Řádky ladění vyžadují zaškrtávací políčko na panelu protokolu.",
     "autoPruneUnheardContactsDaysAria": "Automaticky oříznout neslyšené kontakty při spuštění, starší než {{days}} dnů",
     "capTotalContactsCountAria": "Omezit celkový počet kontaktů, ponechat naposledy zobrazené {{count}} kontakty",
     "unknownError": "Neznámá chyba",
@@ -338,7 +337,7 @@
     "exportForDeveloperButton": "Export pro vývojáře",
     "exportForDeveloperWarning": "Zahrnuje úplnou databázi a nouzové auditní protokoly MECP, které mohou obsahovat uložená hesla, text zpráv, identifikátory odesílatelů a kanálů a údaje o poloze. Sdílejte tento balíček soukromě pouze se správci – nikdy na veřejném GitHub.",
     "exportSupportBundleFailed": "Nelze exportovat balíček podpory: {{message}}",
-    "storeForwardHistoryProfileLabel": "Store & Forward catch-up profile",
+    "storeForwardHistoryProfileLabel": "Profil doplnění historie Store & Forward",
     "storeForwardHistoryProfileAria": "Agresivita dohánění historie Store & Forward",
     "storeForwardHistoryProfileConservative": "Konzervativní (přátelské k rušné síti)",
     "storeForwardHistoryProfileAggressive": "Agresivní (flekaté pokrytí)",
@@ -364,7 +363,6 @@
     "messageActionsBarBgVisible": "Zobrazit pozadí",
     "shareMyLocation": "Sdílet mé umístění",
     "shareMyLocationOffInfo": "Sdílení polohy je vypnuto — aktualizace GPS hostitele a odesílání sítě jsou zakázány. Povolte možnost Sdílet moji polohu výše a použijte automatické obnovení nebo odešlete svou pozici.",
-    "shareMyLocationHint": "Pokud je tato aplikace povolena, může vyhledat vaši polohu v tomto počítači a odeslat ji přes Meshtastic, MeshCore nebo Reticulum (sdílení chatu, rádio push, RMAP). Po vypnutí jsou vyhledávání GPS hostitele a odesílání aplikací vypnuté; statické souřadnice stále fungují pouze pro vaši místní mapu. Rádio s vlastní GPS může stále zobrazovat vaši polohu lokálně. Firmware zařízení se může vysílat, dokud neupravíte nastavení rádia nebo modulů.",
     "deleteOldNodesConfirm_few": "Tímto trvale smažete všechny uzly, které nebyly za poslední {{days}} dny slyšet. Budou znovu objeveny, až budou znovu vysílat.",
     "pruneDistantDeleteConfirm_few": "Smazat {{count}} uzly",
     "pruneDistantNodesConfirm_few": "Touto akcí trvale smažete ze zařízení {{count}} uzly za {{distance}} {{unit}}. Toto nelze vrátit zpět.",
@@ -399,7 +397,8 @@
       "deepSea": "Hlubina",
       "dusk": "Soumrak",
       "evergreen": "Jehličí",
-      "highContrast": "Vysoký kontrast"
+      "highContrast": "Vysoký kontrast",
+      "daylight": "Denní světlo"
     },
     "themeAccents": {
       "heading": "Zvýraznění",
@@ -427,7 +426,9 @@
     "updatesSection": "Aktualizace",
     "autoUpdateDownload": "Automaticky stahovat aktualizace",
     "autoUpdateDownloadDesc": "Po každém šeku stáhne nejnovější aktualizaci na pozadí. Když je vypnuto, aktualizace jsou stále detekovány, ale stahovány pouze po stisknutí tlačítka Stáhnout — užitečné, když správce balíčků zpracovává instalaci.",
-    "autoUpdateDownloadSaveFailed": "Nelze uložit nastavení automatické aktualizace stahování."
+    "autoUpdateDownloadSaveFailed": "Nelze uložit nastavení automatické aktualizace stahování.",
+    "shareMyLocationHint": "Pokud je tato aplikace povolena, může vyhledat tvoji polohu v tomto počítači a odeslat ji přes Meshtastic nebo MeshCore (sdílení chatu, rádiový signál). Po vypnutí jsou vyhledávání GPS hostitele a odesílání aplikací vypnuté; statické souřadnice stále fungují pouze pro vaši místní mapu. Rádio s vlastní GPS může stále zobrazovat vaši polohu lokálně. Firmware zařízení se může vysílat, dokud neupravíte nastavení rádia nebo modulů.",
+    "logPanelHelp": "Pokud je povoleno, na pravé straně se zobrazí živý záznamový proud. Ladicí řádky vyžadují zaškrtávací políčko uvnitř panelu protokolu."
   },
   "aria": {
     "closeDialog": "Zavřít dialog",
@@ -1132,7 +1133,7 @@
     "errors": {
       "ble": {
         "adapter_missing": "Nebyl nalezen žádný adaptér Bluetooth. Povolte Bluetooth v nastavení systému a zkuste to znovu.",
-        "permission_denied": "Bluetooth permission was denied. Allow Mesh Hub to use Bluetooth, then try again.",
+        "permission_denied": "Povolení Bluetooth bylo zamítnuto. Povolte aplikaci Mesh Hub používat Bluetooth a zkuste to znovu.",
         "scan_busy": "Probíhá další skenování Bluetooth. Chvíli počkejte a zkuste to znovu.",
         "mac_conflict": "This Bluetooth device is already connected to another protocol. Disconnect it there first.",
         "connect_timeout": "Vypršel časový limit připojení Bluetooth. Udržujte rádio v bdělém stavu a poblíž a zkuste to znovu.",
@@ -2301,7 +2302,7 @@
     "uptimeLabel": "Doba provozuschopnosti",
     "txQueueLabel": "TX fronta",
     "floodDirectSentLabel": "Flood / Přímo odesláno",
-    "floodDirectRecvLabel": "Flood / Přímá recv",
+    "floodDirectRecvLabel": "Flood / přímý příjem",
     "errorsLabel": "Chyby",
     "dupsDirectFloodLabel": "Dups (přímý / flood)",
     "radioStatsLocalHeading": "Statistiky rádia (místní)",
@@ -3022,9 +3023,9 @@
     "paFanDisabledDesc": "Vypněte chladicí ventilátor výkonového zesilovače (závisí na hardwaru).",
     "rebroadcastModeLabel": "Rebroadcast Mode",
     "nodeInfoBroadcastSecsLabel": "Node Info Broadcast Interval",
-    "nodeInfoBroadcastSecsDesc": "How often to broadcast node info in seconds (0 = firmware default ~15 min).",
+    "nodeInfoBroadcastSecsDesc": "Jak často vysílat informace o uzlu v sekundách (0 = výchozí firmware ~15 minut).",
     "doubleTapAsButtonPressLabel": "Double-tap as Button Press",
-    "doubleTapAsButtonPressDesc": "Treat an accelerometer double-tap as a user button press (hardware-dependent).",
+    "doubleTapAsButtonPressDesc": "Dvojité klepnutí zachycené akcelerometrem považovat za stisk uživatelského tlačítka (závisí na hardwaru).",
     "disableTripleClickLabel": "Disable Triple-click",
     "disableTripleClickDesc": "Zakažte akci trojitého kliknutí na uživatelské tlačítko.",
     "ledHeartbeatDisabledLabel": "Disable LED Heartbeat",
@@ -3062,7 +3063,7 @@
       }
     },
     "autoScreenCarouselSecsLabel": "Screen Carousel Interval",
-    "autoScreenCarouselSecsDesc": "Seconds between automatic screen page changes. 0 to disable.",
+    "autoScreenCarouselSecsDesc": "Sekundy mezi automatickými změnami stránky na obrazovce. 0 pro zakázání.",
     "oledTypeLabel": "OLED Type",
     "flipScreenLabel": "Flip Screen",
     "flipScreenDesc": "Otočte displej o 180 stupňů.",
@@ -3072,7 +3073,7 @@
     "wakeOnTapOrMotionDesc": "Probudit obrazovku, když na zařízení klepnete nebo na něj pohnete.",
     "use12hClockLabel": "12-Hour Clock",
     "useLongNodeNameLabel": "Use Long Node Name",
-    "useLongNodeNameDesc": "Show full node name instead of short name on screen.",
+    "useLongNodeNameDesc": "Zobrazit celý název uzlu namísto krátkého názvu na obrazovce.",
     "enableMessageBubblesLabel": "Message Bubbles",
     "enableMessageBubblesDesc": "Zobrazit příchozí zprávy v bublině na displeji.",
     "oledTypes": {
@@ -4279,7 +4280,7 @@
       "severity": "Severity",
       "category": "Category",
       "codes": "Codes",
-      "removeCode": "Remove code {{code}}",
+      "removeCode": "Odstranit kód {{code}}",
       "freetext": "Free text (pax, GPS, notes)",
       "addPax": "Add 1pax",
       "attachGps": "Attach GPS",
@@ -4296,14 +4297,14 @@
     "rebroadcast": {
       "title": "MECP RF rebroadcast",
       "hint": "Volitelně přemosťujte MECP slyšené na jednom protokolu protokolu na druhý. Ve výchozím nastavení vypnuto. Chcete-li cestu také obrátit, povolte možnost Obousměrné.",
-      "add": "Add bridge rule",
-      "remove": "Remove bridge rule",
+      "add": "Přidat pravidlo mostu",
+      "remove": "Odstranit pravidlo mostu",
       "enableRule": "Enabled",
       "bidirectional": "Bidirectional",
       "endpointA": "Listen / source (A)",
       "endpointB": "Forward / destination (B)",
       "protocol": "Protocol",
-      "channelIndex": "Channel index"
+      "channelIndex": "Index kanálu"
     },
     "exportLogSuccess": "Protokol MECP exportován",
     "exportLogSuccessPath": "Protokol MECP exportován do {{path}}",

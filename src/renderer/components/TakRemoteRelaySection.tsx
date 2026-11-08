@@ -12,6 +12,7 @@ import { TCP_PORT_MAX, TCP_PORT_MIN } from '@/shared/tcpPort';
 
 import { useTakRemoteRelay } from '../hooks/useTakRemoteRelay';
 import { localizeTakRemoteUserError } from '../lib/takRemoteUserError';
+import { buttonClassName } from './ui/Button';
 import { INPUT_BOX_CLASS } from './ui/formClasses';
 
 const DEFAULT_TLS_PORT = 8089;
@@ -28,8 +29,8 @@ const DEFAULT_REMOTE_SETTINGS: TAKRemoteSettings = {
 };
 
 const STATUS_DOT: Record<TAKRemoteStatus['state'], string> = {
-  connected: 'bg-green-500',
-  connecting: 'bg-orange-500',
+  connected: 'bg-success-500',
+  connecting: 'bg-warning-500',
   disconnected: 'bg-ink-500',
 };
 
@@ -37,7 +38,7 @@ function CredentialSummary({ credentials }: { credentials: TAKRemoteCredentialSu
   const { t } = useTranslation();
   if (!credentials) return null;
   return (
-    <ul className="text-ink-400 space-y-1 text-xs">
+    <ul className="text-ink-400 text-label space-y-1">
       <li>
         {credentials.caSubjects.length > 0
           ? t('takServerPanel.remoteCaSummary', { names: credentials.caSubjects.join(', ') })
@@ -101,11 +102,13 @@ function EnrollForm({
 
   return (
     <div data-setting-anchor="tak.remote.enroll" className="space-y-2">
-      <h5 className="text-ink-300 text-xs font-medium">{t('takServerPanel.remoteEnrollTitle')}</h5>
-      <p className="text-ink-400 text-xs">{t('takServerPanel.remoteEnrollHint')}</p>
+      <h5 className="text-ink-300 text-label font-medium">
+        {t('takServerPanel.remoteEnrollTitle')}
+      </h5>
+      <p className="text-ink-400 text-label">{t('takServerPanel.remoteEnrollHint')}</p>
       <div className="flex flex-wrap items-end gap-2">
         <div>
-          <label htmlFor={`${id}-user`} className="text-ink-400 mb-1 block text-xs">
+          <label htmlFor={`${id}-user`} className="text-ink-400 text-label mb-1 block">
             {t('takServerPanel.remoteEnrollUsername')}
           </label>
           <input
@@ -124,7 +127,7 @@ function EnrollForm({
           />
         </div>
         <div>
-          <label htmlFor={`${id}-pass`} className="text-ink-400 mb-1 block text-xs">
+          <label htmlFor={`${id}-pass`} className="text-ink-400 text-label mb-1 block">
             {t('takServerPanel.remoteEnrollPassword')}
           </label>
           <input
@@ -141,7 +144,7 @@ function EnrollForm({
           />
         </div>
         <div>
-          <label htmlFor={`${id}-port`} className="text-ink-400 mb-1 block text-xs">
+          <label htmlFor={`${id}-port`} className="text-ink-400 text-label mb-1 block">
             {t('takServerPanel.remoteEnrollPort')}
           </label>
           <input
@@ -163,16 +166,16 @@ function EnrollForm({
           onClick={handleEnroll}
           aria-label={t('takServerPanel.remoteEnroll')}
           disabled={disabled || !ready}
-          className="bg-secondary-dark border-ink-600 text-ink-200 hover:border-ink-500 rounded-lg border px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+          className={buttonClassName('secondary', 'md')}
         >
           {t('takServerPanel.remoteEnroll')}
         </button>
       </div>
       {!hostValid && (
-        <p className="text-ink-400 text-xs">{t('takServerPanel.remoteEnrollNeedsHost')}</p>
+        <p className="text-ink-400 text-label">{t('takServerPanel.remoteEnrollNeedsHost')}</p>
       )}
       {!verifyServer && (
-        <p className="text-ink-400 text-xs">{t('takServerPanel.remoteEnrollNeedsVerify')}</p>
+        <p className="text-ink-400 text-label">{t('takServerPanel.remoteEnrollNeedsVerify')}</p>
       )}
     </div>
   );
@@ -253,9 +256,9 @@ function RemoteRelayForm({ initial, relay }: FormProps) {
       <div className="flex items-center gap-3">
         <span className={`h-3 w-3 shrink-0 rounded-full ${STATUS_DOT[status.state]}`} />
         <div className="min-w-0">
-          <p className="text-ink-200 text-sm font-medium">{statusLabel}</p>
+          <p className="text-ink-200 text-body-lg font-medium">{statusLabel}</p>
           {statusError && (
-            <p className="text-ink-400 text-xs break-words">
+            <p className="text-ink-400 text-label break-words">
               {t('takServerPanel.remoteLastError', { error: statusError })}
             </p>
           )}
@@ -263,14 +266,14 @@ function RemoteRelayForm({ initial, relay }: FormProps) {
       </div>
 
       {actionError && (
-        <div className="rounded-lg border border-red-700 bg-red-900/40 p-3 text-sm text-red-300">
+        <div className="rounded-card border-danger-700 bg-danger-900/40 text-body-lg text-danger-300 border p-3">
           {actionError}
         </div>
       )}
 
       <div className="flex flex-wrap gap-3">
         <div data-setting-anchor="tak.remote.host" className="min-w-0 flex-1 basis-56">
-          <label htmlFor={`${id}-host`} className="text-ink-400 mb-1 block text-xs">
+          <label htmlFor={`${id}-host`} className="text-ink-400 text-label mb-1 block">
             {t('takServerPanel.remoteHostLabel')}
           </label>
           <input
@@ -288,11 +291,11 @@ function RemoteRelayForm({ initial, relay }: FormProps) {
             className={`${INPUT_BOX_CLASS} w-full`}
           />
           {host !== '' && !hostValid && (
-            <p className="mt-1 text-xs text-red-400">{t('takServerPanel.remoteHostError')}</p>
+            <p className="text-label text-danger-400 mt-1">{t('takServerPanel.remoteHostError')}</p>
           )}
         </div>
         <div data-setting-anchor="tak.remote.port">
-          <label htmlFor={`${id}-port`} className="text-ink-400 mb-1 block text-xs">
+          <label htmlFor={`${id}-port`} className="text-ink-400 text-label mb-1 block">
             {t('takServerPanel.remotePortLabel')}
           </label>
           <input
@@ -309,7 +312,7 @@ function RemoteRelayForm({ initial, relay }: FormProps) {
             className={`${INPUT_BOX_CLASS} w-28`}
           />
           {port !== '' && !portValid && (
-            <p className="mt-1 text-xs text-red-400">{t('takServerPanel.remotePortError')}</p>
+            <p className="text-label text-danger-400 mt-1">{t('takServerPanel.remotePortError')}</p>
           )}
         </div>
       </div>
@@ -327,12 +330,12 @@ function RemoteRelayForm({ initial, relay }: FormProps) {
             disabled={active || isBusy}
             className="accent-brand-green disabled:opacity-50"
           />
-          <label htmlFor={`${id}-tls`} className="text-ink-300 cursor-pointer text-sm">
+          <label htmlFor={`${id}-tls`} className="text-ink-300 text-body-lg cursor-pointer">
             {t('takServerPanel.remoteUseTls')}
           </label>
         </div>
         {!useTls && (
-          <p className="pl-6 text-xs text-orange-300">
+          <p className="text-label text-warning-300 pl-6">
             {t('takServerPanel.remotePlainTcpWarning')}
           </p>
         )}
@@ -349,7 +352,7 @@ function RemoteRelayForm({ initial, relay }: FormProps) {
               disabled={active || isBusy}
               className="accent-brand-green disabled:opacity-50"
             />
-            <label htmlFor={`${id}-verify`} className="text-ink-300 cursor-pointer text-sm">
+            <label htmlFor={`${id}-verify`} className="text-ink-300 text-body-lg cursor-pointer">
               {t('takServerPanel.remoteVerifyServer')}
             </label>
           </div>
@@ -370,19 +373,22 @@ function RemoteRelayForm({ initial, relay }: FormProps) {
               disabled={active || isBusy || !hasCa}
               className="accent-brand-green disabled:opacity-50"
             />
-            <label htmlFor={`${id}-name-mismatch`} className="text-ink-300 cursor-pointer text-sm">
+            <label
+              htmlFor={`${id}-name-mismatch`}
+              className="text-ink-300 text-body-lg cursor-pointer"
+            >
               {t('takServerPanel.remoteAllowNameMismatch')}
             </label>
           </div>
         )}
         {useTls && !verifyServer && (
-          <p className="text-xs text-orange-300">
+          <p className="text-label text-warning-300">
             {t('takServerPanel.remoteVerifyOffWarning')}{' '}
             {t('takServerPanel.remoteAutoConnectNeedsVerify')}
           </p>
         )}
         {useTls && verifyServer && !hasCa && (
-          <p className="text-ink-400 pl-6 text-xs">
+          <p className="text-ink-400 text-label pl-6">
             {t('takServerPanel.remoteNameMismatchNeedsCa')}
           </p>
         )}
@@ -398,24 +404,24 @@ function RemoteRelayForm({ initial, relay }: FormProps) {
             disabled={active || isBusy || !canAutoConnect}
             className="accent-brand-green disabled:opacity-50"
           />
-          <label htmlFor={`${id}-autoconnect`} className="text-ink-300 cursor-pointer text-sm">
+          <label htmlFor={`${id}-autoconnect`} className="text-ink-300 text-body-lg cursor-pointer">
             {t('takServerPanel.remoteAutoConnect')}
           </label>
         </div>
       </div>
 
       <div className="border-ink-700 space-y-3 border-t pt-4">
-        <h4 className="text-ink-300 text-xs font-medium">
+        <h4 className="text-ink-300 text-label font-medium">
           {t('takServerPanel.remoteCertificates')}
         </h4>
         <CredentialSummary credentials={credentials} />
-        <p className="text-ink-400 text-xs">{t('takServerPanel.remoteImportHint')}</p>
+        <p className="text-ink-400 text-label">{t('takServerPanel.remoteImportHint')}</p>
         <div
           data-setting-anchor="tak.remote.importCertificates"
           className="flex flex-wrap items-end gap-2"
         >
           <div>
-            <label htmlFor={`${id}-password`} className="text-ink-400 mb-1 block text-xs">
+            <label htmlFor={`${id}-password`} className="text-ink-400 text-label mb-1 block">
               {t('takServerPanel.remotePasswordLabel')}
             </label>
             <input
@@ -436,7 +442,7 @@ function RemoteRelayForm({ initial, relay }: FormProps) {
             onClick={handleImport}
             aria-label={t('takServerPanel.remoteImport')}
             disabled={active || isBusy}
-            className="bg-secondary-dark border-ink-600 text-ink-200 hover:border-ink-500 rounded-lg border px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+            className={buttonClassName('secondary', 'md')}
           >
             {t('takServerPanel.remoteImport')}
           </button>
@@ -446,7 +452,7 @@ function RemoteRelayForm({ initial, relay }: FormProps) {
               onClick={relay.clearCredentials}
               aria-label={t('takServerPanel.remoteClear')}
               disabled={active || isBusy}
-              className="bg-secondary-dark border-ink-600 text-ink-300 rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:border-red-800 hover:text-red-300 disabled:opacity-50"
+              className={buttonClassName('secondary', 'md')}
             >
               {t('takServerPanel.remoteClear')}
             </button>
@@ -471,7 +477,7 @@ function RemoteRelayForm({ initial, relay }: FormProps) {
             onClick={relay.disconnect}
             aria-label={t('takServerPanel.remoteDisconnect')}
             disabled={isBusy}
-            className="rounded-lg bg-red-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-600 disabled:opacity-50"
+            className={buttonClassName('destructive', 'lg')}
           >
             {t('takServerPanel.remoteDisconnect')}
           </button>
@@ -481,7 +487,7 @@ function RemoteRelayForm({ initial, relay }: FormProps) {
             onClick={handleConnect}
             aria-label={t('takServerPanel.remoteConnect')}
             disabled={isBusy || !hostValid || !portValid}
-            className="bg-brand-green hover:bg-brand-green/90 text-app-bg rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+            className={buttonClassName('primary', 'md')}
           >
             {t('takServerPanel.remoteConnect')}
           </button>
@@ -496,9 +502,9 @@ export default function TakRemoteRelaySection() {
   const { t } = useTranslation();
   const relay = useTakRemoteRelay();
   return (
-    <div className="bg-deep-black border-ink-800 space-y-3 rounded-xl border p-4">
-      <h3 className="text-ink-300 text-sm font-medium">{t('takServerPanel.remoteTitle')}</h3>
-      <p className="text-ink-400 text-xs">{t('takServerPanel.remoteDescription')}</p>
+    <div className="bg-deep-black border-ink-800 rounded-container space-y-3 border p-4">
+      <h3 className="text-ink-300 text-body-lg font-medium">{t('takServerPanel.remoteTitle')}</h3>
+      <p className="text-ink-400 text-label">{t('takServerPanel.remoteDescription')}</p>
       {/* The form seeds its fields from saved settings, so mount it once they have loaded. */}
       {relay.savedSettings !== undefined && (
         <RemoteRelayForm initial={relay.savedSettings ?? DEFAULT_REMOTE_SETTINGS} relay={relay} />

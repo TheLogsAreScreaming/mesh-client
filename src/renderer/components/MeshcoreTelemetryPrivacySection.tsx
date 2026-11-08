@@ -14,6 +14,7 @@ import {
   type MeshcoreTelemetryTriState,
   meshcoreTriStateToTelemetryMode,
 } from '../lib/meshcoreTelemetryPrivacy';
+import { buttonClassName } from './ui/Button';
 
 function TriStateRow({
   title,
@@ -64,17 +65,17 @@ function TriStateRow({
   return (
     <fieldset
       data-setting-anchor={anchorId}
-      className="border-ink-600/80 space-y-2 rounded-lg border p-3"
+      className="border-ink-600/80 rounded-card space-y-2 border p-3"
       disabled={disabled}
     >
-      <legend className="text-ink-200 px-1 text-sm font-medium">{title}</legend>
+      <legend className="text-ink-200 text-body-lg px-1 font-medium">{title}</legend>
       <div className="space-y-3">
         {options.map((opt) => {
           const inputId = `${groupName}-${opt.id}`;
           return (
             <div
               key={opt.id}
-              className={`hover:bg-secondary-dark/50 flex gap-2 rounded-md p-1.5 ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+              className={`hover:bg-secondary-dark/50 rounded-card flex gap-2 p-1.5 ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
             >
               <input
                 id={inputId}
@@ -92,8 +93,8 @@ function TriStateRow({
                 htmlFor={inputId}
                 className={`flex min-w-0 flex-1 cursor-pointer flex-col gap-0.5 ${disabled ? 'cursor-not-allowed' : ''}`}
               >
-                <span className="text-ink-200 text-sm">{opt.label}</span>
-                <span className="text-muted text-xs">{opt.sub}</span>
+                <span className="text-ink-200 text-body-lg">{opt.label}</span>
+                <span className="text-muted text-label">{opt.sub}</span>
               </label>
             </div>
           );
@@ -152,14 +153,14 @@ export default function MeshcoreTelemetryPrivacySection({
   return (
     <details
       data-setting-anchor="radio.telemetryPrivacy.section"
-      className="group bg-deep-black/50 border-ink-700 rounded-lg border"
+      className="group bg-deep-black/50 border-ink-700 rounded-card border"
     >
-      <summary className="text-ink-200 hover:bg-ink-800 flex cursor-pointer items-center justify-between rounded-lg px-4 py-3 font-medium transition-colors">
+      <summary className="text-ink-200 hover:bg-ink-800 rounded-card flex cursor-pointer items-center justify-between px-4 py-3 font-medium transition-colors">
         <span>{t('meshcoreTelemetryPrivacy.summary')}</span>
         <DetailsChevron />
       </summary>
       <div className="space-y-4 px-4 pb-4">
-        <p className="text-muted text-xs">{t('meshcoreTelemetryPrivacy.description')}</p>
+        <p className="text-muted text-label">{t('meshcoreTelemetryPrivacy.description')}</p>
         <TriStateRow
           anchorId="radio.telemetryPrivacy.allowTelemetry"
           title={t('meshcoreTelemetryPrivacy.allowTelemetryTitle')}
@@ -221,7 +222,7 @@ export default function MeshcoreTelemetryPrivacySection({
               );
             })
           }
-          className="bg-brand-green text-app-bg rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
+          className={buttonClassName('primary', 'md')}
         >
           {applying
             ? t('meshcoreTelemetryPrivacy.applying')

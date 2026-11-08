@@ -50,7 +50,7 @@ export function QuitButton() {
         }}
         aria-label={label}
         title={label}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-red-400 transition-colors hover:bg-red-950/40 hover:text-red-300"
+        className="rounded-card text-danger-400 hover:bg-danger-950/40 hover:text-danger-300 flex h-8 w-8 shrink-0 items-center justify-center transition-colors"
       >
         <LogOut aria-hidden className={ICON_MD} size={16} />
       </button>

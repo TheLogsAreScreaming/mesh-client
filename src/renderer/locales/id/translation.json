@@ -194,7 +194,6 @@
     "meshcorePathHashDeviceReported": "Laporan radio yang terhubung: {{mode}}",
     "meshcorePathHashModeHint": "Membutuhkan firmware pendamping v1.14.0+ dan repeater pada v1.14+ di sepanjang jalur. Repeater pra-1.14 secara diam-diam menjatuhkan paket multibyte. Repeater dan server ruangan juga dapat menggunakan CLI: set path.hash.mode {0|1|2}.",
     "meshcorePathHashApplyFailed": "Mode hash jalur gagal: {{message}}",
-    "logPanelHelp": "Saat diaktifkan, streaming log langsung muncul di sebelah kanan. Pada tab Reticulum, jalur perangkat menyertakan keluaran sespan dan kesehatan antarmuka lokal. Baris debug memerlukan kotak centang di dalam panel log.",
     "autoPruneUnheardContactsDaysAria": "Pangkas otomatis kontak yang belum pernah terdengar saat startup, lebih lama dari {{days}} hari",
     "capTotalContactsCountAria": "Batasi total kontak, pertahankan kontak {{count}} yang terakhir dilihat",
     "unknownError": "Kesalahan tidak diketahui",
@@ -364,7 +363,6 @@
     "messageActionsBarBgVisible": "Tampilkan latar belakang",
     "shareMyLocation": "Bagikan lokasi saya",
     "shareMyLocationOffInfo": "Berbagi lokasi tidak aktif — penyegaran GPS host dan pengiriman jala dinonaktifkan. Aktifkan Bagikan lokasi saya di atas untuk menggunakan penyegaran otomatis atau kirim posisi Anda.",
-    "shareMyLocationHint": "Saat diaktifkan, aplikasi ini dapat mencari lokasi Anda di komputer ini dan mengirimkannya melalui Meshtastic, MeshCore, atau Reticulum (berbagi obrolan, push radio, RMAP). Saat dinonaktifkan, pencarian GPS tuan rumah dan pengiriman aplikasi tidak aktif; koordinat statis masih berfungsi untuk peta lokal Anda saja. Radio dengan GPS sendiri mungkin masih menunjukkan posisi Anda secara lokal. Firmware perangkat mungkin masih disiarkan sampai Anda menyesuaikan pengaturan Radio atau Modul.",
     "fontSize": "Ukuran fonta",
     "fontSizeDesc": "Sesuaikan ukuran teks di seluruh aplikasi. Peta, grafik, dan terminal tidak terpengaruh.",
     "decreaseFontSize": "Perkecil Ukuran Font",
@@ -392,7 +390,8 @@
       "deepSea": "Laut dalam",
       "dusk": "Senja",
       "evergreen": "Hijau abadi",
-      "highContrast": "Kontras tinggi"
+      "highContrast": "Kontras tinggi",
+      "daylight": "Siang hari"
     },
     "themeAccents": {
       "heading": "Aksen",
@@ -420,7 +419,9 @@
     "updatesSection": "Pembaruan",
     "autoUpdateDownload": "Unduh pembaruan secara otomatis",
     "autoUpdateDownloadDesc": "Mengunduh pembaruan terbaru di latar belakang setelah setiap pemeriksaan. Ketika mati, pembaruan masih terdeteksi tetapi hanya diunduh ketika Anda menekan tombol Unduh — berguna ketika manajer paket menangani instalasi.",
-    "autoUpdateDownloadSaveFailed": "Tidak dapat menyimpan pengaturan unduhan pembaruan otomatis."
+    "autoUpdateDownloadSaveFailed": "Tidak dapat menyimpan pengaturan unduhan pembaruan otomatis.",
+    "shareMyLocationHint": "Saat diaktifkan, aplikasi ini dapat mencari lokasi Anda di komputer ini dan mengirimkannya melalui Meshtastic atau MeshCore (chat share, radio push). Saat dinonaktifkan, pencarian GPS tuan rumah dan pengiriman aplikasi tidak aktif; koordinat statis masih berfungsi untuk peta lokal Anda saja. Radio dengan GPS sendiri mungkin masih menunjukkan posisi Anda secara lokal. Firmware perangkat mungkin masih disiarkan sampai Anda menyesuaikan pengaturan Radio atau Modul.",
+    "logPanelHelp": "Saat diaktifkan, aliran log langsung muncul di sebelah kanan. Garis debug memerlukan kotak centang di dalam panel log."
   },
   "aria": {
     "closeDialog": "Tutup dialog",
@@ -1113,7 +1114,7 @@
     "errors": {
       "ble": {
         "adapter_missing": "Tidak ada adaptor Bluetooth yang ditemukan. Aktifkan Bluetooth di pengaturan sistem dan coba lagi.",
-        "permission_denied": "Bluetooth permission was denied. Allow Mesh Hub to use Bluetooth, then try again.",
+        "permission_denied": "Izin Bluetooth ditolak. Izinkan Mesh Hub menggunakan Bluetooth, lalu coba lagi.",
         "scan_busy": "Pemindaian Bluetooth lainnya sedang berlangsung. Tunggu sebentar dan coba lagi.",
         "mac_conflict": "This Bluetooth device is already connected to another protocol. Disconnect it there first.",
         "connect_timeout": "Waktu koneksi Bluetooth habis. Jaga agar radio tetap aktif dan berada di dekat Anda, lalu coba lagi.",
@@ -3961,7 +3962,7 @@
     "remotePortError": "Port harus antara 1 dan 65535",
     "remoteVerifyServer": "Verifikasi sertifikat server (disarankan)",
     "remoteAutoConnect": "Terhubung saat peluncuran aplikasi",
-    "remoteCertificates": "Certificates",
+    "remoteCertificates": "Sertifikat",
     "remoteCaSummary": "CA Tepercaya: {{names}}",
     "remoteNoCa": "Tidak ada CA yang diimpor. Server diperiksa terhadap toko kepercayaan sistem.",
     "remoteClientSummary": "Sertifikat klien: {{subject}}, kedaluwarsa {{date}}",
@@ -4241,7 +4242,7 @@
       "severity": "Severity",
       "category": "Category",
       "codes": "Codes",
-      "removeCode": "Remove code {{code}}",
+      "removeCode": "Hapus kode {{code}}",
       "freetext": "Free text (pax, GPS, notes)",
       "addPax": "Add 1pax",
       "attachGps": "Attach GPS",
@@ -4258,14 +4259,14 @@
     "rebroadcast": {
       "title": "MECP RF rebroadcast",
       "hint": "Secara opsional menjembatani MECP yang terdengar pada satu saluran protokol ke saluran protokol lainnya. Mati secara default. Aktifkan Dua Arah untuk juga membalikkan jalur.",
-      "add": "Add bridge rule",
-      "remove": "Remove bridge rule",
+      "add": "Tambah aturan jembatan",
+      "remove": "Hapus aturan jembatan",
       "enableRule": "Enabled",
       "bidirectional": "Bidirectional",
       "endpointA": "Listen / source (A)",
       "endpointB": "Forward / destination (B)",
       "protocol": "Protocol",
-      "channelIndex": "Channel index"
+      "channelIndex": "Indeks saluran"
     },
     "exportLogSuccess": "Log MECP diekspor",
     "exportLogSuccessPath": "Log MECP diekspor ke {{path}}",

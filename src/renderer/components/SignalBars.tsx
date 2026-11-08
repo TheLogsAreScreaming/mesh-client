@@ -1,5 +1,6 @@
 import { Link2 } from 'lucide-react-motion';
 
+import { useChartPalette } from '@/renderer/lib/chartPalette';
 import { useIconTrigger } from '@/renderer/lib/icons/iconMotionContext';
 
 import type { SignalBarLevel } from '../lib/hostLinkQuality';
@@ -12,7 +13,7 @@ export function LinkIcon({ className }: { className?: string }) {
   return (
     <Link2
       aria-hidden
-      className={className ?? 'h-4 w-4 text-green-400'}
+      className={className ?? 'text-success-400 h-4 w-4'}
       trigger={trigger}
       size={16}
     />
@@ -33,11 +34,9 @@ interface Props {
 }
 
 const BAR_HEIGHTS = [3, 6, 9, 12];
-const FILLED_COLOR = '#4ade80';
-const UNFILLED_COLOR = '#424242';
-const NO_DATA_COLOR = '#5c5c5c';
 
 export default function SignalBars({ rssi, level, noData, isSelf, className }: Props) {
+  const chart = useChartPalette();
   if (isSelf) {
     return <LinkIcon className={className ?? 'h-4 w-4'} />;
   }
@@ -54,7 +53,7 @@ export default function SignalBars({ rssi, level, noData, isSelf, className }: P
           y={12 - h}
           width="3"
           height={h}
-          fill={showNoData ? NO_DATA_COLOR : i < resolvedLevel ? FILLED_COLOR : UNFILLED_COLOR}
+          fill={showNoData ? chart.track : i < resolvedLevel ? chart.green400 : chart.grid}
           rx="0.5"
         />
       ))}

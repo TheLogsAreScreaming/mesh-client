@@ -38,8 +38,8 @@ export function SecureSecretsStartup({ children }: { children: ReactNode }) {
           <div className="bg-ink-700 h-8 w-8 animate-pulse rounded-full" aria-hidden />
         </output>
       ) : (
-        <div role="alert" className="text-ink-200 max-w-md space-y-3 text-sm">
-          <h1 className="text-lg font-semibold">{t('app.savedSettingsUnavailable')}</h1>
+        <div role="alert" className="text-ink-200 text-body-lg max-w-md space-y-3">
+          <h1 className="text-heading font-semibold">{t('app.savedSettingsUnavailable')}</h1>
           <p>{t('app.savedSettingsRecovery')}</p>
           <Button
             variant="primary"

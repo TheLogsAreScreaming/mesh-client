@@ -194,7 +194,6 @@
     "meshcorePathHashDeviceReported": "Angeschlossene Funkberichte: {{mode}}",
     "meshcorePathHashModeHint": "Benötigt Begleit-Firmware v1.14.0+ und Repeater auf v1.14+ entlang des Pfades. Pre-1.14 Repeater legen Multibyte-Pakete stillschweigend ab. Repeater- und Raumserver können auch CLI: set path.hash.mode {0|1|2} verwenden.",
     "meshcorePathHashApplyFailed": "Pfad-Hash-Modus fehlgeschlagen: {{message}}",
-    "logPanelHelp": "Wenn diese Option aktiviert ist, wird rechts ein Live-Protokollstream angezeigt. Auf der Registerkarte „Reticulum“ umfassen die Gerätezeilen die Sidecar-Ausgabe und den Zustand der lokalen Schnittstelle. Für Debugzeilen ist das Kontrollkästchen im Protokollbereich erforderlich.",
     "autoPruneUnheardContactsDaysAria": "Ungehörte Kontakte, die älter als {{days}} Tage sind, werden beim Start automatisch bereinigt",
     "capTotalContactsCountAria": "Begrenzen Sie die Gesamtzahl der Kontakte und behalten Sie die zuletzt gesehenen {{count}}-Kontakte bei",
     "unknownError": "Unbekannter Fehler",
@@ -364,7 +363,6 @@
     "messageActionsBarBgVisible": "Zeige Hintergrund",
     "shareMyLocation": "Meinen Standort teilen",
     "shareMyLocationOffInfo": "Die Standortfreigabe ist deaktiviert — Host-GPS-Aktualisierung und Mesh-Versand sind deaktiviert. Aktivieren Sie Meinen Standort oben teilen, um die automatische Aktualisierung zu verwenden oder Ihre Position zu senden.",
-    "shareMyLocationHint": "Wenn diese App aktiviert ist, kann sie Ihren Standort auf diesem Computer nachschlagen und ihn über Meshtastic, MeshCore oder Reticulum (Chatfreigabe, Radio-Push, RMAP) senden. Wenn diese Option deaktiviert ist, sind Host-GPS-Suchvorgänge und das Senden von Apps deaktiviert. Statische Koordinaten funktionieren immer noch nur für deine lokale Karte. Ein Radio mit eigenem GPS kann immer noch Ihre Position vor Ort anzeigen. Die Geräte-Firmware kann weiterhin senden, bis Sie die Radio- oder Moduleinstellungen anpassen.",
     "fontSize": "Schriftgrösse",
     "fontSizeDesc": "Passen Sie die Textgröße in der App an. Karten, Diagramme und das Terminal sind nicht betroffen.",
     "decreaseFontSize": "Schrift verkleinern",
@@ -392,7 +390,8 @@
       "deepSea": "Tiefsee",
       "dusk": "Dämmerung",
       "evergreen": "Tannengrün",
-      "highContrast": "Hoher Kontrast"
+      "highContrast": "Hoher Kontrast",
+      "daylight": "Daylight"
     },
     "themeAccents": {
       "heading": "Akzent",
@@ -420,7 +419,9 @@
     "updatesSection": "Updates",
     "autoUpdateDownload": "App-Updates automatisch downloaden",
     "autoUpdateDownloadDesc": "Lädt nach jeder Prüfung das neueste Update im Hintergrund herunter. Wenn diese Option deaktiviert ist, werden Updates immer noch erkannt, aber nur heruntergeladen, wenn Sie auf die Schaltfläche Download klicken — nützlich, wenn ein Paketmanager die Installation übernimmt.",
-    "autoUpdateDownloadSaveFailed": "Die automatische Update-Download-Einstellung konnte nicht gespeichert werden."
+    "autoUpdateDownloadSaveFailed": "Die automatische Update-Download-Einstellung konnte nicht gespeichert werden.",
+    "shareMyLocationHint": "Wenn diese App aktiviert ist, sucht sie möglicherweise deinen Standort auf diesem Computer und sendet ihn über Meshtastic oder MeshCore (Chat-Share, Radio-Push). Wenn diese Option deaktiviert ist, sind Host-GPS-Suchvorgänge und das Senden von Apps deaktiviert. Statische Koordinaten funktionieren immer noch nur für deine lokale Karte. Ein Radio mit eigenem GPS kann immer noch Ihre Position vor Ort anzeigen. Die Geräte-Firmware kann weiterhin senden, bis Sie die Radio- oder Moduleinstellungen anpassen.",
+    "logPanelHelp": "Wenn diese Option aktiviert ist, wird rechts ein Live-Log-Stream angezeigt. Debug-Zeilen erfordern das Kontrollkästchen im Protokollfenster."
   },
   "aria": {
     "closeDialog": "Schließen Dialog",
@@ -1113,7 +1114,7 @@
     "errors": {
       "ble": {
         "adapter_missing": "Es wurde kein Bluetooth-Adapter gefunden. Aktivieren Sie Bluetooth in den Systemeinstellungen und versuchen Sie es erneut.",
-        "permission_denied": "Bluetooth permission was denied. Allow Mesh Hub to use Bluetooth, then try again.",
+        "permission_denied": "Bluetooth-Berechtigung wurde verweigert. Erlauben Sie Mesh Hub, Bluetooth zu verwenden, und versuchen Sie es dann erneut.",
         "scan_busy": "Ein weiterer Bluetooth-Scan ist im Gange. Warten Sie einen Moment und versuchen Sie es erneut.",
         "mac_conflict": "This Bluetooth device is already connected to another protocol. Disconnect it there first.",
         "connect_timeout": "Zeitüberschreitung der Bluetooth-Verbindung. Halten Sie das Radio wach und in der Nähe und versuchen Sie es dann erneut.",
@@ -2987,9 +2988,9 @@
     "paFanDisabledDesc": "Deaktivieren Sie den Leistungsverstärker-Kühllüfter (hardwareabhängig).",
     "rebroadcastModeLabel": "Rebroadcast Mode",
     "nodeInfoBroadcastSecsLabel": "Node Info Broadcast Interval",
-    "nodeInfoBroadcastSecsDesc": "How often to broadcast node info in seconds (0 = firmware default ~15 min).",
+    "nodeInfoBroadcastSecsDesc": "Wie oft Knoteninformationen in Sekunden übertragen werden sollen (0 = Firmware-Standard ~15 Minuten).",
     "doubleTapAsButtonPressLabel": "Double-tap as Button Press",
-    "doubleTapAsButtonPressDesc": "Treat an accelerometer double-tap as a user button press (hardware-dependent).",
+    "doubleTapAsButtonPressDesc": "Doppeltippen (Beschleunigungssensor) wie einen Tastendruck behandeln (hardwareabhängig).",
     "disableTripleClickLabel": "Disable Triple-click",
     "disableTripleClickDesc": "Deaktivieren Sie die Dreifachklick-Aktion auf der Benutzerschaltfläche.",
     "ledHeartbeatDisabledLabel": "Disable LED Heartbeat",
@@ -3027,7 +3028,7 @@
       }
     },
     "autoScreenCarouselSecsLabel": "Screen Carousel Interval",
-    "autoScreenCarouselSecsDesc": "Seconds between automatic screen page changes. 0 to disable.",
+    "autoScreenCarouselSecsDesc": "Sekunden zwischen den automatischen Änderungen der Bildschirmseite. 0 zum Deaktivieren.",
     "oledTypeLabel": "OLED Type",
     "flipScreenLabel": "Flip Screen",
     "flipScreenDesc": "Drehen Sie das Display um 180 Grad.",
@@ -3037,7 +3038,7 @@
     "wakeOnTapOrMotionDesc": "Wecken Sie den Bildschirm, wenn das Gerät angetippt oder bewegt wird.",
     "use12hClockLabel": "12-Hour Clock",
     "useLongNodeNameLabel": "Use Long Node Name",
-    "useLongNodeNameDesc": "Show full node name instead of short name on screen.",
+    "useLongNodeNameDesc": "Vollständigen Knotennamen anstelle des Kurznamens auf dem Bildschirm anzeigen.",
     "enableMessageBubblesLabel": "Message Bubbles",
     "enableMessageBubblesDesc": "Eingehende Nachrichten in einer Blase auf dem Display anzeigen.",
     "oledTypes": {
@@ -3961,7 +3962,7 @@
     "remotePortError": "Port muss zwischen 1 und 65535 liegen",
     "remoteVerifyServer": "Überprüfen Sie das Serverzertifikat (empfohlen)",
     "remoteAutoConnect": "Beim Start der Anwendung verbinden",
-    "remoteCertificates": "Zeugnisse",
+    "remoteCertificates": "Zertifikate",
     "remoteCaSummary": "Vertrauenswürdige CA: {{names}}",
     "remoteNoCa": "Keine CA importiert. Der Server wird mit dem Systemvertrauensspeicher verglichen.",
     "remoteClientSummary": "Kundenzertifikat: {{subject}}, gültig bis {{date}}",

@@ -26,14 +26,16 @@ export function MeshcoreRouteChain({
   const { t } = useTranslation();
 
   if (segments.length === 0 || (treatSingleSegmentAsDirect && segments.length <= 1)) {
-    return <span className={`text-ink-300 text-xs ${className}`}>{t('meshcoreRoute.direct')}</span>;
+    return (
+      <span className={`text-ink-300 text-label ${className}`}>{t('meshcoreRoute.direct')}</span>
+    );
   }
 
   // Last segment is typically the destination hash prefix; show named dest instead.
   const intermediates = segments.slice(0, -1);
 
   return (
-    <span className={`inline-flex flex-wrap items-center gap-1 text-xs ${className}`}>
+    <span className={`text-label inline-flex flex-wrap items-center gap-1 ${className}`}>
       <span className="text-brand-green">{t('meshcoreRoute.me')}</span>
       {intermediates.map((seg, i) => {
         const label = seg.resolvedLabel ?? seg.hex;
@@ -44,7 +46,7 @@ export function MeshcoreRouteChain({
           <span key={`${seg.hex}-${i}`} className="inline-flex items-center gap-1">
             <span className="text-ink-600">→</span>
             <span
-              className="rounded bg-indigo-900/40 px-1.5 py-0.5 font-mono text-indigo-300"
+              className="bg-info-900/40 text-info-300 rounded px-1.5 py-0.5 font-mono"
               title={title}
             >
               {label}
@@ -53,7 +55,7 @@ export function MeshcoreRouteChain({
         );
       })}
       <span className="text-ink-600">→</span>
-      <span className="text-white">▣ {destLabel}</span>
+      <span className="text-ink-50">▣ {destLabel}</span>
     </span>
   );
 }

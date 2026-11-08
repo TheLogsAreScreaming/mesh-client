@@ -15,7 +15,7 @@ export interface MessageTranslateButtonProps extends MessageTranslationProps {
   iconSize?: number;
 }
 
-const DEFAULT_BUTTON_CLASS = 'message-action text-muted shrink-0 rounded p-1 text-xs';
+const DEFAULT_BUTTON_CLASS = 'message-action text-muted shrink-0 rounded p-1 text-label';
 
 export function MessageTranslateButton({
   messageKey,

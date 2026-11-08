@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { mecpCodeInComposeMode, type MecpComposeMode } from '@/renderer/lib/mecp/mecpComposeRoles';
@@ -15,13 +15,11 @@ import {
   severityLabelKey,
 } from '@/renderer/lib/mecp/mecpMessages';
 
+import { DialogFrame } from '../ui/DialogFrame';
 import { TEXTAREA_BOX_CLASS } from '../ui/formClasses';
 import { MECP_SEVERITY_BADGE_CLASSES } from './MecpSeverityBadge';
 
 const SEVERITY_ORDER: Severity[] = [0, 1, 2, 3];
-
-const FOCUSABLE_SELECTOR =
-  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /** Increment an existing `Npax` token, or append `1pax`. */
 export function bumpMecpPaxFreetext(prev: string): string {
@@ -64,69 +62,11 @@ export function MecpComposeModal({
   );
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
-  const onCloseRef = useRef(onClose);
-
-  useEffect(() => {
-    onCloseRef.current = onClose;
-  }, [onClose]);
+  const titleId = useId();
 
   useEffect(() => {
     void loadMecpLanguage(mecpLanguageForAppLocale(i18n.language || 'en')).then(setLangFile);
   }, [i18n.language]);
-
-  useEffect(() => {
-    if (!open) return;
-    const panel = panelRef.current;
-    if (!panel) return;
-
-    previouslyFocusedRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
-
-    const focusables = () =>
-      [...panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)].filter(
-        (el) => el.offsetParent !== null || el === document.activeElement,
-      );
-
-    focusables()[0]?.focus();
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
-        onCloseRef.current();
-        return;
-      }
-      if (e.key !== 'Tab') return;
-
-      const nodes = focusables();
-      if (nodes.length === 0) return;
-
-      const first = nodes[0];
-      const last = nodes[nodes.length - 1];
-      const active = document.activeElement;
-
-      if (e.shiftKey) {
-        if (active === first || !panel.contains(active)) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else if (active === last || !panel.contains(active)) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener('keydown', onKeyDown, true);
-    return () => {
-      document.removeEventListener('keydown', onKeyDown, true);
-      const prev = previouslyFocusedRef.current;
-      if (prev && document.contains(prev)) {
-        prev.focus();
-      }
-    };
-  }, [open]);
 
   const codesForCategory = useMemo(() => {
     return Object.keys(langFile.codes)
@@ -222,208 +162,201 @@ export function MecpComposeModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <button
-        type="button"
-        aria-label={t('common.cancel')}
-        className="absolute inset-0 cursor-pointer border-0 bg-transparent p-0"
-        onClick={onClose}
-      />
-      <div
-        ref={panelRef}
-        className={`bg-deep-black rounded-modal shadow-level-4 relative max-h-[90vh] w-full max-w-lg overflow-y-auto border p-4 ${responseMode ? 'border-blue-700/50' : 'border-red-700/50'}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-      >
-        <div className="mb-3 flex items-center justify-between">
-          <h2
-            className={`text-lg font-semibold ${responseMode ? 'text-blue-200' : 'text-red-200'}`}
-          >
-            {title}
-          </h2>
+    <DialogFrame
+      labelledBy={titleId}
+      onClose={onClose}
+      // Escape stops here so the panel underneath (chat, map) never also reacts to it.
+      captureEscape
+      panelClassName={`max-h-[90vh] w-full max-w-lg overflow-y-auto p-4 ${responseMode ? 'border-blue-700/50!' : 'border-danger-700/50!'}`}
+    >
+      <div className="mb-3 flex items-center justify-between">
+        <h2
+          id={titleId}
+          className={`text-heading font-semibold ${responseMode ? 'text-blue-200' : 'text-danger-200'}`}
+        >
+          {title}
+        </h2>
+        <button
+          type="button"
+          className="text-ink-400 text-body-lg hover:text-ink-50"
+          onClick={onClose}
+          aria-label={t('aria.closeDialog')}
+        >
+          {t('common.close')}
+        </button>
+      </div>
+
+      <p className="text-ink-400 text-label mb-2">{t('mecp.compose.severity')}</p>
+      <div className="mb-3 flex flex-wrap gap-2">
+        {SEVERITY_ORDER.map((s) => (
           <button
+            key={s}
             type="button"
-            className="text-ink-400 text-sm hover:text-white"
-            onClick={onClose}
-            aria-label={t('aria.closeDialog')}
+            aria-label={t(severityLabelKey(s))}
+            aria-pressed={severity === s}
+            onClick={() => {
+              clearError();
+              setSeverity(s);
+            }}
+            className={`text-label rounded px-2 py-1 font-semibold ${
+              severity === s ? MECP_SEVERITY_BADGE_CLASSES[s] : 'bg-ink-800 text-ink-300'
+            }`}
           >
-            {t('common.close')}
+            {t(severityLabelKey(s))}
           </button>
-        </div>
+        ))}
+      </div>
 
-        <p className="text-ink-400 mb-2 text-xs">{t('mecp.compose.severity')}</p>
-        <div className="mb-3 flex flex-wrap gap-2">
-          {SEVERITY_ORDER.map((s) => (
-            <button
-              key={s}
-              type="button"
-              aria-label={t(severityLabelKey(s))}
-              aria-pressed={severity === s}
-              onClick={() => {
-                clearError();
-                setSeverity(s);
-              }}
-              className={`rounded px-2 py-1 text-xs font-semibold ${
-                severity === s ? MECP_SEVERITY_BADGE_CLASSES[s] : 'bg-ink-800 text-ink-300'
-              }`}
-            >
-              {t(severityLabelKey(s))}
-            </button>
-          ))}
-        </div>
+      {mode !== 'all' && (
+        <label className="text-ink-300 text-label mb-3 flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={showAllCodes}
+            aria-label={t('mecp.compose.showAllCodes')}
+            onChange={(event) => {
+              setShowAllCodes(event.target.checked);
+              setCategory(initialCategory);
+            }}
+          />
+          {t('mecp.compose.showAllCodes')}
+        </label>
+      )}
+      <p className="text-ink-400 text-label mb-2">{t('mecp.compose.category')}</p>
+      <div className="mb-3 grid grid-cols-3 gap-1 sm:grid-cols-4">
+        {categories.map((letter) => (
+          <button
+            key={letter}
+            type="button"
+            aria-pressed={category === letter}
+            aria-label={langFile.categories[letter]?.name ?? letter}
+            onClick={() => {
+              clearError();
+              setCategory(letter);
+            }}
+            className={`text-2xs rounded px-1 py-1 ${
+              category === letter
+                ? responseMode
+                  ? 'bg-blue-900/80 text-blue-100'
+                  : 'bg-danger-900/80 text-danger-100'
+                : 'bg-ink-800 text-ink-300'
+            }`}
+          >
+            {letter} {langFile.categories[letter]?.name ?? ''}
+          </button>
+        ))}
+      </div>
 
-        {mode !== 'all' && (
-          <label className="text-ink-300 mb-3 flex items-center gap-2 text-xs">
-            <input
-              type="checkbox"
-              checked={showAllCodes}
-              aria-label={t('mecp.compose.showAllCodes')}
-              onChange={(event) => {
-                setShowAllCodes(event.target.checked);
-                setCategory(initialCategory);
-              }}
-            />
-            {t('mecp.compose.showAllCodes')}
-          </label>
-        )}
-        <p className="text-ink-400 mb-2 text-xs">{t('mecp.compose.category')}</p>
-        <div className="mb-3 grid grid-cols-3 gap-1 sm:grid-cols-4">
-          {categories.map((letter) => (
+      <p className="text-ink-400 text-label mb-2">{t('mecp.compose.codes')}</p>
+      <div className="mb-2 flex max-h-32 flex-wrap gap-1 overflow-y-auto">
+        {codesForCategory.map((code) => (
+          <button
+            key={code}
+            type="button"
+            aria-pressed={codes.includes(code)}
+            onClick={() => {
+              toggleCode(code);
+            }}
+            className={`text-2xs rounded px-1.5 py-0.5 ${
+              codes.includes(code)
+                ? responseMode
+                  ? 'bg-blue-700 text-white'
+                  : 'bg-danger-700 text-white'
+                : 'bg-ink-800 text-ink-300'
+            }`}
+          >
+            {code} {langFile.codes[code]}
+          </button>
+        ))}
+      </div>
+      {codes.length > 0 ? (
+        <div className="mb-2 flex flex-wrap gap-1">
+          {codes.map((code) => (
             <button
-              key={letter}
+              key={`chip-${code}`}
               type="button"
-              aria-pressed={category === letter}
-              aria-label={langFile.categories[letter]?.name ?? letter}
-              onClick={() => {
-                clearError();
-                setCategory(letter);
-              }}
-              className={`text-2xs rounded px-1 py-1 ${
-                category === letter
-                  ? responseMode
-                    ? 'bg-blue-900/80 text-blue-100'
-                    : 'bg-red-900/80 text-red-100'
-                  : 'bg-ink-800 text-ink-300'
-              }`}
-            >
-              {letter} {langFile.categories[letter]?.name ?? ''}
-            </button>
-          ))}
-        </div>
-
-        <p className="text-ink-400 mb-2 text-xs">{t('mecp.compose.codes')}</p>
-        <div className="mb-2 flex max-h-32 flex-wrap gap-1 overflow-y-auto">
-          {codesForCategory.map((code) => (
-            <button
-              key={code}
-              type="button"
-              aria-pressed={codes.includes(code)}
+              aria-label={t('mecp.compose.removeCode', { code })}
               onClick={() => {
                 toggleCode(code);
               }}
-              className={`text-2xs rounded px-1.5 py-0.5 ${
-                codes.includes(code)
-                  ? responseMode
-                    ? 'bg-blue-700 text-white'
-                    : 'bg-red-700 text-white'
-                  : 'bg-ink-800 text-ink-300'
-              }`}
+              className={`text-2xs rounded-full px-2 py-0.5 ${responseMode ? 'bg-blue-900/60 text-blue-100' : 'bg-danger-900/60 text-danger-100'}`}
             >
-              {code} {langFile.codes[code]}
+              {code} ×
             </button>
           ))}
         </div>
-        {codes.length > 0 ? (
-          <div className="mb-2 flex flex-wrap gap-1">
-            {codes.map((code) => (
-              <button
-                key={`chip-${code}`}
-                type="button"
-                aria-label={t('mecp.compose.removeCode', { code })}
-                onClick={() => {
-                  toggleCode(code);
-                }}
-                className={`text-2xs rounded-full px-2 py-0.5 ${responseMode ? 'bg-blue-900/60 text-blue-100' : 'bg-red-900/60 text-red-100'}`}
-              >
-                {code} ×
-              </button>
-            ))}
-          </div>
-        ) : null}
+      ) : null}
 
-        <label className="text-ink-400 mb-1 block text-xs" htmlFor="mecp-freetext">
-          {t('mecp.compose.freetext')}
-        </label>
-        <textarea
-          id="mecp-freetext"
-          value={freetext}
-          onChange={(e) => {
+      <label className="text-ink-400 text-label mb-1 block" htmlFor="mecp-freetext">
+        {t('mecp.compose.freetext')}
+      </label>
+      <textarea
+        id="mecp-freetext"
+        value={freetext}
+        onChange={(e) => {
+          clearError();
+          setFreetext(e.target.value);
+        }}
+        rows={2}
+        className={`${TEXTAREA_BOX_CLASS} mb-2 w-full`}
+        aria-label={t('mecp.compose.freetext')}
+      />
+      <div className="mb-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          className="border-ink-600 text-ink-300 text-label rounded border px-2 py-0.5"
+          onClick={() => {
             clearError();
-            setFreetext(e.target.value);
+            setFreetext(bumpMecpPaxFreetext);
           }}
-          rows={2}
-          className={`${TEXTAREA_BOX_CLASS} mb-2 w-full`}
-          aria-label={t('mecp.compose.freetext')}
-        />
-        <div className="mb-3 flex flex-wrap gap-2">
-          <button
-            type="button"
-            className="border-ink-600 text-ink-300 rounded border px-2 py-0.5 text-xs"
-            onClick={() => {
-              clearError();
-              setFreetext(bumpMecpPaxFreetext);
-            }}
-            aria-label={t('mecp.compose.addPax')}
-          >
-            {t('mecp.compose.addPax')}
-          </button>
-          <button
-            type="button"
-            className="border-ink-600 text-ink-300 rounded border px-2 py-0.5 text-xs"
-            onClick={() => {
-              void attachGps();
-            }}
-            aria-label={t('mecp.compose.attachGps')}
-          >
-            {t('mecp.compose.attachGps')}
-          </button>
-        </div>
-
-        <p className="text-ink-300 mb-1 font-mono text-xs break-all">{encoded.message || '—'}</p>
-        <p
-          className={`mb-3 text-xs ${encoded.overLimit ? 'text-red-400' : 'text-muted'}`}
-          role="status"
+          aria-label={t('mecp.compose.addPax')}
         >
-          {t('mecp.compose.byteBudget', { used: byteLen, max: MAX_MESSAGE_BYTES })}
-        </p>
-
-        {error ? (
-          <p className="mb-3 text-xs text-red-400" role="alert">
-            {error}
-          </p>
-        ) : null}
-
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            className="text-ink-300 rounded px-3 py-1.5 text-sm"
-            onClick={onClose}
-            aria-label={t('common.cancel')}
-          >
-            {t('common.cancel')}
-          </button>
-          <button
-            type="button"
-            disabled={!canSend}
-            className={`rounded px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40 ${responseMode ? 'bg-blue-700' : 'bg-red-700'}`}
-            onClick={() => void handleSend()}
-            aria-label={t('mecp.compose.send')}
-          >
-            {t('mecp.compose.send')}
-          </button>
-        </div>
+          {t('mecp.compose.addPax')}
+        </button>
+        <button
+          type="button"
+          className="border-ink-600 text-ink-300 text-label rounded border px-2 py-0.5"
+          onClick={() => {
+            void attachGps();
+          }}
+          aria-label={t('mecp.compose.attachGps')}
+        >
+          {t('mecp.compose.attachGps')}
+        </button>
       </div>
-    </div>
+
+      <p className="text-ink-300 text-label mb-1 font-mono break-all">{encoded.message || '—'}</p>
+      <p
+        className={`text-label mb-3 ${encoded.overLimit ? 'text-danger-400' : 'text-muted'}`}
+        role="status"
+      >
+        {t('mecp.compose.byteBudget', { used: byteLen, max: MAX_MESSAGE_BYTES })}
+      </p>
+
+      {error ? (
+        <p className="text-label text-danger-400 mb-3" role="alert">
+          {error}
+        </p>
+      ) : null}
+
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          className="text-ink-300 text-body-lg rounded px-3 py-1.5"
+          onClick={onClose}
+          aria-label={t('common.cancel')}
+        >
+          {t('common.cancel')}
+        </button>
+        <button
+          type="button"
+          disabled={!canSend}
+          className={`text-body-lg rounded px-3 py-1.5 font-semibold text-white disabled:opacity-40 ${responseMode ? 'bg-blue-700' : 'bg-danger-700'}`}
+          onClick={() => void handleSend()}
+          aria-label={t('mecp.compose.send')}
+        >
+          {t('mecp.compose.send')}
+        </button>
+      </div>
+    </DialogFrame>
   );
 }

@@ -87,7 +87,7 @@ describe('TelemetryPanel', () => {
     const chart = screen.getByRole('img', { name: /Signal quality chart/i });
     expect(chart).toHaveAccessibleName(/5 dB.*-88 dBm/);
     for (const [index, unit, series, color] of [
-      [0, 'dB', 'SNR', 'var(--color-orange-400)'],
+      [0, 'dB', 'SNR', 'var(--color-warning-400)'],
       [1, 'dBm', 'RSSI', 'var(--color-blue-400)'],
     ] as const) {
       const axis = chart.querySelectorAll('.recharts-yAxis')[index];

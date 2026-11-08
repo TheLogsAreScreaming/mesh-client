@@ -1141,7 +1141,7 @@ describe('App accessibility', () => {
       name: 'MQTT error',
     });
     const mqttText = mqttLabel.querySelector('span.truncate');
-    expect(mqttText).toHaveClass('text-red-400');
+    expect(mqttText).toHaveClass('text-danger-400');
     expect(mqttText).not.toHaveClass('animate-pulse');
     expect(mqttLabel.querySelector('svg')).toHaveClass('animate-pulse');
   });
@@ -1170,7 +1170,7 @@ describe('App accessibility', () => {
       name: /^Radio: Reconnecting \(BLE\)/,
     });
     const deviceText = deviceLabel.querySelector('span.truncate');
-    expect(deviceText).toHaveClass('text-red-400');
+    expect(deviceText).toHaveClass('text-danger-400');
     expect(deviceText).not.toHaveClass('animate-pulse');
     expect(deviceLabel.querySelector('.rounded-full')).toHaveClass('animate-pulse');
     expect(

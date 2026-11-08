@@ -66,10 +66,10 @@ export function ThemePicker({
     <>
       <section aria-labelledby="app-theme-surfaces-heading" className="space-y-2">
         <div>
-          <h4 id="app-theme-surfaces-heading" className="text-ink-200 text-sm font-medium">
+          <h4 id="app-theme-surfaces-heading" className="text-ink-200 text-body-lg font-medium">
             {t('appPanel.themePresets.heading')}
           </h4>
-          <p className="text-muted text-xs">
+          <p className="text-muted text-label">
             {activeSurface === null || activeAccent === null
               ? t('appPanel.themePresets.custom')
               : t('appPanel.themePresets.hint')}
@@ -107,7 +107,7 @@ export function ThemePicker({
         </div>
       </section>
       <section aria-labelledby="app-theme-accents-heading" className="space-y-2">
-        <h4 id="app-theme-accents-heading" className="text-ink-200 text-sm font-medium">
+        <h4 id="app-theme-accents-heading" className="text-ink-200 text-body-lg font-medium">
           {t('appPanel.themeAccents.heading')}
         </h4>
         <div

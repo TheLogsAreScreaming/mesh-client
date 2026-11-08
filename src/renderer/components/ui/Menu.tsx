@@ -180,7 +180,7 @@ export function Menu({
             }}
             className={`text-body rounded-badge flex w-full items-start gap-2.5 px-2.5 py-2 text-left transition-colors outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
               entry.tone === 'danger'
-                ? 'text-red-400 hover:bg-red-400/10 focus-visible:bg-red-400/10'
+                ? 'text-danger-400 hover:bg-danger-400/10 focus-visible:bg-danger-400/10'
                 : 'hover:bg-sidebar-active-bg focus-visible:bg-sidebar-active-bg text-ink-200'
             }`}
           >
@@ -347,17 +347,17 @@ export interface SplitButtonProps {
 
 const SPLIT_GROUP: Record<NonNullable<SplitButtonProps['variant']>, string> = {
   secondary: 'border-secondary-dark bg-sidebar-active-bg',
-  danger: 'border-red-400/45',
+  danger: 'border-danger-400/45',
 };
 
 const SPLIT_MAIN: Record<NonNullable<SplitButtonProps['variant']>, string> = {
   secondary: 'text-ink-200 hover:bg-secondary-dark',
-  danger: 'text-red-400 hover:bg-red-400/10',
+  danger: 'text-danger-400 hover:bg-danger-400/10',
 };
 
 const SPLIT_CHEVRON: Record<NonNullable<SplitButtonProps['variant']>, string> = {
   secondary: 'border-secondary-dark text-ink-300 hover:bg-secondary-dark',
-  danger: 'border-red-400/30 text-red-400 hover:bg-red-400/10',
+  danger: 'border-danger-400/30 text-danger-400 hover:bg-danger-400/10',
 };
 
 /** Main action plus a chevron menu for its rarer variants (Export formats, Disconnect all and quit). */

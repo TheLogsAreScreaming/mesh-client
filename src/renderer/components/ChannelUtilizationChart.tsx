@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Bar, BarChart, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
+import { useChartPalette } from '@/renderer/lib/chartPalette';
 import { formatMeshtasticNodeId } from '@/shared/nodeNameUtils';
 
 import type { MeshNode } from '../lib/types';
@@ -11,6 +12,7 @@ interface ChannelUtilizationChartProps {
 }
 
 export default function ChannelUtilizationChart({ nodes }: ChannelUtilizationChartProps) {
+  const chart = useChartPalette();
   const { t } = useTranslation();
 
   const rows = useMemo(() => {
@@ -28,8 +30,10 @@ export default function ChannelUtilizationChart({ nodes }: ChannelUtilizationCha
   if (rows.length === 0) {
     return (
       <div className="border-ink-700 bg-ink-800/50 mt-6 rounded border p-4">
-        <h3 className="text-ink-300 mb-1 text-sm font-medium">{t('channelUtilization.title')}</h3>
-        <p className="text-muted text-xs">{t('channelUtilization.noData')}</p>
+        <h3 className="text-ink-300 text-body-lg mb-1 font-medium">
+          {t('channelUtilization.title')}
+        </h3>
+        <p className="text-muted text-label">{t('channelUtilization.noData')}</p>
       </div>
     );
   }
@@ -38,36 +42,38 @@ export default function ChannelUtilizationChart({ nodes }: ChannelUtilizationCha
 
   return (
     <div className="border-ink-700 bg-ink-800/50 mt-6 rounded border p-4">
-      <h3 className="text-ink-300 mb-1 text-sm font-medium">{t('channelUtilization.title')}</h3>
+      <h3 className="text-ink-300 text-body-lg mb-1 font-medium">
+        {t('channelUtilization.title')}
+      </h3>
       <ResponsiveContainer width="100%" height={chartHeight}>
         <BarChart data={rows} layout="vertical" margin={{ top: 0, right: 48, left: 0, bottom: 0 }}>
           <XAxis
             type="number"
             domain={[0, 100]}
-            tick={{ fill: '#a3a3a3', fontSize: 11 }}
+            tick={{ fill: chart.label, fontSize: 11 }}
             tickFormatter={(v) => `${v}%`}
           />
           <YAxis
             type="category"
             dataKey="name"
             width={120}
-            tick={{ fill: '#a3a3a3', fontSize: 11 }}
+            tick={{ fill: chart.label, fontSize: 11 }}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#333333',
-              border: '1px solid #424242',
+              backgroundColor: chart.gridSubtle,
+              border: `1px solid ${chart.tooltipBorder}`,
               borderRadius: 6,
             }}
-            labelStyle={{ color: '#e0e0e0' }}
-            itemStyle={{ color: '#a3a3a3' }}
+            labelStyle={{ color: chart.text }}
+            itemStyle={{ color: chart.label }}
             formatter={(value) => [`${value}%`, t('channelUtilization.tooltipLabel')]}
           />
-          <Bar dataKey="pct" radius={[0, 3, 3, 0]} fill="#4ade80">
+          <Bar dataKey="pct" radius={[0, 3, 3, 0]} fill={chart.green400}>
             <LabelList
               dataKey="pct"
               position="right"
-              style={{ fill: '#a3a3a3', fontSize: 11 }}
+              style={{ fill: chart.label, fontSize: 11 }}
               formatter={(v: unknown) => `${v}%`}
             />
           </Bar>

@@ -146,7 +146,7 @@ function RegionalConnectionForm({ feed, provider = 'beacon' }: ConnectionControl
         >
           {t('liveTraffic.beacon.connect')}
         </Button>
-        <span className="text-muted text-xs">{t('liveTraffic.beacon.readOnly')}</span>
+        <span className="text-muted text-label">{t('liveTraffic.beacon.readOnly')}</span>
       </form>
       {(connected || busy) && (
         <Button
@@ -175,7 +175,7 @@ function RegionalConnectionForm({ feed, provider = 'beacon' }: ConnectionControl
         </Button>
       )}
       <p
-        className={`mt-1 text-xs ${feed.error || actionError ? 'text-orange-300' : 'text-muted'}`}
+        className={`text-label mt-1 ${feed.error || actionError ? 'text-warning-300' : 'text-muted'}`}
         role="status"
       >
         {actionError
@@ -185,7 +185,7 @@ function RegionalConnectionForm({ feed, provider = 'beacon' }: ConnectionControl
             : statusText}
       </p>
       {feed.directoryLimited && (
-        <p className="text-status-warning mt-1 text-xs" role="status">
+        <p className="text-status-warning text-label mt-1" role="status">
           {t('liveTraffic.directoryLimited')}
         </p>
       )}

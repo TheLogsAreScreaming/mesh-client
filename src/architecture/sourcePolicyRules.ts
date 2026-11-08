@@ -107,6 +107,28 @@ export const SOURCE_POLICY_RULES: SourcePolicyRule[] = [
       'ink-500 text is under 4.5:1 on the dark surfaces; use text-muted (themeable, passes 4.5:1)',
   },
   {
+    id: 'renderer-semantic-status-colors',
+    include: ['src/renderer/**/*.ts', 'src/renderer/**/*.tsx'],
+    exclude: [
+      'src/renderer/**/*.test.ts',
+      'src/renderer/**/*.test.tsx',
+      // Battery ramp: orange and yellow are distinct charge steps, not warning.
+      'src/renderer/lib/batteryGaugeUtils.ts',
+    ],
+    forbid:
+      /\b(?:bg|text|border|border-[trblxyse]|ring|ring-offset|divide|outline|fill|stroke|placeholder|accent|decoration|shadow|from|via|to|caret)-(?:red|orange|green|indigo)-\d{2,3}\b/,
+    message:
+      'Style guide: status colors use the semantic scales (danger, warning, success, info) so one change restyles every state and the Daylight theme can flip them; red / orange / green / indigo are not used directly',
+  },
+  {
+    id: 'renderer-type-and-radius-tokens',
+    include: ['src/renderer/**/*.tsx'],
+    exclude: ['src/renderer/**/*.test.tsx'],
+    forbid: /(?<![\w\-[/])(?:text-(?:xs|sm|base|lg|xl|2xl)|rounded-(?:sm|md|lg|xl))(?![\w\-[/])/,
+    message:
+      'Style guide: use the type tokens (text-label, text-body, text-body-lg, text-title, text-heading, text-display) and radius tokens (rounded-badge, -control, -card, -modal, -container), not Tailwind defaults',
+  },
+  {
     id: 'renderer-ink-neutrals',
     include: ['src/renderer/**/*.ts', 'src/renderer/**/*.tsx'],
     exclude: ['src/renderer/**/*.test.ts', 'src/renderer/**/*.test.tsx'],

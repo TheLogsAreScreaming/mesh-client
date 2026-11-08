@@ -194,7 +194,6 @@
     "meshcorePathHashDeviceReported": "Rapports radio connectés : {{mode}}",
     "meshcorePathHashModeHint": "Nécessite un microprogramme compagnon v1.14.0+ et des répéteurs sur v1.14+ le long du chemin. Les répéteurs pré-1,14 déposent silencieusement des paquets de plusieurs octets. Les serveurs de répéteur et de salle peuvent également utiliser CLI : set path.hash.mode {0|1|2}.",
     "meshcorePathHashApplyFailed": "Échec du mode de hachage du chemin : {{message}}",
-    "logPanelHelp": "Lorsqu'il est activé, un flux de journaux en direct apparaît sur la droite. Dans l’onglet Reticulum, les lignes de périphériques incluent la sortie side-car et l’état de l’interface locale. Les lignes de débogage nécessitent la case à cocher dans le panneau de journal.",
     "autoPruneUnheardContactsDaysAria": "Élague automatiquement les contacts non entendus au démarrage, datant de plus de {{days}} jours",
     "capTotalContactsCountAria": "Limiter le nombre total de contacts, conserver les contacts {{count}} les plus récemment vus",
     "unknownError": "Erreur inconnue",
@@ -364,7 +363,6 @@
     "messageActionsBarBgVisible": "Afficher l'arrière-plan",
     "shareMyLocation": "Partager mon emplacement",
     "shareMyLocationOffInfo": "Le partage de localisation est désactivé — l'actualisation du GPS de l'hôte et l'envoi de maillage sont désactivés. Activez Partager ma position ci-dessus pour utiliser l'actualisation automatique ou envoyer votre position.",
-    "shareMyLocationHint": "Lorsqu'elle est activée, cette application peut rechercher votre position sur cet ordinateur et l'envoyer via Meshtastic, MeshCore ou Reticulum (partage de chat, push radio, RMAP). Lorsqu'elles sont désactivées, les recherches GPS de l'hôte et l'envoi d'applications sont désactivés ; les coordonnées statiques ne fonctionnent toujours que pour votre carte locale. Une radio avec son propre GPS peut toujours afficher votre position localement. Le micrologiciel de l'appareil peut continuer à diffuser jusqu'à ce que vous régliez les paramètres Radio ou Modules.",
     "fontSize": "Taille de police",
     "fontSizeDesc": "Ajustez la taille du texte dans l'application. Les cartes, les graphiques et le terminal ne sont pas affectés.",
     "decreaseFontSize": "Réduire la taille de la police",
@@ -392,7 +390,8 @@
       "deepSea": "Abysses",
       "dusk": "Crépuscule",
       "evergreen": "Sapin",
-      "highContrast": "Contraste élevé"
+      "highContrast": "Contraste élevé",
+      "daylight": "Daylight"
     },
     "themeAccents": {
       "heading": "Accent",
@@ -420,7 +419,9 @@
     "updatesSection": "Mises à jour",
     "autoUpdateDownload": "Télécharger automatiquement les mises à jour",
     "autoUpdateDownloadDesc": "Télécharge la dernière mise à jour en arrière-plan après chaque vérification. Lorsqu'elle est désactivée, les mises à jour sont toujours détectées, mais seulement téléchargées lorsque vous appuyez sur le bouton Télécharger — utile lorsqu'un gestionnaire de paquets gère l'installation.",
-    "autoUpdateDownloadSaveFailed": "Impossible d'enregistrer le paramètre de téléchargement de mise à jour automatique."
+    "autoUpdateDownloadSaveFailed": "Impossible d'enregistrer le paramètre de téléchargement de mise à jour automatique.",
+    "shareMyLocationHint": "Lorsqu'elle est activée, cette application peut rechercher votre position sur cet ordinateur et l'envoyer sur Meshtastic ou MeshCore (partage de chat, push radio). Lorsqu'elles sont désactivées, les recherches GPS de l'hôte et l'envoi d'applications sont désactivés ; les coordonnées statiques ne fonctionnent toujours que pour votre carte locale. Une radio avec son propre GPS peut toujours afficher votre position localement. Le micrologiciel de l'appareil peut continuer à diffuser jusqu'à ce que vous régliez les paramètres Radio ou Modules.",
+    "logPanelHelp": "Lorsqu'il est activé, un flux de journaux en direct apparaît à droite. Les lignes de débogage nécessitent la case à cocher à l'intérieur du panneau de journal."
   },
   "aria": {
     "closeDialog": "Fermer la boîte de dialogue",
@@ -1113,7 +1114,7 @@
     "errors": {
       "ble": {
         "adapter_missing": "Aucun adaptateur Bluetooth n'a été trouvé. Activez Bluetooth dans les paramètres système et réessayez.",
-        "permission_denied": "Bluetooth permission was denied. Allow Mesh Hub to use Bluetooth, then try again.",
+        "permission_denied": "L'autorisation Bluetooth a été refusée. Autorisez Mesh Hub à utiliser Bluetooth, puis réessayez.",
         "scan_busy": "Une autre analyse Bluetooth est en cours. Attendez un instant et réessayez.",
         "mac_conflict": "This Bluetooth device is already connected to another protocol. Disconnect it there first.",
         "connect_timeout": "La connexion Bluetooth a expiré. Gardez la radio éveillée et à proximité, puis réessayez.",
@@ -2273,7 +2274,7 @@
     "uptimeLabel": "Uptime",
     "txQueueLabel": "File d'attente TX",
     "floodDirectSentLabel": "Flood /envoi direct",
-    "floodDirectRecvLabel": "Flood /Récupération directe",
+    "floodDirectRecvLabel": "Flood / direct reçu",
     "errorsLabel": "Erreurs",
     "dupsDirectFloodLabel": "Dups (direct / flood)",
     "radioStatsLocalHeading": "Statistiques radio (local)",
@@ -2987,9 +2988,9 @@
     "paFanDisabledDesc": "Désactivez le ventilateur de refroidissement de l'amplificateur de puissance (dépendant du matériel).",
     "rebroadcastModeLabel": "Rebroadcast Mode",
     "nodeInfoBroadcastSecsLabel": "Node Info Broadcast Interval",
-    "nodeInfoBroadcastSecsDesc": "How often to broadcast node info in seconds (0 = firmware default ~15 min).",
+    "nodeInfoBroadcastSecsDesc": "Fréquence de diffusion des informations du nœud, en secondes (0 = valeur par défaut du firmware, ~15 min).",
     "doubleTapAsButtonPressLabel": "Double-tap as Button Press",
-    "doubleTapAsButtonPressDesc": "Treat an accelerometer double-tap as a user button press (hardware-dependent).",
+    "doubleTapAsButtonPressDesc": "Traiter un double appui détecté par l’accéléromètre comme un appui sur le bouton utilisateur (selon le matériel).",
     "disableTripleClickLabel": "Disable Triple-click",
     "disableTripleClickDesc": "Désactivez l'action de triple-clic sur le bouton utilisateur.",
     "ledHeartbeatDisabledLabel": "Disable LED Heartbeat",
@@ -3027,7 +3028,7 @@
       }
     },
     "autoScreenCarouselSecsLabel": "Screen Carousel Interval",
-    "autoScreenCarouselSecsDesc": "Seconds between automatic screen page changes. 0 to disable.",
+    "autoScreenCarouselSecsDesc": "Secondes entre les changements automatiques de page d'écran. 0 pour désactiver.",
     "oledTypeLabel": "OLED Type",
     "flipScreenLabel": "Flip Screen",
     "flipScreenDesc": "Faites pivoter l'écran de 180 degrés.",
@@ -3037,7 +3038,7 @@
     "wakeOnTapOrMotionDesc": "Réveillez l'écran lorsque l'appareil est effleuré ou déplacé.",
     "use12hClockLabel": "12-Hour Clock",
     "useLongNodeNameLabel": "Use Long Node Name",
-    "useLongNodeNameDesc": "Show full node name instead of short name on screen.",
+    "useLongNodeNameDesc": "Afficher le nom complet du nœud au lieu du nom court à l'écran.",
     "enableMessageBubblesLabel": "Message Bubbles",
     "enableMessageBubblesDesc": "Afficher les messages entrants dans une bulle à l'écran.",
     "oledTypes": {

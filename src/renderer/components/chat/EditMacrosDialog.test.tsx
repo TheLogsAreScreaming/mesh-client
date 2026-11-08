@@ -46,7 +46,7 @@ describe('EditMacrosDialog', () => {
     render(<EditMacrosDialog protocol="meshcore" onClose={vi.fn()} />);
     const input = screen.getByRole('textbox', { name: 'F3 message text' });
     expect(input).toHaveAttribute('aria-invalid', 'true');
-    expect(input.className).toContain('border-red-500');
+    expect(input.className).toContain('border-danger-500');
     expect(screen.getByText('171 B')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'F1 message text' })).not.toHaveAttribute(
       'aria-invalid',
