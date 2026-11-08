@@ -18,11 +18,11 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '../..');
 describe('extractDocLinkTargets', () => {
   it('extracts GitHub blob, docs-site, and relative docs/*.md links in source order', () => {
     const fixture = `
-      href="https://github.com/charlottemeshtastic/mesh-client/blob/main/docs/diagnostics.md"
+      href="https://github.com/TheLogsAreScreaming/mesh-client/blob/main/docs/diagnostics.md"
       [Troubleshooting](docs/troubleshooting.md#section)
-      https://charlottemeshtastic.github.io/mesh-client/troubleshooting-meshcore/
+      https://thelogsarescreaming.github.io/mesh-client/troubleshooting-meshcore/
       [Broken](docs/missing.md)
-      https://charlottemeshtastic.github.io/mesh-client/
+      https://thelogsarescreaming.github.io/mesh-client/
     `;
     expect(extractDocLinkTargets(fixture)).toEqual([
       'docs/diagnostics.md',
@@ -67,10 +67,10 @@ describe('findBrokenDocLinks', () => {
       writeFileSync(
         join(root, 'src/main/links.ts'),
         [
-          "'https://charlottemeshtastic.github.io/mesh-client/troubleshooting/#real-heading'",
-          "'https://charlottemeshtastic.github.io/mesh-client/troubleshooting/#gone'",
-          "'https://charlottemeshtastic.github.io/mesh-client/nope/'",
-          "'https://charlottemeshtastic.github.io/mesh-client/install/'",
+          "'https://thelogsarescreaming.github.io/mesh-client/troubleshooting/#real-heading'",
+          "'https://thelogsarescreaming.github.io/mesh-client/troubleshooting/#gone'",
+          "'https://thelogsarescreaming.github.io/mesh-client/nope/'",
+          "'https://thelogsarescreaming.github.io/mesh-client/install/'",
         ].join('\n'),
       );
       expect(findBrokenDocLinks(root).map((b) => b.resolvedPath)).toEqual([

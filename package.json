@@ -11,10 +11,10 @@
     "electron",
     "desktop"
   ],
-  "homepage": "https://github.com/charlottemeshtastic/mesh-client",
+  "homepage": "https://github.com/TheLogsAreScreaming/mesh-client",
   "repository": {
     "type": "git",
-    "url": "https://github.com/charlottemeshtastic/mesh-client"
+    "url": "https://github.com/TheLogsAreScreaming/mesh-client"
   },
   "license": "GPL-3.0-or-later",
   "author": {

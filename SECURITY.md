@@ -6,8 +6,8 @@ We take the security of our project seriously and appreciate your efforts to hel
 
 If you believe you have found a security vulnerability, please **do not report it via a public GitHub issue**. Instead, please
 
-- open a private report at <https://github.com/charlottemeshtastic/mesh-client/security/advisories/new>, or
-- contact the repository owner, [@charlottemeshtastic](https://github.com/charlottemeshtastic), on GitHub
+- open a private report at <https://github.com/TheLogsAreScreaming/mesh-client/security/advisories/new>, or
+- contact the repository owner, [@TheLogsAreScreaming](https://github.com/TheLogsAreScreaming), on GitHub
 
 To help us investigate and triage the issue as quickly as possible, please include:
 

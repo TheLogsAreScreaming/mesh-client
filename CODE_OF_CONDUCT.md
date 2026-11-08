@@ -54,7 +54,7 @@ via an official social media account, or acting as an appointed representative a
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the community leaders responsible for enforcement by contacting
-the repository owner, [@charlottemeshtastic](https://github.com/charlottemeshtastic), on GitHub.
+the repository owner, [@TheLogsAreScreaming](https://github.com/TheLogsAreScreaming), on GitHub.
 All complaints will be reviewed and investigated promptly and fairly.
 
 All community leaders are obligated to respect the privacy and security of the

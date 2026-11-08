@@ -67,6 +67,6 @@ describe('basemapRegistry', () => {
 
   it('builds an identifying user agent', () => {
     expect(meshTilesUserAgent('5.38.0')).toContain('mesh-client/5.38.0');
-    expect(meshTilesUserAgent('5.38.0')).toContain('charlottemeshtastic/mesh-client');
+    expect(meshTilesUserAgent('5.38.0')).toContain('TheLogsAreScreaming/mesh-client');
   });
 });

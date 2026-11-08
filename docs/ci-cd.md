@@ -346,7 +346,7 @@ Canonical JSON lives at [`.github/rulesets/main-merge-queue.json`](../.github/ru
 
 ```bash
 # Update live ruleset from canonical JSON
-gh api repos/charlottemeshtastic/mesh-client/rulesets/20821455 \
+gh api repos/TheLogsAreScreaming/mesh-client/rulesets/20821455 \
   --method PUT \
   --input .github/rulesets/main-merge-queue.json
 ```

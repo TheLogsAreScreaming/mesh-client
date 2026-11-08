@@ -20,10 +20,10 @@ describe('docsSitePageUrl', () => {
   it('builds MkDocs directory URLs with optional anchors', () => {
     expect(docsSitePageUrl('index')).toBe(DOCS_SITE_URL);
     expect(docsSitePageUrl('diagnostics')).toBe(
-      'https://charlottemeshtastic.github.io/mesh-client/diagnostics/',
+      'https://thelogsarescreaming.github.io/mesh-client/diagnostics/',
     );
     expect(docsSitePageUrl('troubleshooting', 'reporting-bugs')).toBe(
-      'https://charlottemeshtastic.github.io/mesh-client/troubleshooting/#reporting-bugs',
+      'https://thelogsarescreaming.github.io/mesh-client/troubleshooting/#reporting-bugs',
     );
     expect(DIAGNOSTICS_DOCS_URL).toBe(docsSitePageUrl('diagnostics'));
   });

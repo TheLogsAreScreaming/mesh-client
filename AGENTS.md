@@ -137,7 +137,7 @@ Before PR: `pnpm run check:pr` (lint + typecheck + `typecheck:strict-shared` + f
 
 ## 7. Git & PR Workflow
 
-Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`). Remote: `charlottemeshtastic/mesh-client` (fork of `Colorado-Mesh/mesh-client`). Pre-PR: refresh `README`/version metadata as needed; `gh pr create` descriptions must cover **all** commits on the branch (`git log origin/main..HEAD --oneline`), not only the last one.
+Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`, `test:`). Remote: `TheLogsAreScreaming/mesh-client` (fork of `Colorado-Mesh/mesh-client`). Pre-PR: refresh `README`/version metadata as needed; `gh pr create` descriptions must cover **all** commits on the branch (`git log origin/main..HEAD --oneline`), not only the last one.
 
 ## 8. Subsystem Quick Reference
 

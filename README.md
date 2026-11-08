@@ -13,18 +13,18 @@
 
 ![License](https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)
-[![CI Build](https://github.com/charlottemeshtastic/mesh-client/actions/workflows/ci.yaml/badge.svg)](https://github.com/charlottemeshtastic/mesh-client/actions/workflows/ci.yaml)
-[![Build/Release Electron App](https://github.com/charlottemeshtastic/mesh-client/actions/workflows/release.yaml/badge.svg?event=push)](https://github.com/charlottemeshtastic/mesh-client/actions/workflows/release.yaml?query=event%3Apush)
-[![Flatpak Build](https://github.com/charlottemeshtastic/mesh-client/actions/workflows/flatpak.yaml/badge.svg)](https://github.com/charlottemeshtastic/mesh-client/actions/workflows/flatpak.yaml)
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/charlottemeshtastic/mesh-client)
-[![Publish Docs](https://github.com/charlottemeshtastic/mesh-client/actions/workflows/docs.yml/badge.svg)](https://github.com/charlottemeshtastic/mesh-client/actions/workflows/docs.yml)
+[![CI Build](https://github.com/TheLogsAreScreaming/mesh-client/actions/workflows/ci.yaml/badge.svg)](https://github.com/TheLogsAreScreaming/mesh-client/actions/workflows/ci.yaml)
+[![Build/Release Electron App](https://github.com/TheLogsAreScreaming/mesh-client/actions/workflows/release.yaml/badge.svg?event=push)](https://github.com/TheLogsAreScreaming/mesh-client/actions/workflows/release.yaml?query=event%3Apush)
+[![Flatpak Build](https://github.com/TheLogsAreScreaming/mesh-client/actions/workflows/flatpak.yaml/badge.svg)](https://github.com/TheLogsAreScreaming/mesh-client/actions/workflows/flatpak.yaml)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/TheLogsAreScreaming/mesh-client-releases)
+[![Publish Docs](https://github.com/TheLogsAreScreaming/mesh-client/actions/workflows/docs.yml/badge.svg)](https://github.com/TheLogsAreScreaming/mesh-client/actions/workflows/docs.yml)
 
 > [!NOTE]
 > **Mesh Hub is a volunteer-run project.** Bug reports, testing on real radios, translations, docs, and code are all welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 **For everyone, everywhere.** We welcome community participation and collaboration in the development of this project!
 
-Releases and build artifacts are published on [GitHub](https://github.com/charlottemeshtastic/mesh-client).
+Releases and build artifacts are published on [GitHub](https://github.com/TheLogsAreScreaming/mesh-client).
 
 ---
 
@@ -386,7 +386,7 @@ MeshCore runs simultaneously alongside Meshtastic. Use the protocol switcher at 
 | **Windows** | Windows 10 version **1809+** or Windows 11 (x64 and arm64 installers) |
 | **Linux**   | x86_64 or aarch64; AppImage, `.deb`, `.rpm`, or Flatpak               |
 
-**Pre-built binaries** for **macOS**, **Linux**, and **Windows** are available in the [GitHub Releases](https://github.com/charlottemeshtastic/mesh-client/releases) area. Download the installer or archive for your platform; no Node.js or build tools required.
+**Pre-built binaries** for **macOS**, **Linux**, and **Windows** are available in the [GitHub Releases](https://github.com/TheLogsAreScreaming/mesh-client-releases/releases) area. Download the installer or archive for your platform; no Node.js or build tools required.
 
 - **Windows (Intel/AMD x64):** the x64 `Setup` `.exe` installer
 - **Windows 11 on ARM (Snapdragon, etc.):** the `arm64` `Setup` `.exe` installer — do not use the x64 installer on native ARM hardware.
@@ -433,7 +433,7 @@ See [Troubleshooting; macOS: File is damaged…](docs/troubleshooting.md#macos-f
 **Prerequisites:** [Node.js 22.15.0+](https://nodejs.org/) and [pnpm 12+](https://pnpm.io/installation) (repo pins an exact `packageManager` — Corepack, or `npm i -g pnpm` / `npm i -g corepack` on Node 25+). After a pnpm major bump, `pnpm install` / `pnpm run dev` print upgrade instructions if your local pnpm is too old.
 
 ```bash
-git clone https://github.com/charlottemeshtastic/mesh-client
+git clone https://github.com/TheLogsAreScreaming/mesh-client
 cd mesh-client
 pnpm install
 pnpm run dev

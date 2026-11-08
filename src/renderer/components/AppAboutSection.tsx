@@ -4,7 +4,7 @@ import { MeshHubWordmark } from './MeshHubWordmark';
 
 const COMMUNITY_LINKS = [
   {
-    href: 'https://github.com/charlottemeshtastic/mesh-client',
+    href: 'https://github.com/TheLogsAreScreaming/mesh-client',
     labelKey: 'common.github',
     titleKey: 'app.footerGithubTitle',
   },

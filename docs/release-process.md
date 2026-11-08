@@ -225,7 +225,7 @@ If `latest.yml` lists hyphenated Setup names but the release only has dotted Git
 
 1. Download the existing x64 and arm64 NSIS binaries from the release (dotted names).
 2. Re-upload the **same files** as extra assets named `Mesh-client-Setup-{version}.exe` and `Mesh-client-Setup-{version}-arm64.exe`. Keep the dotted files.
-3. Confirm `https://github.com/charlottemeshtastic/mesh-client/releases/download/v{version}/Mesh-client-Setup-{version}.exe` returns 302, not 404.
+3. Confirm `https://github.com/TheLogsAreScreaming/mesh-client-releases/releases/download/v{version}/Mesh-client-Setup-{version}.exe` returns 302, not 404.
 
 Example for v5.36.0 (run from a temp dir after `gh auth login`):
 
@@ -248,6 +248,14 @@ When artifacts and notes look correct:
 2. Click **Publish release**
 
 ---
+
+## Mirror the release to the downloads repo
+
+The app updates from `TheLogsAreScreaming/mesh-client-releases`, so a release is not available to users until it is copied there. After publishing the release in the source repo, run this from a machine signed in with write access to both repos (CI's `GITHUB_TOKEN` cannot write to another repo):
+
+```bash
+scripts/mirror-release.sh v1.2.3
+```
 
 ## Version naming
 

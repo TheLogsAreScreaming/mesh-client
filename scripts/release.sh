@@ -210,7 +210,7 @@ push_prepared_release() {
   print_success "--------------------------------------------------------"
   print_success "Success! $new_version has been pushed."
   print_success "GitHub Actions will now begin building the distributables."
-  echo "Check progress at: https://github.com/charlottemeshtastic/mesh-client/actions"
+  echo "Check progress at: https://github.com/TheLogsAreScreaming/mesh-client/actions"
   print_warning "Releases are created as drafts — review artifacts, then publish on GitHub."
   print_success "--------------------------------------------------------"
 }
@@ -321,7 +321,7 @@ EOF
   echo "### macOS install"
   echo "- **Recommended:** open the **\`.dmg\`** and drag **Mesh Hub** to **Applications**."
   echo "- If you use the **\`.zip\`**: extract with **[Keka](https://www.keka.io/en/)** or \`ditto -xk\` — **do not use 7-Zip** (or Finder Archive Utility); they break framework symlinks and can crash at launch with \`Library not loaded: Squirrel.framework\`."
-  echo "- See [troubleshooting](https://charlottemeshtastic.github.io/mesh-client/troubleshooting/#macos-library-not-loaded-squirrelframework-after-zip-extract) if the app will not open after a ZIP extract."
+  echo "- See [troubleshooting](https://thelogsarescreaming.github.io/mesh-client/troubleshooting/#macos-library-not-loaded-squirrelframework-after-zip-extract) if the app will not open after a ZIP extract."
 
   echo ""
   echo "### Breaking Changes"
@@ -352,7 +352,7 @@ EOF
 
   echo ""
   echo "### Full Changelog"
-  echo "[\`$last_tag...$new_version\`](https://github.com/charlottemeshtastic/mesh-client/compare/$last_tag...$new_version)"
+  echo "[\`$last_tag...$new_version\`](https://github.com/TheLogsAreScreaming/mesh-client/compare/$last_tag...$new_version)"
 
   echo ""
   print_header "========================================"
