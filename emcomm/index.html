@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://charlottemeshtastic.github.io/mesh-client/emcomm/">
       
       
-        <link rel="prev" href="../features/">
+        <link rel="prev" href="../live-traffic-map/">
       
       
         <link rel="next" href="../key-backup-and-crypto/">
@@ -292,7 +292,7 @@
     
     
       <li class="md-tabs__item md-tabs__item--active">
-        <a href="./" class="md-tabs__link">
+        <a href="../live-traffic-map/" class="md-tabs__link">
           
   
   
@@ -520,6 +520,8 @@
       
         
       
+        
+      
     
     
     
@@ -567,6 +569,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../live-traffic-map/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Live Traffic Map
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1465,6 +1495,8 @@
       
         
       
+        
+      
     
     
     
@@ -1870,6 +1902,34 @@
     
   
     Offline maps
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/live-packet-map/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Live packet map
   
 
     
@@ -2301,10 +2361,11 @@
 </ul>
 <h2 id="sending-a-report">Sending a report<a class="headerlink" href="#sending-a-report" title="Permanent link">&para;</a></h2>
 <ol>
-<li>Turn on <strong>App → MECP → Show MECP button in Chat</strong> (off by default).</li>
-<li>In Chat, open the conversation to send to, then click the red <strong>siren</strong> button next to Send.</li>
-<li>Choose severity and codes, add free text and optionally your position, and send.</li>
+<li>Turn on <strong>App → MECP → Show MECP buttons in Chat</strong> (off by default).</li>
+<li>In Chat, open the conversation to send to, then click the red <strong>siren</strong> button to request help or report conditions, or the blue <strong>shield</strong> button to respond.</li>
+<li>Choose severity and codes, add free text and optionally your position, and send. Both workflows start at ROUTINE with no codes selected. The response workflow opens on acknowledgements and help updates. Use <strong>Show all MECP codes</strong> if you need a code from another category.</li>
 </ol>
+<p>Both workflows use the same standard MECP codes and translated labels, so other clients can read them. On MeshCore, queued reports and retries use the destination channel’s saved scope. Choose <strong>Unscoped</strong> beside Send for mesh-wide floods, or a saved region for local floods; <strong>Default</strong> follows the companion radio’s default.</p>
 <p>Every report goes through the <strong>emergency outbox</strong>. It is sent right away when the radio is up, and it keeps retrying (after 30 seconds, 1 minute, 2 minutes, then every 5 minutes) until the network acknowledges it. Acknowledgement means the radio heard the mesh repeat or confirm it (a Meshtastic ACK, a MeshCore repeater rebroadcast or DM ACK), or another station acknowledged or relayed your report. There is no age cutoff or attempt limit. While a report is waiting, Chat shows it with <strong>Waiting for network acknowledgement…</strong> or a retry countdown. If a report is stuck, use <strong>Stop retrying</strong> on it (you are asked to confirm). A soft cap of 20 queued emergency reports blocks the least urgent extras, but never deletes anything and never blocks a MAYDAY.</p>
 <h2 id="incident-tab">Incident tab<a class="headerlink" href="#incident-tab" title="Permanent link">&para;</a></h2>
 <p>The <strong>Incident</strong> tab is always visible on all three protocols, at the bottom of the rail next to <strong>App</strong>. Its red badge counts open MAYDAY and URGENT reports (drills included), so you notice them even if you rarely open the tab.</p>
@@ -2353,7 +2414,7 @@
 </ul>
 <p>Node IDs can be spoofed, especially on Meshtastic, so blocking stops casual abuse but not a determined attacker. Only block a sender you are sure is abusing MECP.</p>
 <h2 id="durable-audit-log">Durable audit log<a class="headerlink" href="#durable-audit-log" title="Permanent link">&para;</a></h2>
-<p>Every inbound MECP report is appended to <code>mecp-received.log</code> in the app data folder (separate from the session app log, rotated to <code>mecp-received.log.1</code>). Export it from <strong>App → MECP → Export MECP log</strong>. It is also included in support bundles.</p>
+<p>Every inbound MECP report is appended to <code>mecp-received.log</code> in the app data folder (separate from the session app log, rotated to <code>mecp-received.log.1</code>). Export it from <strong>App → MECP → Export MECP log</strong>. The logs are included only in the private developer support bundle, never in the public-safe GitHub report.</p>
 <h2 id="rf-rebroadcast-bridge">RF rebroadcast (bridge)<a class="headerlink" href="#rf-rebroadcast-bridge" title="Permanent link">&para;</a></h2>
 <p><strong>App → MECP</strong> can bridge MECP reports between a Meshtastic channel and a MeshCore channel. It is <strong>off</strong> by default.</p>
 <ul>
@@ -2403,7 +2464,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 10, 2026 19:19:48 UTC">October 10, 2026</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="October 11, 2026 01:20:39 UTC">October 11, 2026</span>
   </span>
 
     
