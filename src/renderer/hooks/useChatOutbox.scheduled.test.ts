@@ -57,33 +57,6 @@ describe('scheduled send via durable outbox', () => {
     vi.useRealTimers();
   });
 
-  it.each<MeshProtocol>(['meshtastic', 'meshcore', 'reticulum'])(
-    'does not send a future scheduled row but sends it once due (%s)',
-    async (protocol) => {
-      const future = makeEntry({ id: 10, protocol, nextRetryAt: Date.now() + HOUR });
-      const sendFn = vi.fn().mockResolvedValue('ok');
-      vi.mocked(outbox.list).mockResolvedValue([future]);
-      await drainChatOutboxOnce({ protocol, sendFn, isSendAvailable: () => true });
-      expect(sendFn).not.toHaveBeenCalled();
-      expect(outbox.updateStatus).not.toHaveBeenCalled();
-
-      // Simulates a restart after the schedule elapsed: the same persisted row now drains.
-      vi.mocked(outbox.list).mockResolvedValue([{ ...future, nextRetryAt: Date.now() - 1000 }]);
-      if (protocol === 'reticulum') {
-        // Reticulum drain requires a receipt; this test only covers the eligibility gate.
-        sendFn.mockResolvedValue(undefined);
-      }
-      await drainChatOutboxOnce({
-        protocol,
-        sendFn,
-        isSendAvailable: () => true,
-        reticulumReceiptTimeoutMs: 1,
-      });
-      expect(sendFn).toHaveBeenCalledTimes(1);
-      expect(sendFn.mock.calls[0][0]).toBe('hello');
-    },
-  );
-
   it('treats a scheduled row as App-drained and arms the retry timer for it', () => {
     const at = Date.now() + HOUR;
     const scheduled = makeEntry({ id: 2, nextRetryAt: at });

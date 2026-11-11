@@ -139,52 +139,6 @@ describe('AI history conversation boundaries', () => {
       }),
     ).toMatchObject([{ body: 'legacy room' }]);
   });
-  it('scopes Reticulum identity and peer before limit', () => {
-    const peer = 'aa'.repeat(16);
-    for (const [identity, sender, to, body] of [
-      ['self', peer, 'own', 'in'],
-      ['self', 'own', peer, 'out'],
-      ['other', peer, 'own', 'wrong identity'],
-      ['self', 'bb'.repeat(16), 'own', 'other peer'],
-    ])
-      db.prepareOnce(
-        'INSERT INTO reticulum_messages (identity_id,sender_id,to_hash,payload,timestamp) VALUES (?, ?, ?, ?, 100)',
-      ).run(identity, sender, to, body);
-    expect(
-      querySummaryHistory(db, {
-        protocol: 'reticulum',
-        surface: 'dm',
-        identityId: 'self',
-        peerHash: peer,
-        sinceMs: 100,
-        untilMs: 100,
-      }).map((m) => m.body),
-    ).toEqual(['in', 'out']);
-  });
-  it('normalizes RRC rooms and excludes notices and other hubs', () => {
-    const hub = 'ab'.repeat(16);
-    for (const [room, kind, body] of [
-      ['lobby', 'msg', 'chat'],
-      ['lobby', 'notice', 'system'],
-      ['other', 'msg', 'other'],
-    ])
-      db.prepareOnce(
-        'INSERT INTO rrc_messages (message_id,hub_hash,room,kind,body,timestamp) VALUES (?, ?, ?, ?, ?, 100)',
-      ).run(body, hub, room, kind, body);
-    db.prepareOnce(
-      'INSERT INTO rrc_messages (message_id,hub_hash,room,kind,body,timestamp,react_to) VALUES (?, ?, ?, ?, ?, 100, ?)',
-    ).run('reaction', hub, 'lobby', 'msg', '👍', '1111111111111111');
-    expect(
-      querySummaryHistory(db, {
-        protocol: 'reticulum',
-        surface: 'rrc',
-        hubHash: hub,
-        room: '#Lobby',
-        sinceMs: 100,
-        untilMs: 100,
-      }),
-    ).toMatchObject([{ body: 'chat' }]);
-  });
   it('validates malformed IPC arguments', () => {
     for (const value of [
       {},

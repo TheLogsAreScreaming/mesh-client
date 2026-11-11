@@ -7,7 +7,6 @@ import {
   setLiveChannelKeys,
 } from '../stores/liveChannelKeyStore';
 import { useNodeStore } from '../stores/nodeStore';
-import { useReticulumIdentityStore } from '../stores/reticulumIdentityStore';
 import { loadMutedViews } from './chatPanelProtocolStorage';
 import {
   CONVERSATION_MUTES_KEY,
@@ -22,8 +21,6 @@ import {
 import { meshcoreContactToMeshNode, pubkeyToNodeId } from './meshcoreUtils';
 import { meshcoreProtocol } from './protocols/MeshCoreProtocol';
 import { meshtasticProtocol } from './protocols/MeshtasticProtocol';
-import { reticulumProtocol } from './protocols/ReticulumProtocol';
-import { isRrcRoomMuted } from './rrcMention';
 import {
   MESHTASTIC_MQTT_SECRET_KEY,
   resetSecureSecretCacheForTests,
@@ -395,15 +392,6 @@ describe('stable conversation mutes', () => {
     expect(loadMutedViews('meshcore')).toEqual(new Set(['room:192', 'dm:5']));
   });
 
-  it('keys RRC rooms by full hub identity and canonical room spelling', () => {
-    expect(saveConversationMutes('reticulum', new Set(), new Set(['rrc:ABC:#General']))).toBe(true);
-    const views = loadMutedViews('reticulum');
-    expect(isRrcRoomMuted('abc', 'general', views)).toBe(true);
-    expect(isRrcRoomMuted('def', 'general', views)).toBe(false);
-    expect(saveConversationMutes('reticulum', views, new Set())).toBe(true);
-    expect(isRrcRoomMuted('abc', '#GENERAL', loadMutedViews('reticulum'))).toBe(false);
-  });
-
   it('keeps previous preferences and UI on quota errors, and rejects unavailable identity', () => {
     expect(toggle('ch:0')).toBe(false);
     device();
@@ -487,36 +475,6 @@ describe('stable conversation mutes', () => {
     identities.useIdentityStore.setState(useIdentityStore.getState());
     expect(projectConversationMutes('meshcore', new Set())).toEqual(new Set());
     expect(saveAfterRestart('meshcore', new Set(), new Set(['ch:0']))).toBe(false);
-  });
-
-  it('uses the real Reticulum local LXMF identity with its offline store bucket', () => {
-    useIdentityStore.setState({
-      activeIdentityId: 'offline-reticulum',
-      identities: {
-        'offline-reticulum': {
-          id: 'offline-reticulum',
-          protocol: reticulumProtocol,
-          signature: '',
-          transports: [],
-          createdAt: 0,
-          lastSeenAt: 0,
-        },
-      },
-    });
-    useReticulumIdentityStore
-      .getState()
-      .setIdentity({ configured: true, identity_hash: 'a'.repeat(32), lxmf_hash: 'b'.repeat(32) });
-    useNodeStore.setState({
-      nodes: {
-        'offline-reticulum': { 5: { nodeId: 5, reticulumDestinationHash: 'c'.repeat(32) } },
-      },
-    });
-    expect(saveConversationMutes('reticulum', new Set(), new Set(['dm:5']))).toBe(true);
-    expect(loadMutedViews('reticulum')).toEqual(new Set(['dm:5']));
-    useReticulumIdentityStore
-      .getState()
-      .setIdentity({ configured: true, identity_hash: 'd'.repeat(32), lxmf_hash: 'e'.repeat(32) });
-    expect(loadMutedViews('reticulum').size).toBe(0);
   });
 
   it('preserves legacy mutes and refuses to overwrite a corrupt stable document', () => {

@@ -95,6 +95,48 @@ function makeMeshtasticBucketOverrides(
   };
 }
 
+<<<<<<< HEAD
+=======
+function makeReticulumSnapshot(
+  overrides: Partial<DebugReticulumSnapshot> = {},
+): DebugReticulumSnapshot {
+  const bucket = makeBucketOverrides({
+    hydrationSlotId: OFFLINE_RETICULUM_IDENTITY_ID,
+    connectIdentityId: OFFLINE_RETICULUM_IDENTITY_ID,
+    uiStoreIdentityId: OFFLINE_RETICULUM_IDENTITY_ID,
+    ...(overrides.bucket ?? {}),
+  });
+  return {
+    bucket,
+    sidecar: { running: false, port: 0, pid: null },
+    stack: null,
+    diagnosticRows: [],
+    fetchErrors: {},
+    ...overrides,
+  };
+}
+
+function makeMeshcoreRadio(
+  overrides: Partial<DebugSnapshot['meshcoreRadio']> = {},
+): DebugSnapshot['meshcoreRadio'] {
+  return {
+    radioFreq: null,
+    radioBw: null,
+    radioSf: null,
+    radioCr: null,
+    txPower: null,
+    manualAddContacts: null,
+    firmwareVersion: null,
+    pathHashMode: null,
+    radioContactCount: null,
+    radioMaxContacts: 350,
+    floodScopeRadioDefault: '#test',
+    floodScopeOverrides: {},
+    ...overrides,
+  };
+}
+
+>>>>>>> upstream/main
 function makeSyntheticSnapshot(overrides: Partial<DebugSnapshot> = {}): DebugSnapshot {
   const ui = {
     activePanelIndex: 0,
@@ -140,7 +182,11 @@ function makeSyntheticSnapshot(overrides: Partial<DebugSnapshot> = {}): DebugSna
     ui,
     meshtastic,
     meshcore,
+<<<<<<< HEAD
+=======
     meshcoreRadio: makeMeshcoreRadio(),
+    reticulum,
+>>>>>>> upstream/main
     ...overrides,
   };
   return { ...base, warnings: analyzeDebugSnapshot(base) };
@@ -197,6 +243,55 @@ describe('buildDebugSnapshot', () => {
     expect(snap.meshtastic.mqttChannelNameToIndex).toEqual({ LongFast: 1, Private: 0 });
   });
 
+<<<<<<< HEAD
+=======
+  it('includes MeshCore radio params and flood scope from context and storage', () => {
+    ensureOfflineProtocolIdentities();
+    setDebugSnapshotMeshcoreRadioLive(
+      buildDebugSnapshotMeshcoreRadioLive(
+        { radioFreq: 910.525, radioBw: 62.5, radioSf: 7, radioCr: 5, txPower: 22 },
+        { firmwareVersion: 'v1.14.0', pathHashMode: 1 },
+        165,
+      ),
+    );
+    localStorage.setItem(
+      APP_SETTINGS_STORAGE_KEY,
+      JSON.stringify({ meshcoreFloodScopeHashtag: '#tn' }),
+    );
+    localStorage.setItem(
+      floodScopeOverridesStorageKey('meshcore'),
+      JSON.stringify({ 'ch:1': '#east-tn', 'ch:2': FLOOD_SCOPE_OVERRIDE_UNSCOPED }),
+    );
+
+    const snap = buildDebugSnapshot();
+
+    expect(snap.meshcoreRadio).toMatchObject({
+      radioFreq: 910.525,
+      radioBw: 62.5,
+      radioSf: 7,
+      radioCr: 5,
+      txPower: 22,
+      firmwareVersion: 'v1.14.0',
+      pathHashMode: 1,
+      radioContactCount: 165,
+      floodScopeRadioDefault: '#tn',
+      floodScopeOverrides: { 'ch:1': '#east-tn', 'ch:2': FLOOD_SCOPE_OVERRIDE_UNSCOPED },
+    });
+    expect(snap.meshcoreRadio.radioMaxContacts).toBeGreaterThan(0);
+  });
+
+  it('uses activeProtocol from ui context for activeTab including reticulum', () => {
+    ensureOfflineProtocolIdentities();
+    setDebugSnapshotUiContext({ activeProtocol: 'reticulum' });
+
+    const snap = buildDebugSnapshot();
+
+    expect(snap.activeTab.protocol).toBe('reticulum');
+    expect(snap.activeTab.uiStoreIdentityId).toBe(OFFLINE_RETICULUM_IDENTITY_ID);
+    expect(snap.sessionSummary.reticulum.uiStoreIdentityId).toBe(OFFLINE_RETICULUM_IDENTITY_ID);
+  });
+
+>>>>>>> upstream/main
   it('includes resolved and primary identity bucket counts when connected', () => {
     ensureOfflineProtocolIdentities();
     const connectedId = 'id-mc-debug';
@@ -532,6 +627,88 @@ describe('analyzeDebugSnapshot', () => {
   });
 });
 
+<<<<<<< HEAD
+=======
+describe('buildDebugSnapshotAsync', () => {
+  beforeEach(() => {
+    useIdentityStore.setState({ identities: {}, activeIdentityId: null });
+    resetDebugSnapshotUiContext();
+    vi.mocked(window.electronAPI.reticulum.getStatus).mockReset();
+    vi.mocked(window.electronAPI.reticulum.proxyGet).mockReset();
+  });
+
+  it('includes bounded renderer memory separately from main-process liveness', async () => {
+    vi.mocked(window.electronAPI.reticulum.getStatus).mockResolvedValue({
+      running: false,
+      port: 0,
+      pid: null,
+    });
+    const rendererMemory: memorySampler.CoiMemorySnapshot = {
+      crossOriginIsolated: true,
+      supported: true,
+      sampling: false,
+      failed: false,
+      samples: [{ at: 1234, bytes: 5678, source: 'renderer-process' }],
+    };
+    const snapshot = vi
+      .spyOn(memorySampler, 'getCoiMemorySnapshot')
+      .mockReturnValue(rendererMemory);
+    try {
+      const result = await buildDebugSnapshotAsync();
+      expect(result.rendererMemory).toEqual(rendererMemory);
+      expect(result).toHaveProperty('mainLiveness');
+    } finally {
+      snapshot.mockRestore();
+    }
+  });
+
+  it('includes live sidecar stack payload when running', async () => {
+    ensureOfflineProtocolIdentities();
+    vi.mocked(window.electronAPI.reticulum.getStatus).mockResolvedValue({
+      running: true,
+      port: 19437,
+      pid: 7,
+    });
+    vi.mocked(window.electronAPI.reticulum.proxyGet).mockResolvedValue({
+      status: 'ok',
+      rns_ready: true,
+      lxmf_ready: false,
+    });
+
+    const snap = await buildDebugSnapshotAsync();
+
+    expect(snap.reticulum.sidecar.running).toBe(true);
+    expect(snap.reticulum.stack?.status).toMatchObject({ rns_ready: true });
+  });
+
+  it('includes mainLiveness from getRendererLiveness', async () => {
+    ensureOfflineProtocolIdentities();
+    vi.mocked(window.electronAPI.reticulum.getStatus).mockResolvedValue({
+      running: false,
+      port: 0,
+      pid: null,
+    });
+    vi.mocked(window.electronAPI.app.getRendererLiveness).mockResolvedValue({
+      mainUptimeSec: 3600,
+      lastRendererHeartbeatAgeMs: 12_000,
+      rendererUnresponsiveSeen: true,
+      rss: 100,
+      heapUsed: 50,
+    });
+
+    const snap = await buildDebugSnapshotAsync();
+
+    expect(snap.mainLiveness).toEqual({
+      mainUptimeSec: 3600,
+      lastRendererHeartbeatAgeMs: 12_000,
+      rendererUnresponsiveSeen: true,
+      rss: 100,
+      heapUsed: 50,
+    });
+  });
+});
+
+>>>>>>> upstream/main
 describe('copyDebugSnapshotToClipboard', () => {
   afterEach(() => {
     vi.unstubAllGlobals();

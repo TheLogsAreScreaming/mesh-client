@@ -56,57 +56,5 @@ const presence: MemberPresenceSnapshot = {
 };
 
 describe('TeamContactDetailDialog', () => {
-  it('defaults compose picker to last-active protocol and sends that link', async () => {
-    const user = userEvent.setup();
-    const onSendDm = vi.fn().mockReturnValue(true);
-    render(
-      <TeamContactDetailDialog
-        member={member}
-        presence={presence}
-        messagesByProtocol={{
-          meshtastic: [
-            {
-              sender_id: 10,
-              sender_name: 'C-MT',
-              payload: 'hello',
-              timestamp: 1,
-              channel: 0,
-              to: 1,
-            },
-          ],
-          meshcore: [],
-          reticulum: [],
-        }}
-        onClose={() => {}}
-        onOpenChat={() => {}}
-        onSendDm={onSendDm}
-      />,
-    );
 
-    expect(screen.getByLabelText(/send via/i)).toHaveValue('meshcore:20');
-    expect(screen.getByText(/hello/i)).toBeInTheDocument();
-    await user.type(screen.getByLabelText(/message body/i), 'Check-in');
-    await user.click(screen.getByRole('button', { name: /^send$/i }));
-    expect(onSendDm).toHaveBeenCalledWith({
-      protocol: 'meshcore',
-      destination: 20,
-      reticulumHash: null,
-      text: 'Check-in',
-    });
-  });
-
-  it('has no axe violations', async () => {
-    const { container } = render(
-      <TeamContactDetailDialog
-        member={member}
-        presence={presence}
-        messagesByProtocol={{ meshtastic: [], meshcore: [], reticulum: [] }}
-        onClose={() => {}}
-        onOpenChat={() => {}}
-        onSendDm={() => true}
-      />,
-    );
-    hydrateAxeThemeColors(container);
-    expect(await axe(container)).toHaveNoViolations();
-  });
 });

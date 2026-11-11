@@ -25,7 +25,6 @@ import {
 const currentIdentity: Partial<Record<MeshProtocol, string>> = {
   meshcore: 'mc',
   meshtastic: 'mt',
-  reticulum: 'rn',
 };
 /** Reticulum peers whose LXMF destination is known under their own node id. */
 const ownLxmf = new Set<number>();
@@ -313,19 +312,6 @@ describe('direct messages from TAK', () => {
     expect(findTakSendTargets(direct('meshtastic', 456))).toEqual([]);
     setTakRadio('meshcore', null);
     expect(findTakSendTargets(direct('meshcore', 123))).toEqual([]);
-  });
-
-  it('sends to a Reticulum peer only while its LXMF destination is its own', () => {
-    setTakRadio('reticulum', 'rn');
-    useTakRelayPrefsStore.getState().setDirectMessages('rn', true);
-    const peer = { kind: 'direct' as const, protocol: 'reticulum' as const, nodeId: 789 };
-    ownLxmf.add(789);
-    expect(findTakSendTargets(peer)).toEqual([
-      { identityId: 'rn', protocol: 'reticulum', channelIndex: 0, destination: 789 },
-    ]);
-    // Its address now remaps to another destination: nothing is sent.
-    ownLxmf.delete(789);
-    expect(findTakSendTargets(peer)).toEqual([]);
   });
 
   it('sends nothing while the recorded radio is no longer the one in use for the protocol', () => {

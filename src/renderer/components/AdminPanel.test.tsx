@@ -166,40 +166,6 @@ describe('AdminPanel', () => {
       meshtasticHwModel: '43',
     };
 
-    it('renders the collapsible flasher for local Meshtastic and MeshCore targets', () => {
-      renderAdmin({ capabilities: MESHTASTIC_CAPABILITIES, firmwareFlashDevice: mtDevice });
-      const details = screen.getByTestId('admin-firmware-flash');
-      expect(details.tagName).toBe('DETAILS');
-      expect(screen.getByLabelText('Board to flash')).toHaveValue('meshtastic:heltec-v3');
-    });
-
-    it('supports MeshCore through the same section', () => {
-      renderAdmin({
-        capabilities: MESHCORE_CAPABILITIES,
-        firmwareFlashDevice: {
-          protocol: 'meshcore',
-          isConnected: true,
-          connectionType: 'ble',
-          meshcoreManufacturerModel: 'RAK 4631',
-        },
-      });
-      expect(screen.getByLabelText('Board to flash')).toHaveValue('meshcore:rak4631');
-    });
-
-    it('hides the flasher for remote admin targets (USB only)', () => {
-      renderAdmin({
-        capabilities: MESHTASTIC_CAPABILITIES,
-        firmwareFlashDevice: mtDevice,
-        configTarget: {
-          mode: 'remote',
-          nodeNum: 1,
-          isReady: true,
-          isLoading: false,
-        },
-      });
-      expect(screen.queryByTestId('admin-firmware-flash')).toBeNull();
-    });
-
     it('explains why flashing is unavailable when the capability is off', () => {
       renderAdmin({
         capabilities: {

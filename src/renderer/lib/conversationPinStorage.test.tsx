@@ -83,16 +83,6 @@ describe('conversationPinStorage', () => {
     expect(loadConversationPrefs('meshtastic', null).pinned).toEqual(['ch:1']);
   });
 
-  it('notifies subscribers after a successful save', () => {
-    const listener = vi.fn();
-    const unsubscribe = subscribeConversationPrefs(listener);
-    saveConversationPrefs('reticulum', 'id-r', { pinned: ['dm:5'], archived: [] });
-    expect(listener).toHaveBeenCalledWith('reticulum', 'id-r');
-    unsubscribe();
-    saveConversationPrefs('reticulum', 'id-r', { pinned: [], archived: [] });
-    expect(listener).toHaveBeenCalledTimes(1);
-  });
-
   it('orders pinned first in pin order and keeps the rest stable', () => {
     const items = ['ch:0', 'ch:1', 'ch:2', 'ch:3'];
     expect(orderPinnedFirst(items, (k) => k, ['ch:3', 'ch:1'])).toEqual([

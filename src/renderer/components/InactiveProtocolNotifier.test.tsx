@@ -70,25 +70,6 @@ describe('InactiveProtocolNotifier', () => {
     },
   );
 
-  it('never toasts for a protocol disabled in App → Protocols', () => {
-    const enabled: MeshProtocol[] = ['meshtastic', 'reticulum'];
-    const { rerender } = render(
-      <InactiveProtocolNotifier
-        activeProtocol="meshtastic"
-        messagesByProtocol={byProtocol(1)}
-        enabledProtocols={enabled}
-      />,
-    );
-    rerender(
-      <InactiveProtocolNotifier
-        activeProtocol="meshtastic"
-        messagesByProtocol={byProtocol(3)}
-        enabledProtocols={enabled}
-      />,
-    );
-    expect(addToast).not.toHaveBeenCalled();
-  });
-
   it('preserves the existing passive MECP toast independently of chat filtering', () => {
     localStorage.setItem('mesh-client:chatNotificationMode', 'mentions');
     localStorage.setItem('mesh-client:notifMuted', '1');

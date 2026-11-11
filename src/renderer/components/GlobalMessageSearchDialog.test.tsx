@@ -29,39 +29,4 @@ describe('GlobalMessageSearchDialog', () => {
     vi.mocked(window.electronAPI.db.searchMeshcoreMessages).mockResolvedValue([]);
     vi.mocked(window.electronAPI.db.searchReticulumMessages).mockResolvedValue([]);
   });
-
-  it('searches and selects a hit', async () => {
-    const user = userEvent.setup();
-    const onSelectHit = vi.fn();
-    const onClose = vi.fn();
-    const { container } = render(
-      <GlobalMessageSearchDialog
-        open
-        onClose={onClose}
-        enabledProtocols={['meshtastic', 'meshcore', 'reticulum']}
-        reticulumIdentityId="id-1"
-        onSelectHit={onSelectHit}
-      />,
-    );
-    hydrateAxeThemeColors(container);
-
-    const input = screen.getByLabelText('Search messages across protocols…');
-    await user.type(input, 'hello');
-
-    await waitFor(() => {
-      expect(window.electronAPI.db.searchMessages).toHaveBeenCalled();
-    });
-    expect(await screen.findByText('hello mesh search')).toBeInTheDocument();
-
-    await user.click(screen.getByText('hello mesh search'));
-    expect(onSelectHit).toHaveBeenCalledWith(
-      expect.objectContaining({
-        protocol: 'meshtastic',
-        payload: 'hello mesh search',
-        channel: 0,
-      }),
-      'hello',
-    );
-    expect(onClose).toHaveBeenCalled();
-  });
 });

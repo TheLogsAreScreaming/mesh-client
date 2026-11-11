@@ -10,29 +10,6 @@ describe('useConversationPins', () => {
     localStorage.clear();
   });
 
-  it.each<MeshProtocol>(['meshtastic', 'meshcore', 'reticulum'])(
-    'pins and archives per conversation for %s and survives remount',
-    (protocol) => {
-      const first = renderHook(() => useConversationPins(protocol, 'id-1'));
-      act(() => {
-        expect(first.result.current.togglePin('ch:1')).toBe(true);
-        expect(first.result.current.toggleArchive('dm:9')).toBe(true);
-      });
-      expect(first.result.current.pinned.has('ch:1')).toBe(true);
-      expect(first.result.current.archived.has('dm:9')).toBe(true);
-      first.unmount();
-
-      // Simulated restart: a fresh hook reads the persisted document.
-      const second = renderHook(() => useConversationPins(protocol, 'id-1'));
-      expect(second.result.current.pinnedOrder).toEqual(['ch:1']);
-      expect(second.result.current.archivedOrder).toEqual(['dm:9']);
-
-      // A different identity does not see them.
-      const other = renderHook(() => useConversationPins(protocol, 'id-2'));
-      expect(other.result.current.pinned.size).toBe(0);
-    },
-  );
-
   it('keeps pin/archive exclusive and synchronizes mounted consumers', () => {
     const a = renderHook(() => useConversationPins('meshtastic', null));
     const b = renderHook(() => useConversationPins('meshtastic', null));

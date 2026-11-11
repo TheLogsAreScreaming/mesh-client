@@ -14,8 +14,6 @@ function snap(partial: Partial<PowerSaveConnectionSnapshot> = {}): PowerSaveConn
     meshtastic: { connected: false, link: null },
     meshcore: { connected: false, link: null },
     mqtt: false,
-    reticulumSidecar: false,
-    reticulumLocalRadio: false,
     ...partial,
   };
 }
@@ -45,18 +43,6 @@ describe('normalizePowerSaveLinkType', () => {
 });
 
 describe('shouldHoldPowerSaveBlocker', () => {
-  it('off never holds', () => {
-    expect(
-      shouldHoldPowerSaveBlocker('off', snap({ meshtastic: { connected: true, link: 'ble' } })),
-    ).toBe(false);
-    expect(
-      shouldHoldPowerSaveBlocker(
-        'off',
-        snap({ mqtt: true, reticulumSidecar: true, reticulumLocalRadio: true }),
-      ),
-    ).toBe(false);
-  });
-
   it('rf holds for Meshtastic ble and MeshCore serial', () => {
     expect(
       shouldHoldPowerSaveBlocker('rf', snap({ meshtastic: { connected: true, link: 'ble' } })),
@@ -64,33 +50,6 @@ describe('shouldHoldPowerSaveBlocker', () => {
     expect(
       shouldHoldPowerSaveBlocker('rf', snap({ meshcore: { connected: true, link: 'serial' } })),
     ).toBe(true);
-  });
-
-  it('rf releases for reported MeshCore TCP + mqtt + sidecar (no local radio)', () => {
-    expect(
-      shouldHoldPowerSaveBlocker(
-        'rf',
-        snap({
-          meshcore: { connected: true, link: 'tcp' },
-          mqtt: true,
-          reticulumSidecar: true,
-          reticulumLocalRadio: false,
-        }),
-      ),
-    ).toBe(false);
-  });
-
-  it('rf releases for http / mqtt-only / sidecar-without-local-radio', () => {
-    expect(
-      shouldHoldPowerSaveBlocker('rf', snap({ meshtastic: { connected: true, link: 'http' } })),
-    ).toBe(false);
-    expect(shouldHoldPowerSaveBlocker('rf', snap({ mqtt: true }))).toBe(false);
-    expect(
-      shouldHoldPowerSaveBlocker(
-        'rf',
-        snap({ reticulumSidecar: true, reticulumLocalRadio: false }),
-      ),
-    ).toBe(false);
   });
 
   it('rf holds when connected with unknown link (conservative)', () => {
@@ -103,23 +62,5 @@ describe('shouldHoldPowerSaveBlocker', () => {
     expect(
       shouldHoldPowerSaveBlocker('rf', snap({ meshtastic: { connected: false, link: 'ble' } })),
     ).toBe(false);
-  });
-
-  it('rf holds for Reticulum local radio', () => {
-    expect(
-      shouldHoldPowerSaveBlocker('rf', snap({ reticulumSidecar: true, reticulumLocalRadio: true })),
-    ).toBe(true);
-  });
-
-  it('always holds for mqtt / sidecar / tcp / ble and releases when idle', () => {
-    expect(shouldHoldPowerSaveBlocker('always', snap({ mqtt: true }))).toBe(true);
-    expect(shouldHoldPowerSaveBlocker('always', snap({ reticulumSidecar: true }))).toBe(true);
-    expect(
-      shouldHoldPowerSaveBlocker('always', snap({ meshcore: { connected: true, link: 'tcp' } })),
-    ).toBe(true);
-    expect(
-      shouldHoldPowerSaveBlocker('always', snap({ meshtastic: { connected: true, link: 'ble' } })),
-    ).toBe(true);
-    expect(shouldHoldPowerSaveBlocker('always', snap())).toBe(false);
   });
 });

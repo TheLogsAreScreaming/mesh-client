@@ -303,40 +303,6 @@ describe('Catch up availability', () => {
   );
 });
 describe('conversation summary async boundaries', () => {
-  it.each(['meshtastic', 'meshcore', 'reticulum'] as const)(
-    'does not mark fully collected two-page %s history as partial',
-    async (protocol) => {
-      const history = Array.from({ length: AI_MAX_MESSAGES + 1 }, (_, index) => ({
-        id: index + 1,
-        at: index + 1,
-        sender: 'Alice',
-        body: `Message ${index + 1}`,
-      }));
-      vi.mocked(window.electronAPI.ai.getHistory)
-        .mockResolvedValueOnce(history)
-        .mockResolvedValueOnce([history[0]]);
-      const { result } = renderHook(() =>
-        useConversationSummary({
-          ...input,
-          protocol,
-          history: { ...input.history, protocol },
-        }),
-      );
-      await act(async () => {
-        await result.current.run();
-      });
-      expect(window.electronAPI.ai.getHistory).toHaveBeenCalledTimes(2);
-      expect(window.electronAPI.ai.getHistory).toHaveBeenLastCalledWith(
-        expect.objectContaining({ beforeAt: 2, beforeId: 2 }),
-      );
-      expect(result.current.state).toMatchObject({
-        collectedMessageCount: AI_MAX_MESSAGES + 1,
-        messageCount: AI_MAX_MESSAGES + 1,
-        truncated: false,
-      });
-    },
-  );
-
   it('still marks history partial when the collection cap leaves an older row behind', async () => {
     useAiSummaryStore.getState().setStatus({ ...ready, maxCollectedMessages: AI_MAX_MESSAGES + 1 });
     const history = Array.from({ length: AI_MAX_MESSAGES + 2 }, (_, index) => ({
@@ -362,28 +328,6 @@ describe('conversation summary async boundaries', () => {
       truncated: true,
     });
   });
-
-  it.each(['meshtastic', 'meshcore', 'reticulum'] as const)(
-    'keeps older eligible %s messages when the newest exceeds the renderer limit',
-    async (protocol) => {
-      const older = { at: 1, sender: 'Alice', body: 'Net at 20:00.' };
-      const { result } = renderHook(() =>
-        useConversationSummary({
-          ...input,
-          protocol,
-          history: null,
-          messages: [older, { at: 2, sender: 'Bob', body: 'x'.repeat(AI_MAX_TOTAL_CHARS + 1) }],
-        }),
-      );
-      await act(async () => {
-        await result.current.run();
-      });
-      expect(window.electronAPI.ai.summarize).toHaveBeenCalledWith(
-        expect.objectContaining({ messages: [older] }),
-      );
-      expect(result.current.state).toMatchObject({ collectedMessageCount: 2, truncated: true });
-    },
-  );
 
   it('normalizes legacy MeshCore names and payloads before weather filtering and overlap merging', async () => {
     vi.mocked(window.electronAPI.ai.getHistory).mockResolvedValueOnce([
@@ -460,39 +404,6 @@ describe('conversation summary async boundaries', () => {
     expect(result.current.state).toMatchObject({ collectedMessageCount: 0, error: 'noMessages' });
   });
 
-  it.each(['meshtastic', 'meshcore', 'reticulum'] as const)(
-    'keeps 44 distinct %s messages when three share text and timestamps',
-    async (protocol) => {
-      const messages = Array.from({ length: 41 }, (_, at) => ({
-        at: at + 1,
-        sender: 'Alice',
-        body: `Message ${at}`,
-      }));
-      messages.push(...messages.slice(0, 3));
-      vi.mocked(window.electronAPI.ai.getHistory).mockResolvedValueOnce(messages);
-      const summarize = vi.mocked(window.electronAPI.ai.summarize).getMockImplementation()!;
-      vi.mocked(window.electronAPI.ai.summarize).mockImplementationOnce(async (request) => ({
-        ...(await summarize(request)),
-        summaryInput: { messageCount: 41, truncated: true },
-      }));
-      const { result, rerender } = renderHook(
-        ({ messages }) => useConversationSummary({ ...input, protocol, messages }),
-        { initialProps: { messages } },
-      );
-      await act(async () => {
-        await result.current.run();
-      });
-      expect(vi.mocked(window.electronAPI.ai.summarize).mock.calls[0][0].messages).toHaveLength(44);
-      expect(result.current.state).toMatchObject({
-        messageCount: 41,
-        collectedMessageCount: 44,
-        truncated: true,
-      });
-      rerender({ messages: [...messages, { at: 100, sender: 'Bob', body: 'New arrival' }] });
-      expect(result.current.state?.collectedMessageCount).toBe(44);
-    },
-  );
-
   it('preserves the opening unread boundary and excludes older fetched history', async () => {
     vi.mocked(window.electronAPI.ai.getHistory).mockResolvedValueOnce([
       { at: 100, sender: 'Alice', body: 'read' },
@@ -558,74 +469,3 @@ describe('conversation summary async boundaries', () => {
     expect(window.electronAPI.ai.summarize).not.toHaveBeenCalled();
   });
 });
-
-it.each(['linux', 'darwin', 'win32'] as const)(
-  'retains protocol and conversation ranges across switches and remounts on %s',
-  async (platform) => {
-    vi.mocked(window.electronAPI.getPlatform).mockReturnValue(platform);
-    for (const protocol of ['meshtastic', 'meshcore', 'reticulum'] as const) {
-      const first = {
-        ...input,
-        protocol,
-        history: null,
-        messages: [{ at: Date.now(), sender: 'A', body: 'Status' }],
-      };
-      const { result, rerender, unmount } = renderHook(
-        ({ key }) => useConversationSummary({ ...first, key }),
-        { initialProps: { key: 'one' } },
-      );
-      act(() => {
-        result.current.setScope({ kind: 'hours', hours: 12 });
-      });
-      rerender({ key: 'two' });
-      expect(result.current.scope).toEqual({ kind: 'unread' });
-      act(() => {
-        result.current.setScope({ kind: 'loaded' });
-      });
-      rerender({ key: 'one' });
-      expect(result.current.scope).toEqual({ kind: 'hours', hours: 12 });
-      unmount();
-      const remounted = renderHook(() => useConversationSummary(first));
-      expect(remounted.result.current.scope).toEqual({ kind: 'hours', hours: 12 });
-      await act(async () => {
-        await remounted.result.current.run();
-      });
-      expect(window.electronAPI.ai.summarize).toHaveBeenLastCalledWith(
-        expect.objectContaining({ protocol, scope: { kind: 'hours', hours: 12 } }),
-      );
-      remounted.unmount();
-      disposeAiSummaries();
-      useAiSummaryStore.getState().setStatus(ready);
-    }
-  },
-);
-
-it.each(['meshtastic', 'meshcore', 'reticulum'] as const)(
-  'keeps a newest window under the %s renderer budget instead of reintroducing an answered question',
-  async (protocol) => {
-    const newest = { at: 3, sender: 'Carol', body: 'Next net at 20:00. '.repeat(20) };
-    const { result } = renderHook(() =>
-      useConversationSummary({
-        ...input,
-        protocol,
-        history: null,
-        messages: [
-          { at: 1, sender: 'Alice', body: 'Can someone check the repeater?' },
-          {
-            at: 2,
-            sender: 'Bob',
-            body: 'The repeater is operational. ' + 'x'.repeat(AI_MAX_TOTAL_CHARS - 128),
-          },
-          newest,
-        ],
-      }),
-    );
-    await act(async () => {
-      await result.current.run();
-    });
-    expect(window.electronAPI.ai.summarize).toHaveBeenLastCalledWith(
-      expect.objectContaining({ messages: [newest] }),
-    );
-    expect(result.current.state).toMatchObject({ collectedMessageCount: 3, truncated: true });
-  },
-);

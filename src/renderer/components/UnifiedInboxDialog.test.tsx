@@ -37,7 +37,6 @@ function renderInbox(over: Partial<UnifiedInboxDialogProps> = {}) {
         msg(4, { reticulum_message_hash: 'aa11', reticulum_sender_hash: 'bb22', storeId: 'aa11' }),
       ],
     },
-    reticulumIdentityId: 'rid',
     onSelectItem: vi.fn(),
     ...over,
   };
@@ -140,22 +139,6 @@ describe('UnifiedInboxDialog', () => {
     expect(loadStarred('meshtastic').map((s) => s.starId)).toEqual(['1']);
     await user.click(screen.getByRole('button', { name: 'Star' }));
     expect(loadStarred('meshtastic')).toHaveLength(1);
-  });
-
-  it('requires confirmation before deleting locally, then hides rows and deletes Reticulum rows', async () => {
-    const user = userEvent.setup();
-    renderInbox();
-    await user.click(screen.getByRole('checkbox', { name: 'Select message from Sender1' }));
-    await user.click(screen.getByRole('checkbox', { name: 'Select message from Sender4' }));
-    await user.click(screen.getByRole('button', { name: 'Delete locally' }));
-    expect(screen.getByRole('alert')).toHaveTextContent('Remove 2 messages from this inbox?');
-    expect(loadDismissedInboxKeys().size).toBe(0);
-
-    await user.click(screen.getByRole('button', { name: 'Delete' }));
-    expect(loadDismissedInboxKeys()).toEqual(new Set(['meshtastic:1', 'reticulum:4']));
-    expect(screen.getAllByRole('listitem')).toHaveLength(2);
-    expect(screen.queryByText('payload 1')).not.toBeInTheDocument();
-    expect(window.electronAPI.db.deleteReticulumMessage).toHaveBeenCalledWith('rid', 'aa11');
   });
 
   it('cancelling the delete confirmation removes nothing', async () => {

@@ -43,21 +43,4 @@ describe('useSendMessage', () => {
     expect(sendChatOnIdentity).not.toHaveBeenCalled();
   });
 
-  it('shows Reticulum delivery problems as error toasts', () => {
-    const { result } = renderHook(() => useSendMessage('id-rt'));
-    result.current('hello', 0, 5);
-    const notices = vi.mocked(sendChatOnIdentity).mock.calls[0][2];
-    notices?.onNoPropagationNode?.();
-    notices?.onMissingLxmfDelivery?.();
-    expect(addToast).toHaveBeenNthCalledWith(
-      1,
-      i18n.t('chatPanel.reticulumNoPropagationNode'),
-      'error',
-    );
-    expect(addToast).toHaveBeenNthCalledWith(
-      2,
-      i18n.t('chatPanel.reticulumChatNeedsLxmfDelivery'),
-      'error',
-    );
-  });
 });

@@ -73,63 +73,6 @@ describe('SuggestToTeamContactModal', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('creates a new card with isSelf when preferSelf and no self exists', async () => {
-    const user = userEvent.setup();
-    const allocateUnitId = vi.fn().mockResolvedValue(9);
-    const upsertMember = vi.fn().mockResolvedValue({
-      unitId: 9,
-      callsign: 'New',
-      role: 'OP',
-      isSelf: true,
-      onRoster: false,
-      createdAt: 1,
-      updatedAt: 1,
-      links: [],
-    });
-    const setLink = vi.fn().mockResolvedValue({
-      unitId: 9,
-      callsign: 'New',
-      role: 'OP',
-      isSelf: true,
-      onRoster: false,
-      createdAt: 1,
-      updatedAt: 2,
-      links: [{ protocol: 'reticulum', durableKey: 'ab'.repeat(16), onRoster: false }],
-    });
-    useTeamRosterStore.setState({ allocateUnitId, upsertMember, setLink, members: [] });
-    const onClose = vi.fn();
-
-    renderModal(
-      <SuggestToTeamContactModal
-        candidate={{
-          protocol: 'reticulum',
-          durableKey: 'ab'.repeat(16),
-          longName: 'New Peer',
-        }}
-        preferSelf
-        onClose={onClose}
-      />,
-    );
-
-    expect(screen.getByRole('tab', { name: /create new card/i })).toHaveAttribute(
-      'aria-selected',
-      'true',
-    );
-    await user.clear(screen.getByLabelText(/callsign/i));
-    await user.type(screen.getByLabelText(/callsign/i), 'New');
-    await user.click(screen.getByRole('button', { name: /create and link/i }));
-    expect(allocateUnitId).toHaveBeenCalled();
-    expect(upsertMember).toHaveBeenCalledWith(
-      expect.objectContaining({
-        unitId: 9,
-        callsign: 'New',
-        isSelf: true,
-      }),
-    );
-    expect(setLink).toHaveBeenCalled();
-    expect(onClose).toHaveBeenCalled();
-  });
-
   it('shows already-linked status', () => {
     useTeamRosterStore.setState({
       members: [

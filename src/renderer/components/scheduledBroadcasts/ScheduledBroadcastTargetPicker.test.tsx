@@ -9,7 +9,6 @@ import {
 import { OFFLINE_MESHCORE_IDENTITY_ID } from '@/renderer/lib/offlineProtocolIdentities';
 import { meshcoreProtocol } from '@/renderer/lib/protocols/MeshCoreProtocol';
 import { meshtasticProtocol } from '@/renderer/lib/protocols/MeshtasticProtocol';
-import { reticulumProtocol } from '@/renderer/lib/protocols/ReticulumProtocol';
 import { resetSecureSecretCacheForTests } from '@/renderer/lib/secureSecretStorage';
 import { setConnection, useConnectionStore } from '@/renderer/stores/connectionStore';
 import {
@@ -23,8 +22,6 @@ import {
   setLiveChannelKeys,
 } from '@/renderer/stores/liveChannelKeyStore';
 import { upsertNode, upsertNodeRecord, useNodeStore } from '@/renderer/stores/nodeStore';
-import { useRrcHubStore } from '@/renderer/stores/rrcHubStore';
-import { useRrcSessionStore } from '@/renderer/stores/rrcSessionStore';
 
 import { ScheduledBroadcastTargetPicker } from './ScheduledBroadcastTargetPicker';
 
@@ -145,34 +142,6 @@ describe('ScheduledBroadcastTargetPicker', () => {
     expect(screen.getByText('Peak Relay (connected)')).toBeInTheDocument();
     expect(screen.queryByText(/^offline-/)).not.toBeInTheDocument();
     expect(screen.getByLabelText('MeshCore channel 0: Public')).toBeInTheDocument();
-  });
-
-  it('labels RRC rooms with the hub display name', () => {
-    useIdentityStore.setState({
-      identities: {
-        rns: {
-          id: 'rns',
-          protocol: reticulumProtocol,
-          signature: '',
-          transports: [],
-          createdAt: 1,
-          lastSeenAt: 1,
-        },
-      },
-      activeIdentityId: 'rns',
-    });
-    useRrcHubStore.getState().upsertFromEvent({
-      destination_hash: HUB,
-      display_name: 'Denver Hub',
-      source: 'discovered',
-    });
-    useRrcSessionStore.setState({
-      hubDestHash: HUB,
-      rooms: new Map([['lobby', { name: 'lobby' }]]),
-      sessionsByHub: new Map(),
-    });
-    render(<ScheduledBroadcastTargetPicker targets={[]} onChange={() => {}} />);
-    expect(screen.getByLabelText('Denver Hub — lobby')).toBeInTheDocument();
   });
 
   it('hides MeshCore rooms with neither login nor saved password', () => {

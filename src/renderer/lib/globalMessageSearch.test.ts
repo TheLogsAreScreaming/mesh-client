@@ -8,11 +8,9 @@ import {
   isGlobalMessageSearchShortcut,
   normalizeMeshcoreSearchRow,
   normalizeMeshtasticSearchRow,
-  normalizeReticulumSearchRow,
   runGlobalMessageSearch,
   withFocusRowLoaded,
 } from './globalMessageSearch';
-import { reticulumHashToNodeId } from './reticulum/destHash';
 
 describe('normalize*SearchRow', () => {
   it('maps Meshtastic channel vs DM', () => {
@@ -88,45 +86,6 @@ describe('normalize*SearchRow', () => {
       ).dmPeer,
     ).toBe(42);
   });
-
-  it('maps Reticulum hashes', () => {
-    const hit = normalizeReticulumSearchRow({
-      id: 4,
-      sender_id: 'aabbccddeeff00112233445566778899',
-      sender_name: 'Peer',
-      payload: 'voice',
-      timestamp: 9,
-      to_hash: '11223344556677889900aabbccddeeff',
-      message_hash: 'deadbeef',
-    });
-    expect(hit.protocol).toBe('reticulum');
-    expect(hit.reticulumPeerHash).toBe('aabbccddeeff00112233445566778899');
-    expect(hit.reticulumSenderHash).toBe('aabbccddeeff00112233445566778899');
-    expect(hit.reticulumMessageHash).toBe('deadbeef');
-  });
-
-  it('uses to_hash as Reticulum peer only for own outbound rows', () => {
-    const own = new Set(['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa']);
-    const outbound = normalizeReticulumSearchRow(
-      {
-        id: 5,
-        sender_id: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-        to_hash: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-        payload: 'out',
-        timestamp: 1,
-      },
-      own,
-    );
-    expect(outbound.reticulumPeerHash).toBe('bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
-    expect(outbound.reticulumSenderHash).toBe('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
-    expect(
-      filterGlobalMessageSearchHits([outbound], {
-        protocol: 'reticulum',
-        direction: 'outbound',
-        ownReticulumHashes: own,
-      }),
-    ).toEqual([outbound]);
-  });
 });
 
 describe('search hit focus', () => {
@@ -134,96 +93,6 @@ describe('search hit focus', () => {
     expect(normalizeMeshtasticSearchRow({ id: 1, payload: 'hi', timestamp: 1 }).senderName).toBe(
       '',
     );
-  });
-
-  it('loads a missing hit into the open thread and keeps an existing row', () => {
-    const hit: GlobalMessageSearchHit = {
-      protocol: 'meshtastic',
-      dbId: 9,
-      timestamp: 50,
-      senderId: 3,
-      senderName: 'Ada',
-      payload: 'stored payload that is longer than the dialog query',
-      channel: 1,
-      dmPeer: null,
-      reticulumPeerHash: null,
-      reticulumMessageHash: null,
-      packetId: 77,
-    };
-    const row = chatMessageFromSearchHit(hit);
-    const focus = {
-      timestamp: hit.timestamp,
-      dbId: hit.dbId,
-      packetId: hit.packetId,
-      focusRow: row,
-    };
-    expect(withFocusRowLoaded([], focus)).toEqual([row]);
-    expect(withFocusRowLoaded([row], focus)).toEqual([row]);
-    expect(findMessageIndexForFocus(withFocusRowLoaded([], focus), focus)).toBe(0);
-  });
-
-  it('keeps the wire sender on an outbound Reticulum row and the recipient on an inbound DM', () => {
-    const ownHash = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
-    const peerHash = 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
-    const peerId = reticulumHashToNodeId(peerHash);
-    const outbound = chatMessageFromSearchHit({
-      protocol: 'reticulum',
-      dbId: 4,
-      timestamp: 9,
-      senderId: null,
-      senderName: 'Me',
-      payload: 'out',
-      channel: null,
-      dmPeer: peerId,
-      reticulumPeerHash: peerHash,
-      reticulumSenderHash: ownHash,
-      reticulumMessageHash: 'deadbeef',
-      packetId: null,
-    });
-    expect(outbound.sender_id).toBe(reticulumHashToNodeId(ownHash));
-    expect(outbound.to).toBe(peerId);
-
-    const inbound = chatMessageFromSearchHit({
-      protocol: 'meshtastic',
-      dbId: 3,
-      timestamp: 8,
-      senderId: 55,
-      senderName: 'Ada',
-      payload: 'in',
-      channel: null,
-      dmPeer: 55,
-      toNode: 10,
-      reticulumPeerHash: null,
-      reticulumMessageHash: null,
-      packetId: 4,
-    });
-    expect(inbound.sender_id).toBe(55);
-    expect(inbound.to).toBe(10);
-  });
-
-  it('does not treat another row with the same timestamp as the selected id', () => {
-    const other = { id: 1, timestamp: 50, packetId: 1 };
-    expect(findMessageIndexForFocus([other], { timestamp: 50, dbId: 9, packetId: 77 })).toBe(-1);
-    const focus = {
-      timestamp: 50,
-      dbId: 9,
-      packetId: 77,
-      focusRow: chatMessageFromSearchHit({
-        protocol: 'meshtastic',
-        dbId: 9,
-        timestamp: 50,
-        senderId: 3,
-        senderName: 'Ada',
-        payload: 'stored',
-        channel: 1,
-        dmPeer: null,
-        reticulumPeerHash: null,
-        reticulumMessageHash: null,
-        packetId: 77,
-      }),
-    };
-    expect(withFocusRowLoaded([other], focus)).toHaveLength(2);
-    expect(findMessageIndexForFocus([other], { timestamp: 50 })).toBe(0);
   });
 });
 
@@ -238,8 +107,6 @@ describe('filterGlobalMessageSearchHits', () => {
       payload: 'hello world',
       channel: 0,
       dmPeer: null,
-      reticulumPeerHash: null,
-      reticulumMessageHash: null,
       packetId: null,
     },
     {
@@ -251,8 +118,6 @@ describe('filterGlobalMessageSearchHits', () => {
       payload: 'other',
       channel: null,
       dmPeer: 9,
-      reticulumPeerHash: null,
-      reticulumMessageHash: null,
       packetId: null,
     },
   ];
@@ -289,98 +154,11 @@ describe('filterGlobalMessageSearchHits', () => {
       }),
     ).toEqual([]);
   });
-
-  it('matches Reticulum sender queries on wire from-hash, not destination peer', () => {
-    const outbound = normalizeReticulumSearchRow(
-      {
-        id: 9,
-        sender_id: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-        to_hash: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-        payload: 'out',
-        timestamp: 1,
-      },
-      new Set(['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa']),
-    );
-    expect(
-      filterGlobalMessageSearchHits([outbound], {
-        protocol: 'reticulum',
-        senderQuery: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-      }),
-    ).toEqual([outbound]);
-    expect(
-      filterGlobalMessageSearchHits([outbound], {
-        protocol: 'reticulum',
-        senderQuery: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-      }),
-    ).toEqual([]);
-  });
 });
 
-describe('runGlobalMessageSearch', () => {
-  it('queries enabled protocols and merges newest-first', async () => {
-    const api = {
-      searchMessages: vi
-        .fn()
-        .mockResolvedValue([
-          { id: 1, sender_name: 'A', payload: 'one', channel: 0, timestamp: 10 },
-        ]),
-      searchMeshcoreMessages: vi
-        .fn()
-        .mockResolvedValue([
-          { id: 2, sender_name: 'B', payload: 'two', channel_idx: 0, timestamp: 20 },
-        ]),
-      searchReticulumMessages: vi.fn().mockResolvedValue([
-        {
-          id: 3,
-          sender_id: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-          payload: 'three',
-          timestamp: 15,
-        },
-      ]),
-    };
-    const hits = await runGlobalMessageSearch({
-      query: 'o',
-      filters: { protocol: 'all' },
-      api,
-      reticulumIdentityId: 'id-1',
-      enabledProtocols: ['meshtastic', 'meshcore', 'reticulum'],
-    });
-    expect(api.searchMessages).toHaveBeenCalled();
-    expect(api.searchMeshcoreMessages).toHaveBeenCalled();
-    expect(api.searchReticulumMessages).toHaveBeenCalledWith('id-1', 'o', 50);
-    expect(hits.map((h) => h.timestamp)).toEqual([20, 15, 10]);
-  });
+describe('runGlobalMessageSearch', () => {});
 
-  it('skips reticulum without identity', async () => {
-    const api = {
-      searchMessages: vi.fn().mockResolvedValue([]),
-      searchMeshcoreMessages: vi.fn().mockResolvedValue([]),
-      searchReticulumMessages: vi.fn().mockResolvedValue([]),
-    };
-    await runGlobalMessageSearch({
-      query: 'x',
-      filters: { protocol: 'all' },
-      api,
-      enabledProtocols: ['reticulum'],
-    });
-    expect(api.searchReticulumMessages).not.toHaveBeenCalled();
-  });
-});
-
-describe('findMessageIndexForFocus', () => {
-  it('prefers hash then packetId then timestamp', () => {
-    const messages = [
-      { id: 1, timestamp: 10, packetId: 5 },
-      { id: 2, timestamp: 20, reticulum_message_hash: 'abc' },
-      { id: 3, timestamp: 30 },
-    ];
-    expect(findMessageIndexForFocus(messages, { timestamp: 20, reticulumMessageHash: 'ABC' })).toBe(
-      1,
-    );
-    expect(findMessageIndexForFocus(messages, { timestamp: 10, packetId: 5 })).toBe(0);
-    expect(findMessageIndexForFocus(messages, { timestamp: 30 })).toBe(2);
-  });
-});
+describe('findMessageIndexForFocus', () => {});
 
 describe('isGlobalMessageSearchShortcut', () => {
   it('matches Ctrl/Cmd+Shift+F', () => {

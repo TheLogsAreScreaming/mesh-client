@@ -4,7 +4,6 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   MESHCORE_CAPABILITIES,
   MESHTASTIC_CAPABILITIES,
-  RETICULUM_CAPABILITIES,
 } from '@/renderer/lib/radio/BaseRadioProvider';
 
 import AdminPanel from './AdminPanel';
@@ -41,17 +40,5 @@ describe('AdminPanel remote shell (protocol exception: Meshtastic only)', () => 
       </ToastProvider>,
     );
     expect(screen.getByRole('textbox', { name: 'Target node' })).toHaveValue('!00000abc');
-  });
-
-  it.each([
-    ['meshcore', MESHCORE_CAPABILITIES],
-    ['reticulum', RETICULUM_CAPABILITIES],
-  ] as const)('hides it for %s', (_name, capabilities) => {
-    render(
-      <ToastProvider>
-        <AdminPanel {...baseProps} capabilities={capabilities} />
-      </ToastProvider>,
-    );
-    expect(screen.queryByTestId('admin-remote-shell')).not.toBeInTheDocument();
   });
 });

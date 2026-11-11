@@ -42,6 +42,8 @@ describe('connectionPanelRadioStatusLabel', () => {
   });
 });
 
+<<<<<<< HEAD
+=======
 describe('connectionPanelConnectionTypeLabel', () => {
   it.each<[ConnectionType, MeshProtocol, string]>([
     ['ble', 'meshtastic', 'connectionPanel.bluetooth'],
@@ -50,6 +52,7 @@ describe('connectionPanelConnectionTypeLabel', () => {
     ['http', 'meshtastic', 'connectionPanel.wifiHttp'],
     ['http', 'meshcore', 'connectionPanel.tcpIp'],
     ['ble', 'meshcore', 'connectionPanel.bluetooth'],
+    ['http', 'reticulum', 'connectionPanel.wifiHttp'],
   ])('maps %s/%s to %s', (type, protocol, key) => {
     expect(connectionPanelConnectionTypeLabel(mockT(), type, protocol)).toBe(key);
   });
@@ -75,6 +78,7 @@ describe('statusBarTransportLabel', () => {
   });
 });
 
+>>>>>>> upstream/main
 describe('connectionPanelMqttStatusLabel', () => {
   it.each<[MQTTStatus, boolean, string]>([
     ['connected', false, 'app.deviceStatus.connected'],

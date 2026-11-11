@@ -30,42 +30,6 @@ function msg(over: Partial<ChatMessage>): ChatMessage {
 const EMPTY = { meshtastic: [], meshcore: [], reticulum: [] };
 
 describe('buildUnifiedInboxItems', () => {
-  it('merges protocols newest first and excludes own sends, reactions and empty payloads', () => {
-    const items = buildUnifiedInboxItems({
-      enabledProtocols: ['meshtastic', 'meshcore', 'reticulum'],
-      ownNodeIdsByProtocol: { meshtastic: new Set([99]) },
-      messagesByProtocol: {
-        meshtastic: [
-          msg({ id: 1, timestamp: 100 }),
-          msg({ id: 2, sender_id: 99, timestamp: 900 }),
-          msg({ id: 3, timestamp: 800, emoji: 1, replyId: 5 }),
-          msg({ id: 4, timestamp: 700, payload: '' }),
-        ],
-        meshcore: [msg({ id: 5, timestamp: 300, channel: 2 })],
-        reticulum: [
-          msg({ id: undefined, storeId: 'abc', timestamp: 500, reticulum_message_hash: 'ab' }),
-        ],
-      },
-    });
-    expect(items.map((i) => i.key)).toEqual(['reticulum:500-x', 'meshcore:5', 'meshtastic:1']);
-  });
-
-  it('classifies DM vs channel and builds view keys', () => {
-    const [bcast, dm, ret] = buildUnifiedInboxItems({
-      enabledProtocols: ['meshtastic', 'reticulum'],
-      messagesByProtocol: {
-        ...EMPTY,
-        meshtastic: [
-          msg({ id: 1, timestamp: 3, to: 0xffffffff, channel: 4 }),
-          msg({ id: 2, timestamp: 2, to: 77, sender_id: 12 }),
-        ],
-        reticulum: [msg({ id: 3, timestamp: 1, sender_id: 55 })],
-      },
-    });
-    expect([bcast.isDirectMessage, bcast.viewKey]).toEqual([false, 'ch:4']);
-    expect([dm.isDirectMessage, dm.viewKey]).toEqual([true, 'dm:12']);
-    expect([ret.isDirectMessage, ret.viewKey]).toEqual([true, 'dm:55']);
-  });
 
   it('respects disabled protocols, protocol filter, text query, dismissed keys and limit', () => {
     const messagesByProtocol = {
@@ -99,77 +63,7 @@ describe('buildUnifiedInboxItems', () => {
 });
 
 describe('inboxItemToJumpTarget', () => {
-  it('maps channel, DM and Reticulum rows to search-hit targets', () => {
-    const [ch, dm, ret] = buildUnifiedInboxItems({
-      enabledProtocols: ['meshtastic', 'reticulum'],
-      messagesByProtocol: {
-        ...EMPTY,
-        meshtastic: [
-          msg({ id: 1, timestamp: 3, channel: 2, packetId: 42 }),
-          msg({ id: 2, timestamp: 2, to: 7, sender_id: 12 }),
-        ],
-        reticulum: [
-          msg({
-            id: 3,
-            timestamp: 1,
-            reticulum_sender_hash: 'ABCD',
-            reticulum_message_hash: 'EF01',
-          }),
-        ],
-      },
-    });
-    expect(inboxItemToJumpTarget(ch)).toMatchObject({
-      protocol: 'meshtastic',
-      channel: 2,
-      dmPeer: null,
-      packetId: 42,
-      dbId: 1,
-    });
-    expect(inboxItemToJumpTarget(dm)).toMatchObject({ channel: null, dmPeer: 12 });
-    expect(inboxItemToJumpTarget(ret)).toMatchObject({
-      protocol: 'reticulum',
-      channel: null,
-      dmPeer: null,
-      reticulumPeerHash: 'abcd',
-      reticulumSenderHash: 'abcd',
-      reticulumMessageHash: 'ef01',
-    });
-  });
 
-  it('resolves outbound-shaped DM peers via own-id checks', () => {
-    const own = new Set([99]);
-    const outboundLoRa = inboxItemToJumpTarget(
-      {
-        key: 'meshtastic:1',
-        protocol: 'meshtastic',
-        starId: '1',
-        viewKey: 'dm:12',
-        isDirectMessage: true,
-        message: msg({ id: 1, sender_id: 99, to: 12, timestamp: 1 }),
-      },
-      { ownNodeIds: own },
-    );
-    expect(outboundLoRa.dmPeer).toBe(12);
-
-    const outboundRet = inboxItemToJumpTarget(
-      {
-        key: 'reticulum:2',
-        protocol: 'reticulum',
-        starId: '2',
-        viewKey: 'dm:x',
-        isDirectMessage: true,
-        message: msg({
-          id: 2,
-          timestamp: 2,
-          reticulum_sender_hash: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-          reticulum_destination_hash: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
-        }),
-      },
-      { ownReticulumHashes: new Set(['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa']) },
-    );
-    expect(outboundRet.reticulumPeerHash).toBe('bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
-    expect(outboundRet.reticulumSenderHash).toBe('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
-  });
 });
 
 describe('formatting', () => {

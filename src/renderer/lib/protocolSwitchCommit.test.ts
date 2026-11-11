@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  APP_PANEL_INDEX,
-  CHAT_PANEL_INDEX,
-  GAMES_PANEL_INDEX,
-  NODES_PANEL_INDEX,
-} from './appTabMappings';
+import { APP_PANEL_INDEX, CHAT_PANEL_INDEX, NODES_PANEL_INDEX } from './appTabMappings';
 import {
   beginProtocolSwitch,
   isCurrentProtocolSwitch,
@@ -17,7 +12,6 @@ import {
 const ALL_ON: ProtocolVisitFlags = {
   rooms: true,
   games: true,
-  rrc: true,
   remote: true,
   nomad: true,
   peers: true,
@@ -27,7 +21,6 @@ const ALL_ON: ProtocolVisitFlags = {
 const ALL_OFF: ProtocolVisitFlags = {
   rooms: false,
   games: false,
-  rrc: false,
   remote: false,
   nomad: false,
   peers: false,

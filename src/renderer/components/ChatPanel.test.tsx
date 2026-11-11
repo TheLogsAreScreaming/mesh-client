@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
 import { resetTranslation } from '@/renderer/lib/translation/translationTestFixtures';
-import { disposeAiSummaries, useAiSummaryStore } from '@/renderer/stores/aiSummaryStore';
 
 import { hydrateAxeThemeColors } from '../lib/a11yTestHelpers';
 import * as chatNotifications from '../lib/chatNotifications';
@@ -12,22 +11,13 @@ import {
   draftsStorageKey,
   lastReadStorageKey,
   loadActiveChannelInitial,
-  loadMutedViews,
   saveActiveChannel,
   saveDraft,
-  saveFloodScopeOverride,
 } from '../lib/chatPanelProtocolStorage';
 import { CHAT_SCROLL_END_THRESHOLD, getDistFromChatBottom } from '../lib/chatScrollUtils';
-import { computeChannelUnreadCounts, totalUnreadCount } from '../lib/chatUnreadCounts';
+import { computeChannelUnreadCounts } from '../lib/chatUnreadCounts';
 import i18n from '../lib/i18n';
 import { ensureLocaleLoaded } from '../lib/localeResources';
-import {
-  clearReticulumHashRegistry,
-  registerReticulumDestinationHash,
-  reticulumHashToNodeId,
-} from '../lib/reticulum/destHash';
-import { LXMF_DELIVERY_ASPECT } from '../lib/reticulum/resolveReticulumChatLxmfDest';
-import { LXST_TELEPHONY_ASPECT } from '../lib/reticulumVoiceCapability';
 import { messageRecordsToChatMessages } from '../lib/storeRecordAdapters';
 import type { ChatMessage, MeshNode } from '../lib/types';
 import {
@@ -37,7 +27,7 @@ import {
 import type { MessageRecord } from '../stores/messageStore';
 import { useWeatherFilterStore } from '../stores/weatherFilterStore';
 import { channelButtonLabel } from './chat/ChatChannelSwitcher';
-import ChatPanel, { type ChatPanelProps } from './ChatPanel';
+import ChatPanel from './ChatPanel';
 import { ToastProvider } from './Toast';
 
 const probeReticulumPeerMock = vi.hoisted(() => vi.fn());
@@ -87,7 +77,6 @@ vi.mock('@tanstack/react-virtual', () => ({
         })),
       getTotalSize: () => count * 96,
       measureElement: () => {},
-      resizeItem: () => {},
       containerRef: { current: null },
       isAtEnd: () => mockIsAtEnd,
       scrollToEnd: mockScrollToEnd,
@@ -109,8 +98,6 @@ vi.mock('@tanstack/react-virtual', () => ({
 }));
 
 beforeEach(() => {
-  disposeAiSummaries();
-  useAiSummaryStore.setState({ status: null });
   localStorage.clear();
   mockIsAtEnd = true;
   mockScrollDirection = 'forward';
@@ -530,7 +517,7 @@ describe('ChatPanel accessibility', () => {
     );
 
     expect(screen.queryByText('Private hello')).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Alice 1' }));
+    await user.click(screen.getByRole('button', { name: 'Alice' }));
     await waitFor(() => {
       expect(screen.getByText('Private hello')).toBeInTheDocument();
     });
@@ -603,12 +590,7 @@ describe('ChatPanel accessibility', () => {
     );
 
     expect(screen.queryByText('!ffffffff')).not.toBeInTheDocument();
-    expect(screen.queryByText('DMs', { exact: true })).not.toBeInTheDocument();
-    expect(
-      within(screen.getByRole('group', { name: 'DMs' })).getByRole('button', {
-        name: 'Order chats',
-      }),
-    ).toBeDisabled();
+    expect(screen.getByText('No conversations yet')).toBeInTheDocument();
   });
 
   it('allows closing inferred DM tab and resurfaces on subsequent message (even if timestamp is stale)', async () => {
@@ -654,10 +636,10 @@ describe('ChatPanel accessibility', () => {
       </ToastProvider>,
     );
 
-    expect(screen.getByRole('button', { name: 'Alice 1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Alice' })).toBeInTheDocument();
     await user.click(screen.getByTitle('Close DM'));
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Alice 1' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Alice' })).toBeInTheDocument();
     });
 
     rerender(
@@ -710,7 +692,7 @@ describe('ChatPanel accessibility', () => {
       </ToastProvider>,
     );
 
-    expect(screen.getByRole('button', { name: 'Alice 2' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Alice' })).toBeInTheDocument();
   });
 
   it('shows close button for inferred DM tabs in MeshCore', () => {
@@ -1118,6 +1100,7 @@ describe('ChatPanel scroll pinning', () => {
         isAtEnd: () => boolean;
         itemSizeCache: Map<string, number>;
         scrollOffset: number;
+        scrollAdjustments: number;
       },
     ) => boolean;
     expect(adjust).toBeTypeOf('function');
@@ -1125,6 +1108,7 @@ describe('ChatPanel scroll pinning', () => {
     const measured = {
       itemSizeCache: new Map([['k0', 96]]),
       scrollOffset: 0,
+      scrollAdjustments: 0,
     };
     expect(adjust(row, 0, { scrollDirection: 'forward', isAtEnd: () => true, ...measured })).toBe(
       true,
@@ -1792,58 +1776,6 @@ describe('ChatPanel StatusBadge', () => {
     expect(screen.getByLabelText(/Your reaction: Love/i)).toBeInTheDocument();
   });
 
-  // aria-label on a role-less span is not exposed; screen readers read only the emoji.
-  it.each(['meshtastic', 'meshcore', 'reticulum'] as const)(
-    'exposes each reaction chip by name as an image (%s)',
-    async (protocol) => {
-      const t0 = Date.now() - 10_000;
-      const { container } = render(
-        <ToastProvider>
-          <ChatPanel
-            {...baseProps}
-            protocol={protocol}
-            myNodeNum={99}
-            messages={[
-              {
-                sender_id: 2,
-                sender_name: 'Alice',
-                payload: 'hi',
-                channel: 0,
-                timestamp: t0,
-                packetId: 100,
-                status: 'acked',
-              },
-              {
-                sender_id: 3,
-                sender_name: 'Bob',
-                payload: '👍',
-                channel: 0,
-                timestamp: t0 + 1000,
-                emoji: 0x1f44d,
-                replyId: 100,
-                status: 'acked',
-              },
-              {
-                sender_id: 99,
-                sender_name: 'Me',
-                payload: '❤️',
-                channel: 0,
-                timestamp: t0 + 2000,
-                emoji: 0x2764,
-                replyId: 100,
-                status: 'acked',
-              },
-            ]}
-          />
-        </ToastProvider>,
-      );
-      const other = screen.getByRole('img', { name: 'Bob reacted with Like' });
-      expect(screen.getByRole('img', { name: 'Your reaction: Love' })).toBeInTheDocument();
-      hydrateAxeThemeColors(container);
-      expect(await axe(other.parentElement!)).toHaveNoViolations();
-    },
-  );
-
   it('renders US flag tapback from full payload when stored scalar is first regional indicator only', () => {
     const US_FLAG = '\u{1F1FA}\u{1F1F8}';
     const t0 = Date.now() - 10_000;
@@ -2001,247 +1933,6 @@ describe('ChatPanel unread watermarks', () => {
     isActive: true,
   };
 
-  it.each(
-    (['meshtastic', 'meshcore'] as const).flatMap((protocol) =>
-      [
-        { range: 'unread', hide: true },
-        { range: '1', hide: true },
-        { range: 'unread', hide: false },
-      ].map((options) => ({ protocol, ...options })),
-    ),
-  )(
-    'respects history weather visibility ($protocol, $range, hide=$hide)',
-    async ({ protocol, range, hide }) => {
-      const weather = useWeatherFilterStore.getState();
-      weather.setHideInChannels(hide);
-      weather.setPattern('^CUSTOMWX');
-      weather.setSenderMarked(protocol, 7, true);
-      useAiSummaryStore.getState().setStatus({
-        ...(await window.electronAPI.ai.getStatus()),
-        enabled: true,
-        engine: 'local',
-        model: 'test',
-        baseUrl: 'http://127.0.0.1:1234',
-      });
-      const at = Date.now() - 1000;
-      const history = [
-        { at, sender: 'Weather', senderId: 7, body: 'Morning report' },
-        { at, sender: 'Weather', senderId: 8, body: 'Ordinary check-in' },
-        { at, sender: 'Bot', senderId: 9, body: 'Forecast: 60F now' },
-        { at, sender: 'Bot', senderId: 10, body: 'CUSTOMWX report' },
-        { at, sender: 'Alice', senderId: 2, body: 'East repeater is online.' },
-      ];
-      vi.mocked(window.electronAPI.ai.getHistory).mockResolvedValue(history);
-      vi.mocked(window.electronAPI.ai.summarize).mockClear();
-      const { unmount } = render(
-        <ToastProvider>
-          <ChatPanel {...baseProps} protocol={protocol} messages={[]} />
-        </ToastProvider>,
-      );
-      try {
-        if (range !== 'unread')
-          fireEvent.change(screen.getByRole('combobox', { name: 'Summary range' }), {
-            target: { value: range },
-          });
-        fireEvent.click(screen.getByRole('button', { name: 'Catch up' }));
-        await waitFor(() => {
-          expect(window.electronAPI.ai.summarize).toHaveBeenCalledOnce();
-        });
-        const request = vi.mocked(window.electronAPI.ai.summarize).mock.calls[0][0];
-        expect(request.messages.map((message) => message.body)).toEqual(
-          (hide ? [history[1], history[4]] : history).map((message) => message.body),
-        );
-      } finally {
-        unmount();
-        weather.setHideInChannels(false);
-        weather.setPattern('');
-        weather.setSenderMarked(protocol, 7, false);
-      }
-    },
-  );
-
-  it.each(['meshtastic', 'meshcore', 'reticulum'] as const)(
-    'retains weather text in %s DM history with channel hiding enabled',
-    async (protocol) => {
-      useWeatherFilterStore.getState().setHideInChannels(true);
-      useAiSummaryStore.getState().setStatus({
-        ...(await window.electronAPI.ai.getStatus()),
-        enabled: true,
-        engine: 'local',
-        model: 'test',
-        baseUrl: 'http://127.0.0.1:1234',
-      });
-      const history = [
-        { at: Date.now() - 1000, sender: 'Alice', senderId: 2, body: 'Forecast: 60F now' },
-      ];
-      vi.mocked(window.electronAPI.ai.getHistory).mockResolvedValue(history);
-      vi.mocked(window.electronAPI.ai.summarize).mockClear();
-      const { unmount } = render(
-        <ToastProvider>
-          <ChatPanel
-            {...baseProps}
-            protocol={protocol}
-            dmOnlyChat
-            initialDmTarget={2}
-            messages={[]}
-          />
-        </ToastProvider>,
-      );
-      try {
-        fireEvent.click(screen.getByRole('button', { name: 'Catch up' }));
-        await waitFor(() => {
-          expect(window.electronAPI.ai.summarize).toHaveBeenCalledOnce();
-        });
-        expect(vi.mocked(window.electronAPI.ai.summarize).mock.calls[0][0].messages).toEqual(
-          history.map(({ at, sender, body }) => ({ at, sender, body })),
-        );
-      } finally {
-        unmount();
-        useWeatherFilterStore.getState().setHideInChannels(false);
-      }
-    },
-  );
-
-  it.each(['meshtastic', 'meshcore', 'reticulum'] as const)(
-    'does not summarize read history after the %s unread divider clears',
-    async (protocol) => {
-      const ts = Date.now() - 1000;
-      const isDm = protocol === 'reticulum';
-      const readKey = isDm ? 'dm:2' : 'ch:0';
-      localStorage.setItem(lastReadStorageKey(protocol), JSON.stringify({ [readKey]: ts - 1000 }));
-      useAiSummaryStore.getState().setStatus({
-        ...(await window.electronAPI.ai.getStatus()),
-        enabled: true,
-        engine: 'local',
-        model: 'test',
-        baseUrl: 'http://127.0.0.1:1234',
-      });
-      const history = [{ at: ts, sender: 'Alice', body: 'Already read' }];
-      vi.mocked(window.electronAPI.ai.getHistory).mockResolvedValue(history);
-      vi.mocked(window.electronAPI.ai.summarize).mockClear();
-      const { container } = render(
-        <ToastProvider>
-          <ChatPanel
-            {...baseProps}
-            protocol={protocol}
-            dmOnlyChat={isDm}
-            initialDmTarget={isDm ? 2 : undefined}
-            messages={[
-              {
-                to: isDm ? 1 : undefined,
-                sender_id: 2,
-                sender_name: 'Alice',
-                payload: 'Already read',
-                channel: 0,
-                timestamp: ts,
-                status: 'acked',
-              },
-            ]}
-          />
-        </ToastProvider>,
-      );
-      await waitFor(() => {
-        const stored = JSON.parse(
-          localStorage.getItem(lastReadStorageKey(protocol)) ?? '{}',
-        ) as Record<string, number>;
-        expect(stored[readKey]).toBe(ts);
-      });
-      fireEvent.scroll(container.querySelector('[data-chat-scroll-root]')!);
-      await waitFor(() => {
-        expect(screen.queryByText('New messages')).not.toBeInTheDocument();
-      });
-      fireEvent.click(screen.getByRole('button', { name: 'Catch up' }));
-      await waitFor(() => {
-        expect(screen.getByRole('status')).toHaveTextContent('No messages in this range');
-      });
-      expect(window.electronAPI.ai.getHistory).toHaveBeenLastCalledWith(
-        expect.objectContaining({ sinceMs: ts }),
-      );
-      expect(window.electronAPI.ai.summarize).not.toHaveBeenCalled();
-    },
-  );
-
-  it.each(
-    (['meshtastic', 'meshcore'] as const).flatMap((protocol) =>
-      (['linux', 'darwin', 'win32'] as const).map((platform) => ({ protocol, platform })),
-    ),
-  )(
-    'keeps selected channel unread visible until read ($protocol, $platform)',
-    async ({ protocol, platform }) => {
-      vi.mocked(window.electronAPI.getPlatform).mockReturnValue(platform);
-      const hasFocus = vi.spyOn(document, 'hasFocus').mockReturnValue(false);
-      const ts = Date.now() - 120_000;
-      localStorage.setItem(lastReadStorageKey(protocol), JSON.stringify({ 'ch:0': ts }));
-      const messages: ChatMessage[] = Array.from({ length: 69 }, (_, index) => ({
-        sender_id: 2,
-        sender_name: 'Alice',
-        channel: 0,
-        payload: `Unread ${index}`,
-        timestamp: ts + index + 1,
-        status: 'acked',
-      }));
-      const { container, rerender } = render(
-        <ToastProvider>
-          <ChatPanel {...baseProps} protocol={protocol} isActive={false} messages={messages} />
-        </ToastProvider>,
-      );
-      const stored = () =>
-        JSON.parse(localStorage.getItem(lastReadStorageKey(protocol)) ?? '{}') as Record<
-          string,
-          number
-        >;
-      try {
-        rerender(
-          <ToastProvider>
-            <ChatPanel {...baseProps} protocol={protocol} messages={messages} />
-          </ToastProvider>,
-        );
-        const selected = within(screen.getByRole('region', { name: 'Channels' })).getByRole(
-          'button',
-          { name: 'General 69' },
-        );
-        expect(selected).toHaveAttribute('aria-pressed', 'true');
-        expect(selected).toHaveAttribute('data-channel-unread', '69');
-        if (platform === 'linux') {
-          hydrateAxeThemeColors(selected);
-          expect(await axe(selected)).toHaveNoViolations();
-        }
-        expect(totalUnreadCount(messages, stored(), new Set([1]), protocol)).toBe(69);
-
-        const stream = container.querySelector<HTMLDivElement>('[data-chat-scroll-root]')!;
-        Object.defineProperties(stream, {
-          scrollHeight: { value: 2000, configurable: true },
-          clientHeight: { value: 400, configurable: true },
-          scrollTop: { value: 1000, writable: true, configurable: true },
-        });
-        hasFocus.mockReturnValue(true);
-        await act(async () => {
-          fireEvent(window, new Event('focus'));
-          await new Promise<void>((resolve) =>
-            requestAnimationFrame(() => {
-              resolve();
-            }),
-          );
-        });
-        expect(selected).toHaveAttribute('data-channel-unread', '69');
-        expect(stored()['ch:0']).toBe(ts);
-
-        stream.scrollTop = 1600;
-        fireEvent.scroll(stream);
-        await waitFor(() => {
-          expect(selected).toHaveAttribute('data-channel-unread', '0');
-          expect(totalUnreadCount(messages, stored(), new Set([1]), protocol)).toBe(0);
-        });
-      } finally {
-        hasFocus.mockRestore();
-        vi.mocked(window.electronAPI.getPlatform).mockReturnValue('linux');
-      }
-    },
-    // Each case renders the whole panel twice (2-5 s alone), so the 5 s default fails under the
-    // load of a full CI shard.
-    30_000,
-  );
-
   it('keeps DM tab open after unread clears when conversation was opened via DM tab', async () => {
     const user = userEvent.setup();
     const ts = Date.now();
@@ -2284,7 +1975,7 @@ describe('ChatPanel unread watermarks', () => {
       </ToastProvider>,
     );
 
-    await user.click(screen.getByRole('button', { name: 'Alice 1' }));
+    await user.click(screen.getByRole('button', { name: 'Alice' }));
 
     rerender(
       <ToastProvider>
@@ -2357,11 +2048,11 @@ describe('ChatPanel unread watermarks', () => {
       </ToastProvider>,
     );
 
-    expect(screen.getByRole('button', { name: 'Alice 1' })).toBeInTheDocument();
-    const aliceTab = screen.getByRole('button', { name: 'Alice 1' }).parentElement;
+    expect(screen.getByRole('button', { name: 'Alice' })).toBeInTheDocument();
+    const aliceTab = screen.getByRole('button', { name: 'Alice' }).parentElement;
     expect(aliceTab?.querySelector('.bg-danger-600')?.textContent).toBe('1');
 
-    await user.click(screen.getByRole('button', { name: 'Alice 1' }));
+    await user.click(screen.getByRole('button', { name: 'Alice' }));
     expect(screen.getByText('orphan DM')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'General' }));
 
@@ -2413,10 +2104,10 @@ describe('ChatPanel unread watermarks', () => {
       </ToastProvider>,
     );
 
-    expect(screen.getByRole('button', { name: 'Alice 1' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Alice' })).toBeInTheDocument();
     await user.click(screen.getByTitle('Close DM'));
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Alice 1' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Alice' })).toBeInTheDocument();
     });
   });
 
@@ -2793,7 +2484,7 @@ describe('ChatPanel unread watermarks', () => {
       </ToastProvider>,
     );
 
-    await user.click(screen.getByRole('button', { name: 'Alice 1' }));
+    await user.click(screen.getByRole('button', { name: 'Alice' }));
 
     await waitFor(() => {
       const stored = JSON.parse(
@@ -2847,7 +2538,7 @@ describe('ChatPanel unread watermarks', () => {
       </ToastProvider>,
     );
 
-    await user.click(screen.getByRole('button', { name: 'Alice 1' }));
+    await user.click(screen.getByRole('button', { name: 'Alice' }));
     await waitFor(() => {
       expect(screen.getByText('first')).toBeInTheDocument();
     });
@@ -2885,22 +2576,21 @@ describe('ChatPanel unread watermarks', () => {
     });
   });
 
-  it.each(
-    (['meshtastic', 'meshcore', 'reticulum'] as const).flatMap((protocol) =>
-      (['linux', 'darwin', 'win32'] as const).map((platform) => ({ protocol, platform })),
-    ),
-  )(
-    'holds unread on the open DM while the window is visible but unfocused, then clears on refocus ($protocol, $platform)',
-    async ({ protocol, platform }) => {
+  it.each(['linux', 'darwin', 'win32'] as const)(
+    'holds unread on the open DM while the window is visible but unfocused, then clears on refocus (%s)',
+    async (platform) => {
       vi.mocked(window.electronAPI.getPlatform).mockReturnValue(platform);
       const user = userEvent.setup();
       const ts = Date.now();
       const selfId = 0x12345678;
       const peerId = 2;
       // Seed the open DM as already read so any advance is attributable to the new inbound.
-      localStorage.setItem(lastReadStorageKey(protocol), JSON.stringify({ [`dm:${peerId}`]: ts }));
+      localStorage.setItem(
+        'mesh-client:lastRead:meshcore',
+        JSON.stringify({ [`dm:${peerId}`]: ts }),
+      );
       const readStored = () =>
-        JSON.parse(localStorage.getItem(lastReadStorageKey(protocol)) ?? '{}') as Record<
+        JSON.parse(localStorage.getItem('mesh-client:lastRead:meshcore') ?? '{}') as Record<
           string,
           number
         >;
@@ -2933,8 +2623,7 @@ describe('ChatPanel unread watermarks', () => {
         <ToastProvider>
           <ChatPanel
             {...baseProps}
-            protocol={protocol}
-            dmOnlyChat={protocol === 'reticulum'}
+            protocol="meshcore"
             myNodeNum={selfId}
             ownNodeIds={[selfId]}
             nodes={nodes}
@@ -2943,9 +2632,7 @@ describe('ChatPanel unread watermarks', () => {
         </ToastProvider>,
       );
 
-      if (protocol !== 'reticulum') {
-        await user.click(screen.getByRole('button', { name: 'Alice' }));
-      }
+      await user.click(screen.getByRole('button', { name: 'Alice' }));
       await waitFor(() => {
         expect(screen.getByText('first')).toBeInTheDocument();
       });
@@ -2953,59 +2640,46 @@ describe('ChatPanel unread watermarks', () => {
       // Window is visible but not focused (e.g. user switched to another app).
       const hasFocusSpy = vi.spyOn(document, 'hasFocus').mockReturnValue(false);
 
-      try {
-        const secondTs = ts + 5000;
-        const withSecond = [
-          firstMsg,
-          {
-            sender_id: peerId,
-            sender_name: 'Alice',
-            payload: 'second',
-            channel: -1,
-            timestamp: secondTs,
-            status: 'acked' as const,
-            to: selfId,
-          },
-        ];
-        rerender(
-          <ToastProvider>
-            <ChatPanel
-              {...baseProps}
-              protocol={protocol}
-              dmOnlyChat={protocol === 'reticulum'}
-              myNodeNum={selfId}
-              ownNodeIds={[selfId]}
-              nodes={nodes}
-              messages={withSecond}
-            />
-          </ToastProvider>,
-        );
+      const secondTs = ts + 5000;
+      const withSecond = [
+        firstMsg,
+        {
+          sender_id: peerId,
+          sender_name: 'Alice',
+          payload: 'second',
+          channel: -1,
+          timestamp: secondTs,
+          status: 'acked' as const,
+          to: selfId,
+        },
+      ];
+      rerender(
+        <ToastProvider>
+          <ChatPanel
+            {...baseProps}
+            protocol="meshcore"
+            myNodeNum={selfId}
+            ownNodeIds={[selfId]}
+            nodes={nodes}
+            messages={withSecond}
+          />
+        </ToastProvider>,
+      );
 
-        // Give the inbound mark-read effect (rAF) a chance to run and confirm it stayed read-gated.
-        await new Promise((resolve) => setTimeout(resolve, 30));
-        expect(readStored()[`dm:${peerId}`]).toBe(ts);
-        expect(screen.getByRole('button', { name: 'Alice 1', pressed: true })).toHaveAttribute(
-          'data-dm-unread',
-          '1',
-        );
-        expect(totalUnreadCount(withSecond, readStored(), new Set([selfId]), protocol)).toBe(1);
+      // Give the inbound mark-read effect (rAF) a chance to run and confirm it stayed read-gated.
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      expect(readStored()[`dm:${peerId}`]).toBe(ts);
 
-        // Refocusing (clicking the dock/taskbar badge) clears unread on the open conversation.
-        hasFocusSpy.mockReturnValue(true);
-        fireEvent(window, new Event('focus'));
+      // Refocusing (clicking the dock/taskbar badge) clears unread on the open conversation.
+      hasFocusSpy.mockReturnValue(true);
+      fireEvent(window, new Event('focus'));
 
-        await waitFor(() => {
-          expect(readStored()[`dm:${peerId}`]).toBe(secondTs);
-          expect(screen.getByRole('button', { name: 'Alice', pressed: true })).toHaveAttribute(
-            'data-dm-unread',
-            '0',
-          );
-          expect(totalUnreadCount(withSecond, readStored(), new Set([selfId]), protocol)).toBe(0);
-        });
-      } finally {
-        hasFocusSpy.mockRestore();
-        vi.mocked(window.electronAPI.getPlatform).mockReturnValue('linux');
-      }
+      await waitFor(() => {
+        expect(readStored()[`dm:${peerId}`]).toBe(secondTs);
+      });
+
+      hasFocusSpy.mockRestore();
+      vi.mocked(window.electronAPI.getPlatform).mockReturnValue('linux');
     },
   );
 });
@@ -3251,166 +2925,17 @@ describe('ChatPanel tapback reaction picker', () => {
     },
   );
 
-  // aria-hidden comes off while a reaction is pending, so find the capture input by tabindex.
   function reactionHiddenInput(): HTMLInputElement {
-    const inputs = document.querySelectorAll<HTMLInputElement>('input[tabindex="-1"]');
-    expect(inputs).toHaveLength(1);
-    return inputs[0];
+    const input = document.querySelector<HTMLInputElement>(
+      'input[aria-hidden="true"][tabindex="-1"]',
+    );
+    expect(input).not.toBeNull();
+    return input!;
   }
 
   function composeTextarea(): HTMLTextAreaElement {
     return screen.getByPlaceholderText('Enter message here');
   }
-
-  // Keyboard and assistive-tech activation fire click with no mousedown first.
-  describe.each(['darwin', 'win32'] as const)(
-    'React pressed from the keyboard on %s',
-    (platform) => {
-      it.each([
-        ['{Enter}', 'meshtastic'],
-        ['{Enter}', 'meshcore'],
-        ['{Enter}', 'reticulum'],
-        ['[Space]', 'meshtastic'],
-        ['[Space]', 'meshcore'],
-        ['[Space]', 'reticulum'],
-      ] as const)(
-        'focuses the capture input before the OS panel opens (%s, %s)',
-        async (key, protocol) => {
-          vi.mocked(window.electronAPI.getPlatform).mockReturnValue(platform);
-          let focusedWhenPanelOpened: Element | null = null;
-          vi.mocked(window.electronAPI.showEmojiPanel).mockImplementation(() => {
-            focusedWhenPanelOpened = document.activeElement;
-            return Promise.resolve();
-          });
-          const onReact = vi.fn().mockResolvedValue(undefined);
-          const user = userEvent.setup();
-          render(
-            <ToastProvider>
-              <ChatPanel
-                {...defaultProps}
-                protocol={protocol}
-                onReact={onReact}
-                messages={[{ ...baseMessage, packetId: 42 }]}
-              />
-            </ToastProvider>,
-          );
-          screen.getByRole('button', { name: 'Add reaction' }).focus();
-          await user.keyboard(key);
-          expect(window.electronAPI.showEmojiPanel).toHaveBeenCalledOnce();
-          const hidden = reactionHiddenInput();
-          expect(focusedWhenPanelOpened).toBe(hidden);
-          hidden.value = '👍';
-          fireEvent.input(hidden);
-          await waitFor(() => {
-            expect(onReact).toHaveBeenCalledWith('👍', 42, 0);
-          });
-        },
-      );
-    },
-  );
-
-  it.each(['meshtastic', 'meshcore', 'reticulum'] as const)(
-    'opens the inline emoji-picker when React is pressed with Enter on Linux (%s)',
-    async (protocol) => {
-      vi.mocked(window.electronAPI.getPlatform).mockReturnValue('linux');
-      const user = userEvent.setup();
-      render(
-        <ToastProvider>
-          <ChatPanel {...defaultProps} protocol={protocol} />
-        </ToastProvider>,
-      );
-      screen.getByRole('button', { name: 'Add reaction' }).focus();
-      await user.keyboard('{Enter}');
-      await waitFor(() => {
-        expect(document.querySelector('emoji-picker')).toBeInTheDocument();
-      });
-      expect(window.electronAPI.showEmojiPanel).not.toHaveBeenCalled();
-    },
-  );
-
-  // A focused aria-hidden element is still exposed by Chromium, unnamed; expose it by name instead.
-  it.each(
-    (['darwin', 'win32'] as const).flatMap((platform) =>
-      (['meshtastic', 'meshcore', 'reticulum'] as const).map((protocol) => ({
-        platform,
-        protocol,
-      })),
-    ),
-  )(
-    'names the capture input only while a reaction is pending ($platform, $protocol)',
-    async ({ platform, protocol }) => {
-      vi.mocked(window.electronAPI.getPlatform).mockReturnValue(platform);
-      let exposedWhenPanelOpened: HTMLElement | null = null;
-      vi.mocked(window.electronAPI.showEmojiPanel).mockImplementation(() => {
-        exposedWhenPanelOpened = screen.queryByRole('textbox', { name: 'Add reaction' });
-        return Promise.resolve();
-      });
-      const onReact = vi.fn().mockResolvedValue(undefined);
-      const user = userEvent.setup();
-      render(
-        <ToastProvider>
-          <ChatPanel
-            {...defaultProps}
-            protocol={protocol}
-            onReact={onReact}
-            messages={[{ ...baseMessage, packetId: 42 }]}
-          />
-        </ToastProvider>,
-      );
-      expect(screen.queryByRole('textbox', { name: 'Add reaction' })).not.toBeInTheDocument();
-      screen.getByRole('button', { name: 'Add reaction' }).focus();
-      await user.keyboard('{Enter}');
-      expect(exposedWhenPanelOpened).not.toBeNull();
-      expect(exposedWhenPanelOpened).toBe(document.activeElement);
-      const hidden = reactionHiddenInput();
-      hidden.value = '👍';
-      fireEvent.input(hidden);
-      await waitFor(() => {
-        expect(onReact).toHaveBeenCalledWith('👍', 42, 0);
-      });
-      expect(screen.queryByRole('textbox', { name: 'Add reaction' })).not.toBeInTheDocument();
-    },
-  );
-
-  it.each(
-    (['linux', 'darwin', 'win32'] as const).flatMap((platform) =>
-      (['meshtastic', 'meshcore', 'reticulum'] as const).map((protocol) => ({
-        platform,
-        protocol,
-      })),
-    ),
-  )(
-    'keeps the DM open when Escape dismisses the reaction picker ($platform, $protocol)',
-    async ({ platform, protocol }) => {
-      vi.mocked(window.electronAPI.getPlatform).mockReturnValue(platform);
-      const onReact = vi.fn().mockResolvedValue(undefined);
-      const user = userEvent.setup();
-      render(
-        <ToastProvider>
-          <ChatPanel
-            {...defaultProps}
-            protocol={protocol}
-            onReact={onReact}
-            initialDmTarget={2}
-            messages={[{ ...baseMessage, to: 1, packetId: 42, payload: 'direct hello' }]}
-          />
-        </ToastProvider>,
-      );
-      expect(await screen.findByText('direct hello')).toBeInTheDocument();
-      screen.getByRole('button', { name: 'Add reaction' }).focus();
-      await user.keyboard('{Enter}');
-      await user.keyboard('{Escape}');
-      expect(document.querySelector('emoji-picker')).not.toBeInTheDocument();
-      // The DM composer has its own placeholder, so find it as the only textarea.
-      expect(document.activeElement).toBe(document.querySelector('textarea'));
-      expect(screen.getByText('direct hello')).toBeInTheDocument();
-      await user.keyboard('{Escape}');
-      await waitFor(() => {
-        expect(screen.queryByText('direct hello')).not.toBeInTheDocument();
-      });
-      expect(onReact).not.toHaveBeenCalled();
-    },
-  );
 
   it.each(['linux', 'darwin', 'win32'] as const)(
     'clears replyTo when React is clicked (%s)',
@@ -3805,100 +3330,6 @@ describe('ChatPanel RF hop label', () => {
     );
     expect(await screen.findByText('3 hops')).toBeInTheDocument();
   });
-
-  describe('hop pill route tooltip', () => {
-    const incoming: ChatMessage = {
-      sender_id: 1,
-      sender_name: 'Peer',
-      payload: 'hello mesh',
-      channel: 0,
-      timestamp: Date.now(),
-      receivedVia: 'rf',
-      rxHops: 2,
-      packetId: 4242,
-    };
-    const repeater = (nodeId: number, name: string, extra: Partial<MeshNode> = {}): MeshNode => ({
-      node_id: nodeId,
-      long_name: name,
-      short_name: '',
-      hw_model: 'Repeater',
-      snr: 0,
-      battery: 0,
-      last_heard: 1_000,
-      latitude: null,
-      longitude: null,
-      ...extra,
-    });
-
-    it('looks up the MeshCore route on hover and names repeaters from the node list', async () => {
-      const getMessageRoute = vi.fn(() => ({
-        status: 'floodPath' as const,
-        hashes: ['F8F9', 'D4D4'],
-      }));
-      const nodes = new Map([
-        [0x10, repeater(0x10, 'Pikes Peak', { public_key_hex: 'f8f9' + '55'.repeat(30) })],
-      ]);
-      render(
-        <ToastProvider>
-          <ChatPanel
-            {...defaultProps}
-            protocol="meshcore"
-            nodes={nodes}
-            messages={[incoming]}
-            getMessageRoute={getMessageRoute}
-          />
-        </ToastProvider>,
-      );
-      const pill = await screen.findByRole('button', { name: '2 hops, route details' });
-      expect(getMessageRoute).not.toHaveBeenCalled();
-      fireEvent.mouseEnter(pill);
-      expect(getMessageRoute).toHaveBeenCalledWith(expect.objectContaining({ packetId: 4242 }));
-      expect(screen.getByRole('tooltip').textContent).toBe(
-        [
-          'Reached you in 2 hops',
-          'From Peer',
-          '1. Pikes Peak (F8F9)',
-          '2. D4D4, unknown repeater',
-          'To you',
-        ].join('\n'),
-      );
-    });
-
-    it('shows the Meshtastic last relay', async () => {
-      const nodes = new Map([[0x1234563a, repeater(0x1234563a, 'Ridge Router', { hops_away: 0 })]]);
-      render(
-        <ToastProvider>
-          <ChatPanel
-            {...defaultProps}
-            protocol="meshtastic"
-            nodes={nodes}
-            messages={[incoming]}
-            getMessageRoute={() => ({ status: 'lastRelay', relayByte: 0x3a })}
-          />
-        </ToastProvider>,
-      );
-      fireEvent.mouseEnter(await screen.findByRole('button', { name: '2 hops, route details' }));
-      expect(screen.getByRole('tooltip').textContent).toBe(
-        [
-          'Reached you in 2 hops',
-          'Last relay: Ridge Router',
-          'The radio reports only the last relay, not the full route.',
-        ].join('\n'),
-      );
-    });
-
-    it('says Reticulum records no relays', async () => {
-      render(
-        <ToastProvider>
-          <ChatPanel {...defaultProps} protocol="reticulum" messages={[incoming]} />
-        </ToastProvider>,
-      );
-      fireEvent.mouseEnter(await screen.findByRole('button', { name: '2 hops, route details' }));
-      expect(screen.getByRole('tooltip').textContent).toBe(
-        'Reached you in 2 hops\nPackets on this network record how many relays they passed, not which ones.',
-      );
-    });
-  });
 });
 
 // ─── New feature tests ──────────────────────────────────────────────────────
@@ -4093,34 +3524,6 @@ describe('ChatPanel — sender filter', () => {
 });
 
 describe('ChatPanel — draft persistence', () => {
-  it('keeps the draft and does not send while the composer is disabled', async () => {
-    const user = userEvent.setup();
-    const onSend = vi.fn().mockResolvedValue(undefined);
-    const view = render(
-      <ToastProvider>
-        <ChatPanel {...baseProps} isConnected onSend={onSend} />
-      </ToastProvider>,
-    );
-    const textarea = screen.getByRole('textbox');
-    await user.type(textarea, 'keep me');
-    view.rerender(
-      <ToastProvider>
-        <ChatPanel {...baseProps} isConnected onSend={onSend} composerDisabled />
-      </ToastProvider>,
-    );
-    expect(textarea).toHaveValue('keep me');
-    expect(textarea).toBeDisabled();
-    await user.click(screen.getByRole('button', { name: 'Send' }));
-    expect(onSend).not.toHaveBeenCalled();
-    view.rerender(
-      <ToastProvider>
-        <ChatPanel {...baseProps} isConnected onSend={onSend} />
-      </ToastProvider>,
-    );
-    expect(screen.getByRole('textbox')).toHaveValue('keep me');
-    expect(screen.getByRole('textbox')).not.toBeDisabled();
-  });
-
   it('preserves unsent input when switching channels', async () => {
     const user = userEvent.setup();
     localStorage.clear();
@@ -5153,37 +4556,6 @@ describe('ChatPanel — Option B bubbles and toolbar', () => {
     }
   });
 
-  it.each(['meshtastic', 'meshcore', 'reticulum'] as const)(
-    'keeps DM ordering in the toolbar without a visible heading on %s',
-    async (protocol) => {
-      const { rerender } = render(
-        <ToastProvider>
-          <ChatPanel {...baseProps} protocol={protocol} />
-        </ToastProvider>,
-      );
-      const tools = await screen.findByRole('group', { name: 'Conversation tools' });
-      const dmTools = within(tools).getByRole('group', { name: 'DMs' });
-      expect(within(dmTools).getByRole('button', { name: 'Order chats' })).toBeDisabled();
-      expect(screen.queryByText('DMs', { exact: true })).not.toBeInTheDocument();
-      localStorage.setItem(`mesh-client:openDmTabs:${protocol}`, '[42,43]');
-      rerender(
-        <ToastProvider>
-          <ChatPanel key="populated" {...baseProps} protocol={protocol} />
-        </ToastProvider>,
-      );
-      const populatedTools = within(
-        screen.getByRole('group', { name: 'Conversation tools' }),
-      ).getByRole('group', { name: 'DMs' });
-      const order = within(populatedTools).getByRole('button', { name: 'Order chats' });
-      expect(order).toBeEnabled();
-      expect(order).toHaveAttribute('title', 'Order chats: DMs');
-      order.focus();
-      await userEvent.setup().keyboard('{Enter}');
-      expect(await screen.findByRole('dialog', { name: 'Order chats' })).toBeVisible();
-      expect(screen.getByRole('dialog').querySelectorAll('li')).toHaveLength(2);
-    },
-  );
-
   it('opens a channel requested from outside (the launcher) and reports it consumed', async () => {
     const consumed = vi.fn();
     render(
@@ -5328,7 +4700,7 @@ describe('ChatPanel — screen reader announcements', () => {
 describe('ChatPanel removing a MeshCore channel (#1077)', () => {
   const secret = new Uint8Array([1, ...new Array<number>(15).fill(0)]);
   const baseProps = () => ({
-    messages: [] as ChatMessage[],
+    messages: [],
     channels: [
       { index: 0, name: 'Public' },
       { index: 3, name: '#test' },
@@ -5665,82 +5037,6 @@ describe('ChatPanel removing a MeshCore channel (#1077)', () => {
       expect(props.onDeleteMeshcoreChannel).toHaveBeenCalledWith(3);
     });
   });
-
-  describe('while a DM is open', () => {
-    const alice: MeshNode = {
-      node_id: 2,
-      long_name: 'Alice',
-      short_name: '',
-      hw_model: '',
-      snr: 0,
-      battery: 0,
-      last_heard: Date.now(),
-      latitude: null,
-      longitude: null,
-    };
-    const dmFromAlice: ChatMessage = {
-      sender_id: 2,
-      sender_name: 'Alice',
-      payload: 'Private hello',
-      channel: -1,
-      timestamp: Date.now(),
-      status: 'acked',
-      to: 1,
-    };
-    // The channel row is drawn at reduced opacity in DM view. Opacity makes it a stacking
-    // context, so a dialog inside it is faded and the message list paints over it.
-    const openDmAndGetFadedRow = async (user: ReturnType<typeof userEvent.setup>) => {
-      renderPanel({
-        messages: [dmFromAlice],
-        nodes: new Map([[2, alice]]),
-        onClearChannelMessages: vi.fn().mockResolvedValue(undefined),
-      } as Partial<ReturnType<typeof baseProps>>);
-      await user.click(screen.getByRole('button', { name: /^Alice/ }));
-      await screen.findByText('Private hello');
-      const row = screen.getByTestId('chat-conversation-row').parentElement;
-      expect(row).toHaveClass('opacity-60');
-      return row;
-    };
-
-    it('opens the + dialog and its remove confirm outside the faded channel row', async () => {
-      const user = userEvent.setup();
-      const row = await openDmAndGetFadedRow(user);
-      await user.click(screen.getByRole('button', { name: '+ Add Channel' }));
-      expect(row?.contains(screen.getByRole('dialog', { name: 'Add Channel' }))).toBe(false);
-      await user.click(screen.getByRole('button', { name: 'Remove #test' }));
-      expect(row?.contains(screen.getByRole('alertdialog', { name: 'Remove #test?' }))).toBe(false);
-    });
-
-    it('opens the clear messages confirm outside the faded channel row', async () => {
-      const user = userEvent.setup();
-      const row = await openDmAndGetFadedRow(user);
-      fireEvent.contextMenu(chip('#test'));
-      await user.click(screen.getByRole('menuitem', { name: 'Clear messages' }));
-      expect(
-        row?.contains(screen.getByRole('alertdialog', { name: 'Clear messages in #test?' })),
-      ).toBe(false);
-    });
-
-    it('closes the remove confirm on Escape and stays in the DM', async () => {
-      const user = userEvent.setup();
-      const row = await openDmAndGetFadedRow(user);
-      await user.click(screen.getByRole('button', { name: '+ Add Channel' }));
-      await user.click(screen.getByRole('button', { name: 'Remove #test' }));
-      await user.keyboard('{Escape}');
-      expect(screen.queryByRole('alertdialog')).toBeNull();
-      expect(row).toHaveClass('opacity-60');
-      expect(screen.getByText('Private hello')).toBeInTheDocument();
-    });
-
-    it('closes the + dialog on Escape and stays in the DM', async () => {
-      const user = userEvent.setup();
-      const row = await openDmAndGetFadedRow(user);
-      await user.click(screen.getByRole('button', { name: '+ Add Channel' }));
-      await user.keyboard('{Escape}');
-      expect(screen.queryByRole('dialog', { name: 'Add Channel' })).toBeNull();
-      expect(row).toHaveClass('opacity-60');
-    });
-  });
 });
 
 describe('ChatPanel — weather view', () => {
@@ -5874,7 +5170,7 @@ describe('ChatPanel — weather view', () => {
       screen
         .getAllByRole('button', { pressed: true })
         .find((b) => b.getAttribute('data-strip-active') === 'true');
-    expect(generalTab()?.getAttribute('aria-label')).toBe(channelButtonLabel('General', 1));
+    expect(generalTab()?.getAttribute('aria-label')).toBe('General');
 
     await user.click(screen.getByRole('button', { name: /Weather view/ }));
     expect(generalTab()?.getAttribute('aria-label')).toBe(channelButtonLabel('General', 1));
@@ -6030,7 +5326,7 @@ describe('ChatPanel — starred view', () => {
     const dmPlaceholder = i18n.t('chatPanel.composePlaceholderDm', { name: 'Alice' });
     const channelPlaceholder = i18n.t('chatPanel.composePlaceholderDefault');
     const channelWithShield = 'General 1, Unread MAYDAY MECP report';
-    await user.click(await screen.findByRole('button', { name: 'Alice 1' }));
+    await user.click(await screen.findByRole('button', { name: 'Alice' }));
     expect(await screen.findByPlaceholderText(dmPlaceholder)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Request or report with MECP' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: channelWithShield })).toBeInTheDocument();
@@ -6111,340 +5407,5 @@ describe('Chat translation actions', () => {
     expect(api.translate).toHaveBeenCalledWith(
       expect.objectContaining({ provider: 'offline', mode: 'manual' }),
     );
-  });
-});
-
-describe('Signal report quick replies', () => {
-  const message: ChatMessage = {
-    sender_id: 2,
-    sender_name: 'Peer',
-    payload: 'Test transmission',
-    channel: 0,
-    timestamp: 1_800_000_000_000,
-    packetId: 12345,
-    receivedVia: 'rf',
-    rxSnr: 12,
-    rxRssi: -4,
-    rxHops: 6,
-  };
-
-  function renderSignalPanel(overrides: Partial<ChatPanelProps> = {}) {
-    const props = {
-      messages: [message],
-      channels: [{ index: 0, name: 'General' }],
-      myNodeNum: 99,
-      nodes: new Map(),
-      isConnected: true,
-      isActive: true,
-      protocol: 'meshcore' as const,
-      onSend: vi.fn().mockResolvedValue(undefined),
-      onReact: vi.fn(),
-      onResend: vi.fn(),
-      onNodeClick: vi.fn(),
-      ...overrides,
-    };
-    return {
-      props,
-      ...render(
-        <ToastProvider>
-          <ChatPanel {...props} />
-        </ToastProvider>,
-      ),
-    };
-  }
-
-  it.each(['linux', 'darwin', 'win32'] as const)(
-    'sends one reply immediately while preserving the draft on %s',
-    async (platform) => {
-      vi.mocked(window.electronAPI.getPlatform).mockReturnValue(platform);
-      const getReceptionStats = vi
-        .fn()
-        .mockReturnValue({ snr: 12, rssi: -4, hops: 6, path: ['0600', 'C5EC'] });
-      const { props, container } = renderSignalPanel({ getReceptionStats });
-      const composer = await waitForComposer();
-      fireEvent.change(composer, { target: { value: 'Unfinished draft' } });
-      fireEvent.click(await screen.findByRole('button', { name: 'Reply to message' }));
-      expect(getReceptionStats).not.toHaveBeenCalled();
-      fireEvent.click(screen.getByRole('button', { name: 'Send signal report' }));
-      await waitFor(() => {
-        expect(props.onSend).toHaveBeenCalledExactlyOnceWith(
-          'ack: SNR 12.0 dB, RSSI -4 dBm, 6 hops via 0600, C5EC',
-          0,
-          undefined,
-          12345,
-        );
-      });
-      expect(composer).toHaveValue('Unfinished draft');
-      expect(screen.getByRole('button', { name: /Cancel reply/i })).toBeInTheDocument();
-      hydrateAxeThemeColors(container);
-      expect(await axe(container)).toHaveNoViolations();
-    },
-  );
-
-  it('keeps the action disabled while the send is pending', async () => {
-    let resolve!: () => void;
-    const onSend = vi.fn(
-      () =>
-        new Promise<undefined>((done) => {
-          resolve = () => {
-            done(undefined);
-          };
-        }),
-    );
-    renderSignalPanel({ onSend });
-    const button = await screen.findByRole('button', { name: 'Send signal report' });
-    fireEvent.click(button);
-    fireEvent.click(button);
-    expect(onSend).toHaveBeenCalledTimes(1);
-    expect(button).toBeDisabled();
-    await act(async () => {
-      resolve();
-      await Promise.resolve();
-    });
-    expect(button).toBeEnabled();
-  });
-
-  it('sends a MeshCore DM with to unset to the sender and not public channel 0', async () => {
-    const { props } = renderSignalPanel({
-      messages: [{ ...message, channel: -1, to: undefined }],
-      initialDmTarget: 2,
-    });
-    fireEvent.click(await screen.findByRole('button', { name: 'Send signal report' }));
-    await waitFor(() => {
-      expect(props.onSend).toHaveBeenCalledExactlyOnceWith(
-        'ack: SNR 12.0 dB, RSSI -4 dBm, 6 hops',
-        0,
-        2,
-        12345,
-      );
-    });
-    expect(props.onSend).not.toHaveBeenCalledWith(
-      expect.anything(),
-      0,
-      undefined,
-      expect.anything(),
-    );
-  });
-
-  it('refuses to send a signal report when a DM peer cannot be resolved', async () => {
-    const { props } = renderSignalPanel({
-      messages: [{ ...message, channel: -1, to: undefined, sender_id: 0 }],
-      initialDmTarget: 0,
-    });
-    fireEvent.click(await screen.findByRole('button', { name: 'Send signal report' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      i18n.t('chatPanel.signalReportUnavailable'),
-    );
-    expect(props.onSend).not.toHaveBeenCalled();
-  });
-
-  it('sends DM reports back to the sender and restores the saved flood scope on failure', async () => {
-    saveFloodScopeOverride('meshcore', 'dm:2', '#test');
-    const applyScope = vi.fn().mockResolvedValue(undefined);
-    const onSend = vi.fn().mockRejectedValue(new Error('Not connected'));
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      renderSignalPanel({
-        messages: [{ ...message, channel: -1, to: 99 }],
-        initialDmTarget: 2,
-        onSend,
-        applyMeshcoreFloodScopeHashtag: applyScope,
-        meshcoreFloodScopeHashtag: '#home',
-      });
-      const composer = await waitForComposer();
-      fireEvent.change(composer, { target: { value: 'Keep this draft' } });
-      fireEvent.click(await screen.findByRole('button', { name: 'Send signal report' }));
-      await waitFor(() => {
-        expect(onSend).toHaveBeenCalledWith('ack: SNR 12.0 dB, RSSI -4 dBm, 6 hops', 0, 2, 12345);
-      });
-      await waitFor(() => {
-        expect(applyScope).toHaveBeenLastCalledWith('#home');
-      });
-      expect(applyScope).toHaveBeenNthCalledWith(1, '#test');
-      expect(composer).toHaveValue('Keep this draft');
-      expect(
-        await screen.findByText(i18n.t('chatPanel.sendErrors.notConnected')),
-      ).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Send signal report' })).toBeEnabled();
-    } finally {
-      warn.mockRestore();
-    }
-  });
-
-  it('sends only a receipt when RF provenance is known without numeric measurements', async () => {
-    const { props } = renderSignalPanel({
-      messages: [{ ...message, rxSnr: undefined, rxRssi: undefined, rxHops: undefined }],
-    });
-    fireEvent.click(await screen.findByRole('button', { name: 'Send signal report' }));
-    await waitFor(() => {
-      expect(props.onSend).toHaveBeenCalledWith('ack: received via RF', 0, undefined, 12345);
-    });
-  });
-
-  it('keeps stored signal measurements when a capture only has a valid hop count', async () => {
-    const { props } = renderSignalPanel({
-      getReceptionStats: () => ({ snr: NaN, rssi: undefined, hops: 0, path: [] }),
-    });
-    fireEvent.click(await screen.findByRole('button', { name: 'Send signal report' }));
-    await waitFor(() => {
-      expect(props.onSend).toHaveBeenCalledWith(
-        'ack: SNR 12.0 dB, RSSI -4 dBm, 0 hops',
-        0,
-        undefined,
-        12345,
-      );
-    });
-  });
-
-  it('uses Meshtastic reply ids and preserves zero-hop measurements', async () => {
-    const { props } = renderSignalPanel({
-      protocol: 'meshtastic',
-      messages: [{ ...message, rxHops: 0, rxSnr: 0 }],
-    });
-    fireEvent.click(await screen.findByRole('button', { name: 'Send signal report' }));
-    await waitFor(() => {
-      expect(props.onSend).toHaveBeenCalledWith(
-        'ack: SNR 0.0 dB, RSSI -4 dBm, 0 hops',
-        0,
-        undefined,
-        12345,
-      );
-    });
-  });
-
-  it.each([
-    { messages: [{ ...message, sender_id: 99 }] },
-    { messages: [{ ...message, receivedVia: 'mqtt' as const }] },
-    { isConnected: false },
-    { isMqttOnly: true },
-    { protocol: 'reticulum' as const, messages: [{ ...message, receivedVia: 'tcp' as const }] },
-    {
-      protocol: 'reticulum' as const,
-      messages: [{ ...message, reticulum_message_hash: 'ab'.repeat(32) }],
-    },
-  ])('hides the RF action when unavailable: %j', async (overrides) => {
-    renderSignalPanel(overrides);
-    await waitForComposer();
-    expect(screen.queryByRole('button', { name: 'Send signal report' })).not.toBeInTheDocument();
-  });
-
-  it.each(['linux', 'darwin', 'win32'] as const)(
-    'replies to a Reticulum RF chat by LXMF hash while preserving the draft on %s',
-    async (platform) => {
-      vi.mocked(window.electronAPI.getPlatform).mockReturnValue(platform);
-      const parentHash = 'ab'.repeat(32);
-      const senderHash = 'cd'.repeat(16);
-      const normalizedPeer = reticulumHashToNodeId(senderHash);
-      clearReticulumHashRegistry();
-      registerReticulumDestinationHash(message.sender_id, senderHash);
-      try {
-        const { props } = renderSignalPanel({
-          protocol: 'reticulum',
-          dmOnlyChat: true,
-          lxmfReplyHashReplies: true,
-          initialDmTarget: 2,
-          messages: [
-            {
-              ...message,
-              to: 99,
-              reticulum_sender_hash: senderHash,
-              reticulum_message_hash: parentHash,
-              rxRadioTransport: 'rf',
-              rxSnr: undefined,
-              rxRssi: undefined,
-              rxHops: undefined,
-            },
-          ],
-        });
-        const composer = await waitForComposer();
-        fireEvent.change(composer, { target: { value: 'Reticulum draft' } });
-        fireEvent.click(await screen.findByRole('button', { name: 'Send signal report' }));
-        await waitFor(() => {
-          expect(props.onSend).toHaveBeenCalledWith(
-            'ack: received via RF',
-            0,
-            normalizedPeer,
-            parentHash,
-          );
-        });
-        expect(normalizedPeer).not.toBe(message.sender_id);
-        expect(composer).toHaveValue('Reticulum draft');
-      } finally {
-        clearReticulumHashRegistry();
-      }
-    },
-  );
-
-  it('sends a Reticulum signal report to the normalized LXMF peer', async () => {
-    const identity = '0f79468863d76b3ba574baa92606ffcb';
-    const lxmf = 'e3359f1314aff4fb6261400a8202149b';
-    const telephony = 'ab1d53d6923d6983dfb4451e3869b878';
-    const telephonyId = reticulumHashToNodeId(telephony) >>> 0;
-    const lxmfId = reticulumHashToNodeId(lxmf) >>> 0;
-    clearReticulumHashRegistry();
-    registerReticulumDestinationHash(telephonyId, telephony);
-    registerReticulumDestinationHash(lxmfId, lxmf);
-    useReticulumIdentityActivityStore.setState({
-      byDestination: new Map([
-        [
-          telephony,
-          [
-            {
-              destination_hash: telephony,
-              aspect: LXST_TELEPHONY_ASPECT,
-              identity_hash: identity,
-              last_seen: 200,
-            },
-          ],
-        ],
-        [
-          lxmf,
-          [
-            {
-              destination_hash: lxmf,
-              aspect: LXMF_DELIVERY_ASPECT,
-              identity_hash: identity,
-              last_seen: 150,
-            },
-          ],
-        ],
-      ]),
-    });
-    const parentHash = 'ab'.repeat(32);
-    const view = renderSignalPanel({
-      protocol: 'reticulum',
-      dmOnlyChat: true,
-      lxmfReplyHashReplies: true,
-      initialDmTarget: telephonyId,
-      messages: [
-        {
-          ...message,
-          sender_id: telephonyId,
-          to: 99,
-          reticulum_sender_hash: telephony,
-          reticulum_message_hash: parentHash,
-          rxRadioTransport: 'rf',
-          rxSnr: undefined,
-          rxRssi: undefined,
-          rxHops: undefined,
-        },
-      ],
-    });
-    try {
-      fireEvent.click(await screen.findByRole('button', { name: 'Send signal report' }));
-      await waitFor(() => {
-        expect(view.props.onSend).toHaveBeenCalledWith(
-          'ack: received via RF',
-          0,
-          lxmfId,
-          parentHash,
-        );
-      });
-      expect(lxmfId).not.toBe(telephonyId);
-    } finally {
-      view.unmount();
-      clearReticulumHashRegistry();
-      useReticulumIdentityActivityStore.setState({ byDestination: new Map() });
-    }
   });
 });

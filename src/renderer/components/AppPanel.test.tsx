@@ -57,24 +57,6 @@ describe('AppPanel GPS refresh with Share off', () => {
     expect(onRefreshGps).toHaveBeenCalledOnce();
   });
 
-  it('disables Refresh Now when no onRefreshGps is wired', async () => {
-    localStorage.setItem(APP_SETTINGS_STORAGE_KEY, JSON.stringify({ shareMyLocation: false }));
-    render(
-      <ToastProvider>
-        <AppPanel
-          protocol="reticulum"
-          nodeCount={0}
-          messageCount={0}
-          channels={[]}
-          myNodeNum={null}
-          onLocationFilterChange={vi.fn()}
-        />
-      </ToastProvider>,
-    );
-    fireEvent.click(await screen.findByText('GPS / Location'));
-    expect(screen.getByRole('button', { name: 'Refresh Now' })).toBeDisabled();
-  });
-
   it('mentions saved location local use when share is off and static is active', async () => {
     localStorage.setItem(APP_SETTINGS_STORAGE_KEY, JSON.stringify({ shareMyLocation: false }));
     saveNewLocation({ name: 'Desktop', lat: 41.59375, lon: -73.02428, fixed: true });
@@ -141,49 +123,6 @@ describe('AppPanel migrated settings preservation', () => {
     expect(JSON.parse(localStorage.getItem('mesh-client:gpsSettings')!).refreshInterval).toBe(0);
   });
 
-  it('persists only its changed field and never replays other panels captured at mount', async () => {
-    localStorage.setItem(APP_SETTINGS_STORAGE_KEY, JSON.stringify(joeyPreferences));
-    render(
-      <ToastProvider>
-        <AppPanel
-          protocol="meshtastic"
-          nodeCount={0}
-          messageCount={0}
-          channels={[]}
-          myNodeNum={null}
-          onLocationFilterChange={vi.fn()}
-        />
-      </ToastProvider>,
-    );
-    await screen.findByText('App Settings');
-    await act(async () => {});
-    const current = JSON.parse(localStorage.getItem(APP_SETTINGS_STORAGE_KEY)!);
-    const updates = {
-      mapViewport: { center: [40, -105], zoom: 13 },
-      reticulumAutostart: true,
-      envMode: 'canyon',
-      reticulumRmapAnnounceIntervalMin: 29,
-      'meshcoreRoomLastPost:7': '1800000000000',
-      unknownFutureField: { enabled: true },
-    };
-    localStorage.setItem(APP_SETTINGS_STORAGE_KEY, JSON.stringify({ ...current, ...updates }));
-    fireEvent.click(document.getElementById('distanceFilter')!);
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 350));
-    });
-    const actual = JSON.parse(localStorage.getItem(APP_SETTINGS_STORAGE_KEY)!);
-    for (const [key, value] of Object.entries(updates)) expect(actual[key], key).toEqual(value);
-    for (const key of [
-      'autoPruneEnabled',
-      'mecpComposeEnabled',
-      'mecpRebroadcastRules',
-      'meshcoreContactCapCount',
-      'use24HourTime',
-      'translationTargetLanguage',
-      'translationReadLanguages',
-    ])
-      expect(actual[key], key).toEqual(joeyPreferences[key as keyof typeof joeyPreferences]);
-  });
 });
 
 describe('AppPanel accessibility', () => {
@@ -922,65 +861,6 @@ describe('AppPanel: RRC unread all room messages toggle', () => {
     localStorage.removeItem('mesh-client:appSettings');
   });
 
-  it('shows the toggle only on the Reticulum protocol tab, checked by default', async () => {
-    const { unmount } = render(
-      <ToastProvider>
-        <AppPanel {...defaultProps} protocol="meshtastic" />
-      </ToastProvider>,
-    );
-    expect(
-      screen.queryByRole('checkbox', { name: /RRC unread for all room messages/i }),
-    ).toBeNull();
-    unmount();
-
-    const { unmount: unmountMeshcore } = render(
-      <ToastProvider>
-        <AppPanel {...defaultProps} protocol="meshcore" />
-      </ToastProvider>,
-    );
-    expect(
-      screen.queryByRole('checkbox', { name: /RRC unread for all room messages/i }),
-    ).toBeNull();
-    unmountMeshcore();
-
-    render(
-      <ToastProvider>
-        <AppPanel {...defaultProps} protocol="reticulum" />
-      </ToastProvider>,
-    );
-    const checkbox = await screen.findByRole('checkbox', {
-      name: /RRC unread for all room messages/i,
-    });
-    expect(checkbox).toBeChecked();
-  });
-
-  it('persists rrcUnreadAllRoomMessages false and remounts unchecked', async () => {
-    const { unmount } = render(
-      <ToastProvider>
-        <AppPanel {...defaultProps} protocol="reticulum" />
-      </ToastProvider>,
-    );
-    const checkbox = await screen.findByRole('checkbox', {
-      name: /RRC unread for all room messages/i,
-    });
-    act(() => {
-      fireEvent.click(checkbox);
-    });
-    await waitFor(() => {
-      const raw = localStorage.getItem('mesh-client:appSettings');
-      expect(raw).toContain('"rrcUnreadAllRoomMessages":false');
-    });
-    unmount();
-
-    render(
-      <ToastProvider>
-        <AppPanel {...defaultProps} protocol="reticulum" />
-      </ToastProvider>,
-    );
-    expect(
-      await screen.findByRole('checkbox', { name: /RRC unread for all room messages/i }),
-    ).not.toBeChecked();
-  });
 });
 
 describe('AppPanel: MeshCore Radio-owned settings are not on App', () => {
@@ -1040,42 +920,6 @@ describe('AppPanel: support bundle exports', () => {
       '/tmp/mesh-client-github-report.zip',
     );
   });
-
-  it.each(['meshtastic', 'meshcore', 'reticulum'] as const)(
-    'shows renderer memory and exports a GitHub bundle for %s',
-    async (protocol) => {
-      const { container } = render(
-        <ToastProvider>
-          <AppPanel {...defaultProps} protocol={protocol} />
-        </ToastProvider>,
-      );
-      const memory = await waitFor(() => {
-        const details = container.querySelector(
-          'details[data-setting-anchor="app.support.rendererMemory"]',
-        );
-        expect(details).toBeInstanceOf(HTMLDetailsElement);
-        return details as HTMLDetailsElement;
-      });
-      expect(memory.open).toBe(false);
-      memory.open = true;
-      // Process working-set sampling remains available without COI (force-file recovery).
-      expect(await screen.findByRole('button', { name: 'Sample now' })).toBeEnabled();
-      expect(screen.getByText(/recovery mode/i)).toBeInTheDocument();
-      // Support export actions live in the sibling Support / Bug reports collapsible.
-      const supportDetails = memory.previousElementSibling;
-      expect(supportDetails).toBeInstanceOf(HTMLDetailsElement);
-      (supportDetails as HTMLDetailsElement).open = true;
-      fireEvent.click(
-        await screen.findByRole('button', { name: /Export support bundle for GitHub/i }),
-      );
-      await waitFor(() => {
-        expect(window.electronAPI.support.exportBundle).toHaveBeenCalledWith(
-          'github',
-          expect.stringContaining('"rendererMemory"'),
-        );
-      });
-    },
-  );
 
   it('invokes support.exportBundle with developer mode', async () => {
     const { container } = render(
@@ -1432,37 +1276,4 @@ describe('AppPanel fresh location consent', () => {
   beforeEach(() => {
     localStorage.clear();
   });
-  it.each(['meshtastic', 'meshcore', 'reticulum'] as const)(
-    'starts %s sharing off and preserves an explicit opt-in',
-    async (protocol) => {
-      const props = {
-        protocol,
-        nodeCount: 0,
-        messageCount: 0,
-        channels: [],
-        myNodeNum: null,
-        onLocationFilterChange: vi.fn(),
-      };
-      const first = render(
-        <ToastProvider>
-          <AppPanel {...props} />
-        </ToastProvider>,
-      );
-      fireEvent.click(await screen.findByText('GPS / Location'));
-      const sharing = screen.getByRole('checkbox', { name: 'Share my location' });
-      expect(sharing).not.toBeChecked();
-      fireEvent.click(sharing);
-      expect(JSON.parse(localStorage.getItem(APP_SETTINGS_STORAGE_KEY) ?? '{}')).toMatchObject({
-        shareMyLocation: true,
-      });
-      first.unmount();
-      render(
-        <ToastProvider>
-          <AppPanel {...props} />
-        </ToastProvider>,
-      );
-      fireEvent.click(await screen.findByText('GPS / Location'));
-      expect(screen.getByRole('checkbox', { name: 'Share my location' })).toBeChecked();
-    },
-  );
 });

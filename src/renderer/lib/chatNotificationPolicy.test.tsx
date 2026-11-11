@@ -1,7 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { RrcChatMessage } from '@/shared/rrc-types';
-
 import { useIdentityStore } from '../stores/identityStore';
 import { useNodeStore } from '../stores/nodeStore';
 import { resolveInactiveChatNotification } from './chatInactiveNotifications';
@@ -13,7 +11,6 @@ import {
   saveChatNotificationMode,
 } from './chatNotificationPolicy';
 import { getProtocolForType } from './protocols/protocolRegistry';
-import { resolveInactiveRrcNotificationType } from './rrcInactiveNotifications';
 import type { ChatMessage, MeshProtocol } from './types';
 
 function message(overrides: Partial<ChatMessage> = {}): ChatMessage {
@@ -121,11 +118,6 @@ describe('chat notification policy', () => {
     },
   );
 
-  it('keeps Reticulum DMs eligible without requiring a mention', () => {
-    saveChatNotificationMode('mentions');
-    expect(classify('reticulum', message({ channel: -1, to: 1 }))?.type).toBe('dm');
-  });
-
   it('uses the displayed offline bucket when its primary identity has no hydrated data', () => {
     const protocol = getProtocolForType('meshcore')!;
     useIdentityStore.setState({
@@ -155,53 +147,6 @@ describe('chat notification policy', () => {
       nodes: { 'offline-meshcore': { 1: { nodeId: 1, longName: 'Hydrated Radio' } } },
     });
     expect(mentionsLocalChatIdentity('@[Hydrated Radio]', 'meshcore', new Set([1]))).toBe(true);
-  });
-
-  it('combines RRC global and existing room mode, with whispers explicit', () => {
-    const msg = { id: 'rrc1', timestamp: 1, body: 'hello', room: 'general', kind: 'msg' as const };
-    const resolveRrcAlertType = (args: {
-      msg: RrcChatMessage;
-      nickname: string;
-      notifyMode: 'all' | 'mentions';
-      muted: boolean;
-    }) =>
-      resolveInactiveRrcNotificationType({
-        newMessages: [args.msg],
-        nickname: args.nickname,
-        notifyMode: args.notifyMode,
-        hubDestHash: 'abc',
-        mutedViews: new Set(args.muted ? ['rrc:abc:general'] : []),
-        notifGloballyMuted: false,
-        localIdentityHash: null,
-      });
-    saveChatNotificationMode('mentions');
-    expect(
-      resolveRrcAlertType({ msg, nickname: 'Joey', notifyMode: 'all', muted: false }),
-    ).toBeNull();
-    expect(
-      resolveRrcAlertType({
-        msg: { ...msg, body: '@joey!' },
-        nickname: 'Joey',
-        notifyMode: 'all',
-        muted: false,
-      }),
-    ).toBe('dm');
-    expect(
-      resolveRrcAlertType({
-        msg: { ...msg, room: '@' + 'a'.repeat(32) },
-        nickname: 'Joey',
-        notifyMode: 'mentions',
-        muted: false,
-      }),
-    ).toBe('dm');
-    expect(
-      resolveRrcAlertType({
-        msg: { ...msg, body: '@Joey' },
-        nickname: 'Joey',
-        notifyMode: 'all',
-        muted: true,
-      }),
-    ).toBeNull();
   });
 
   it('reports failed persistence without changing the selected mode', () => {

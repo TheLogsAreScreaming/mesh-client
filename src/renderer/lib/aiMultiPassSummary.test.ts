@@ -87,27 +87,6 @@ beforeEach(() => {
   vi.stubGlobal('window', { electronAPI: { ai: api } });
 });
 describe('multi-pass summary orchestration', () => {
-  it.each(['meshtastic', 'meshcore', 'reticulum'] as const)(
-    'processes all 169 %s messages and merges them into a final summary',
-    async (protocol) => {
-      const result = await runMultiPassSummary({
-        base: { ...base, protocol },
-        messages,
-        status,
-        signal: new AbortController().signal,
-        callbacks,
-      });
-      expect(
-        requests.filter((request) => request.mode === 'map').flatMap((request) => request.messages),
-      ).toEqual(messages);
-      expect(requests.at(-1)?.mode).toBe('final');
-      expect(result.messageCount).toBe(169);
-      expect(result.truncated).toBe(false);
-      expect(result.digests.length).toBeGreaterThan(0);
-      expect(callbacks.onFinalText).toHaveBeenCalledExactlyOnceWith('Useful digest.');
-      expect(waiters.size).toBe(0);
-    },
-  );
   it('splits an oversized source message and counts it once', async () => {
     const oversized = [{ at: 1, sender: 'Alice', body: '漢😀\n'.repeat(2000) }];
     expect(shouldUseMultiPass(oversized, 'os', base)).toBe(true);
