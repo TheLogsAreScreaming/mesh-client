@@ -51,7 +51,7 @@ export interface AiSummaryRequest {
   mode?: AiSummaryPassMode;
   /** Conversation label shown to the model, e.g. "#general", "DM with KX4ABC", "Room: NodeChat". */
   conversationLabel: string;
-  protocol: 'meshtastic' | 'meshcore' | 'reticulum';
+  protocol: 'meshtastic' | 'meshcore';
   surface: 'channel' | 'dm' | 'room' | 'rrc';
   /** UI locale (BCP-47) so the summary comes back in the user's language. */
   locale: string;

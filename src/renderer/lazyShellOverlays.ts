@@ -24,18 +24,6 @@ export function loadPanelLauncher() {
   return import('./components/shell/PanelLauncher').then((m) => ({ default: m.PanelLauncher }));
 }
 
-export function loadRncpEnableRequestModal() {
-  return import('./components/remote/RncpEnableRequestModal').then((m) => ({
-    default: m.RncpEnableRequestModal,
-  }));
-}
-
-export function loadReticulumVoiceOverlay() {
-  return import('./components/reticulum/ReticulumVoiceOverlay').then((m) => ({
-    default: m.ReticulumVoiceOverlay,
-  }));
-}
-
 export function loadStartupLocationPrompt() {
   return import('./components/StartupLocationPrompt');
 }

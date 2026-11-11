@@ -41,22 +41,3 @@ export function teamLinkFromLoraNode(opts: {
     identityId: identityId ?? null,
   };
 }
-
-/** Build a link candidate for a Reticulum peer detail row. */
-/** Build a TeamLinkCandidate from a Reticulum peer. */
-export function teamLinkFromReticulumPeer(opts: {
-  destinationHash: string;
-  displayName?: string | null;
-  nodeId?: number | null;
-  identityId?: string | null;
-}): TeamLinkCandidate | null {
-  const durableKey = normalizeTeamDurableKey('reticulum', opts.destinationHash);
-  if (!durableKey) return null;
-  return {
-    protocol: 'reticulum',
-    durableKey,
-    nodeId: opts.nodeId ?? null,
-    longName: opts.displayName?.trim() || null,
-    identityId: opts.identityId ?? null,
-  };
-}

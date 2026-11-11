@@ -13,7 +13,7 @@ export interface ContactTimelineItem {
   protocol: MeshProtocol;
   message: ChatMessage;
   isDirectMessage: boolean;
-  /** Peer node id for Jump to Chat (LoRa / synthetic Reticulum). */
+  /** Peer node id for Jump to Chat. */
   dmPeer: number | null;
   reticulumPeerHash: string | null;
   channel: number | null;
@@ -23,7 +23,6 @@ export type MessagesByProtocol = Readonly<Record<MeshProtocol, readonly ChatMess
 
 /** Whether a chat row is a direct message for the given protocol. */
 function isDirect(protocol: MeshProtocol, msg: ChatMessage): boolean {
-  if (protocol === 'reticulum') return true;
   return msg.to != null && msg.to !== 0 && msg.to !== LORA_BROADCAST;
 }
 
@@ -36,7 +35,6 @@ function messageKey(protocol: MeshProtocol, msg: ChatMessage): string {
 interface PeerFilter {
   protocol: MeshProtocol;
   nodeIds: Set<number>;
-  reticulumHashes: Set<string>;
 }
 
 /** Build per-protocol peer match sets from presence snapshots. */
@@ -48,16 +46,12 @@ function buildPeerFilters(snaps: readonly LinkPresenceSnapshot[]): PeerFilter[] 
       filter = {
         protocol: snap.link.protocol,
         nodeIds: new Set(),
-        reticulumHashes: new Set(),
       };
       byProtocol.set(snap.link.protocol, filter);
     }
     if (snap.peerNodeId != null) filter.nodeIds.add(snap.peerNodeId >>> 0);
-    if (snap.link.protocol === 'reticulum') {
-      filter.reticulumHashes.add(snap.link.durableKey.toLowerCase());
-    }
     // MeshCore pubkey-only link without resolved node: still match durable decimal if present.
-    if (snap.link.protocol !== 'reticulum' && /^\d+$/.test(snap.link.durableKey)) {
+    if (/^\d+$/.test(snap.link.durableKey)) {
       filter.nodeIds.add(Number.parseInt(snap.link.durableKey, 10) >>> 0);
     }
   }
@@ -66,16 +60,6 @@ function buildPeerFilters(snaps: readonly LinkPresenceSnapshot[]): PeerFilter[] 
 
 /** True when a message involves any peer in the filter. */
 function messageTouchesPeer(protocol: MeshProtocol, msg: ChatMessage, filter: PeerFilter): boolean {
-  if (protocol === 'reticulum') {
-    const sender = msg.reticulum_sender_hash?.toLowerCase();
-    const dest = msg.reticulum_destination_hash?.toLowerCase();
-    if (sender && filter.reticulumHashes.has(sender)) return true;
-    if (dest && filter.reticulumHashes.has(dest)) return true;
-    // Fallback: synthetic ids when hashes missing on older rows.
-    if (filter.nodeIds.has(msg.sender_id >>> 0)) return true;
-    if (msg.to != null && filter.nodeIds.has(msg.to >>> 0)) return true;
-    return false;
-  }
   if (filter.nodeIds.has(msg.sender_id >>> 0)) return true;
   if (msg.to != null && filter.nodeIds.has(msg.to >>> 0)) return true;
   return false;
@@ -98,22 +82,13 @@ export function buildContactMessageTimeline(
     const messages = messagesByProtocol[filter.protocol];
     for (const msg of messages) {
       if (!msg.payload) continue;
-      if (msg.emoji && (msg.replyId != null || msg.reticulum_reply_to_hash)) continue;
+      if (msg.emoji && msg.replyId != null) continue;
       if (!messageTouchesPeer(filter.protocol, msg, filter)) continue;
       const direct = isDirect(filter.protocol, msg);
       let dmPeer: number | null = null;
-      let reticulumPeerHash: string | null = null;
+      const reticulumPeerHash: string | null = null;
       let channel: number | null = null;
-      if (filter.protocol === 'reticulum') {
-        const sender = msg.reticulum_sender_hash?.toLowerCase() ?? null;
-        const dest = msg.reticulum_destination_hash?.toLowerCase() ?? null;
-        // Prefer a filter-matched peer hash for Jump to Chat; never fall back to an
-        // unmatched sender/dest hash (can be the local identity).
-        reticulumPeerHash =
-          (sender && filter.reticulumHashes.has(sender) ? sender : null) ??
-          (dest && filter.reticulumHashes.has(dest) ? dest : null);
-        dmPeer = filter.nodeIds.has(msg.sender_id >>> 0) ? msg.sender_id : (msg.to ?? null);
-      } else if (direct) {
+      if (direct) {
         dmPeer = filter.nodeIds.has(msg.sender_id >>> 0) ? msg.sender_id : (msg.to ?? null);
       } else {
         channel = msg.channel;
@@ -140,7 +115,7 @@ export function dmPeerFromPresence(snap: LinkPresenceSnapshot): number | null {
   return snap.peerNodeId;
 }
 
-/** Lowercased Reticulum destination hash from a link, if any. */
-export function reticulumHashFromLink(link: TeamMemberLink): string | null {
-  return link.protocol === 'reticulum' ? link.durableKey.toLowerCase() : null;
+/** Hash-addressed peer for a link; no protocol in this build addresses peers by hash. */
+export function reticulumHashFromLink(_link: TeamMemberLink): string | null {
+  return null;
 }

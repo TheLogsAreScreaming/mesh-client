@@ -1,10 +1,5 @@
 import { getNodeStatus, type NodeStatus } from '@/renderer/lib/nodeStatus';
-import {
-  MESHCORE_CAPABILITIES,
-  MESHTASTIC_CAPABILITIES,
-  RETICULUM_CAPABILITIES,
-} from '@/renderer/lib/radio/BaseRadioProvider';
-import { reticulumHashToNodeId } from '@/renderer/lib/reticulum/destHash';
+import { MESHCORE_CAPABILITIES, MESHTASTIC_CAPABILITIES } from '@/renderer/lib/radio/BaseRadioProvider';
 import type { MeshNode } from '@/renderer/lib/types';
 import type { MeshProtocol } from '@/shared/meshProtocol';
 import type { TeamMember, TeamMemberLink } from '@/shared/teamRosterTypes';
@@ -45,12 +40,7 @@ const STATUS_RANK: Record<NodeStatus, number> = {
 
 /** Stale/offline thresholds for a protocol radio provider. */
 function thresholdsFor(protocol: MeshProtocol): { stale: number; offline: number } {
-  const caps =
-    protocol === 'meshcore'
-      ? MESHCORE_CAPABILITIES
-      : protocol === 'reticulum'
-        ? RETICULUM_CAPABILITIES
-        : MESHTASTIC_CAPABILITIES;
+  const caps = protocol === 'meshcore' ? MESHCORE_CAPABILITIES : MESHTASTIC_CAPABILITIES;
   return { stale: caps.nodeStaleThresholdMs, offline: caps.nodeOfflineThresholdMs };
 }
 
@@ -93,13 +83,7 @@ export function resolveLinkPresence(
   let lastHeardMs: number;
   let displayName: string | null = link.longName?.trim() || null;
 
-  if (link.protocol === 'reticulum') {
-    const hash = link.durableKey.toLowerCase();
-    const heard = reticulumByHash.get(hash);
-    lastHeardMs = heard?.lastHeardMs ?? 0;
-    displayName = heard?.displayName?.trim() || displayName;
-    peerNodeId = reticulumHashToNodeId(hash) >>> 0;
-  } else if (link.protocol === 'meshcore') {
+  if (link.protocol === 'meshcore') {
     const nodes = nodesByProtocol.meshcore;
     peerNodeId = resolveMeshcoreNodeId(link, nodes);
     const node = peerNodeId != null ? nodes?.get(peerNodeId) : undefined;

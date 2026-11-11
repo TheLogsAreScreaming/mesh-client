@@ -14,15 +14,11 @@ export interface MessageReceptionStats {
   path?: string[];
 }
 
-/** Reticulum's display transport can come from its peer route; require frame evidence. */
+/** Radio transport a message was received over, preferring the recorded frame evidence. */
 export function radioMessageReceptionTransport(
-  message: Pick<
-    ChatMessage,
-    'receivedVia' | 'rxRadioTransport' | 'reticulum_message_hash' | 'reticulum_sender_hash'
-  >,
+  message: Pick<ChatMessage, 'receivedVia' | 'rxRadioTransport'>,
 ): ChatMessage['receivedVia'] {
   if (message.rxRadioTransport) return message.rxRadioTransport;
-  if (message.reticulum_message_hash || message.reticulum_sender_hash) return undefined;
   const via = message.receivedVia;
   return via === 'both' || via?.split('+').some((atom) => atom === 'rf' || atom === 'ble')
     ? via

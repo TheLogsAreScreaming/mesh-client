@@ -2,7 +2,6 @@ import type { TFunction } from 'i18next';
 
 import type { DeviceRecord } from '@/renderer/stores/deviceStore';
 import { getDevice } from '@/renderer/stores/deviceStore';
-import { useRrcHubStore } from '@/renderer/stores/rrcHubStore';
 import type { ScheduledBroadcastTarget } from '@/shared/scheduledBroadcastTypes';
 
 import { resolveChannelTargetIndex } from './resolveChannelTarget';
@@ -68,8 +67,6 @@ export function resolveRrcHubDisplayLabel(
   const override = hubDisplayNameOverride?.trim();
   if (override) return override;
   if (!hubDestHash) return '';
-  const fromStore = useRrcHubStore.getState().getHub(hubDestHash)?.display_name?.trim();
-  if (fromStore) return fromStore;
   return hubDestHash.slice(0, 8);
 }
 

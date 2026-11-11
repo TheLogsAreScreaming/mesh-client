@@ -29,8 +29,6 @@ export interface UnifiedInboxDialogProps {
   enabledProtocols: readonly MeshProtocol[];
   messagesByProtocol: Readonly<Record<MeshProtocol, readonly ChatMessage[]>>;
   ownNodeIdsByProtocol?: Partial<Record<MeshProtocol, ReadonlySet<number>>>;
-  ownReticulumHashes?: ReadonlySet<string>;
-  reticulumIdentityId?: string | null;
   /** Same handler as global search hits: opens the source conversation and focuses the message. */
   onSelectItem: (hit: GlobalMessageSearchHit) => void;
 }
@@ -38,7 +36,6 @@ export interface UnifiedInboxDialogProps {
 const PROTOCOL_LABEL_KEYS: Record<MeshProtocol, string> = {
   meshtastic: 'unifiedInbox.meshtastic',
   meshcore: 'unifiedInbox.meshcore',
-  reticulum: 'unifiedInbox.reticulum',
 };
 
 function formatTime(ts: number): string {
@@ -66,8 +63,6 @@ function UnifiedInboxDialogBody({
   enabledProtocols,
   messagesByProtocol,
   ownNodeIdsByProtocol,
-  ownReticulumHashes,
-  reticulumIdentityId,
   onSelectItem,
 }: Omit<UnifiedInboxDialogProps, 'open'>) {
   const { t } = useTranslation();
@@ -209,20 +204,6 @@ function UnifiedInboxDialogBody({
     setSelected(new Set());
     setConfirmingDelete(false);
 
-    // Reticulum rows also have a per-message SQLite delete; Meshtastic/MeshCore do not, so those
-    // are only hidden from the inbox (the chat history itself is untouched).
-    for (const item of toRemove) {
-      if (item.protocol !== 'reticulum' || !reticulumIdentityId) continue;
-      const hash = item.message.reticulum_message_hash;
-      if (hash) {
-        void window.electronAPI.db
-          .deleteReticulumMessage(reticulumIdentityId, hash)
-          .catch((e: unknown) => {
-            console.warn('[UnifiedInbox] reticulum delete failed ' + errLikeToLogString(e));
-          });
-      }
-      if (item.message.storeId) deleteMessage(reticulumIdentityId, item.message.storeId);
-    }
     addToast(t('unifiedInbox.deleted', { count: toRemove.length }), 'success');
   };
 
@@ -232,7 +213,6 @@ function UnifiedInboxDialogBody({
     onSelectItem(
       inboxItemToJumpTarget(item, {
         ownNodeIds: ownForProtocol && ownForProtocol.size > 0 ? ownForProtocol : undefined,
-        ownReticulumHashes,
       }),
     );
     onClose();

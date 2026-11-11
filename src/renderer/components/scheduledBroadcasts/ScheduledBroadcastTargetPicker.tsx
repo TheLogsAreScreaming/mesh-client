@@ -6,7 +6,6 @@ import { useMeshcoreRoomSessionRevision } from '@/renderer/hooks/useMeshcoreRoom
 import {
   formatScheduledBroadcastChannelLabel,
   formatScheduledBroadcastRrcRoomLabel,
-  resolveRrcHubDisplayLabel,
 } from '@/renderer/lib/scheduledBroadcasts/channelLabel';
 import { SCHEDULED_BROADCAST_MAX_TARGETS } from '@/renderer/lib/scheduledBroadcasts/constants';
 import { formatScheduledBroadcastIdentityLegend } from '@/renderer/lib/scheduledBroadcasts/identityLabel';
@@ -16,8 +15,6 @@ import { useDeviceStore } from '@/renderer/stores/deviceStore';
 import { useIdentityStore } from '@/renderer/stores/identityStore';
 import { useLiveChannelKeyStore } from '@/renderer/stores/liveChannelKeyStore';
 import { useNodeStore } from '@/renderer/stores/nodeStore';
-import { useRrcHubStore } from '@/renderer/stores/rrcHubStore';
-import { useRrcSessionStore } from '@/renderer/stores/rrcSessionStore';
 import type { ScheduledBroadcastTarget } from '@/shared/scheduledBroadcastTypes';
 import { touch } from '@/shared/touch';
 
@@ -80,16 +77,9 @@ export function ScheduledBroadcastTargetPicker({
       .join('|'),
   );
   const liveByProtocol = useLiveChannelKeyStore((s) => s.byProtocol);
-  const rrcHub = useRrcSessionStore((s) => s.hubDestHash);
-  const rrcRooms = useRrcSessionStore((s) => s.rooms);
-  const rrcHubs = useRrcHubStore((s) => s.hubs);
   // Re-filter MeshCore rooms when login/logout or Forget/save password changes eligibility.
   const roomSessionRevision = useMeshcoreRoomSessionRevision();
   const roomCredentialRevision = useMeshcoreRoomCredentialRevision();
-  const rrcIdentityId = useMemo(
-    () => Object.values(identities).find((i) => i.protocol.type === 'reticulum')?.id,
-    [identities],
-  );
 
   const { candidates, liveUnavailableByIdentity } = useMemo(() => {
     // Re-read canPost / guest credentials after login/logout or credential set/clear.
@@ -151,36 +141,12 @@ export function ScheduledBroadcastTargetPicker({
       }
     }
 
-    if (rrcIdentityId && rrcHub) {
-      const hubDisplayName = resolveRrcHubDisplayLabel(
-        rrcHub,
-        rrcHubs.get(rrcHub.toLowerCase())?.display_name,
-      );
-      for (const room of rrcRooms.keys()) {
-        const partial = {
-          kind: 'rrc-room' as const,
-          identityId: rrcIdentityId,
-          hubDestHash: rrcHub,
-          room,
-        };
-        list.push({
-          ...partial,
-          label: formatScheduledBroadcastRrcRoomLabel(partial, t, hubDisplayName),
-          enabled: true,
-        });
-      }
-    }
-
     return { candidates: list, liveUnavailableByIdentity: liveUnavailable };
   }, [
     identities,
     devices,
     nodesByIdentity,
     liveByProtocol,
-    rrcHub,
-    rrcRooms,
-    rrcHubs,
-    rrcIdentityId,
     roomSessionRevision,
     roomCredentialRevision,
     t,
@@ -304,37 +270,6 @@ export function ScheduledBroadcastTargetPicker({
           </fieldset>
         );
       })}
-      {rrcIdentityId && rrcHub ? (
-        <fieldset className="border-ink-700 rounded-card border p-2">
-          <legend className="text-ink-200 text-label px-1">
-            {t('scheduledBroadcasts.targetKind.rrcRoom')}
-          </legend>
-          <ul className="flex flex-col gap-1">
-            {candidates
-              .filter((c) => c.kind === 'rrc-room')
-              .map((candidate) => {
-                const key = targetKey(candidate);
-                const id = `sb-target-${key}`;
-                return (
-                  <li key={key}>
-                    <label htmlFor={id} className="text-label text-ink-100 flex items-center gap-2">
-                      <input
-                        id={id}
-                        type="checkbox"
-                        checked={isSelected(candidate)}
-                        onChange={() => {
-                          toggle(candidate);
-                        }}
-                        aria-label={candidate.label}
-                      />
-                      {candidate.label}
-                    </label>
-                  </li>
-                );
-              })}
-          </ul>
-        </fieldset>
-      ) : null}
     </div>
   );
 }

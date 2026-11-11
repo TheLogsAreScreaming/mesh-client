@@ -211,8 +211,6 @@ import {
   loadGlobalMessageSearchDialog,
   loadKeyVerificationDialog,
   loadPanelLauncher,
-  loadReticulumVoiceOverlay,
-  loadRncpEnableRequestModal,
   loadStartupLocationPrompt,
   loadUnifiedInboxDialog,
 } from './lazyShellOverlays';
@@ -299,7 +297,6 @@ import {
   MESHCORE_FIRMWARE_RELEASES_URL,
   MESHTASTIC_FIRMWARE_RELEASES_URL,
 } from './lib/firmwareCheck';
-import { buildDetectedFlashDevice } from './lib/flasher/deviceFirmwareBoards';
 import { applyFontScale, loadFontScale } from './lib/fontScale';
 import {
   chatMessageFromSearchHit,
@@ -1283,7 +1280,13 @@ function AppContent() {
   const { status: takStatus, error: takError, takClientLoss } = useTakServer();
   const takRemoteStatus = useTakRemoteStatus();
   useTakContacts();
-  useTakInboundChat();
+  useTakInboundChat({
+    meshcore: { identityId: meshcoreIdentityId ?? null, channels: meshcoreRuntime.channels },
+    meshtastic: {
+      identityId: meshtasticIdentityId ?? null,
+      channelConfigs: meshtasticRuntime.channelConfigs,
+    },
+  });
   useTakNodeReplicator({
     active: takStatus.running || takRemoteStatus.state !== 'disconnected',
     nodesByProtocol: uiNodesByProtocol,
@@ -1713,15 +1716,9 @@ function AppContent() {
     () => ({
       meshtastic: meshtasticOwnNodeIdSet,
       meshcore: meshcoreOwnNodeIdSet,
-      reticulum: reticulumOwnNodeIdSet,
     }),
-    [meshtasticOwnNodeIdSet, meshcoreOwnNodeIdSet, reticulumOwnNodeIdSet],
+    [meshtasticOwnNodeIdSet, meshcoreOwnNodeIdSet],
   );
-
-  const ownReticulumHashes = useMemo(() => {
-    const hash = reticulumIdentity?.lxmf_hash?.trim().toLowerCase();
-    return hash ? new Set<string>([hash]) : undefined;
-  }, [reticulumIdentity?.lxmf_hash]);
 
   const handleIncidentAck = useCallback(
     (incident: EmergencyIncident) => {
@@ -1796,9 +1793,7 @@ function AppContent() {
           queueOutbox: (entry) => {
             const protocolName = entry.protocol;
             const identityId =
-              protocolName === 'meshtastic' ||
-              protocolName === 'meshcore' ||
-              protocolName === 'reticulum'
+              protocolName === 'meshtastic' || protocolName === 'meshcore'
                 ? (selectByProtocol(identityIdByProtocol, protocolName) ?? null)
                 : null;
             return window.electronAPI.chat.outbox.add(withOutboxIdentity(entry, identityId));
@@ -1870,23 +1865,11 @@ function AppContent() {
       meshtasticSelfPublicKeyHex,
     ],
   );
-  const reticulumOwnNodeIdsForChat = useMemo(
-    () => Array.from(reticulumOwnNodeIdSet),
-    [reticulumOwnNodeIdSet],
-  );
   const meshcoreOwnNodeIdsForChat = useMemo(
     () => Array.from(meshcoreOwnNodeIdSet),
     [meshcoreOwnNodeIdSet],
   );
-  const headerMyNodeNum = (() => {
-    if (protocol !== 'reticulum') return activeConnectionView.state.myNodeNum;
-    const fromRuntime =
-      typeof reticulumRuntime.selfNodeId === 'number' ? reticulumRuntime.selfNodeId : 0;
-    const fromIdentity = reticulumIdentity?.lxmf_hash
-      ? reticulumHashToNodeId(reticulumIdentity.lxmf_hash)
-      : 0;
-    return Math.max(activeConnectionView.state.myNodeNum, fromRuntime, fromIdentity);
-  })();
+  const headerMyNodeNum = activeConnectionView.state.myNodeNum;
   const headerSelfNodeLabel = (() => {
     return capabilities.prefersDeviceOwnerLongNameInHeader
       ? meshcoreRuntime.deviceOwner?.longName?.trim() ||
@@ -2298,7 +2281,7 @@ function AppContent() {
         nextTab: targetTab,
         destinationPanel: targetTabs.tabIndexToPanelIndex[targetTab] ?? null,
         protocolChanged: true,
-        enablePeers: selectByProtocol(capabilitiesByProtocol, newProtocol).hasReticulumPeersList,
+        enablePeers: false,
       });
     },
     [
@@ -2470,17 +2453,9 @@ function AppContent() {
         return pos ? { lat: pos.lat, lon: pos.lon } : null;
       }
     : undefined;
-  const reticulumChatShareLocation = canTransmitLocation({ protocol: 'reticulum' })
-    ? async () => {
-        const stored = readStoredStaticGps();
-        const pos = await resolveOurPosition(undefined, undefined, stored?.lat, stored?.lon);
-        return pos ? { lat: pos.lat, lon: pos.lon } : null;
-      }
-    : undefined;
   const chatShareLocationByProtocol = protocolRecord(
     meshtasticChatShareLocation,
     meshcoreChatShareLocation,
-    reticulumChatShareLocation,
   );
 
   const hasLocalMeshtasticRadio =
@@ -2697,7 +2672,6 @@ function AppContent() {
   const handleResend = useCallback(
     (msg: ChatMessage) => {
       if (protocolSwitchPending) return;
-      const args = buildResendArgs(msg);
       sendMessage(
         msg.payload,
         msg.channel,
@@ -2730,34 +2704,26 @@ function AppContent() {
     () =>
       protocolRecord(
         chatChannelsFromRuntimeChannels(meshtasticRuntime.channels, {
-          hasReticulumInterfaceConfig: meshtasticCapabilities.hasReticulumInterfaceConfig,
           hasCompanionContactManagementConfig:
             meshtasticCapabilities.hasCompanionContactManagementConfig,
         }),
         chatChannelsFromRuntimeChannels(meshcoreRuntime.channels, {
-          hasReticulumInterfaceConfig: meshcoreCapabilities.hasReticulumInterfaceConfig,
           hasCompanionContactManagementConfig:
             meshcoreCapabilities.hasCompanionContactManagementConfig,
-        }),
-        chatChannelsFromRuntimeChannels(reticulumRuntime.channels, {
-          hasReticulumInterfaceConfig: reticulumCapabilities.hasReticulumInterfaceConfig,
-          hasCompanionContactManagementConfig:
-            reticulumCapabilities.hasCompanionContactManagementConfig,
         }),
       ),
     [
       meshtasticCapabilities.hasCompanionContactManagementConfig,
-      meshtasticCapabilities.hasReticulumInterfaceConfig,
       meshtasticRuntime.channels,
       meshcoreCapabilities.hasCompanionContactManagementConfig,
-      meshcoreCapabilities.hasReticulumInterfaceConfig,
       meshcoreRuntime.channels,
-      reticulumCapabilities.hasCompanionContactManagementConfig,
-      reticulumCapabilities.hasReticulumInterfaceConfig,
-      reticulumRuntime.channels,
     ],
   );
   const chatChannels = selectByProtocol(chatChannelsByProtocol, protocol);
+  const chatMessagesForPanel = activeUiMessages;
+  const chatNodesForPanel = nodesForUi;
+  const chatChannelsForPanel = chatChannels;
+  const chatShareLocationResolver = selectByProtocol(chatShareLocationByProtocol, protocol);
 
   const [visitedMapProtocols, setVisitedMapProtocols] = useState<ReadonlySet<MeshProtocol>>(
     () => new Set(),
@@ -2790,19 +2756,16 @@ function AppContent() {
         );
         return;
       }
-      const destinationPanelIndex = target.kind === 'rrc' ? RRC_PANEL_INDEX : CHAT_PANEL_INDEX;
+      const destinationPanelIndex = CHAT_PANEL_INDEX;
       const tabIndex = findFilteredTabIndexForPanel(
         selectByProtocol(tabsByProtocol, targetProtocol),
         destinationPanelIndex,
       );
       if (protocol === targetProtocol && pendingProtocolSelection == null) {
         if (tabIndex >= 0) setActiveTab(tabIndex);
-        if (target.kind === 'rrc') setRrcTabVisited(true);
-        else {
-          setVisitedChatProtocols((previous) =>
-            previous.has(targetProtocol) ? previous : new Set(previous).add(targetProtocol),
-          );
-        }
+        setVisitedChatProtocols((previous) =>
+          previous.has(targetProtocol) ? previous : new Set(previous).add(targetProtocol),
+        );
       } else {
         if (protocol !== targetProtocol) {
           lastTabByProtocol.current.set(protocol, activeTab);
@@ -2814,13 +2777,10 @@ function AppContent() {
           nextTab: tabIndex >= 0 ? tabIndex : 0,
           destinationPanel: tabIndex >= 0 ? destinationPanelIndex : null,
           protocolChanged: protocol !== targetProtocol,
-          enablePeers: selectByProtocol(capabilitiesByProtocol, targetProtocol)
-            .hasReticulumPeersList,
+          enablePeers: false,
         });
       }
-      if (target.kind === 'rrc') {
-        focusRrcNotificationTarget(target, useRrcSessionStore.getState());
-      } else if (target.dmPeer != null) {
+      if (target.dmPeer != null) {
         setPendingDmTarget({ protocol: target.protocol, peer: target.dmPeer });
       } else if (target.channel != null) {
         setPendingChannelTarget({ protocol: target.protocol, channel: target.channel });
@@ -2857,17 +2817,6 @@ function AppContent() {
         return false;
       }
       let destination = args.destination;
-      if (args.protocol === 'reticulum' && args.reticulumHash) {
-        try {
-          destination = openReticulumDmFromHash(args.reticulumHash);
-        } catch (err) {
-          console.warn(
-            '[App] team roster Reticulum DM failed ' +
-              (err instanceof Error ? err.message : String(err)),
-          );
-          return false;
-        }
-      }
       try {
         const send = selectByProtocol(autoResendSendByProtocol, args.protocol);
         const storeId = send(args.text, 0, destination);
@@ -3016,15 +2965,7 @@ function AppContent() {
   }, []);
   const handleGlobalMessageSearchHit = useCallback(
     (hit: GlobalMessageSearchHit, query?: string) => {
-      let dmPeer = hit.dmPeer;
-      if (hit.protocol === 'reticulum' && hit.reticulumPeerHash) {
-        try {
-          dmPeer = openReticulumDmFromHash(hit.reticulumPeerHash);
-        } catch (err) {
-          console.warn('[App] global search open Reticulum DM failed', err);
-          dmPeer = null;
-        }
-      }
+      const dmPeer = hit.dmPeer;
       openChatFromNotification({
         kind: 'chat',
         protocol: hit.protocol,
@@ -3036,7 +2977,6 @@ function AppContent() {
       setPendingMessageFocus({
         timestamp: hit.timestamp,
         packetId: hit.packetId,
-        reticulumMessageHash: hit.reticulumMessageHash,
         dbId: hit.dbId,
         ...(highlight ? { highlightQuery: highlight } : {}),
         focusRow: chatMessageFromSearchHit(opened),
@@ -3660,7 +3600,6 @@ function AppContent() {
     Boolean(headerSelfNodeLabel) &&
     (!capabilities.prefersDeviceOwnerLongNameInHeader ||
       activeConnectionView.state.status === 'configured');
-  const radioTransport = activeConnectionView.state.connectionType?.toUpperCase() ?? '';
   const radioStatusText = showStatusBarNode
     ? t('shell.status.radioNode', {
         node: headerSelfNodeLabel,
@@ -4118,338 +4057,125 @@ function AppContent() {
                           className="h-full w-full min-w-0"
                         >
                           <Suspense fallback={<PanelSkeleton />}>
-                            {REGISTERED_MESH_PROTOCOLS.filter((chatProtocol) => {
-                              if (!enabledProtocols.includes(chatProtocol)) return false;
-                              if (visitedChatProtocols.has(chatProtocol)) return true;
-                              // First Chat paint before the visit effect: keep the active protocol mounted.
-                              return (
-                                activePanelIndex === CHAT_PANEL_INDEX && chatProtocol === protocol
-                              );
-                            }).map((chatProtocol) => {
-                              const chatCapabilities = selectByProtocol(
-                                capabilitiesByProtocol,
-                                chatProtocol,
-                              );
-                              const chatMessages = selectByProtocol(
-                                uiMessagesByProtocol,
-                                chatProtocol,
-                              );
-                              const chatNodes = selectByProtocol(uiNodesByProtocol, chatProtocol);
-                              const chatChannelsForProtocol = selectByProtocol(
-                                chatChannelsByProtocol,
-                                chatProtocol,
-                              );
-                              const chatConnectionView = selectByProtocol(
-                                connectionViewByProtocol,
-                                chatProtocol,
-                              );
-                              const chatRuntime = runtimes[chatProtocol];
-                              const chatSelfNodeNum = asNumericNodeId(
-                                chatRuntime.selfNodeId,
-                                chatRuntime.state.myNodeNum,
-                              );
-                              const chatOperational =
-                                chatConnectionView.state.status === 'configured' ||
-                                chatConnectionView.state.status === 'stale';
-                              const chatActive =
-                                activePanelIndex === CHAT_PANEL_INDEX && protocol === chatProtocol;
-                              const chatShareLocation = selectByProtocol(
-                                chatShareLocationByProtocol,
-                                chatProtocol,
-                              );
-                              return (
-                                <div
-                                  key={chatProtocol}
-                                  hidden={!chatActive}
-                                  className="h-full w-full min-w-0"
-                                >
-                                  <ChatPanel
-                                    messages={chatMessages}
-                                    getReceptionStats={
-                                      chatCapabilities.hasCompanionContactManagementConfig
-                                        ? (message) =>
-                                            meshcoreMessageReceptionStats(
-                                              message,
-                                              meshcoreRuntime.rawPackets,
-                                              meshcoreRuntime.channels,
-                                            )
-                                        : undefined
+                            <ChatPanel
+                              key={protocol}
+                              messages={chatMessagesForPanel}
+                              messagesForUnread={activeUiMessages}
+                              channels={chatChannelsForPanel}
+                              meshcoreChannelSources={
+                                capabilities.hasCompanionContactManagementConfig
+                                  ? meshcoreRuntime.channels
+                                  : undefined
+                              }
+                              onSetMeshcoreChannel={
+                                capabilities.hasCompanionContactManagementConfig
+                                  ? meshcorePanelActions.meshcoreSetChannel
+                                  : undefined
+                              }
+                              onDeleteMeshcoreChannel={
+                                capabilities.hasCompanionContactManagementConfig
+                                  ? meshcorePanelActions.meshcoreDeleteChannel
+                                  : undefined
+                              }
+                              onClearChannelMessages={
+                                capabilities.hasCompanionContactManagementConfig
+                                  ? clearMeshcoreChatChannelMessages
+                                  : undefined
+                              }
+                              meshcoreChannelManagementDisabled={!isOperational}
+                              myNodeNum={activeSelfNodeNum}
+                              ownNodeIds={
+                                capabilities.hasMqttHybrid
+                                  ? meshtasticOwnNodeIdsForChat
+                                  : Array.from(meshcoreOwnNodeIdSet)
+                              }
+                              onSend={handleSend}
+                              onReact={selectByProtocol(sendReactionByProtocol, protocol)}
+                              onResend={handleResend}
+                              onNodeClick={setSelectedNodeId}
+                              isConnected={
+                                isOperational || activeConnectionView.mqttStatus === 'connected'
+                              }
+                              isMqttOnly={
+                                !isOperational && activeConnectionView.mqttStatus === 'connected'
+                              }
+                              connectionType={activeConnectionView.state.connectionType}
+                              nodes={chatNodesForPanel}
+                              initialDmTarget={
+                                pendingDmTarget?.protocol === protocol ? pendingDmTarget.peer : null
+                              }
+                              onDmTargetConsumed={handleDmTargetConsumed}
+                              initialChannelTarget={
+                                pendingChannelTarget?.protocol === protocol
+                                  ? pendingChannelTarget.channel
+                                  : null
+                              }
+                              onChannelTargetConsumed={handleChannelTargetConsumed}
+                              isActive={activePanelIndex === 1}
+                              protocol={protocol}
+                              identityId={focusedIdentityId}
+                              scrollToTopRef={scrollToTopChatRef}
+                              outerScrollMetricsRootRef={mainViewportRef}
+                              compactMode={chatCompactMode}
+                              alwaysShowMessageActions={alwaysShowMessageActions}
+                              meshcoreFloodScopeHashtag={
+                                capabilities.modulesTabUsesRepeatersLabel
+                                  ? meshcoreFloodScopeHashtag
+                                  : undefined
+                              }
+                              meshcoreFloodScopePresets={
+                                capabilities.modulesTabUsesRepeatersLabel
+                                  ? meshcoreFloodScopePresets
+                                  : undefined
+                              }
+                              onRememberMeshcoreFloodScopePreset={
+                                capabilities.modulesTabUsesRepeatersLabel
+                                  ? (hashtag: string) => {
+                                      setMeshcoreFloodScopePresets((prev) =>
+                                        rememberMeshcoreFloodScopePreset(prev, hashtag),
+                                      );
                                     }
-                                    getMessageRoute={
-                                      chatCapabilities.messageRouteDetail === 'floodPath'
-                                        ? (message) =>
-                                            meshcoreChatMessageRoute(
-                                              message,
-                                              meshcoreRuntime.rawPackets,
-                                              meshcoreRuntime.channels,
-                                            )
-                                        : chatCapabilities.messageRouteDetail === 'lastRelay'
-                                          ? (message) =>
-                                              meshtasticChatMessageRoute(
-                                                message,
-                                                meshtasticRuntime.rawPackets,
-                                              )
-                                          : undefined
+                                  : undefined
+                              }
+                              applyMeshcoreFloodScopeHashtag={
+                                capabilities.modulesTabUsesRepeatersLabel
+                                  ? meshcorePanelActions.applyMeshcoreFloodScopeHashtag
+                                  : undefined
+                              }
+                              onFetchStoreForwardHistory={
+                                capabilities.hasStoreForward
+                                  ? () =>
+                                      meshtasticPanelActions.requestStoreForwardHistory({
+                                        manual: true,
+                                      })
+                                  : undefined
+                              }
+                              resolveShareLocation={chatShareLocationResolver}
+                              onSendLocationWaypoint={
+                                protocol === 'meshtastic' && chatShareLocationResolver
+                                  ? async (lat, lon, channel) => {
+                                      const id =
+                                        crypto.getRandomValues(new Uint32Array(1))[0] >>> 0 || 1;
+                                      await meshtasticPanelActions.sendWaypoint(
+                                        {
+                                          id,
+                                          latitude: lat,
+                                          longitude: lon,
+                                          name: t('chatPanel.shareLocationLabel'),
+                                          description: '',
+                                          expire: 0,
+                                          lockedTo: 0,
+                                        },
+                                        0xffffffff,
+                                        channel,
+                                      );
                                     }
-                                    messagesForUnread={chatMessages}
-                                    channels={chatChannelsForProtocol}
-                                    meshcoreChannelSources={
-                                      chatCapabilities.hasCompanionContactManagementConfig
-                                        ? meshcoreRuntime.channels
-                                        : undefined
-                                    }
-                                    onSetMeshcoreChannel={
-                                      chatCapabilities.hasCompanionContactManagementConfig
-                                        ? meshcorePanelActions.meshcoreSetChannel
-                                        : undefined
-                                    }
-                                    onDeleteMeshcoreChannel={
-                                      chatCapabilities.hasCompanionContactManagementConfig
-                                        ? meshcorePanelActions.meshcoreDeleteChannel
-                                        : undefined
-                                    }
-                                    onClearChannelMessages={
-                                      chatCapabilities.hasCompanionContactManagementConfig
-                                        ? clearMeshcoreChatChannelMessages
-                                        : undefined
-                                    }
-                                    meshcoreChannelManagementDisabled={!chatOperational}
-                                    myNodeNum={chatSelfNodeNum}
-                                    ownNodeIds={
-                                      chatProtocol === 'reticulum'
-                                        ? reticulumOwnNodeIdsForChat
-                                        : chatCapabilities.hasMqttHybrid
-                                          ? meshtasticOwnNodeIdsForChat
-                                          : meshcoreOwnNodeIdsForChat
-                                    }
-                                    onSend={handleSend}
-                                    composerDisabled={protocolSwitchPending || !chatActive}
-                                    onReact={selectByProtocol(sendReactionByProtocol, chatProtocol)}
-                                    onResend={handleResend}
-                                    onNodeClick={setSelectedNodeId}
-                                    onPeerClick={setSelectedPeerHash}
-                                    isConnected={
-                                      chatOperational ||
-                                      chatConnectionView.mqttStatus === 'connected'
-                                    }
-                                    isMqttOnly={
-                                      !chatOperational &&
-                                      chatConnectionView.mqttStatus === 'connected'
-                                    }
-                                    connectionType={chatConnectionView.state.connectionType}
-                                    nodes={chatNodes}
-                                    initialDmTarget={
-                                      chatActive && pendingDmTarget?.protocol === chatProtocol
-                                        ? pendingDmTarget.peer
-                                        : null
-                                    }
-                                    onDmTargetConsumed={
-                                      chatActive ? handleDmTargetConsumed : undefined
-                                    }
-                                    initialChannelTarget={
-                                      chatActive && pendingChannelTarget?.protocol === chatProtocol
-                                        ? pendingChannelTarget.channel
-                                        : null
-                                    }
-                                    onChannelTargetConsumed={
-                                      chatActive && pendingChannelTarget?.protocol === chatProtocol
-                                        ? handleChannelTargetConsumed
-                                        : undefined
-                                    }
-                                    initialMessageFocus={
-                                      chatActive && pendingMessageFocus?.protocol === chatProtocol
-                                        ? pendingMessageFocus
-                                        : null
-                                    }
-                                    onMessageFocusConsumed={
-                                      chatActive && pendingMessageFocus?.protocol === chatProtocol
-                                        ? handleMessageFocusConsumed
-                                        : undefined
-                                    }
-                                    onOpenGlobalMessageSearch={openGlobalMessageSearch}
-                                    isActive={chatActive}
-                                    protocol={chatProtocol}
-                                    identityId={
-                                      selectByProtocol(identityIdByProtocol, chatProtocol) ?? null
-                                    }
-                                    dmOnlyChat={chatCapabilities.hasReticulumInterfaceConfig}
-                                    hasRncpTransfer={chatCapabilities.hasRncpTransfer}
-                                    hasLxstVoice={chatCapabilities.hasLxstVoice}
-                                    hasReticulumVoiceMemo={chatCapabilities.hasReticulumVoiceMemo}
-                                    hasReticulumFileAttachments={
-                                      chatCapabilities.hasReticulumFileAttachments
-                                    }
-                                    onVoiceMemo={
-                                      chatCapabilities.hasReticulumVoiceMemo && reticulumIdentityId
-                                        ? (destination: number) => {
-                                            const phase =
-                                              useReticulumVoiceMemoStore.getState().phase;
-                                            if (
-                                              phase === 'sending' ||
-                                              phase === 'starting' ||
-                                              phase === 'stopping'
-                                            ) {
-                                              return;
-                                            }
-                                            if (phase === 'recording' || phase === 'ready') {
-                                              sendReticulumVoiceMemo({
-                                                identityId: reticulumIdentityId,
-                                                destination,
-                                                onOversize: () => {
-                                                  addToast(
-                                                    t('chatPanel.voiceMemo.tooLargeForWire'),
-                                                    'warning',
-                                                  );
-                                                },
-                                                onNoPropagationNode: () => {
-                                                  addToast(
-                                                    t('chatPanel.reticulumNoPropagationNode'),
-                                                    'error',
-                                                  );
-                                                },
-                                                onTooLargeForPropagation: () => {
-                                                  addToast(
-                                                    t('chatPanel.voiceMemo.tooLargeForPropagation'),
-                                                    'info',
-                                                  );
-                                                },
-                                                onMissingLxmfDelivery: () => {
-                                                  addToast(
-                                                    t('chatPanel.reticulumChatNeedsLxmfDelivery'),
-                                                    'error',
-                                                  );
-                                                },
-                                              });
-                                              return;
-                                            }
-                                            void startReticulumVoiceMemo()
-                                              .then((ok) => {
-                                                if (!ok) {
-                                                  const err =
-                                                    useReticulumVoiceMemoStore.getState().lastError;
-                                                  if (err === 'call_busy') {
-                                                    addToast(
-                                                      t('chatPanel.voiceMemo.callBusy'),
-                                                      'warning',
-                                                    );
-                                                  } else if (err === 'mic_denied') {
-                                                    addToast(
-                                                      t('chatPanel.voiceMemo.micDenied'),
-                                                      'error',
-                                                    );
-                                                  } else if (
-                                                    err === 'sidecar_unavailable' ||
-                                                    err === 'start_failed' ||
-                                                    err
-                                                  ) {
-                                                    useReticulumVoiceMemoStore.getState().reset();
-                                                    addToast(
-                                                      t('chatPanel.voiceMemo.startFailed'),
-                                                      'error',
-                                                    );
-                                                  }
-                                                }
-                                              })
-                                              .catch((e: unknown) => {
-                                                console.warn(
-                                                  '[App] startReticulumVoiceMemo rejected:',
-                                                  errLikeToLogString(e),
-                                                );
-                                                useReticulumVoiceMemoStore.getState().reset();
-                                                addToast(
-                                                  t('chatPanel.voiceMemo.startFailed'),
-                                                  'error',
-                                                );
-                                              });
-                                          }
-                                        : undefined
-                                    }
-                                    hasLrgpGames={chatCapabilities.hasLrgpGames}
-                                    hasLxmfPaper={chatCapabilities.hasLxmfPaper}
-                                    showLxmfDeliveryStatus={chatCapabilities.hasLxmfDeliveryStatus}
-                                    showLxmfAttachmentLine={
-                                      chatCapabilities.hasReticulumInterfaceConfig
-                                    }
-                                    composerPayloadLimit={chatCapabilities.lxmfPayloadLimit}
-                                    lxmfReplyHashReplies={chatCapabilities.hasLxmfDeliveryStatus}
-                                    scrollToTopRef={chatActive ? scrollToTopChatRef : undefined}
-                                    outerScrollMetricsRootRef={mainViewportRef}
-                                    compactMode={chatCompactMode}
-                                    alwaysShowMessageActions={alwaysShowMessageActions}
-                                    meshcoreFloodScopeHashtag={
-                                      chatCapabilities.modulesTabUsesRepeatersLabel
-                                        ? meshcoreFloodScopeHashtag
-                                        : undefined
-                                    }
-                                    meshcoreFloodScopePresets={
-                                      chatCapabilities.modulesTabUsesRepeatersLabel
-                                        ? meshcoreFloodScopePresets
-                                        : undefined
-                                    }
-                                    onRememberMeshcoreFloodScopePreset={
-                                      chatCapabilities.modulesTabUsesRepeatersLabel
-                                        ? (hashtag: string) => {
-                                            setMeshcoreFloodScopePresets((prev) =>
-                                              rememberMeshcoreFloodScopePreset(prev, hashtag),
-                                            );
-                                          }
-                                        : undefined
-                                    }
-                                    applyMeshcoreFloodScopeHashtag={
-                                      chatCapabilities.modulesTabUsesRepeatersLabel
-                                        ? meshcorePanelActions.applyMeshcoreFloodScopeHashtag
-                                        : undefined
-                                    }
-                                    onFetchStoreForwardHistory={
-                                      chatCapabilities.hasStoreForward
-                                        ? () =>
-                                            meshtasticPanelActions.requestStoreForwardHistory({
-                                              manual: true,
-                                            })
-                                        : undefined
-                                    }
-                                    onOpenPropagationSettings={
-                                      chatProtocol === 'reticulum'
-                                        ? handleOpenReticulumPropagationSettings
-                                        : undefined
-                                    }
-                                    reticulumStackLive={
-                                      chatProtocol === 'reticulum' &&
-                                      (reticulumConnectionView.state.status === 'configured' ||
-                                        reticulumConnectionView.state.status === 'connected' ||
-                                        reticulumConnectionView.state.status === 'stale')
-                                    }
-                                    resolveShareLocation={chatShareLocation}
-                                    onSendLocationWaypoint={
-                                      chatProtocol === 'meshtastic' && chatShareLocation
-                                        ? async (lat, lon, channel) => {
-                                            const id =
-                                              crypto.getRandomValues(new Uint32Array(1))[0] >>> 0 ||
-                                              1;
-                                            await meshtasticPanelActions.sendWaypoint(
-                                              {
-                                                id,
-                                                latitude: lat,
-                                                longitude: lon,
-                                                name: t('chatPanel.shareLocationLabel'),
-                                                description: '',
-                                                expire: 0,
-                                                lockedTo: 0,
-                                              },
-                                              0xffffffff,
-                                              channel,
-                                            );
-                                          }
-                                        : undefined
-                                    }
-                                  />
-                                </div>
-                              );
-                            })}
+                                  : undefined
+                              }
+                            />
                           </Suspense>
                         </div>
                       )}
-
                       <div
                         id={`panel-${NODES_PANEL_INDEX}`}
                         role="tabpanel"
@@ -5067,13 +4793,6 @@ function AppContent() {
                                       ? meshtasticPanelActions.factoryResetConfig
                                       : undefined
                                   }
-                                  firmwareFlashDevice={buildDetectedFlashDevice(protocol, {
-                                    isConnected: isOperational,
-                                    state: activeConnectionView.state,
-                                    meshtasticHwModel: meshtasticUiNodes.get(
-                                      meshtasticConnectionView.state.myNodeNum,
-                                    )?.hw_model,
-                                  })}
                                 />
                               }
                             </Suspense>
@@ -5231,7 +4950,6 @@ function AppContent() {
                                 capabilities={capabilities}
                                 meshtasticIdentityId={meshtasticIdentityId}
                                 meshcoreIdentityId={meshcoreIdentityId}
-                                reticulumIdentityId={reticulumIdentityId}
                               />
                             </Suspense>
                           </ErrorBoundary>
@@ -5723,8 +5441,7 @@ function AppContent() {
               }}
               onOpenContact={(id) => {
                 openTabFromLauncher(tabSlotIds.indexOf('Nodes'));
-                if (capabilities.hasReticulumPeersList) selectPeerFrom('list', id);
-                else selectNodeFrom('list', Number(id));
+                selectNodeFrom('list', Number(id));
               }}
               settings={launcherSnapshot.settings}
               onOpenSetting={openSettingFromLauncher}

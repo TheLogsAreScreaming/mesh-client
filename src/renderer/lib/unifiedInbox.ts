@@ -36,8 +36,6 @@ export function inboxItemKey(protocol: MeshProtocol, msg: ChatMessage): string {
 }
 
 function isDirect(protocol: MeshProtocol, msg: ChatMessage): boolean {
-  // Reticulum LXMF chat has no channel concept: every row is a peer conversation.
-  if (protocol === 'reticulum') return true;
   return msg.to != null && msg.to !== 0 && msg.to !== LORA_BROADCAST;
 }
 
@@ -67,7 +65,7 @@ export function buildUnifiedInboxItems(opts: BuildUnifiedInboxOptions): UnifiedI
     const own = opts.ownNodeIdsByProtocol?.[protocol];
     for (const msg of opts.messagesByProtocol[protocol]) {
       if (own?.has(msg.sender_id >>> 0)) continue;
-      if (msg.emoji && (msg.replyId != null || msg.reticulum_reply_to_hash)) continue;
+      if (msg.emoji && msg.replyId != null) continue;
       if (!msg.payload) continue;
       const key = inboxItemKey(protocol, msg);
       if (opts.dismissed?.has(key)) continue;
@@ -91,7 +89,6 @@ export function buildUnifiedInboxItems(opts: BuildUnifiedInboxOptions): UnifiedI
 
 export interface InboxJumpTargetOwnIds {
   ownNodeIds?: ReadonlySet<number>;
-  ownReticulumHashes?: ReadonlySet<string>;
 }
 
 /**
@@ -105,25 +102,6 @@ export function inboxItemToJumpTarget(
   own?: InboxJumpTargetOwnIds,
 ): GlobalMessageSearchHit {
   const { message: m, protocol } = item;
-  if (protocol === 'reticulum') {
-    const senderHash = m.reticulum_sender_hash?.toLowerCase() ?? null;
-    const toHash = m.reticulum_destination_hash?.toLowerCase() ?? null;
-    const fromIsOwn = senderHash != null && own?.ownReticulumHashes?.has(senderHash) === true;
-    return {
-      protocol,
-      dbId: m.id ?? null,
-      timestamp: m.timestamp,
-      senderId: m.sender_id,
-      senderName: m.sender_name,
-      payload: m.payload,
-      channel: null,
-      dmPeer: null,
-      reticulumPeerHash: (fromIsOwn ? toHash : senderHash) ?? toHash,
-      reticulumSenderHash: senderHash,
-      reticulumMessageHash: m.reticulum_message_hash?.toLowerCase() ?? null,
-      packetId: m.packetId ?? null,
-    };
-  }
   const fromIsOwn = own?.ownNodeIds?.has(m.sender_id >>> 0) === true;
   const dmPeer = !item.isDirectMessage ? null : fromIsOwn ? (m.to ?? null) : m.sender_id;
   return {
@@ -136,8 +114,6 @@ export function inboxItemToJumpTarget(
     channel: item.isDirectMessage ? null : m.channel,
     dmPeer,
     toNode: item.isDirectMessage ? (m.to ?? null) : null,
-    reticulumPeerHash: null,
-    reticulumMessageHash: m.reticulum_message_hash?.toLowerCase() ?? null,
     packetId: m.packetId ?? null,
   };
 }

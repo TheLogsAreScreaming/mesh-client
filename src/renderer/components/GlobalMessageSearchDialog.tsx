@@ -18,9 +18,7 @@ export interface GlobalMessageSearchDialogProps {
   open: boolean;
   onClose: () => void;
   enabledProtocols: readonly MeshProtocol[];
-  reticulumIdentityId?: string | null;
   ownNodeIdsByProtocol?: Partial<Record<MeshProtocol, ReadonlySet<number>>>;
-  ownReticulumHashes?: ReadonlySet<string>;
   onSelectHit: (hit: GlobalMessageSearchHit, query: string) => void;
   /** Switch to the unified inbox (multi-select actions across protocols). */
   onOpenInbox?: () => void;
@@ -39,7 +37,6 @@ function formatHitTime(ts: number): string {
 const PROTOCOL_LABEL_KEYS: Record<MeshProtocol, string> = {
   meshtastic: 'globalMessageSearch.meshtastic',
   meshcore: 'globalMessageSearch.meshcore',
-  reticulum: 'globalMessageSearch.reticulum',
 };
 
 function protocolLabelKey(protocol: MeshProtocol): string {
@@ -54,9 +51,7 @@ export function GlobalMessageSearchDialog({
   open,
   onClose,
   enabledProtocols,
-  reticulumIdentityId,
   ownNodeIdsByProtocol,
-  ownReticulumHashes,
   onSelectHit,
   onOpenInbox,
 }: GlobalMessageSearchDialogProps) {
@@ -106,7 +101,7 @@ export function GlobalMessageSearchDialog({
         return;
       }
       const api = window.electronAPI?.db;
-      if (!api?.searchMessages || !api.searchMeshcoreMessages || !api.searchReticulumMessages) {
+      if (!api?.searchMessages || !api.searchMeshcoreMessages) {
         setError(t('globalMessageSearch.unavailable'));
         setHits([]);
         return;
@@ -125,14 +120,11 @@ export function GlobalMessageSearchDialog({
               meshtastic: ownNodeIdsByProtocol?.meshtastic,
               meshcore: ownNodeIdsByProtocol?.meshcore,
             },
-            ownReticulumHashes,
           },
           api: {
             searchMessages: api.searchMessages.bind(api),
             searchMeshcoreMessages: api.searchMeshcoreMessages.bind(api),
-            searchReticulumMessages: api.searchReticulumMessages.bind(api),
           },
-          reticulumIdentityId,
           enabledProtocols,
           limitPerProtocol: GLOBAL_MESSAGE_SEARCH_LIMIT,
         });
@@ -152,9 +144,7 @@ export function GlobalMessageSearchDialog({
       direction,
       enabledProtocols,
       ownNodeIdsByProtocol,
-      ownReticulumHashes,
       protocol,
-      reticulumIdentityId,
       senderQuery,
       t,
     ],

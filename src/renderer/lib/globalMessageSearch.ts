@@ -1,6 +1,5 @@
 import type { MeshProtocol } from '@/shared/meshProtocol';
 
-import { reticulumHashToNodeId } from './reticulum/destHash';
 import type { ChatMessage } from './types';
 
 /** Cap per protocol so a single query stays responsive. */
@@ -25,8 +24,6 @@ export interface GlobalMessageSearchFilters {
    * owned on one protocol cannot skew DM peer / direction classification on the other.
    */
   ownNodeIdsByProtocol?: Partial<Record<'meshtastic' | 'meshcore', ReadonlySet<number>>>;
-  /** Own Reticulum destination hashes (lowercase hex) for direction filtering. */
-  ownReticulumHashes?: ReadonlySet<string>;
 }
 
 export interface GlobalMessageSearchHit {
@@ -37,18 +34,12 @@ export interface GlobalMessageSearchHit {
   senderId: number | null;
   senderName: string;
   payload: string;
-  /** Channel index for broadcast; null for DM / Reticulum DM-only. */
+  /** Channel index for broadcast; null for DM. */
   channel: number | null;
-  /** LoRa DM peer node id, or Reticulum synthetic node id after open. */
+  /** LoRa DM peer node id. */
   dmPeer: number | null;
   /** LoRa DM recipient (`to_node`). Kept so an inbound row still names our node. */
   toNode?: number | null;
-  /** Reticulum conversation peer hash (counterparty), not necessarily the wire sender. */
-  reticulumPeerHash: string | null;
-  /** Reticulum `sender_id` / from-hash for direction filtering (preserved separately from peer). */
-  reticulumSenderHash?: string | null;
-  /** LXMF message hash for scroll targeting. */
-  reticulumMessageHash: string | null;
   packetId: number | null;
 }
 
@@ -73,16 +64,6 @@ interface MeshcoreSearchRow {
   channel_idx?: number;
   timestamp?: number;
   to_node?: number | null;
-}
-
-interface ReticulumSearchRow {
-  id?: number;
-  sender_id?: string | null;
-  sender_name?: string | null;
-  payload?: string;
-  timestamp?: number;
-  to_hash?: string | null;
-  message_hash?: string | null;
 }
 
 function asNumber(value: unknown): number | null {
@@ -130,8 +111,6 @@ export function normalizeMeshtasticSearchRow(
     channel: isDm ? null : channel,
     dmPeer: isDm ? resolveLoRaDmPeer(senderId, to, ownNodeIds) : null,
     toNode: isDm ? to : null,
-    reticulumPeerHash: null,
-    reticulumMessageHash: null,
     packetId: asNumber(row.packetId ?? row.packet_id),
   };
 }
@@ -154,31 +133,6 @@ export function normalizeMeshcoreSearchRow(
     channel: isDm ? null : channelIdx,
     dmPeer: isDm ? resolveLoRaDmPeer(senderId, to, ownNodeIds) : null,
     toNode: isDm ? to : null,
-    reticulumPeerHash: null,
-    reticulumMessageHash: null,
-    packetId: null,
-  };
-}
-
-export function normalizeReticulumSearchRow(
-  row: ReticulumSearchRow,
-  ownReticulumHashes?: ReadonlySet<string>,
-): GlobalMessageSearchHit {
-  const senderHash = asString(row.sender_id).toLowerCase() || null;
-  const toHash = asString(row.to_hash).toLowerCase() || null;
-  const fromIsOwn = senderHash != null && ownReticulumHashes?.has(senderHash) === true;
-  return {
-    protocol: 'reticulum',
-    dbId: asNumber(row.id),
-    timestamp: asNumber(row.timestamp) ?? 0,
-    senderId: null,
-    senderName: asString(row.sender_name),
-    payload: asString(row.payload),
-    channel: null,
-    dmPeer: null,
-    reticulumPeerHash: (fromIsOwn ? toHash : senderHash) ?? toHash,
-    reticulumSenderHash: senderHash,
-    reticulumMessageHash: asString(row.message_hash).toLowerCase() || null,
     packetId: null,
   };
 }
@@ -188,8 +142,6 @@ function matchesSender(hit: GlobalMessageSearchHit, senderQuery: string | undefi
   if (!q) return true;
   if (hit.senderName.toLowerCase().includes(q)) return true;
   if (hit.senderId != null && String(hit.senderId).includes(q)) return true;
-  // Wire from-hash (not conversation peer — outbound peer is the destination).
-  if (hit.reticulumSenderHash?.includes(q)) return true;
   return false;
 }
 
@@ -202,7 +154,6 @@ function matchesConversation(
   if (c.startsWith('dm:')) {
     const peer = c.slice(3);
     if (hit.dmPeer != null && String(hit.dmPeer) === peer) return true;
-    if (hit.reticulumPeerHash && hit.reticulumPeerHash === peer.toLowerCase()) return true;
     return false;
   }
   const channel = Number(c);
@@ -215,17 +166,7 @@ function matchesDirection(
 ): boolean {
   const direction = filters.direction ?? 'all';
   if (direction === 'all') return true;
-  if (hit.protocol === 'reticulum') {
-    const own = filters.ownReticulumHashes;
-    // Without own hashes we cannot classify — exclude from directional results.
-    if (!own || own.size === 0) return false;
-    // Direction uses the wire from-hash, not the conversation peer (which is to_hash when we sent).
-    const sender = hit.reticulumSenderHash ?? hit.reticulumPeerHash;
-    const fromIsOwn = sender != null && own.has(sender);
-    if (direction === 'outbound') return fromIsOwn;
-    return !fromIsOwn;
-  }
-  // Remaining protocols are LoRa (meshtastic | meshcore); use that protocol's own set only.
+  // Use the hit protocol's own set only.
   const own = filters.ownNodeIdsByProtocol?.[hit.protocol];
   // Protocol-scoped own set only — missing/empty means we cannot classify this hit.
   if (!own || own.size === 0) return false;
@@ -254,11 +195,6 @@ export function filterGlobalMessageSearchHits(
 export interface GlobalMessageSearchApi {
   searchMessages: (query: string, limit?: number) => Promise<unknown[]>;
   searchMeshcoreMessages: (query: string, limit?: number) => Promise<unknown[]>;
-  searchReticulumMessages: (
-    identityId: string,
-    query: string,
-    limit?: number,
-  ) => Promise<unknown[]>;
 }
 
 /**
@@ -268,7 +204,6 @@ export async function runGlobalMessageSearch(opts: {
   query: string;
   filters: GlobalMessageSearchFilters;
   api: GlobalMessageSearchApi;
-  reticulumIdentityId?: string | null;
   enabledProtocols: readonly MeshProtocol[];
   limitPerProtocol?: number;
 }): Promise<GlobalMessageSearchHit[]> {
@@ -300,16 +235,7 @@ export async function runGlobalMessageSearch(opts: {
         ),
     );
   }
-  if (want('reticulum') && opts.reticulumIdentityId) {
-    const ownHashes = opts.filters.ownReticulumHashes;
-    tasks.push(
-      opts.api
-        .searchReticulumMessages(opts.reticulumIdentityId, q, limit)
-        .then((rows) =>
-          (rows as ReticulumSearchRow[]).map((row) => normalizeReticulumSearchRow(row, ownHashes)),
-        ),
-    );
-  }
+
 
   const nested = await Promise.all(tasks);
   const merged = nested.flat();
@@ -322,7 +248,6 @@ export async function runGlobalMessageSearch(opts: {
 export interface PendingMessageFocus {
   timestamp: number;
   packetId?: number | null;
-  reticulumMessageHash?: string | null;
   dbId?: number | null;
   /** Highlight query for in-bubble mark tags. The dialog query, never a payload prefix. */
   highlightQuery?: string;
@@ -335,15 +260,8 @@ export interface PendingMessageFocus {
 /** Build a chat row from a search/inbox hit so the open thread can show it. */
 export function chatMessageFromSearchHit(hit: GlobalMessageSearchHit): ChatMessage {
   const dm = hit.channel == null;
-  const senderFromHash =
-    hit.protocol === 'reticulum' && hit.reticulumSenderHash
-      ? reticulumHashToNodeId(hit.reticulumSenderHash)
-      : null;
-  const senderId = senderFromHash ?? hit.senderId ?? hit.dmPeer ?? 0;
-  const inbound =
-    hit.protocol === 'reticulum'
-      ? hit.dmPeer != null && senderId === hit.dmPeer
-      : hit.dmPeer != null && hit.senderId != null && hit.senderId === hit.dmPeer;
+  const senderId = hit.senderId ?? hit.dmPeer ?? 0;
+  const inbound = hit.dmPeer != null && hit.senderId != null && hit.senderId === hit.dmPeer;
   const to = !dm
     ? undefined
     : inbound
@@ -353,7 +271,6 @@ export function chatMessageFromSearchHit(hit: GlobalMessageSearchHit): ChatMessa
       : (hit.dmPeer ?? undefined);
   return {
     id: hit.dbId ?? undefined,
-    storeId: hit.reticulumMessageHash ?? undefined,
     sender_id: senderId,
     sender_name: hit.senderName,
     payload: hit.payload,
@@ -361,8 +278,6 @@ export function chatMessageFromSearchHit(hit: GlobalMessageSearchHit): ChatMessa
     to,
     timestamp: hit.timestamp,
     packetId: hit.packetId ?? undefined,
-    reticulum_message_hash: hit.reticulumMessageHash ?? undefined,
-    reticulum_sender_hash: hit.reticulumSenderHash ?? undefined,
     status: 'acked',
   };
 }
@@ -373,7 +288,6 @@ export function withFocusRowLoaded<
     id?: number;
     timestamp: number;
     packetId?: number;
-    reticulum_message_hash?: string;
   },
 >(messages: readonly T[], focus: PendingMessageFocus | null | undefined): readonly T[] {
   if (!focus?.focusRow) return messages;
@@ -386,16 +300,9 @@ export function findMessageIndexForFocus(
     id?: number;
     timestamp: number;
     packetId?: number;
-    reticulum_message_hash?: string;
   }[],
   focus: PendingMessageFocus,
 ): number {
-  if (focus.reticulumMessageHash) {
-    const target = focus.reticulumMessageHash.toLowerCase();
-    for (let i = 0; i < messages.length; i++) {
-      if (messages[i].reticulum_message_hash?.toLowerCase() === target) return i;
-    }
-  }
   if (focus.packetId != null) {
     for (let i = 0; i < messages.length; i++) {
       if (messages[i].packetId === focus.packetId) return i;
@@ -406,8 +313,7 @@ export function findMessageIndexForFocus(
       if (messages[i].id === focus.dbId) return i;
     }
   }
-  const hasStableId =
-    Boolean(focus.reticulumMessageHash) || focus.packetId != null || focus.dbId != null;
+  const hasStableId = focus.packetId != null || focus.dbId != null;
   if (!hasStableId) {
     for (let i = 0; i < messages.length; i++) {
       if (messages[i].timestamp === focus.timestamp) return i;

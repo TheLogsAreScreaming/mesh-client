@@ -16,7 +16,6 @@ import type {
 import { getConnection } from '../../stores/connectionStore';
 import { getIdentity } from '../../stores/identityStore';
 import { type NodeRecord, useNodeStore } from '../../stores/nodeStore';
-import { useRrcSessionStore } from '../../stores/rrcSessionStore';
 import {
   countMessageWireBytes,
   getComposerPayloadLimit,
@@ -27,10 +26,6 @@ import { withChatOutboxDrainLock } from '../chatOutboxDrain';
 import { errLikeToLogString } from '../errLikeToLogString';
 import { recordMeshcoreSend } from '../meshcoreSendRateNotice';
 import { withMeshtasticTextSendPacing } from '../meshtasticTextSendPacing';
-import { type RrcSendArgs, rrcSendBounded, type RrcSendResult } from '../rrc/rrcSendBounded';
-import { isRrcDeadSessionSendError } from '../rrcErrorHumanize';
-import { resolveRrcMsgBodyLimit } from '../rrcHubLimits';
-import { rrcRoomsMatch } from '../rrcRoomName';
 import { type ChatSendRequest, sendChatOnIdentity } from '../sendChatOnIdentity';
 import type { IdentityId, MeshProtocol } from '../types';
 import { waitForChatSettlement } from './chatSettlement';
@@ -62,15 +57,6 @@ export interface DeliverResult {
   reason?: ScheduledBroadcastRunReason;
 }
 
-export interface RrcHubRoomState {
-  /** Hub session is `active`. */
-  active: boolean;
-  /** Room is currently joined on that hub. */
-  joined: boolean;
-  /** Hub-advertised `max_msg_body_bytes`, when known. */
-  maxMsgBodyBytes?: number | null;
-}
-
 export interface DeliverDeps {
   sendChat: (identityId: IdentityId, request: ChatSendRequest) => string | undefined;
   waitForSettlement: (
@@ -80,9 +66,6 @@ export interface DeliverDeps {
   ) => Promise<boolean>;
   /** MeshCore room post (runtime `sendRoomPost`). Missing → `send-failed`. */
   sendRoomPost?: (roomNodeId: number, text: string) => Promise<void>;
-  sendRrc: (args: RrcSendArgs) => Promise<RrcSendResult>;
-  getRrcHubRoomState: (hubDestHash: string, room: string) => RrcHubRoomState;
-  joinRrcRoom: (hubDestHash: string, room: string) => Promise<{ ok: boolean }>;
   isIdentityConnected: (identityId: IdentityId) => boolean;
   /** Resolve a MeshCore room's live node id from the node store; undefined when unknown. */
   resolveRoomNodeId: (identityId: IdentityId, roomPubKeyHex: string) => number | undefined;
@@ -132,24 +115,10 @@ function defaultIsIdentityConnected(identityId: IdentityId): boolean {
   return isScheduledBroadcastIdentityConnected(identityId);
 }
 
-function defaultGetRrcHubRoomState(hubDestHash: string, room: string): RrcHubRoomState {
-  const session = useRrcSessionStore.getState().sessionsByHub.get(hubDestHash.toLowerCase());
-  if (!session) return { active: false, joined: false };
-  return {
-    active: session.status === 'active',
-    joined: [...session.rooms.keys()].some((k) => rrcRoomsMatch(k, room)),
-    maxMsgBodyBytes: session.limits.max_msg_body_bytes,
-  };
-}
-
 export function createDefaultDeliverDeps(): DeliverDeps {
   return {
     sendChat: sendChatOnIdentity,
     waitForSettlement: waitForChatSettlement,
-    sendRrc: rrcSendBounded,
-    getRrcHubRoomState: defaultGetRrcHubRoomState,
-    joinRrcRoom: (hubDestHash, room) =>
-      window.electronAPI.reticulum.rrc.join({ hub_dest_hash: hubDestHash, room }),
     isIdentityConnected: defaultIsIdentityConnected,
     resolveRoomNodeId: defaultResolveRoomNodeId,
     getSenderDisplayName: defaultGetSenderDisplayName,
@@ -172,7 +141,8 @@ function drainProtocolFor(target: ScheduledBroadcastTarget): MeshProtocol {
     case 'meshcore-room':
       return 'meshcore';
     case 'rrc-room':
-      return 'reticulum';
+      // RRC (Reticulum) rooms are not part of this build; deliverToTarget never gets here.
+      throw new Error('RRC room targets are not supported');
   }
 }
 
@@ -239,49 +209,13 @@ async function sendMeshcoreRoom(
   return OK;
 }
 
-async function sendRrcRoom(
-  target: ScheduledBroadcastTarget,
-  text: string,
-  deps: DeliverDeps,
-): Promise<Attempt> {
-  const { hubDestHash, room } = target;
-  if (!hubDestHash || !room) return fail('rrc-not-connected');
-
-  let state = deps.getRrcHubRoomState(hubDestHash, room);
-  if (!state.active || !state.joined) {
-    // One join attempt; the hub session must be active and the room joined afterwards.
-    let joined = false;
-    try {
-      joined = (await deps.joinRrcRoom(hubDestHash, room)).ok;
-    } catch (e: unknown) {
-      console.debug('[scheduledBroadcasts] rrc join failed ' + errLikeToLogString(e));
-    }
-    state = deps.getRrcHubRoomState(hubDestHash, room);
-    if (!joined || !state.active) return fail('rrc-not-connected');
-  }
-
-  const bodyLimit = resolveRrcMsgBodyLimit(state.maxMsgBodyBytes);
-  if (countMessageWireBytes(text) > bodyLimit) return fail('text-too-long');
-
-  try {
-    // The hub echoes our line back through the normal RRC listener (own lines are not
-    // counted unread), so no local history append happens here — same as RrcPanel's room send.
-    const res = await deps.sendRrc({ hub_dest_hash: hubDestHash, room, body: text, type: 'msg' });
-    if (res.ok) return OK;
-    const err = res.error ?? '';
-    return fail(isRrcDeadSessionSendError(err) ? 'rrc-not-connected' : 'send-failed');
-  } catch (e: unknown) {
-    const msg = errLikeToLogString(e);
-    console.debug('[scheduledBroadcasts] rrc send failed ' + msg);
-    return fail(isRrcDeadSessionSendError(msg) ? 'rrc-not-connected' : 'send-failed');
-  }
-}
-
 async function deliverToTarget(
   target: ScheduledBroadcastTarget,
   text: string,
   deps: DeliverDeps,
 ): Promise<Attempt> {
+  // RRC (Reticulum) rooms are not part of this build; a saved target cannot be delivered.
+  if (target.kind === 'rrc-room') return fail('rrc-not-connected');
   try {
     return await withChatOutboxDrainLock(drainProtocolFor(target), async () => {
       switch (target.kind) {
@@ -291,7 +225,7 @@ async function deliverToTarget(
         case 'meshcore-room':
           return sendMeshcoreRoom(target, text, deps);
         case 'rrc-room':
-          return sendRrcRoom(target, text, deps);
+          return fail('rrc-not-connected');
       }
     });
   } catch (e: unknown) {

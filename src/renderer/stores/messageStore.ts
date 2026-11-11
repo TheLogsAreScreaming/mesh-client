@@ -138,17 +138,7 @@ const MESSAGE_RECORD_KEYS: (keyof MessageRecord)[] = [
 ];
 
 function messageRecordFieldsEqual(a: MessageRecord, b: MessageRecord): boolean {
-  // Most MessageRecord fields are primitives; reticulumAttachments is a small object array.
   for (const key of MESSAGE_RECORD_KEYS) {
-    if (key === 'reticulumAttachments') {
-      if (
-        JSON.stringify(a.reticulumAttachments ?? null) !==
-        JSON.stringify(b.reticulumAttachments ?? null)
-      ) {
-        return false;
-      }
-      continue;
-    }
     if (a[key] !== b[key]) return false;
   }
   return true;

@@ -36,11 +36,10 @@ export const COT_UID_PREFIXES: readonly string[] = Object.values(COT_UID_PREFIX)
  */
 export const COT_CHAT_ENDPOINT = '*:-1:stcp';
 
-const MESH_NODE_UID_RE = /^(MESH|MC|RN)-([1-9]\d{0,9})$/;
+const MESH_NODE_UID_RE = /^(MESH|MC)-([1-9]\d{0,9})$/;
 const PROTOCOL_BY_PREFIX: Record<string, MeshProtocol> = {
   MESH: 'meshtastic',
   MC: 'meshcore',
-  RN: 'reticulum',
 };
 
 /** The mesh node a marker uid (`MC-123`) names, or null for any other uid. */

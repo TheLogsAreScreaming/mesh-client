@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/purity */
 import type { TFunction } from 'i18next';
 import { CircleX, Info, TriangleAlert } from 'lucide-react-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useLatestTrackedPosition } from '@/renderer/hooks/useLatestTrackedPosition';

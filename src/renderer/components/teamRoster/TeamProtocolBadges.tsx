@@ -6,13 +6,11 @@ import type { TeamMemberLink } from '@/shared/teamRosterTypes';
 const PROTOCOL_BADGE_CLASS: Record<MeshProtocol, string> = {
   meshtastic: 'bg-meshtastic-700 text-white',
   meshcore: 'bg-meshcore-700 text-white',
-  reticulum: 'bg-reticulum-700 text-white',
 };
 
 export const TEAM_PROTOCOL_LABEL_KEYS: Record<MeshProtocol, string> = {
   meshtastic: 'teamRoster.protocolMeshtastic',
   meshcore: 'teamRoster.protocolMeshcore',
-  reticulum: 'teamRoster.protocolReticulum',
 };
 
 /** Compact protocol badges for the devices linked on a Contact Card. */

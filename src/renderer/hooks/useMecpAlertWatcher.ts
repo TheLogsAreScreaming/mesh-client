@@ -16,7 +16,6 @@ import {
   tryParseMecp,
 } from '@/renderer/lib/mecp/mecpMessages';
 import {
-  describeMecpTargetChannel,
   executeMecpRebroadcast,
   MECP_REBROADCAST_SETTINGS_KEY,
   parseMecpRebroadcastRules,
@@ -298,7 +297,6 @@ async function processNewMessages(
           viaStoreForward: msg.viaStoreForward,
           senderLabel: msg.senderName ?? String(msg.from),
           sourceChannelName: resolveMecpSourceChannelName(slice.protocol, msg.channelIndex),
-          reticulumSenderHash: msg.reticulumSenderHash,
         },
         loadRules(),
         async (target, payload) => {
@@ -316,7 +314,7 @@ async function processNewMessages(
               decoded,
               direction: 'rebroadcast',
               toProtocol: target.protocol,
-              toChannel: describeMecpTargetChannel(target),
+              toChannel: target.channelIndex,
               bidirectional: target.bidirectional,
               messageId: msg.id,
             });

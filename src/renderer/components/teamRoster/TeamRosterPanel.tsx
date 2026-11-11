@@ -36,7 +36,6 @@ import { TeamRosterDevicePickerDialog } from './TeamRosterDevicePickerDialog';
 const EMPTY_MESSAGES: MessagesByProtocol = {
   meshtastic: [],
   meshcore: [],
-  reticulum: [],
 };
 
 export interface TeamRosterPanelProps {

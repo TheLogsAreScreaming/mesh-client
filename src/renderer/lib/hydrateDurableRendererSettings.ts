@@ -1,5 +1,4 @@
 import { hydrateMecpBlockedSenders } from '@/renderer/stores/mecpBlockStore';
-import { hydrateReticulumDismissedContacts } from '@/renderer/stores/reticulumPeerStore';
 import { hydrateTakRelayPrefs } from '@/renderer/stores/takRelayPrefsStore';
 import { hydrateWeatherFilterPreferences } from '@/renderer/stores/weatherFilterStore';
 import { MS_PER_SECOND } from '@/shared/timeConstants';
@@ -8,7 +7,6 @@ import { hydrateChatLastRead } from './chatPanelProtocolStorage';
 import { errLikeToLogString } from './errLikeToLogString';
 import { hydrateRendererPreferences } from './rendererPreferences';
 import { flushRendererStorageDeletions } from './rendererStorage';
-import { hydrateRrcLastRead } from './rrcReadWatermark';
 
 const READ_RETRY_DELAYS_MS = [0, 250, MS_PER_SECOND];
 let hydration: Promise<void> | undefined;
@@ -34,10 +32,8 @@ async function hydrateFromDatabase(): Promise<void> {
   if (settings === undefined) throw new Error('Saved settings database unavailable');
   await hydrateRendererPreferences(settings);
   hydrateWeatherFilterPreferences();
-  hydrateReticulumDismissedContacts();
   const results = await Promise.allSettled([
     hydrateChatLastRead(settings),
-    hydrateRrcLastRead(settings),
     hydrateMecpBlockedSenders(settings),
     hydrateTakRelayPrefs(settings),
   ]);

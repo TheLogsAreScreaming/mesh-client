@@ -59,22 +59,7 @@ export function querySummaryHistory(
   let body = 'payload';
   let sender = "COALESCE(sender_name, CAST(sender_id AS TEXT), '')";
   let timestamp = 'timestamp';
-  if (q.protocol === 'reticulum' && q.surface === 'rrc') {
-    if (!q.hubHash || !q.room || !/^[a-f0-9]{32}$/i.test(q.hubHash))
-      throw new Error('Invalid AI room');
-    table = 'rrc_messages';
-    // Reaction lines (rrc-extensions.md K_REACT_TO) are emoji, not conversation.
-    where.push('hub_hash = ?', 'room = ?', "kind IN ('msg', 'action')", 'react_to IS NULL');
-    args.push(q.hubHash.toLowerCase(), q.room.trim().toLowerCase().replace(/^#+/, ''));
-    body = 'body';
-    sender = "COALESCE(nickname, sender_hash, '')";
-  } else if (q.protocol === 'reticulum' && q.surface === 'dm') {
-    if (!q.identityId || !q.peerHash || !/^[a-f0-9]{32}$/i.test(q.peerHash))
-      throw new Error('Invalid AI DM');
-    table = 'reticulum_messages';
-    where.push('identity_id = ?', '(sender_id = ? OR to_hash = ?)');
-    args.push(q.identityId, q.peerHash.toLowerCase(), q.peerHash.toLowerCase());
-  } else if (q.protocol === 'meshtastic' || q.protocol === 'meshcore') {
+  if (q.protocol === 'meshtastic' || q.protocol === 'meshcore') {
     const meshcore = q.protocol === 'meshcore';
     table = meshcore ? 'meshcore_messages' : 'messages';
     if (meshcore) {

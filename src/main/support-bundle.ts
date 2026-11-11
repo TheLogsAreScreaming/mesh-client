@@ -268,7 +268,7 @@ export async function buildSupportBundleZip(
 
   const backupPath = path.join(logDir, LOG_BACKUP_FILENAME);
   if (fs.existsSync(backupPath)) {
-    backupLog = redactMeshcoreCliSecretsInLog(
+    const backupLog = redactMeshcoreCliSecretsInLog(
       await readFileTailOrEmpty(backupPath, MAX_SUPPORT_BUNDLE_LOG_BACKUP_BYTES),
     );
     zip.file(LOG_BACKUP_FILENAME, backupLog);

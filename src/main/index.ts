@@ -441,18 +441,9 @@ function isAnyMqttConnected(): boolean {
   return mqttManager.getStatus() === 'connected' || meshcoreMqttAdapter.getStatus() === 'connected';
 }
 
-function isReticulumSidecarRunning(): boolean {
-  return reticulumSidecarManager?.getStatus().running === true;
-}
-
-/** Meshtastic, MeshCore, the Reticulum sidecar, and MQTT are independent. */
+/** Meshtastic, MeshCore, and MQTT are independent. */
 function hasLiveConnection(): boolean {
-  return (
-    meshtasticDeviceConnected ||
-    meshcoreDeviceConnected ||
-    isReticulumSidecarRunning() ||
-    isAnyMqttConnected()
-  );
+  return meshtasticDeviceConnected || meshcoreDeviceConnected || isAnyMqttConnected();
 }
 
 /** Last computed decision; used only to avoid a debug line per status event. */
@@ -460,14 +451,10 @@ let lastPowerSaveHold: boolean | null = null;
 
 function syncPowerSaveBlocker(): void {
   const mode = readPowerSaveMode();
-  const sidecarRunning = isReticulumSidecarRunning();
   const hold = shouldHoldPowerSaveBlocker(mode, {
     meshtastic: { connected: meshtasticDeviceConnected, link: meshtasticConnectionType },
     meshcore: { connected: meshcoreDeviceConnected, link: meshcoreConnectionType },
     mqtt: isAnyMqttConnected(),
-    reticulumSidecar: sidecarRunning,
-    reticulumLocalRadio:
-      sidecarRunning && reticulumConfigDirHasEnabledLocalRadio(reticulumUserConfigDir()),
   });
   if (hold !== lastPowerSaveHold) {
     lastPowerSaveHold = hold;

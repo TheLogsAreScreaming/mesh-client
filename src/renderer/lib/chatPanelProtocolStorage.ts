@@ -29,7 +29,7 @@ const LEGACY_OPEN_DM_TABS_KEY = 'mesh-client:openDmTabs';
 const LEGACY_LAST_READ_KEY = 'mesh-client:lastRead';
 
 const chatLastReadPersistence = Object.fromEntries(
-  (['meshtastic', 'meshcore', 'reticulum'] as const).map((protocol) => [
+  (['meshtastic', 'meshcore'] as const).map((protocol) => [
     protocol,
     createDurableRendererSetting(
       lastReadStorageKey(protocol),
@@ -46,7 +46,7 @@ const roomsLastReadPersistence = createDurableRendererSetting(
 export async function hydrateChatLastRead(
   settings: Partial<Record<string, string>>,
 ): Promise<void> {
-  const chat = (['meshtastic', 'meshcore', 'reticulum'] as const).map(async (protocol) => {
+  const chat = (['meshtastic', 'meshcore'] as const).map(async (protocol) => {
     const persistence = chatLastReadPersistence[protocol];
     if (settings[DURABLE_RENDERER_STORAGE_KEYS.chatLastRead[protocol]] === undefined) {
       persistence.write(JSON.stringify(loadPersistedLastReadInitial(protocol)));

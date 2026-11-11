@@ -6,7 +6,6 @@ import { MS_PER_MINUTE } from '@/shared/timeConstants';
 import type { OperationalAlertSettings } from '../lib/appSettingsStorage';
 import { playMessageNotification } from '../lib/chatNotifications';
 import { fireNotification } from '../lib/desktopNotification';
-import { filterDiagnosticRowsForProtocol } from '../lib/diagnostics/diagnosticRows';
 import i18n from '../lib/i18n';
 import { useDiagnosticsStore } from '../stores/diagnosticsStore';
 
@@ -39,9 +38,7 @@ export function useDiagnosticSeverityAlerts({
       return;
     }
 
-    const rows = filterDiagnosticRowsForProtocol(diagnosticRows, protocol).filter(
-      (r) => r.severity === 'error',
-    );
+    const rows = diagnosticRows.filter((r) => r.severity === 'error');
     const now = Date.now();
     const fired = firedRef.current;
     const present = new Set(rows.map((row) => row.id));

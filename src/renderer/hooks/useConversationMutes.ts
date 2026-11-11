@@ -17,7 +17,6 @@ import { useConnectionStore } from '../stores/connectionStore';
 import { useIdentityStore } from '../stores/identityStore';
 import { useLiveChannelKeyStore } from '../stores/liveChannelKeyStore';
 import { useNodeStore } from '../stores/nodeStore';
-import { useReticulumIdentityStore } from '../stores/reticulumIdentityStore';
 
 function subscribe(protocol: MeshProtocol, listener: () => void) {
   const discovered = () => {
@@ -30,7 +29,6 @@ function subscribe(protocol: MeshProtocol, listener: () => void) {
     useConnectionStore.subscribe(discovered),
     useLiveChannelKeyStore.subscribe(discovered),
     useNodeStore.subscribe(discovered),
-    useReticulumIdentityStore.subscribe(discovered),
   ];
   window.addEventListener('storage', listener);
   return () => {

@@ -1,31 +1,8 @@
 import type { NoiseStats } from '../diagnostics/RoutingDiagnosticEngine';
 import type { ProtocolCapabilities } from '../radio/BaseRadioProvider';
-import type {
-  BuildReticulumMeshTopologyGraphOptions,
-  ReticulumTopologyGraph,
-  ReticulumTopologyInterfaceInput,
-  ReticulumTopologyNodeInput,
-} from '../reticulum/buildReticulumTopologyLayout';
 import type { HopHistoryPoint, MeshNode, NodeAnomaly } from '../types';
 
-export type AnalysisJobKind = 'topologyBuild' | 'diagnosticsAnalyzeBatch';
-
-/** Serializable topology opts (Set → string[]). */
-export interface TopologyBuildJobRequest {
-  kind: 'topologyBuild';
-  sequence: number;
-  interfaces: ReticulumTopologyInterfaceInput[];
-  peers: ReticulumTopologyNodeInput[];
-  opts: Omit<BuildReticulumMeshTopologyGraphOptions, 'serverPeerHashes'> & {
-    serverPeerHashes?: string[];
-  };
-}
-
-export interface TopologyBuildJobResult {
-  kind: 'topologyBuild';
-  sequence: number;
-  graph: ReticulumTopologyGraph;
-}
+export type AnalysisJobKind = 'diagnosticsAnalyzeBatch';
 
 export interface DiagnosticsAnalyzeNodeInput {
   nodeId: number;
@@ -61,8 +38,8 @@ export interface DiagnosticsAnalyzeBatchResult {
   clearedNodeIds: number[];
 }
 
-export type AnalysisJobRequest = TopologyBuildJobRequest | DiagnosticsAnalyzeBatchRequest;
-export type AnalysisJobResult = TopologyBuildJobResult | DiagnosticsAnalyzeBatchResult;
+export type AnalysisJobRequest = DiagnosticsAnalyzeBatchRequest;
+export type AnalysisJobResult = DiagnosticsAnalyzeBatchResult;
 
 export interface AnalysisJobError {
   kind: 'error';

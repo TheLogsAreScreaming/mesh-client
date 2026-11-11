@@ -1,9 +1,5 @@
 import { connectionDriver } from '@/renderer/lib/drivers/ConnectionDriver';
-import type {
-  MecpRebroadcastSendFn,
-  MecpReticulumEndpoint,
-} from '@/renderer/lib/mecp/mecpRebroadcast';
-import { withReticulumIpcSendDeadline } from '@/renderer/lib/reticulum/reticulumIpcDeadline';
+import type { MecpRebroadcastSendFn } from '@/renderer/lib/mecp/mecpRebroadcast';
 import { tryGetMeshtasticSession } from '@/renderer/lib/sessions/meshtasticSession';
 import { getDevice } from '@/renderer/stores/deviceStore';
 import { useIdentityStore } from '@/renderer/stores/identityStore';
@@ -20,18 +16,9 @@ function findIdentityForProtocol(protocol: 'meshtastic' | 'meshcore') {
  * Resolve a human channel name for the source endpoint (never emit a bare index).
  */
 export function resolveMecpSourceChannelName(
-  protocol: 'meshtastic' | 'meshcore' | 'reticulum',
+  protocol: 'meshtastic' | 'meshcore',
   channelIndex: number,
-  opts?: { rrcRoom?: string; rrcHubDestHash?: string },
 ): string {
-  // Reticulum has no numbered channels — name LXMF or the RRC room for bridge notices.
-  if (protocol === 'reticulum') {
-    if (opts?.rrcRoom) {
-      const hub = opts.rrcHubDestHash?.slice(0, 8);
-      return hub ? `${hub}/${opts.rrcRoom}` : opts.rrcRoom;
-    }
-    return 'LXMF';
-  }
   const identity = findIdentityForProtocol(protocol);
   if (!identity) {
     return protocol === 'meshtastic' && channelIndex === 0 ? 'Primary' : 'unnamed';
@@ -49,56 +36,11 @@ export function resolveMecpSourceChannelName(
   return 'unnamed';
 }
 
-/** Throws unless the Reticulum sidecar stack is live (rebroadcast must not silently queue). */
-async function assertReticulumStackLive(): Promise<void> {
-  const status = await window.electronAPI.reticulum.getStatus();
-  if (!status.running || status.healthy === false) {
-    throw new Error('Reticulum stack not running');
-  }
-}
-
-/**
- * Send a MECP payload (or bridge notice) into Reticulum: an RRC hub room, or an LXMF direct
- * message. Requires the sidecar stack to be running; failures propagate so
- * `executeMecpRebroadcast` logs and skips the notice.
- */
-export async function sendMecpRebroadcastToReticulum(
-  target: MecpReticulumEndpoint,
-  payload: string,
-): Promise<void> {
-  await assertReticulumStackLive();
-  if (target.kind === 'rrc') {
-    const res = await withReticulumIpcSendDeadline(
-      window.electronAPI.reticulum.rrc.send({
-        hub_dest_hash: target.hubDestHash,
-        room: target.room,
-        body: payload,
-        type: 'msg',
-      }),
-    );
-    if (!res.ok) throw new Error(res.error ?? 'RRC send rejected');
-    return;
-  }
-  // Sidecar LxmfSendRequest requires `text` (not `content`).
-  const res = (await withReticulumIpcSendDeadline(
-    window.electronAPI.reticulum.proxyPost('/api/v1/lxmf/send', {
-      destination_hash: target.destinationHash,
-      text: payload,
-    }),
-  )) as { ok?: boolean; error?: string };
-  if (res.ok === false) throw new Error(res.error ?? 'LXMF send rejected');
-}
-
 /**
  * Default send implementation for MECP cross-protocol rebroadcast.
  * Channel broadcast only (to = broadcast / unset).
  */
 export const sendMecpRebroadcastOnProtocol: MecpRebroadcastSendFn = async (target, payload) => {
-  if (target.protocol === 'reticulum') {
-    if (!target.reticulum) throw new Error('Reticulum rebroadcast target missing');
-    await sendMecpRebroadcastToReticulum(target.reticulum, payload);
-    return;
-  }
   if (target.protocol === 'meshtastic') {
     const session = tryGetMeshtasticSession();
     if (!session) {

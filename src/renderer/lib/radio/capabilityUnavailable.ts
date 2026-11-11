@@ -27,7 +27,7 @@ interface FeatureDef {
 const FEATURE_DEFS: Record<CapabilityFeatureId, FeatureDef> = {
   factoryReset: {
     isSupported: (c) => c.hasFactoryReset,
-    protocolReasons: ['meshcore', 'reticulum'],
+    protocolReasons: ['meshcore'],
   },
   factoryResetConfig: {
     isSupported: (c) => c.hasFactoryReset,
@@ -47,7 +47,7 @@ const FEATURE_DEFS: Record<CapabilityFeatureId, FeatureDef> = {
   enterDfu: { protocolReasons: ['meshcore'] },
   firmwareFlash: {
     isSupported: (c) => c.hasDeviceFirmwareFlash,
-    protocolReasons: ['reticulum'],
+    protocolReasons: [],
   },
 };
 

@@ -1,14 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { getAppSettingsRaw, mergeAppSetting } from '@/renderer/lib/appSettingsStorage';
 import {
   createEmptyMecpRebroadcastRules,
-  MECP_REBROADCAST_ANY_PEER,
   MECP_REBROADCAST_SETTINGS_KEY,
-  type MecpRebroadcastEndpoint,
   type MecpRebroadcastRule,
-  type MecpReticulumEndpoint,
   parseMecpRebroadcastRules,
 } from '@/renderer/lib/mecp/mecpRebroadcast';
 
@@ -32,11 +29,8 @@ export function MecpRebroadcastSettings() {
     }
   });
 
-  const lastSavedRules = useRef(rules);
   useEffect(() => {
-    if (rules === lastSavedRules.current) return;
     mergeAppSetting(MECP_REBROADCAST_SETTINGS_KEY, rules, 'MecpRebroadcastSettings');
-    lastSavedRules.current = rules;
   }, [rules]);
 
   const addRule = useCallback(() => {
@@ -107,16 +101,32 @@ export function MecpRebroadcastSettings() {
             <div className="grid grid-cols-2 gap-2">
               <EndpointEditors
                 label={t('mecp.rebroadcast.endpointA')}
-                endpoint={rule.endpointA}
-                onChange={(endpointA) => {
-                  updateRule(rule.id, { endpointA });
+                protocol={rule.endpointA.protocol}
+                channelIndex={rule.endpointA.channelIndex}
+                onProtocol={(protocol) => {
+                  updateRule(rule.id, {
+                    endpointA: { ...rule.endpointA, protocol },
+                  });
+                }}
+                onChannel={(channelIndex) => {
+                  updateRule(rule.id, {
+                    endpointA: { ...rule.endpointA, channelIndex },
+                  });
                 }}
               />
               <EndpointEditors
                 label={t('mecp.rebroadcast.endpointB')}
-                endpoint={rule.endpointB}
-                onChange={(endpointB) => {
-                  updateRule(rule.id, { endpointB });
+                protocol={rule.endpointB.protocol}
+                channelIndex={rule.endpointB.channelIndex}
+                onProtocol={(protocol) => {
+                  updateRule(rule.id, {
+                    endpointB: { ...rule.endpointB, protocol },
+                  });
+                }}
+                onChannel={(channelIndex) => {
+                  updateRule(rule.id, {
+                    endpointB: { ...rule.endpointB, channelIndex },
+                  });
                 }}
               />
             </div>
@@ -135,39 +145,18 @@ export function MecpRebroadcastSettings() {
   );
 }
 
-type EndpointProtocol = MecpRebroadcastEndpoint['protocol'];
-
-function defaultEndpointFor(protocol: EndpointProtocol): MecpRebroadcastEndpoint {
-  // Wire/storage routing by endpoint protocol id (not a ProtocolCapabilities feature gate).
-  switch (protocol) {
-    case 'reticulum':
-      return { protocol: 'reticulum', kind: 'lxmf', destinationHash: MECP_REBROADCAST_ANY_PEER };
-    case 'meshcore':
-      return { protocol: 'meshcore', channelIndex: 0 };
-    default:
-      return { protocol: 'meshtastic', channelIndex: 0 };
-  }
-}
-
-function isReticulumEndpoint(
-  endpoint: MecpRebroadcastEndpoint,
-): endpoint is Extract<MecpRebroadcastEndpoint, { kind: string }> {
-  return 'kind' in endpoint;
-}
-
-/** Lenient draft sanitizer: keep only hex digits while typing (validated on parse/send). */
-function hexDraft(value: string): string {
-  return value.replace(/[^0-9a-f*]/gi, '').toLowerCase();
-}
-
 function EndpointEditors({
   label,
-  endpoint,
-  onChange,
+  protocol,
+  channelIndex,
+  onProtocol,
+  onChannel,
 }: {
   label: string;
-  endpoint: MecpRebroadcastEndpoint;
-  onChange: (endpoint: MecpRebroadcastEndpoint) => void;
+  protocol: 'meshtastic' | 'meshcore';
+  channelIndex: number;
+  onProtocol: (p: 'meshtastic' | 'meshcore') => void;
+  onChannel: (n: number) => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -175,101 +164,26 @@ function EndpointEditors({
       <legend className="text-2xs text-muted mb-1">{label}</legend>
       <select
         className={`${SELECT_BOX_SM_CLASS} mb-1 w-full`}
-        value={endpoint.protocol}
+        value={protocol}
         onChange={(e) => {
-          onChange(defaultEndpointFor(e.target.value as EndpointProtocol));
+          onProtocol(e.target.value as 'meshtastic' | 'meshcore');
         }}
         aria-label={t('mecp.rebroadcast.protocol')}
       >
         <option value="meshtastic">Meshtastic</option>
         <option value="meshcore">MeshCore</option>
-        <option value="reticulum">Reticulum</option>
       </select>
-      {isReticulumEndpoint(endpoint) ? (
-        <ReticulumEndpointFields endpoint={endpoint} onChange={onChange} />
-      ) : (
-        <input
-          type="number"
-          min={0}
-          max={7}
-          className={`${INPUT_BOX_SM_CLASS} w-full`}
-          value={endpoint.channelIndex}
-          onChange={(e) => {
-            onChange({
-              ...endpoint,
-              channelIndex: Math.min(7, Math.max(0, Math.trunc(Number(e.target.value) || 0))),
-            });
-          }}
-          aria-label={t('mecp.rebroadcast.channelIndex')}
-        />
-      )}
-    </fieldset>
-  );
-}
-
-function ReticulumEndpointFields({
-  endpoint,
-  onChange,
-}: {
-  endpoint: MecpReticulumEndpoint;
-  onChange: (endpoint: MecpRebroadcastEndpoint) => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <div className="flex flex-col gap-1">
-      <select
-        className={`${SELECT_BOX_SM_CLASS} w-full`}
-        value={endpoint.kind}
+      <input
+        type="number"
+        min={0}
+        max={7}
+        className={`${INPUT_BOX_SM_CLASS} w-full`}
+        value={channelIndex}
         onChange={(e) => {
-          onChange(
-            e.target.value === 'rrc'
-              ? { protocol: 'reticulum', kind: 'rrc', hubDestHash: '', room: '' }
-              : defaultEndpointFor('reticulum'),
-          );
+          onChannel(Math.min(7, Math.max(0, Math.trunc(Number(e.target.value) || 0))));
         }}
-        aria-label={t('mecp.rebroadcast.reticulumKind')}
-      >
-        <option value="lxmf">{t('mecp.rebroadcast.reticulumKindLxmf')}</option>
-        <option value="rrc">{t('mecp.rebroadcast.reticulumKindRrc')}</option>
-      </select>
-      {endpoint.kind === 'lxmf' ? (
-        <input
-          type="text"
-          className={`${INPUT_BOX_SM_CLASS} w-full font-mono`}
-          value={endpoint.destinationHash}
-          maxLength={32}
-          placeholder={t('mecp.rebroadcast.reticulumPeerPlaceholder')}
-          onChange={(e) => {
-            onChange({ ...endpoint, destinationHash: hexDraft(e.target.value) });
-          }}
-          aria-label={t('mecp.rebroadcast.reticulumPeerHash')}
-        />
-      ) : (
-        <>
-          <input
-            type="text"
-            className={`${INPUT_BOX_SM_CLASS} w-full font-mono`}
-            value={endpoint.hubDestHash}
-            maxLength={32}
-            placeholder={t('mecp.rebroadcast.reticulumHubPlaceholder')}
-            onChange={(e) => {
-              onChange({ ...endpoint, hubDestHash: hexDraft(e.target.value) });
-            }}
-            aria-label={t('mecp.rebroadcast.reticulumHubHash')}
-          />
-          <input
-            type="text"
-            className={`${INPUT_BOX_SM_CLASS} w-full`}
-            value={endpoint.room}
-            maxLength={64}
-            placeholder={t('mecp.rebroadcast.reticulumRoomPlaceholder')}
-            onChange={(e) => {
-              onChange({ ...endpoint, room: e.target.value });
-            }}
-            aria-label={t('mecp.rebroadcast.reticulumRoom')}
-          />
-        </>
-      )}
-    </div>
+        aria-label={t('mecp.rebroadcast.channelIndex')}
+      />
+    </fieldset>
   );
 }

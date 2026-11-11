@@ -3058,7 +3058,12 @@ function ChatPanel({
                   !isOwn && (msg.receivedVia || msg.viaStoreForward || showRfHops) ? (
                     <>
                       {showRfHops && msg.rxHops != null && (
-                        <ChatRfHopLabel rxHops={msg.rxHops} msg={msg} />
+                        <ChatRfHopLabel
+                          rxHops={msg.rxHops}
+                          msg={msg}
+                          senderName={displaySenderName}
+                          routeDetail={capabilities.messageRouteDetail}
+                        />
                       )}
                       {msg.viaStoreForward && <StoreForwardBadge />}
                       {msg.receivedVia && <TransportBadge via={msg.receivedVia} />}

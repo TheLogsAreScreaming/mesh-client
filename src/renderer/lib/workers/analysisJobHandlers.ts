@@ -1,20 +1,10 @@
 import { analyzeNode } from '../diagnostics/RoutingDiagnosticEngine';
 import type { ProtocolCapabilities } from '../radio/BaseRadioProvider';
-import { buildReticulumMeshTopologyGraph } from '../reticulum/buildReticulumTopologyLayout';
 import type {
   AnalysisJobRequest,
   AnalysisJobResult,
   DiagnosticsAnalyzeBatchRequest,
-  TopologyBuildJobRequest,
 } from './analysisJobTypes';
-
-export function runTopologyBuildJob(request: TopologyBuildJobRequest): AnalysisJobResult {
-  const graph = buildReticulumMeshTopologyGraph(request.interfaces, request.peers, {
-    ...request.opts,
-    serverPeerHashes: new Set(request.opts.serverPeerHashes ?? []),
-  });
-  return { kind: 'topologyBuild', sequence: request.sequence, graph };
-}
 
 export function runDiagnosticsAnalyzeBatchJob(
   request: DiagnosticsAnalyzeBatchRequest,
@@ -48,14 +38,5 @@ export function runDiagnosticsAnalyzeBatchJob(
 }
 
 export function runAnalysisJob(request: AnalysisJobRequest): AnalysisJobResult {
-  switch (request.kind) {
-    case 'topologyBuild':
-      return runTopologyBuildJob(request);
-    case 'diagnosticsAnalyzeBatch':
-      return runDiagnosticsAnalyzeBatchJob(request);
-    default: {
-      const _exhaustive: never = request;
-      throw new Error(`unknown analysis job ${String(_exhaustive)}`);
-    }
-  }
+  return runDiagnosticsAnalyzeBatchJob(request);
 }

@@ -46,12 +46,6 @@ export interface PowerSaveConnectionSnapshot {
   meshtastic: PowerSaveLinkState;
   meshcore: PowerSaveLinkState;
   mqtt: boolean;
-  reticulumSidecar: boolean;
-  /**
-   * Sidecar is running and the Reticulum config has an enabled local radio
-   * (BLE RNode or serial RNode/KISS). Computed in main from the config dir.
-   */
-  reticulumLocalRadio: boolean;
 }
 
 function isLocalRadioLink(state: PowerSaveLinkState): boolean {
@@ -72,17 +66,8 @@ export function shouldHoldPowerSaveBlocker(
 ): boolean {
   if (mode === 'off') return false;
   if (mode === 'always') {
-    return (
-      snapshot.mqtt ||
-      snapshot.reticulumSidecar ||
-      snapshot.meshtastic.connected ||
-      snapshot.meshcore.connected
-    );
+    return snapshot.mqtt || snapshot.meshtastic.connected || snapshot.meshcore.connected;
   }
   // mode === 'rf'
-  return (
-    isLocalRadioLink(snapshot.meshtastic) ||
-    isLocalRadioLink(snapshot.meshcore) ||
-    snapshot.reticulumLocalRadio
-  );
+  return isLocalRadioLink(snapshot.meshtastic) || isLocalRadioLink(snapshot.meshcore);
 }

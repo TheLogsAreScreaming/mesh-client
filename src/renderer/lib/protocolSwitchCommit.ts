@@ -1,12 +1,8 @@
 import {
   APP_PANEL_INDEX,
   CHAT_PANEL_INDEX,
-  GAMES_PANEL_INDEX,
   NODES_PANEL_INDEX,
-  NOMAD_NETWORK_PANEL_INDEX,
-  REMOTE_PANEL_INDEX,
   ROOMS_PANEL_INDEX,
-  RRC_PANEL_INDEX,
 } from './appTabMappings';
 import type { RfConnectAutomaticFn, RfConnectFn } from './rfConnectionTypes';
 
@@ -51,10 +47,6 @@ export function visitFlagsForProtocolCommit(
   const base: ProtocolVisitFlags = protocolChanged ? { ...CLEARED_VISIT_FLAGS } : { ...current };
   if (panel === CHAT_PANEL_INDEX) return base;
   if (panel === ROOMS_PANEL_INDEX) return { ...base, rooms: true };
-  if (panel === GAMES_PANEL_INDEX) return { ...base, games: true };
-  if (panel === RRC_PANEL_INDEX) return { ...base, rrc: true };
-  if (panel === REMOTE_PANEL_INDEX) return { ...base, remote: true };
-  if (panel === NOMAD_NETWORK_PANEL_INDEX) return { ...base, nomad: true };
   if (panel === APP_PANEL_INDEX) return { ...base, app: true };
   if (panel === NODES_PANEL_INDEX && enablePeers) return { ...base, peers: true };
   return base;

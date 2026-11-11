@@ -587,7 +587,6 @@ export function ChatComposer({
     // eslint-disable-next-line react-hooks/set-state-in-effect -- restore per-view draft and mention UI on tab switch
     setMentionQuery(null);
     setChatActionError(heldSendError !== undefined ? { message: heldSendError, viewKey } : null);
-    clearMentionCycle();
     // Clear any lingering fast-send advisory when switching chat views.
     if (meshcoreFastSendWarnTimerRef.current) {
       clearTimeout(meshcoreFastSendWarnTimerRef.current);
@@ -1658,16 +1657,6 @@ export function ChatComposer({
         {actionSlot}
         {showSendSplit ? (
           <div className="flex items-center gap-1">
-            {onVoiceMemo != null &&
-              !showFloodScopeOverride &&
-              !sending &&
-              (memoRecordingActive || !input.trim()) && (
-                <VoiceMemoComposerButton
-                  onVoiceMemo={onVoiceMemo}
-                  disabled={disabled}
-                  idleClassName={emojiButtonClass}
-                />
-              )}
             <div ref={floodScopeSplitRef} className="inline-flex min-w-0 items-stretch">
               {showFloodScopeOverride ? (
                 <span className="sr-only">{t('chatPanel.floodScopeOverrideLabel')}</span>

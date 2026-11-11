@@ -248,7 +248,7 @@ export const MESHTASTIC_CAPABILITIES: ProtocolCapabilities = {
   messageRouteDetail: 'lastRelay',
   hasDiagnosticsPanel: true,
   showsNodeNumHexId: true,
-  hasDeviceFirmwareFlash: true,
+  hasDeviceFirmwareFlash: false,
   hasGattBleScanning: true,
 };
 
@@ -319,6 +319,6 @@ export const MESHCORE_CAPABILITIES: ProtocolCapabilities = {
   messageRouteDetail: 'floodPath',
   hasDiagnosticsPanel: true,
   showsNodeNumHexId: false,
-  hasDeviceFirmwareFlash: true,
+  hasDeviceFirmwareFlash: false,
   hasGattBleScanning: true,
 };

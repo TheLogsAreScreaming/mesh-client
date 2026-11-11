@@ -26,7 +26,6 @@ import {
 } from './lib/rendererPreferences';
 import { installRendererUnhandledRejectionLogger } from './lib/rendererUnhandledRejection';
 import { hydrateIncidentStore } from './stores/incidentStore';
-import { hydrateReticulumDismissedContacts } from './stores/reticulumPeerStore';
 import { hydrateScheduledBroadcastsStore } from './stores/scheduledBroadcastsStore';
 import { hydrateWeatherFilterPreferences } from './stores/weatherFilterStore';
 
@@ -60,7 +59,6 @@ async function prepareRendererStorage(): Promise<void> {
 async function finishRendererStorage(): Promise<void> {
   await finalizeRendererPreferences();
   hydrateWeatherFilterPreferences();
-  hydrateReticulumDismissedContacts();
   const locale = parseStoredJson<{ locale?: unknown }>(
     getAppSettingsRaw(),
     'restored locale',

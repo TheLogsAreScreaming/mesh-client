@@ -111,12 +111,12 @@ export function createAnalysisWorkerPool(options: AnalysisWorkerPoolOptions = {}
   }
 
   function runInline(request: AnalysisJobRequest): AnalysisJobResult {
-    const timingName = request.kind === 'topologyBuild' ? 'topologyBuild' : 'diagnosticsPass';
+    const timingName = 'diagnosticsPass';
     return measureRendererTiming(timingName, () => runAnalysisJob(request));
   }
 
   async function run(request: AnalysisJobRequest): Promise<AnalysisJobResult> {
-    const timingName = request.kind === 'topologyBuild' ? 'topologyBuild' : 'diagnosticsPass';
+    const timingName = 'diagnosticsPass';
     return measureRendererTimingAsync(timingName, async () => {
       const w = ensureWorker();
       if (!w) return runAnalysisJob(request);

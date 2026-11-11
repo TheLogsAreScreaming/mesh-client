@@ -2,14 +2,11 @@ import { useConnectionStore } from '../stores/connectionStore';
 import { useIdentityStore } from '../stores/identityStore';
 import { getLiveChannelKeys } from '../stores/liveChannelKeyStore';
 import { useNodeStore } from '../stores/nodeStore';
-import { useReticulumIdentityStore } from '../stores/reticulumIdentityStore';
 import { getNotificationIdentity } from './chatNotificationPolicy';
 import { resolvePrimaryIdentityIdForProtocol } from './identityByProtocol';
 import { getMeshcorePubKey } from './meshcore/meshcorePubKeyRegistry';
 import { pubkeyToNodeId } from './meshcoreUtils';
 import { notificationMqttChannelKeys } from './notificationMqttChannelKeys';
-import { resolveReticulumDestinationHash } from './reticulum/destHash';
-import { rrcRoomMatchKey, rrcRoomsMatch } from './rrcRoomName';
 import type { MeshProtocol } from './types';
 
 export const CONVERSATION_MUTES_KEY = 'mesh-client:conversationMutes:v1';
@@ -60,7 +57,7 @@ function readEntries(): MuteEntry[] {
     if (!entry || typeof entry !== 'object') return false;
     const e = entry as Partial<MuteEntry>;
     return (
-      ['meshtastic', 'meshcore', 'reticulum'].includes(e.protocol ?? '') &&
+      ['meshtastic', 'meshcore'].includes(e.protocol ?? '') &&
       typeof e.device === 'string' &&
       typeof e.view === 'string' &&
       typeof e.target === 'string' &&
@@ -70,9 +67,6 @@ function readEntries(): MuteEntry[] {
 }
 
 function notificationDeviceSignature(protocol: MeshProtocol): string {
-  if (protocol === 'reticulum') {
-    return useReticulumIdentityStore.getState().identity?.lxmf_hash.toLowerCase() ?? '';
-  }
   const { identities, activeIdentityId } = useIdentityStore.getState();
   const id = resolvePrimaryIdentityIdForProtocol(identities, activeIdentityId, protocol);
   const signature = id ? identities[id].signature : '';
@@ -98,7 +92,6 @@ function notificationDeviceSignature(protocol: MeshProtocol): string {
 // Chat keeps its last channel layout visible while RF is disconnected.
 const retainedLayouts = new Map<string, Readonly<Record<number, string>>>();
 function notificationChannelKeys(protocol: MeshProtocol): Readonly<Record<number, string>> | null {
-  if (protocol === 'reticulum') return null;
   const device = notificationDeviceSignature(protocol);
   if (!device) return null;
   if (protocol === 'meshtastic' && device.includes(':mqtt:client:')) {
@@ -127,17 +120,6 @@ function notificationChannelKeys(protocol: MeshProtocol): Readonly<Record<number
 }
 
 function binding(protocol: MeshProtocol, view: string): Omit<MuteEntry, 'muted'> | null {
-  // RRC room identity is the full hub destination plus its canonical room name.
-  if (view.startsWith('rrc:')) {
-    const [, hub, ...room] = view.split(':');
-    if (!hub || !room.length) return null;
-    return {
-      protocol,
-      device: hub.toLowerCase(),
-      view,
-      target: rrcRoomMatchKey(room.join(':')),
-    };
-  }
   const identity = getNotificationIdentity(protocol);
   const keys = notificationChannelKeys(protocol);
   const device = notificationDeviceSignature(protocol);
@@ -156,13 +138,11 @@ function binding(protocol: MeshProtocol, view: string): Omit<MuteEntry, 'muted'>
   const target =
     protocol === 'meshtastic'
       ? id
-      : protocol === 'reticulum'
-        ? resolveReticulumDestinationHash(Number(id), node?.reticulumDestinationHash)
-        : publicKeyHex && /^[0-9a-f]{64}$/i.test(publicKeyHex)
-          ? publicKeyHex
-          : publicKey?.length === 32
-            ? Array.from(publicKey, (b) => b.toString(16).padStart(2, '0')).join('')
-            : null;
+      : publicKeyHex && /^[0-9a-f]{64}$/i.test(publicKeyHex)
+        ? publicKeyHex
+        : publicKey?.length === 32
+          ? Array.from(publicKey, (b) => b.toString(16).padStart(2, '0')).join('')
+          : null;
   return target ? { protocol, device, view, target: `${kind}:${target.toLowerCase()}` } : null;
 }
 
@@ -193,7 +173,7 @@ export function projectConversationMutes(protocol: MeshProtocol, legacy: Set<str
     for (const entry of entries) {
       if (entry.protocol !== protocol) continue;
       let views = [entry.view];
-      if (entry.view.startsWith('ch:') && protocol !== 'reticulum') {
+      if (entry.view.startsWith('ch:')) {
         const keys = notificationChannelKeys(protocol);
         if (keys) {
           views = Object.entries(keys)
@@ -210,17 +190,6 @@ export function projectConversationMutes(protocol: MeshProtocol, legacy: Set<str
           /^(dm|room):/.test(view) &&
           notificationDeviceSignature(protocol) === entry.device;
         if (!waitingForPeer && (!current || !sameBinding(current, entry))) continue;
-        if (view.startsWith('rrc:')) {
-          for (const key of result) {
-            const [, hub, ...room] = key.split(':');
-            if (
-              key.startsWith('rrc:') &&
-              hub.toLowerCase() === entry.device &&
-              rrcRoomsMatch(room.join(':'), entry.target)
-            )
-              result.delete(key);
-          }
-        }
         if (entry.muted) result.add(view);
         else result.delete(view);
       }

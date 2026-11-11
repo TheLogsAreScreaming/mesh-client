@@ -5,7 +5,7 @@ import type { DeliverDeps } from './deliver';
  * registers them once; everything else in `DeliverDeps` has a store/IPC-backed default.
  */
 export type ScheduledBroadcastDeliveryAdapters = Partial<
-  Pick<DeliverDeps, 'sendRoomPost' | 'sendChat' | 'sendRrc'>
+  Pick<DeliverDeps, 'sendRoomPost' | 'sendChat'>
 >;
 
 let adapters: ScheduledBroadcastDeliveryAdapters = {};
