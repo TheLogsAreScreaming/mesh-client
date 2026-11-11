@@ -6,15 +6,35 @@ import { describe, expect, it } from 'vitest';
 
 import { docsSitePageToRepoPath } from './docLinks';
 import {
+  CHAT_DOCS_URL,
   DIAGNOSTICS_DOCS_URL,
   DOCS_SITE_URL,
   docsSitePageUrl,
+  FIRMWARE_DOCS_URL,
+  LETSMESH_MQTT_AUTH_DOCS_URL,
+  MAPS_DOCS_URL,
+  MESHCORE_DOCS_URL,
+  MESHCORE_ROOMS_DOCS_URL,
+  MESHTASTIC_DOCS_URL,
+  SETTINGS_DOCS_URL,
+  TAK_DOCS_URL,
   TROUBLESHOOTING_PAGE_BY_PROTOCOL,
   troubleshootingDocsUrl,
 } from './docsSite';
 import { REGISTERED_MESH_PROTOCOLS } from './meshProtocol';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '../..');
+
+const NEW_USER_GUIDE_URLS: readonly (readonly [string, string])[] = [
+  ['chat', CHAT_DOCS_URL],
+  ['maps', MAPS_DOCS_URL],
+  ['tak', TAK_DOCS_URL],
+  ['firmware', FIRMWARE_DOCS_URL],
+  ['meshtastic', MESHTASTIC_DOCS_URL],
+  ['meshcore', MESHCORE_DOCS_URL],
+  ['settings', SETTINGS_DOCS_URL],
+  ['letsmesh-mqtt-auth', LETSMESH_MQTT_AUTH_DOCS_URL],
+];
 
 describe('docsSitePageUrl', () => {
   it('builds MkDocs directory URLs with optional anchors', () => {
@@ -26,6 +46,13 @@ describe('docsSitePageUrl', () => {
       'https://thelogsarescreaming.github.io/mesh-client/troubleshooting/#reporting-bugs',
     );
     expect(DIAGNOSTICS_DOCS_URL).toBe(docsSitePageUrl('diagnostics'));
+    expect(MESHCORE_ROOMS_DOCS_URL).toBe(docsSitePageUrl('meshcore', 'rooms-bbs'));
+    expect(LETSMESH_MQTT_AUTH_DOCS_URL).toBe(docsSitePageUrl('letsmesh-mqtt-auth'));
+  });
+
+  it.each(NEW_USER_GUIDE_URLS)('%s docs URL maps to an existing page file', (page, url) => {
+    expect(url).toBe(docsSitePageUrl(page));
+    expect(existsSync(join(repoRoot, docsSitePageToRepoPath(page)))).toBe(true);
   });
 });
 

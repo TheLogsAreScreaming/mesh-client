@@ -6,17 +6,22 @@ import { decodeTakPacket, type TakPacketSummary } from '@/renderer/lib/meshtasti
 import type { ProtocolCapabilities } from '@/renderer/lib/radio/BaseRadioProvider';
 import { useRadioProvider } from '@/renderer/lib/radio/providerFactory';
 import { MS_PER_MINUTE } from '@/renderer/lib/timeConstants';
+import { TAK_DOCS_URL } from '@/shared/docsSite';
 import { formatMeshtasticNodeId } from '@/shared/nodeNameUtils';
 import type { TAKSettings } from '@/shared/tak-types';
 
 import { useTakServer } from '../hooks/useTakServer';
 import type { IdentityId } from '../lib/types';
-import { useDeviceStore } from '../stores/deviceStore';
-import TakChannelRelaySection, { type TakRelayChannel } from './TakChannelRelaySection';
+import { useTakRelayPrefsStore } from '../stores/takRelayPrefsStore';
+import TakChannelRelaySection, {
+  TakDirectMessagesSection,
+  TakDirectMessagesToggle,
+} from './TakChannelRelaySection';
 import TakRemoteRelaySection from './TakRemoteRelaySection';
 import TakUnitFiltersSection from './TakUnitFiltersSection';
 import { buttonClassName } from './ui/Button';
 import { INPUT_BOX_CLASS } from './ui/formClasses';
+import { SettingsSection } from './ui/SettingsSection';
 
 interface AtakMessage {
   from: number;
@@ -60,39 +65,25 @@ function formatTimeAgo(ts: number, t: TFunction): string {
 interface Props {
   atakMessages?: Map<number, AtakMessage[]>;
   capabilities?: ProtocolCapabilities;
-  /** Meshtastic identity whose channels may feed GeoChat into TAK. */
+  /** Meshtastic identity whose channels may be served to TAK. */
   meshtasticIdentityId?: IdentityId | null;
-  /** Runtime Meshtastic channels; used when the device store has none (MQTT-only, no radio). */
-  meshtasticRuntimeChannels?: readonly TakRelayChannel[];
-  /** MeshCore identity whose channels may feed tracker fixes and GeoChat into TAK. */
+  /** MeshCore identity whose channels may feed tracker fixes and be served to TAK. */
   meshcoreIdentityId?: IdentityId | null;
+  /** Reticulum identity whose LXMF peers TAK devices may message. */
+  reticulumIdentityId?: IdentityId | null;
 }
-
-const NO_CHANNELS: readonly TakRelayChannel[] = [];
 
 export default function TakServerPanel({
   atakMessages,
   capabilities,
   meshtasticIdentityId,
-  meshtasticRuntimeChannels,
   meshcoreIdentityId,
+  reticulumIdentityId,
 }: Props) {
   const { t } = useTranslation();
   const id = useId();
   const meshtasticCaps = useRadioProvider('meshtastic');
   const meshcoreCaps = useRadioProvider('meshcore');
-  const storedMeshtasticChannels = useDeviceStore((s) =>
-    meshtasticIdentityId ? (s.devices[meshtasticIdentityId]?.channels ?? NO_CHANNELS) : NO_CHANNELS,
-  );
-  const meshcoreChannels = useDeviceStore((s) =>
-    meshcoreIdentityId
-      ? (s.devices[meshcoreIdentityId]?.meshcoreChannels ?? NO_CHANNELS)
-      : NO_CHANNELS,
-  );
-  const meshtasticChannels =
-    storedMeshtasticChannels.length > 0
-      ? storedMeshtasticChannels
-      : (meshtasticRuntimeChannels ?? NO_CHANNELS);
   const {
     status,
     clients,
@@ -110,6 +101,9 @@ export default function TakServerPanel({
   const [localRequireCert, setLocalRequireCert] = useState(settings.requireClientCert);
   const [localAutoStart, setLocalAutoStart] = useState(settings.autoStart);
   const [packageGenerated, setPackageGenerated] = useState(false);
+  // Applies at once, running or not: main sounds or cancels ATAK's alarm as it changes.
+  const mecpAlarm = useTakRelayPrefsStore((s) => s.mecpAlarm);
+  const setMecpAlarm = useTakRelayPrefsStore((s) => s.setMecpAlarm);
 
   /** Decode only the newest packet per node; the buffer holds up to 100 per sender. */
   const latestTakSummaries = useMemo(() => {
@@ -163,8 +157,18 @@ export default function TakServerPanel({
 
   return (
     <div className="w-full space-y-6 p-4">
-      <h2 className="text-ink-200 text-display font-semibold">{t('takServerPanel.title')}</h2>
-      <p className="text-ink-400 text-body-lg">{t('takServerPanel.description')}</p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-ink-200 text-xl font-semibold">{t('takServerPanel.title')}</h2>
+        <a
+          href={TAK_DOCS_URL}
+          target="_blank"
+          rel="noreferrer"
+          className="text-muted hover:text-brand-green text-xs transition-colors"
+        >
+          {t('common.docsLink')}
+        </a>
+      </div>
+      <p className="text-ink-400 text-sm">{t('takServerPanel.description')}</p>
 
       {/* Status */}
       <div className="bg-deep-black border-ink-800 rounded-container flex items-center gap-4 border p-4">
@@ -194,11 +198,7 @@ export default function TakServerPanel({
       )}
 
       {/* Settings form */}
-      <div className="bg-deep-black border-ink-800 rounded-container space-y-4 border p-4">
-        <h3 className="text-ink-300 text-body-lg font-medium">
-          {t('takServerPanel.serverSettings')}
-        </h3>
-
+      <SettingsSection title={t('takServerPanel.serverSettings')} bodyClassName="space-y-4">
         <div className="space-y-3">
           <div data-setting-anchor="tak.server.port">
             <label htmlFor={`${id}-port`} className="text-ink-400 text-label mb-1 block">
@@ -268,6 +268,27 @@ export default function TakServerPanel({
               {t('takServerPanel.autoStart')}
             </label>
           </div>
+
+          <div data-setting-anchor="tak.server.mecpAlarm">
+            <div className="flex items-center gap-2">
+              <input
+                id={`${id}-mecp-alarm`}
+                type="checkbox"
+                checked={mecpAlarm}
+                onChange={(e) => {
+                  setMecpAlarm(e.target.checked);
+                }}
+                aria-describedby={`${id}-mecp-alarm-hint`}
+                className="accent-brand-green"
+              />
+              <label htmlFor={`${id}-mecp-alarm`} className="text-ink-300 cursor-pointer text-sm">
+                {t('takServerPanel.mecpAlarm')}
+              </label>
+            </div>
+            <p id={`${id}-mecp-alarm-hint`} className="text-muted mt-1 text-xs">
+              {t('takServerPanel.mecpAlarmHint')}
+            </p>
+          </div>
         </div>
 
         <div data-setting-anchor="tak.server.startStop" className="flex gap-2 pt-2">
@@ -291,14 +312,14 @@ export default function TakServerPanel({
             </button>
           )}
         </div>
-      </div>
+      </SettingsSection>
 
       {/* Connected clients */}
       {status.running && (
-        <div className="bg-deep-black border-ink-800 rounded-container space-y-3 border p-4">
-          <h3 className="text-ink-300 text-body-lg font-medium">
-            {t('takServerPanel.connectedClients', { count: clients.length })}
-          </h3>
+        <SettingsSection
+          title={t('takServerPanel.connectedClients', { count: clients.length })}
+          bodyClassName="space-y-3"
+        >
           {clients.length === 0 ? (
             <p className="text-muted text-label">{t('takServerPanel.noClientsConnected')}</p>
           ) : (
@@ -314,7 +335,7 @@ export default function TakServerPanel({
               ))}
             </ul>
           )}
-        </div>
+        </SettingsSection>
       )}
 
       <TakRemoteRelaySection />
@@ -323,36 +344,56 @@ export default function TakServerPanel({
 
       <TakChannelRelaySection
         identityId={meshtasticIdentityId ?? null}
-        channels={meshtasticChannels}
         showTrackers={meshtasticCaps.hasTakTrackerChannels}
-        title={t('takServerPanel.channelRelayTitleMeshtastic')}
-        description={t('takServerPanel.channelRelayHelpMeshtastic')}
+        title={t('takServerPanel.messagingTitleMeshtastic')}
+        description={t('takServerPanel.messagingIntroMeshtastic')}
         emptyText={t('takServerPanel.channelRelayNoChannelsMeshtastic')}
         anchorId="tak.channelRelay.meshtastic"
-      />
+      >
+        <TakDirectMessagesToggle
+          identityId={meshtasticIdentityId ?? null}
+          anchorId="tak.directMessages.meshtastic"
+        />
+      </TakChannelRelaySection>
 
       <TakChannelRelaySection
         identityId={meshcoreIdentityId ?? null}
-        channels={meshcoreChannels}
         showTrackers={meshcoreCaps.hasTakTrackerChannels}
-        title={t('takServerPanel.channelRelayTitle')}
-        description={t('takServerPanel.channelRelayHelp')}
+        title={t('takServerPanel.messagingTitleMeshcore')}
+        description={t('takServerPanel.messagingIntroMeshcore')}
         emptyText={t('takServerPanel.channelRelayNoChannels')}
         anchorId="tak.channelRelay.trackers"
+        servedHint={t('takServerPanel.channelRepliesHint')}
+      >
+        <TakDirectMessagesToggle
+          identityId={meshcoreIdentityId ?? null}
+          anchorId="tak.directMessages.meshcore"
+        />
+      </TakChannelRelaySection>
+
+      <TakDirectMessagesSection
+        identityId={reticulumIdentityId ?? null}
+        title={t('takServerPanel.messagingTitleReticulum')}
+        description={t('takServerPanel.messagingIntroReticulum')}
+        anchorId="tak.directMessages.reticulum"
       />
 
       {/* ATAK Plugin Messages from Mesh */}
       {capabilities?.hasAtakPlugin && (
-        <div className="bg-deep-black border-ink-800 rounded-container space-y-3 border p-4">
-          <h3 className="text-ink-300 text-body-lg font-medium">
-            {t('takServerPanel.atakPluginMessages')}
-            {atakMessages && atakMessages.size > 0 && (
-              <span className="text-muted ml-2">
-                ({Array.from(atakMessages.values()).reduce((sum, arr) => sum + arr.length, 0)})
-              </span>
-            )}
-          </h3>
-          <p className="text-ink-400 text-label">{t('takServerPanel.atakPluginDesc')}</p>
+        <SettingsSection
+          title={
+            <>
+              {t('takServerPanel.atakPluginMessages')}
+              {atakMessages && atakMessages.size > 0 && (
+                <span className="ml-2">
+                  ({Array.from(atakMessages.values()).reduce((sum, arr) => sum + arr.length, 0)})
+                </span>
+              )}
+            </>
+          }
+          description={t('takServerPanel.atakPluginDesc')}
+          bodyClassName="space-y-3"
+        >
           {atakMessages && atakMessages.size > 0 ? (
             <ul className="space-y-1.5">
               {Array.from(atakMessages.entries()).map(([nodeId, messages]) => {
@@ -377,15 +418,15 @@ export default function TakServerPanel({
           ) : (
             <p className="text-muted text-label">{t('takServerPanel.noAtakMessages')}</p>
           )}
-        </div>
+        </SettingsSection>
       )}
 
       {/* Data package */}
-      <div className="bg-deep-black border-ink-800 rounded-container space-y-3 border p-4">
-        <h3 className="text-ink-300 text-body-lg font-medium">
-          {t('takServerPanel.atakDataPackage')}
-        </h3>
-        <p className="text-ink-400 text-label">{t('takServerPanel.atakDataPackageDesc')}</p>
+      <SettingsSection
+        title={t('takServerPanel.atakDataPackage')}
+        description={t('takServerPanel.atakDataPackageDesc')}
+        bodyClassName="space-y-3"
+      >
         <div data-setting-anchor="tak.dataPackage.generate" className="flex items-center gap-3">
           <button
             type="button"
@@ -402,14 +443,14 @@ export default function TakServerPanel({
             <span className="text-muted text-label">{t('takServerPanel.startServerFirst')}</span>
           )}
         </div>
-      </div>
+      </SettingsSection>
 
       {/* Certificate management */}
-      <div className="bg-deep-black border-ink-800 rounded-container space-y-3 border p-4">
-        <h3 className="text-ink-300 text-body-lg font-medium">
-          {t('takServerPanel.certificates')}
-        </h3>
-        <p className="text-ink-400 text-label">{t('takServerPanel.certificatesDesc')}</p>
+      <SettingsSection
+        title={t('takServerPanel.certificates')}
+        description={t('takServerPanel.certificatesDesc')}
+        bodyClassName="space-y-3"
+      >
         <button
           data-setting-anchor="tak.certificates.regenerate"
           type="button"
@@ -419,8 +460,8 @@ export default function TakServerPanel({
         >
           {t('takServerPanel.regenerateCerts')}
         </button>
-        <p className="text-muted text-label">{t('takServerPanel.regenerateWarning')}</p>
-      </div>
+        <p className="text-muted text-xs">{t('takServerPanel.regenerateWarning')}</p>
+      </SettingsSection>
     </div>
   );
 }

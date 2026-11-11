@@ -44,12 +44,12 @@ Docs are built with MkDocs Material.
 
 1. Create and activate a local virtual environment (recommended on macOS/Homebrew Python because of PEP 668 externally managed environments):
    - macOS/Linux:
-     - `python3 -m venv .venv`
+     - `python3.14 -m venv .venv`
      - `source .venv/bin/activate`
    - Windows PowerShell:
-     - `py -3 -m venv .venv`
+     - `py -3.14 -m venv .venv`
      - `.\.venv\Scripts\Activate.ps1`
-2. Install the docs dependencies:
+2. Install the docs dependencies with Python 3.14 (not 3.15: `pyyaml==6.0.3` in `docs/requirements.txt` has no cp315 wheel and the install is `--only-binary`, matching [CI](ci-cd.md)):
    - `pnpm run docs:install`
    - or (manual): `python3 -m pip install --require-hashes --only-binary=:all: -r docs/requirements.txt`
 3. Build locally:
@@ -84,6 +84,11 @@ pnpm install
 ### Common pnpm commands
 
 Use these from the repository root:
+
+`pnpm start` rebuilds and uses the same verified `mesh-client://renderer` origin migration as
+installed builds. `pnpm run dev` explicitly uses Vite with COI headers and hot reload. Starting a
+Vite server alone does not redirect `pnpm start`. See the [renderer startup matrix and smoke steps](development/renderer-origin-coi.md)
+to verify each mode.
 
 ```bash
 # App run/build
@@ -772,6 +777,8 @@ See [Build troubleshooting](#windows-could-not-find-any-visual-studio-installati
 
 Install Node 22 (22.15.0+ recommended), `make`, and C++ build tools (`g++`/`gcc-c++`) with native build dependencies.
 
+NixOS: use `nix develop` instead of the package lists below; see [Nix (NixOS and macOS)](#nix-nixos-and-macos).
+
 Debian/Ubuntu:
 
 ```bash
@@ -820,7 +827,8 @@ Log out/in after changing groups.
 LoRa BLE uses the Bluetooth helper's **btleplug** GATT stack on Linux (same as macOS/Windows) — not Web Bluetooth / Noble.
 
 - Requires a working BlueZ stack (`systemctl status bluetooth`, `rfkill list`)
-- Flatpak builds need Bluetooth allowed (`--allow=bluetooth` + BlueZ talk-name)
+- Flatpak builds need Bluetooth allowed (`--allow=bluetooth` + `--system-talk-name=org.bluez`)
+- In-app PIN pairing (Meshtastic / MeshCore) uses BlueZ D-Bus from Electron main (`src/main/linux-bluez/`), not `bluetoothctl`
 - ATT MTU / write sizing follows sidecar negotiation via `bleAttWriteLimit.ts` (spec min 23)
 
 Pairing failures and BlueZ steps: [BLE known issues](troubleshooting.md#ble-known-issues).
@@ -844,6 +852,26 @@ sudo sysctl -w kernel.unprivileged_userns_clone=1
 ### Troubleshooting
 
 See [Linux development: SIGILL / SIGSEGV](#linux-development-sigill-during-pnpm-install) and [Linux: serial port access denied](troubleshooting.md#linux-serial-port-access-denied).
+
+## Nix (NixOS and macOS)
+
+The repo-root `flake.nix` supports `x86_64-linux`, `aarch64-linux`, and `aarch64-darwin`. It is the supported way to develop on NixOS, where the Electron binary that `pnpm install` downloads cannot find its dynamic libraries.
+
+| Command                             | Result                                                                                          |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `nix run` / `nix run .#mesh-client` | Build the packaged app and launch it                                                            |
+| `nix build .#mesh-client`           | Build the app to `./result` (gitignored, along with `result-*`)                                 |
+| `nix build .#reticulum-sidecar`     | Build only `mesh-client-reticulum` (features `rns-stack,rns-ble,rns-rnode-tcp`)                 |
+| `nix develop`                       | Enter a dev shell with Node.js, pnpm, Rust, and Python, then run `pnpm install && pnpm run dev` |
+
+On Linux, `nix develop` opens an FHS environment that carries Electron's runtime libraries (GTK, NSS, Mesa, BlueZ D-Bus, udev, and others), so the regular `pnpm` workflow and pre-commit hooks work unchanged. On macOS it is a plain shell, because the downloaded Electron runs natively.
+
+How the flake stays in sync with the rest of the build:
+
+- **App version** is read from `package.json`, so `pnpm run release` needs no flake change.
+- **Reticulum stack** sources are fetched at the SHAs in `reticulum-sidecar/ratspeak-stack-pins.env`, and overlays are applied from `scripts/lib/ratspeak-overlay-apply-list.sh`. These are the same inputs `scripts/clone-ratspeak-stack.sh` uses. Pin bumps and new overlays need no `flake.nix` or `flake.lock` edit.
+- **Toolchain majors:** the flake uses the nixpkgs attributes `electron_<major>`, `pnpm_<major>`, and `nodejs_<major>`. These must match `devDependencies.electron`, `packageManager`, and `engines.node` in `package.json`. Building the flake fails with an Electron mismatch, and `scripts/flake-stack-pins.test.mjs` fails on any mismatch. When one of those majors changes, update the attribute in `flake.nix`. If the locked nixpkgs does not have the new attribute yet, run `nix flake update` and commit `flake.lock`.
+- **Pre-commit and PR CI** run `scripts/flake-stack-pins.test.mjs` whenever `flake.nix`, the pins file, `scripts/clone-ratspeak-stack.sh`, or the overlay apply list changes (`scripts/precommit-tests.mjs`). No CI job evaluates or builds the flake.
 
 ## Build troubleshooting
 

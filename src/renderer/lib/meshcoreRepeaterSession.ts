@@ -1,8 +1,12 @@
 import { errLikeToLogString } from '@/renderer/lib/errLikeToLogString';
 
-import { MESHCORE_TELEMETRY_TIMEOUT_MS } from '../hooks/meshcore/meshcoreHookPreamble';
+import { serializeMeshcoreUserMessage } from './meshcore/meshcoreMessageI18n';
+import { isMeshcoreNotFoundError } from './meshcoreRadioErr';
 import { getMeshcoreRepeaterCredential } from './meshcoreRepeaterCredentialStorage';
-import { runMeshcoreRepeaterLogin } from './meshcoreRepeaterLoginRpc';
+import {
+  MESHCORE_REPEATER_LOGIN_EXTRA_TIMEOUT_MS,
+  runMeshcoreRepeaterLogin,
+} from './meshcoreRepeaterLoginRpc';
 import {
   meshcoreLoginErrorIsAuthFailure,
   type MeshcoreRadioConnection,
@@ -43,6 +47,9 @@ export function meshcoreRepeaterLoginErrorIsAuthFailure(error: unknown): boolean
 /** Throw when a saved/ephemeral password login was attempted but failed (do not continue RPC). */
 export function assertMeshcoreRepeaterLoginOk(result: MeshcoreRepeaterTryLoginResult): void {
   if (!result.attempted || result.ok) return;
+  if (isMeshcoreNotFoundError(result.error)) {
+    throw new Error(serializeMeshcoreUserMessage('meshcore.errors.radioContactMissing'));
+  }
   if (meshcoreRepeaterLoginErrorIsAuthFailure(result.error)) {
     throw new Error('authentication failed');
   }
@@ -79,23 +86,62 @@ export interface MeshcoreRepeaterTryLoginResult {
  * Best-effort repeater admin login when a saved or ephemeral password exists.
  * Login is only sent on explicit user-triggered admin RPCs — never bulk/auto-fetch.
  * Failures are logged; returns result for UI feedback on persisted credential failures.
+ * Timeout retries / flood escalation are owned by the caller via route escalation.
  */
 export async function meshcoreRepeaterTryLogin(
   conn: MeshcoreRepeaterLoginConn,
   pubKey: Uint8Array,
   nodeId: number,
   runSerialized?: MeshcoreRepeaterRunSerialized,
-  extraTimeoutMs: number = MESHCORE_TELEMETRY_TIMEOUT_MS,
+  /**
+   * Legacy positional extraTimeoutMs when `loginOpts.hopsAway` is omitted.
+   * Prefer passing `{ hopsAway }` via `loginOpts` for receipt-derived waits.
+   */
+  extraTimeoutMs?: number,
+  loginOpts?: Pick<
+    MeshcoreRepeaterLoginOptions,
+    'restoreRadioContact' | 'retryOnTimeout' | 'hopsAway' | 'extraTimeoutMs'
+  >,
 ): Promise<MeshcoreRepeaterTryLoginResult> {
   const { password, fromPersisted } = resolveRepeaterPassword(nodeId);
   if (!password) {
     return { attempted: false, ok: true, fromPersisted: false };
   }
+  const hopsAway = loginOpts?.hopsAway;
+  const legacyExtraTimeoutMs = loginOpts?.extraTimeoutMs ?? extraTimeoutMs;
   return meshcoreRepeaterTryLoginWithPassword(conn, pubKey, password, {
+    restoreRadioContact: loginOpts?.restoreRadioContact,
+    retryOnTimeout: loginOpts?.retryOnTimeout,
     fromPersisted,
     runSerialized,
-    extraTimeoutMs,
+    // Prefer receipt-derived hopsAway; only pass legacy grace when hopsAway is omitted.
+    ...(hopsAway !== undefined
+      ? { hopsAway }
+      : legacyExtraTimeoutMs !== undefined
+        ? { extraTimeoutMs: legacyExtraTimeoutMs }
+        : {}),
   });
+}
+
+export interface MeshcoreRepeaterLoginOptions {
+  fromPersisted?: boolean;
+  runSerialized?: MeshcoreRepeaterRunSerialized;
+  hopsAway?: number | null;
+  extraTimeoutMs?: number;
+  /** Re-add the node to the companion contact table when SendLogin reports not found. */
+  restoreRadioContact?: () => Promise<void>;
+  /**
+   * Blind same-path resend after timeout. Default false — callers should use route
+   * escalation (reset path + flood) instead of doubling a stale direct attempt.
+   */
+  retryOnTimeout?: boolean;
+}
+
+/** Receipt-derived login waits for every hop count; no blind timeout retry. */
+export function meshcoreRepeaterLoginTimeoutPolicy(
+  hopsAway: number | null | undefined,
+): Pick<MeshcoreRepeaterLoginOptions, 'hopsAway' | 'retryOnTimeout'> {
+  return { hopsAway: hopsAway ?? 0, retryOnTimeout: false };
 }
 
 /**
@@ -106,35 +152,48 @@ export async function meshcoreRepeaterTryLoginWithPassword(
   conn: MeshcoreRepeaterLoginConn,
   pubKey: Uint8Array,
   password: string,
-  opts?: {
-    fromPersisted?: boolean;
-    runSerialized?: MeshcoreRepeaterRunSerialized;
-    extraTimeoutMs?: number;
-  },
+  opts?: MeshcoreRepeaterLoginOptions,
 ): Promise<MeshcoreRepeaterTryLoginResult> {
   const trimmed = password.trim();
   const fromPersisted = opts?.fromPersisted ?? false;
   if (!trimmed) {
     return { attempted: false, ok: true, fromPersisted: false };
   }
-  const extraTimeoutMs = opts?.extraTimeoutMs ?? MESHCORE_TELEMETRY_TIMEOUT_MS;
   const runSerialized = opts?.runSerialized;
   const attempt = async (): Promise<void> => {
-    await runMeshcoreRepeaterLogin(
-      conn,
-      pubKey,
-      trimmed,
-      extraTimeoutMs,
+    await runMeshcoreRepeaterLogin(conn, pubKey, trimmed, {
+      hopsAway: opts?.hopsAway,
+      extraTimeoutMs:
+        opts?.hopsAway === undefined
+          ? (opts?.extraTimeoutMs ?? MESHCORE_REPEATER_LOGIN_EXTRA_TIMEOUT_MS)
+          : undefined,
       runSerialized,
-      runSerialized ? awaitMeshcoreRepeaterAdminRfIdle : undefined,
-    );
+      beforeSend: runSerialized ? () => awaitMeshcoreRepeaterAdminRfIdle() : undefined,
+    });
   };
   try {
     await attempt();
     return { attempted: true, ok: true, fromPersisted };
   } catch (e) {
+    const restoreRadioContact = opts?.restoreRadioContact;
+    if (restoreRadioContact && isMeshcoreNotFoundError(e)) {
+      console.warn(
+        '[meshcoreRepeaterSession] node missing from radio contacts; re-adding for login',
+      );
+      try {
+        await restoreRadioContact();
+        await attempt();
+        return { attempted: true, ok: true, fromPersisted };
+      } catch (restoreErr) {
+        console.warn(
+          '[meshcoreRepeaterSession] repeater login after contact restore failed ' +
+            errLikeToLogString(restoreErr),
+        );
+        return { attempted: true, ok: false, fromPersisted, error: restoreErr };
+      }
+    }
     const msg = errLikeToLogString(e).toLowerCase();
-    if (msg.includes('timeout') || msg.includes('timed out')) {
+    if (opts?.retryOnTimeout === true && (msg.includes('timeout') || msg.includes('timed out'))) {
       try {
         await attempt();
         return { attempted: true, ok: true, fromPersisted };

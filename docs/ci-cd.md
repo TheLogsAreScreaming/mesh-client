@@ -27,7 +27,7 @@ Mesh Hub uses GitHub Actions for continuous integration and deployment.
 Runs on every push, pull request, and merge-queue `merge_group` for `main` (and `workflow_dispatch`). Independent lanes start concurrently; only Flatpak waits for change detection:
 
 - **Code quality:** format, markdownlint, license allowlist, actionlint, dependency audit, and yamllint
-- **ESLint:** full repository lint with two workers, using `eslint.ci.config.mjs` to avoid running Prettier again for extensions already covered by the required Code quality job. All type-aware rules and the zero-warning gate remain enabled; local lint still checks formatting.
+- **ESLint:** full repository lint, split over four parallel shards (`ESLint (1/4)` to `ESLint (4/4)`). `scripts/ci-eslint-shard.mjs` deals every Git-visible file to exactly one shard and runs ESLint on that list with two workers, using `eslint.ci.config.mjs` to avoid running Prettier again for extensions already covered by the required Code quality job. All type-aware rules and the zero-warning gate remain enabled on every shard; local lint and the release preflight still run the single `pnpm run lint` pass. To change the shard count, edit the `shard` list in `ci.yaml`.
 - **Typecheck:** `pnpm run typecheck`
 - **Application build:** `pnpm run build`
 - **Flatpak checks:** only when Flatpak inputs change; runs `check:flatpak`, `check:flatpak-offline-pnpm`, `desktop-file-validate`, and `appstreamcli validate`
@@ -68,7 +68,7 @@ Runs on every push, pull request, and merge-queue `merge_group` for `main`:
 2. **Pull requests:** run `vitest related` without coverage for the affected project lanes. Docs-only changes skip Vitest. Shared contracts select all projects.
 3. **Safe fallback:** test infrastructure, dependency manifests, deleted/renamed paths, oversized output, or detector failures run the full matrix.
 4. **Protected events:** `merge_group`, pushes to `main`, and manual runs always run full coverage across `renderer-ui`, `renderer-logic`, and `main`.
-5. **Sharding:** `renderer-ui` runs in three shards; `renderer-logic` and `main` each run once. This applies to both related tests and full coverage. Full runs upload blob reports; related runs write JUnit reports named `junit-<project>-<shard>-<total>.xml` and print results in each shard's log. The existing `Coverage (...)` required checks verify that detection and every shard succeeded.
+5. **Sharding:** `renderer-ui` runs in four shards; `renderer-logic` and `main` each run once. This applies to both related tests and full coverage. Full runs upload blob reports; related runs write JUnit reports named `junit-<project>-<shard>-<total>.xml` and print results in each shard's log. The existing `Coverage (...)` required checks verify that detection and every shard succeeded.
 6. **Merge job:** collect related JUnit reports without checkout, Node/pnpm setup, or dependency installation. Full runs (protected events and PRs that cannot be safely scoped) still run `pnpm run test:coverage:merge` to enforce global thresholds.
 7. **`ble-sidecar-coverage`:** when Bluetooth helper paths change, run `cargo llvm-cov --fail-under-lines 45`, and upload `lcov.info`.
 8. Upload the `vitest-report` artifact (retained 7 days): separate JUnit files for related shards, including empty shards and available reports from failed runs; one merged `junit.xml` for full runs.
@@ -78,6 +78,29 @@ The three `Coverage (...)` job names and `Merge coverage` remain stable for the 
 Static analysis on PRs is **CodeQL** (security) plus ESLint, Clippy, and pre-commit `check:*` scanners. AI PR review is **CodeRabbit** (see [CodeRabbit](#coderabbit) below). SonarQube Cloud is not used.
 
 Test results are available as a downloadable artifact from the workflow run.
+
+### Bundle size (`bundle-size.yaml`)
+
+The independent **Main bundle size** check runs on every pull request, including docs-only,
+draft, fork and stacked PRs targeting any branch. It runs on opening, new commits, reopening,
+edits (including retargeting), and draft/ready transitions, plus main pushes, merge queues
+and manual dispatches. It has no path filter or dependency on related-test selection.
+
+It uses the shared pinned Node/pnpm setup and frozen install, then runs
+`pnpm exec vitest run --project main scripts/esbuild-main-build.test.mjs --coverage.enabled=false --reporter=default`.
+The job sets `MESHTASTIC_SKIP_ELECTRON_REBUILD=1`, so the frozen install skips the lazy Electron
+binary download and `install-app-deps` probe: the check only bundles the main process with esbuild
+(`electron` stays external), and a flaky Electron release CDN (e.g. HTTP 504) must not fail it.
+This explicitly selects the existing esbuild regression because its string entrypoint is invisible
+to Vitest's import-based related selection. The test builds the production minified main process,
+checks worker/license artifacts and enforces the strict `MAIN_BUNDLE_SIZE_BUDGET_BYTES` budget
+defined in that test.
+An oversized bundle or missing test suite fails; the job writes no coverage/blob/JUnit reports.
+The default checkout validates the PR merge ref, with credentials disabled and a read-only token;
+it uses no repository secrets or privileged `pull_request_target` execution.
+
+Making this new check required is a separate repository-admin ruleset/branch-protection decision.
+The workflow does not change repository security settings. Existing global coverage gates remain.
 
 ### Electron E2E (`e2e.yaml`)
 
@@ -89,7 +112,7 @@ Not a PR gate. Runs on a **daily schedule** (default branch only) and on **manua
 4. `pnpm run test:e2e` (Linux under `xvfb-run -a`; macOS/Windows plain) — Playwright launches the local Electron binary via `resolveLocalElectronBin()` with an isolated `--user-data-dir`
 5. On failure, upload `test-results/` + `playwright-report/` (7-day retention)
 
-A separate **Release preflight** job (`ubuntu-latest`) runs `pnpm run release -- --preflight-only` with the same `setup-node-pnpm` + `setup-release-toolchain` composites as `cut-release.yaml`, stopping before any bump, tag, or push. Check it is green before cutting a release.
+A separate **Release preflight** job (`ubuntu-latest`) runs `pnpm run release -- --preflight-only` with the same `setup-node-pnpm` + `setup-release-toolchain` composites as `cut-release.yaml`, stopping before any bump, tag, or push. Its ESLint step matches the CI lint job (`--concurrency 2 --config eslint.ci.config.mjs`) after `format:check`, so type-aware lint does not OOM on the runner. Check it is green before cutting a release.
 
 Local: `pnpm run test:e2e:build`. See [development-environment.md](development-environment.md#playwright-electron-e2e).
 
@@ -155,8 +178,9 @@ After merges to `main` that change `package.json`, `pnpm-lock.yaml`, the generat
 4. Audit licenses (`pnpm run check:licenses`)
 5. Regenerate `docs/third-party-licenses.md` (`pnpm run docs:licenses`)
 6. Open a PR via `peter-evans/create-pull-request` when the file changed (branch `chore/third-party-licenses-<run_id>`)
+7. Admin-merge that docs-only PR with `LICENSE_PR_TOKEN` (no maintainer review)
 
-**Authority:** the `license-automation` environment accepts only `main` and has no release approval requirement. The job uses `GITHUB_TOKEN` with Contents and Pull requests write to open a PR restricted to `docs/third-party-licenses.md`. It has no release, signing, or release-cut credentials and does not create tags or releases. An optional environment secret `LICENSE_PR_TOKEN` can supply a dedicated Contents and Pull requests write token so required PR checks run automatically. With the default `GITHUB_TOKEN`, GitHub suppresses those workflow events; a maintainer must start the required checks before merging the documentation PR. Direct pushes to `main` remain blocked by the merge-queue ruleset.
+**Authority:** the `license-automation` environment accepts only `main` and has no required reviewers. It has no release, signing, or release-cut credentials. Direct pushes to `main` remain blocked by the merge-queue ruleset, so the job opens a PR restricted to `docs/third-party-licenses.md` and admin-merges it. Environment secret **`LICENSE_PR_TOKEN` is required** for that path: a repo-admin fine-grained PAT (Contents + Pull requests write). Falling back to `GITHUB_TOKEN` leaves PRs stuck on the merge-queue review / unattributed-change gate (see #1311). The file is already validated in-job (`check:licenses`, `docs:licenses`, Rust stub refuse) before merge.
 
 ---
 
@@ -165,7 +189,7 @@ After merges to `main` that change `package.json`, `pnpm-lock.yaml`, the generat
 Builds the documentation site with `mkdocs build --strict` on pull requests that touch `docs/**`, `README.md`, `CONTRIBUTING.md`, `mkdocs.yml`, or the MkDocs scripts. On every push to `main` it builds the site the same way and deploys it to GitHub Pages:
 
 1. Check out the code with full history (`fetch-depth: 0`) so the git-revision-date plugin can show "last updated" dates
-2. Set up Node 22 and Python 3.x
+2. Set up Node 22 and Python 3.14 (pinned, not `3.x`: `pyyaml==6.0.3` in `docs/requirements.txt` has no Python 3.15 wheel and the install is `--only-binary`)
 3. Install MkDocs dependencies (`docs/requirements.txt`)
 4. Run `node scripts/prepare-mkdocs.mjs`, which generates `docs/contributing.md` from `CONTRIBUTING.md`, plus `docs/install.md` and `docs/features.md` from the `<!-- docs-site:… -->` markers in `README.md`. It also rewrites repository-relative links for the site. These generated pages are gitignored.
 5. Run `mkdocs build --strict`
@@ -286,16 +310,16 @@ Note: The test results artifact upload step is automatically skipped when runnin
 
 ## Pipeline status (issue #378)
 
-| Area                                             | Status                                                              |
-| ------------------------------------------------ | ------------------------------------------------------------------- |
-| PR lint / typecheck / build / tests              | Done (`ci.yaml`, `tests.yaml`)                                      |
-| CodeQL / CodeRabbit                              | Done (CodeQL **default setup** — PR/push/schedule; not merge-queue) |
-| Tag → draft multi-OS + Flatpak + packaging smoke | Done (`release.yaml`, `flatpak.yaml`, `build.yaml`)                 |
-| `pnpm run release` preflight + bump/tag          | Done (`scripts/release.sh`; `--yes` for non-interactive)            |
-| Manual draft **Publish** on GitHub               | Intentional (human review of artifacts)                             |
-| Dep bumps                                        | Manual (`pnpm run update`; Dependabot PRs disabled)                 |
-| Merge queue + required status checks             | Done (ruleset **20821455** on `main`; see below)                    |
-| E2E                                              | Daily / `workflow_dispatch` only — **not** a merge gate             |
+| Area                                             | Status                                                                               |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| PR lint / typecheck / build / tests              | Done (`ci.yaml`, `tests.yaml`)                                                       |
+| CodeQL / CodeRabbit                              | Done (CodeQL default setup until [advanced activation](../.github/codeql/README.md)) |
+| Tag → draft multi-OS + Flatpak + packaging smoke | Done (`release.yaml`, `flatpak.yaml`, `build.yaml`)                                  |
+| `pnpm run release` preflight + bump/tag          | Done (`scripts/release.sh`; `--yes` for non-interactive)                             |
+| Manual draft **Publish** on GitHub               | Intentional (human review of artifacts)                                              |
+| Dep bumps                                        | Manual (`pnpm run update`; Dependabot PRs disabled)                                  |
+| Merge queue + required status checks             | Done (ruleset **20821455** on `main`; see below)                                     |
+| E2E                                              | Daily / `workflow_dispatch` only — **not** a merge gate                              |
 
 ---
 
@@ -365,7 +389,7 @@ gh api "repos/Colorado-Mesh/mesh-client/rulesets/${RULESET_ID}" \
   --input .github/rulesets/release-tags.json
 ```
 
-Privileged workflows are additionally restricted by protected environments: `release` accepts `v*` tags and requires maintainer approval; `release-cut` accepts `main`, requires maintainer approval, and contains `RELEASE_CUT_TOKEN`; `release-repair` accepts `main` and requires maintainer approval. The one-time `migrate-release-secrets.yaml` workflow verifies those live boundaries and the tag ruleset before moving credentials out of repository scope, removes the old repository secrets, and then removes itself from `main`.
+Privileged workflows are additionally restricted by protected environments: `release` accepts only protected `v*` tags (the release tags ruleset limits tag creation to admins, so the approved cut is the human gate); `release-cut` accepts `main`, requires maintainer approval, and contains `RELEASE_CUT_TOKEN`; `release-repair` accepts `main` and requires maintainer approval. Release credentials live only in these environments; none are repository-scoped.
 
 ---
 

@@ -5,6 +5,7 @@ This document is the authoritative reference for every diagnostic output in Mesh
 **Where diagnostics appear:**
 
 - **DiagnosticsPanel** (Monitor > Diagnostics): network health status, anomaly table, halos toggles, environment profile, max-age settings, 24h CU timeline chart
+- **Optional severity alerts:** App → ops alerts → **Notify on new diagnostics errors** (`notifyOnDiagnosticErrors`, default off) fires a desktop notification + `diagnosticError` sound for new error-severity rows on the active protocol (`useDiagnosticSeverityAlerts`)
 - **NodeDetailModal**: per-node routing health section, redundancy path history, RF findings, MQTT ignore toggle, node notes, watch toggle
 - **NodeListPanel**: inline anomaly badges, redundancy `+N` echo count, MQTT-only node dimming, Node Health Score badge, JSON export
 - **MapPanel**: channel utilization halos, routing anomaly aura circles
@@ -164,13 +165,12 @@ These findings use telemetry observed from other nodes' radio stats.
 
 ### MeshCore-Only RF Findings (Connected Node)
 
-These findings use packet-stats data from a MeshCore device's Repeater Status response (`meshcore_local_stats`).
+These findings use packet-stats data from the connected MeshCore companion (`getStatsPackets`, `meshcore_local_stats`).
 
-| Finding                 | Trigger                                                                        | Severity        | Meaning                                                                                       |
-| ----------------------- | ------------------------------------------------------------------------------ | --------------- | --------------------------------------------------------------------------------------------- |
-| Elevated Noise Floor    | Radio noise floor > −95 dBm                                                    | Warning         | Elevated interference from nearby RF sources reducing effective range                         |
-| Excessive Flooding      | ≥ 20 total transmissions and > 90% are flood-routed (`nSentFlood / totalSent`) | Warning         | Direct routing has not been established with nearby nodes; all traffic falls back to flooding |
-| High Companion TX Queue | `meshcore_local_stats.queueLen > 200` (error if `> 250`)                       | Warning / Error | Companion outbound queue near the 256 cap; traffic may be delayed or dropped                  |
+| Finding                 | Trigger                                                  | Severity        | Meaning                                                                      |
+| ----------------------- | -------------------------------------------------------- | --------------- | ---------------------------------------------------------------------------- |
+| Elevated Noise Floor    | Radio noise floor > −95 dBm                              | Warning         | Elevated interference from nearby RF sources reducing effective range        |
+| High Companion TX Queue | `meshcore_local_stats.queueLen > 200` (error if `> 250`) | Warning / Error | Companion outbound queue near the 256 cap; traffic may be delayed or dropped |
 
 ---
 
@@ -458,13 +458,13 @@ For contributors who want to modify or extend the diagnostics system:
 
 ---
 
-## 18. Technical Reference
+## 20. Technical Reference
 
 This section documents the exact protocol and hardware mechanisms behind each diagnostic finding. Thresholds are quoted directly from the source code.
 
 ---
 
-### 18.1 RF Findings: Connected Node
+### 20.1 RF Findings: Connected Node
 
 #### Utilization vs. TX
 
@@ -512,7 +512,9 @@ This section documents the exact protocol and hardware mechanisms behind each di
 
 **Trigger:** Current `channel_utilization > 2×` 30-minute rolling average, with gates: ≥ 12 samples, ≥ 30-minute span, rolling average ≥ 1%. 15-minute cooldown per node before re-firing.
 
-**Mechanism:** The detector maintains a rolling 24-hour history of `channel_utilization` samples in `diagnosticsStore.cuHistory` (entries from LocalStats / device-metrics telemetry and NodeInfo updates via `processNodeUpdate`). `computeCuStats24h` computes the rolling average over the pruned sample window. A spike fires when current CU exceeds 2× that baseline. The 15-minute cooldown (`cuSpikeLastFired` map in `RFDiagnosticEngine`) prevents the same node from re-firing while CU remains elevated. Cooldown state is cleared by `clearDiagnostics()`.
+**Mechanism:** The detector maintains a rolling 24-hour history of `channel_utilization` samples in `diagnosticsStore.cuHistory` (entries from LocalStats / device-metrics telemetry and NodeInfo updates via `processNodeUpdate`). Samples are **persisted** to `localStorage` (`mesh-client:cuHistorySnapshot`, debounced) so the 24h chart and spike baseline survive app restarts; `clearDiagnostics()` wipes the snapshot. Disable with `localStorage` key `mesh-client:cuHistoryPersistEnabled=0`. `computeCuStats24h` computes the rolling average over the pruned sample window. A spike fires when current CU exceeds 2× that baseline. The 15-minute cooldown (`cuSpikeLastFired` map in `RFDiagnosticEngine`) prevents the same node from re-firing while CU remains elevated. Cooldown state is cleared by `clearDiagnostics()`.
+
+**Reliability proxies (not ACK PDR):** Node detail shows Meshtastic **echo reliability** (`1 − duplicates/total` from session `packetStats`, ≥10 samples) and MeshCore **path reliability** (Laplace-smoothed success/failure from `pathHistoryStore`). Labels avoid claiming end-to-end delivery ratio.
 
 **Fields:** Current `channel_utilization` vs. stored per-node `CuSample[]` history in diagnosticsStore.
 
@@ -564,7 +566,7 @@ This section documents the exact protocol and hardware mechanisms behind each di
 
 ---
 
-### 18.2 RF Findings: Remote Nodes
+### 20.2 RF Findings: Remote Nodes
 
 SNR-based findings (`Wideband Noise Floor`, `Fringe`) are only emitted when `snrMeaningfulForNodeDiagnostics` returns `true`; which requires that the remote node is a 0-hop direct RF neighbor, ensuring the SNR value reflects the actual link to your node rather than a multi-hop path.
 
@@ -602,7 +604,7 @@ SNR-based findings (`Wideband Noise Floor`, `Fringe`) are only emitted when `snr
 
 ---
 
-### 18.3 Routing Anomalies
+### 20.3 Routing Anomalies
 
 #### hop_goblin (`RoutingDiagnosticEngine.detectHopGoblin()`)
 
@@ -646,7 +648,7 @@ SNR-based findings (`Wideband Noise Floor`, `Fringe`) are only emitted when `snr
 
 ---
 
-### 18.4 Foreign LoRa Detection
+### 20.4 Foreign LoRa Detection
 
 #### Packet classification
 
@@ -696,7 +698,7 @@ A module-level `RollingRateCounter(60_000)` counts MeshCore-class packets in the
 
 ---
 
-### 18.5 Packet Redundancy
+### 20.5 Packet Redundancy
 
 #### Data model
 

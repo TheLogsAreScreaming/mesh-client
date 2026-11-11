@@ -11,7 +11,7 @@ import {
   type ChatOutboxSendFn,
   drainChatOutboxOnce,
   earliestEmergencyRetryAt,
-  isAppManagedOutboxRow,
+  isAppDrainedOutboxRow,
   outboxRetryTimerDelayMs,
 } from './useChatOutbox';
 
@@ -19,6 +19,8 @@ export interface EmergencyOutboxDrainTarget {
   protocol: MeshProtocol;
   isSendAvailable: boolean;
   sendFn: ChatOutboxSendFn;
+  /** Identity whose radio is up. Omitted keeps the legacy drain. */
+  connectedIdentityId?: string | null;
 }
 
 export interface UseEmergencyOutboxDrainOptions {
@@ -79,8 +81,8 @@ function scheduleEmergencyRetryTimer(
 
 /**
  * App-level emergency outbox drain for every protocol, independent of whether ChatPanel is
- * mounted. Sends `priority: 'emergency'` rows and Incident ACK rows tagged with
- * {@link incidentAckViewKey}; other normal rows stay with ChatPanel's `useChatOutbox`. Drains
+ * mounted. Sends `priority: 'emergency'` rows, Incident ACK rows tagged with
+ * {@link incidentAckViewKey}, and scheduled sends (see `scheduledSend.ts`); other normal rows stay with ChatPanel's `useChatOutbox`. Drains
  * share {@link drainChatOutboxOnce}'s per-protocol lock with ChatPanel so a row is never sent
  * twice. Mount once from App.
  */
@@ -115,7 +117,9 @@ export function useEmergencyOutboxDrain({ drains }: UseEmergencyOutboxDrainOptio
           },
           isSendAvailable: () =>
             drainsRef.current.find((d) => d.protocol === protocol)?.isSendAvailable === true,
-          rowFilter: isAppManagedOutboxRow,
+          getConnectedIdentityId: () =>
+            drainsRef.current.find((d) => d.protocol === protocol)?.connectedIdentityId,
+          rowFilter: isAppDrainedOutboxRow,
         });
         const at = earliestEmergencyRetryAt(result.rows);
         if (at == null) retryAtByProtocolRef.current.delete(protocol);
@@ -148,7 +152,9 @@ export function useEmergencyOutboxDrain({ drains }: UseEmergencyOutboxDrainOptio
     };
   }, [protocolsKey]);
 
-  const availabilityKey = drains.map((d) => `${d.protocol}:${d.isSendAvailable ? 1 : 0}`).join(',');
+  const availabilityKey = drains
+    .map((d) => `${d.protocol}:${d.isSendAvailable ? 1 : 0}:${d.connectedIdentityId ?? ''}`)
+    .join(',');
   useEffect(() => {
     for (const d of drainsRef.current) {
       if (d.isSendAvailable) void drainProtocolRef.current(d.protocol);

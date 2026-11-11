@@ -428,11 +428,21 @@ impl BtleplugBackend {
         })
     }
 
+    fn matches_profile(profile: GattProfile, services: &[String]) -> bool {
+        Self::service_uuid(profile).is_none_or(|required| {
+            services
+                .iter()
+                .any(|service| service.parse::<Uuid>() == Ok(required))
+        })
+    }
+
     fn service_uuid(profile: GattProfile) -> Option<Uuid> {
         match profile {
             GattProfile::Meshtastic => Some(profile::meshtastic::service()),
-            GattProfile::Meshcore | GattProfile::Rnode => Some(profile::nus::service()),
-            GattProfile::Peer => None,
+            GattProfile::Rnode => Some(profile::nus::service()),
+            // MeshCore companions can advertise their name without the NUS service UUID.
+            // Use the same unfiltered discovery as connect-by-id; validate NUS after connecting.
+            GattProfile::Meshcore | GattProfile::Peer => None,
         }
     }
 
@@ -674,7 +684,10 @@ impl BleBackend for BtleplugBackend {
             Some(u) => ScanFilter { services: vec![u] },
             None => ScanFilter::default(),
         };
-        self.scan_devices(filter, timeout_secs).await
+        let mut devices = self.scan_devices(filter, timeout_secs).await?;
+        // btleplug retains peripherals from earlier unfiltered scans (notably on Windows).
+        devices.retain(|device| Self::matches_profile(profile, &device.service_uuids));
+        Ok(devices)
     }
 
     async fn connect(
@@ -877,10 +890,10 @@ impl BleBackend for BtleplugBackend {
                     {
                         last = Some(rssi);
                     }
-                    if let Some(rssi) = last {
-                        if tx.send(BackendEvent::Rssi(rssi)).is_err() {
-                            break;
-                        }
+                    if let Some(rssi) = last
+                        && tx.send(BackendEvent::Rssi(rssi)).is_err()
+                    {
+                        break;
                     }
                 }
             };
@@ -1002,6 +1015,43 @@ impl BleBackend for BtleplugBackend {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn meshcore_picker_does_not_require_advertised_nus() {
+        assert_eq!(BtleplugBackend::service_uuid(GattProfile::Meshcore), None);
+        assert_eq!(
+            BtleplugBackend::service_uuid(GattProfile::Meshtastic),
+            Some(profile::meshtastic::service())
+        );
+        assert_eq!(
+            BtleplugBackend::service_uuid(GattProfile::Rnode),
+            Some(profile::nus::service())
+        );
+    }
+
+    #[test]
+    fn filtered_profiles_exclude_devices_cached_by_meshcore_scan() {
+        let cached = vec![
+            vec![profile::nus::service().to_string()],
+            vec![],
+            vec![profile::meshtastic::service().to_string()],
+        ];
+        let meshcore: Vec<_> = cached
+            .into_iter()
+            .filter(|services| BtleplugBackend::matches_profile(GattProfile::Meshcore, services))
+            .collect();
+        assert_eq!(meshcore.len(), 3);
+        for (mode, expected) in [
+            (GattProfile::Meshtastic, profile::meshtastic::service()),
+            (GattProfile::Rnode, profile::nus::service()),
+        ] {
+            let filtered: Vec<_> = meshcore
+                .iter()
+                .filter(|services| BtleplugBackend::matches_profile(mode, services))
+                .collect();
+            assert_eq!(filtered, vec![&vec![expected.to_string()]]);
+        }
+    }
 
     #[test]
     fn os_link_probe_only_for_windows_macs() {

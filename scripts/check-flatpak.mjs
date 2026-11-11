@@ -154,7 +154,7 @@ function checkManifestPnpmVersion(pkg) {
   const rel = path.relative(ROOT, MANIFEST);
   const pnpmVersion = pnpmVersionFromPackage(pkg);
 
-  // Offline Flatpak builds cannot re-verify minimumReleaseAge / trustPolicy against npm.
+  // Offline Flatpak builds cannot re-verify trustPolicy / supply-chain policies against npm.
   violations.push(...offlinePnpmEnvContractViolations(yaml, rel));
 
   if (!pnpmVersion) return violations;
@@ -320,8 +320,15 @@ function checkManifestBranchAndElectronPayload(pkg) {
   if (!yaml.includes('--allow=bluetooth')) {
     violations.push({
       file: rel,
+      message: 'manifest finish-args must include --allow=bluetooth for BLE (AF_BLUETOOTH)',
+    });
+  }
+
+  if (!yaml.includes('--system-talk-name=org.bluez')) {
+    violations.push({
+      file: rel,
       message:
-        'manifest finish-args must include --allow=bluetooth for Web Bluetooth (AF_BLUETOOTH)',
+        'manifest finish-args must include --system-talk-name=org.bluez for BlueZ D-Bus pairing/GATT',
     });
   }
 

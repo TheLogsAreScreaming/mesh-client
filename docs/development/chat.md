@@ -14,6 +14,7 @@ Developer reference for the Chat panel, composer, link previews, notifications, 
 - **Macro bar (#1152, #1160):** 12 F1–F12 macros in every `ChatComposer` (channels, DMs, Rooms; opt out with `showMacros={false}`). State lives in `stores/chatMacrosStore.ts` (zustand `persist`, key `mesh-client:chatMacros`, sanitized on rehydrate): global slots `{ label, text }`, `size` (`null` follows `pointer: coarse`, large on touch, small otherwise), `sendMode` (`insert` default, `sendNow` only fires when the box is empty so a draft is never sent or lost), and `collapsed` (**default true**). `useChatMacroShortcuts` (mounted once in `App.tsx`) handles plain F1–F12 at window level and dispatches through `lib/chatMacroKeys.ts`: each composer registers, and the key goes to the visible one (`checkVisibility`), preferring the most recently focused. It calls `preventDefault` only when a composer takes the key, and skips modifiers, repeats and open modals (Shift+F10 stays the channel menu). UI is `components/chat/ChatMacroBar.tsx` (Small sits on the hint row, Medium/Large get their own row, overflow goes to a More menu, minimum 6 visible) and `EditMacrosDialog.tsx` (auto-saves; byte counter warns via `computeComposerLimitStatus` when text exceeds one message for the opening composer's protocol). Icons come from `lucide-react-motion`: `Settings2`, `ChevronDown`/`ChevronUp`, `Ellipsis`, `Plus`, `Keyboard`, `TriangleAlert`.
 - **MeshCore flood scopes:** Radio → Regional flood scope manages up to 20 saved regions independently of the radio default, including while disconnected. Radio → Channels and the visible scope button beside Send choose Default, Unscoped, or a saved/custom region per channel. Default displays the inherited radio scope. Removing a preset does not erase channel preferences. `ChatPanel` applies the destination channel’s current saved choice during outbox drains (including MECP retries), then restores the radio default; it resolves the queued channel index rather than the open conversation. DMs retain their per-view choices. Scope routing depends on repeater region configuration; it does not enforce membership or geographic boundaries.
 - **MeshCore channel menu (#1096, #1139):** right-click / menu key / Shift+F10 on a MeshCore channel chip opens **Remove channel** (not slot 0 Public) and **Clear messages** (all channels); `MeshcoreChatChannelManager` (+ dialog) also offers remove. Remove uses the Radio > Channels delete by slot; confirm re-checks that the slot still holds that channel name and that the same radio (node number snapshot from menu open) is connected, else nothing changes. Clear snapshots the channel key when the confirm dialog opens and aborts if the radio, the slot name, or that key changed; otherwise it deletes that key's rows (or, with no key, this radio's rows plus unscoped legacy rows), then reloads from SQLite; the runtime delete rethrows so refusals surface.
+- **MeshCore message hydration (quiet channels):** `db:getMeshcoreMessagesForHydration` / `loadMeshcoreMessagesForHydration` load the newest global window (`MESHCORE_DB_MESSAGE_LOAD_LIMIT` = 500) **and** a recent window per logical channel (`MESHCORE_DB_PER_CHANNEL_MESSAGE_LOAD_LIMIT` = 100; rooms keep `MESHCORE_DB_ROOM_MESSAGE_LOAD_LIMIT` = 200). A global-only load lets busy Public traffic crowd sparse slots (e.g. `#emergency`) out of `messageStore`. Shared limits live in `src/shared/meshcoreMessageHydration.ts`; SQL is `selectMeshcoreMessagesForHydration` in `src/main/meshcoreMessageChannel.ts`. Runtime `refreshMessagesFromDb` uses the same loader. The identity store and the runtime message list (`trimMeshcoreChatMessages` on hydration, live ingest, and optimistic sends) keep those floors when the merged set exceeds the 2000-message cap. Overflow beyond each floor fills only the remaining room under the cap, so those paths cannot evict a quiet channel to make space for Public. Chat still reads the identity store.
 - **Channel history follows channel identity across radios:** channel slot order differs per radio, so group-channel rows carry a `channel_key` (16-hex digest of protocol + trimmed name + secret/PSK, `src/shared/channelIdentityKey.ts`) and `radio_node_id` (`messages` gained it; `meshcore_messages` already had it). Live slot→key maps come from `meshcoreRuntime.channels` / `meshtasticRuntime.channelConfigs` (`lib/channelIdentity.ts`), are published per protocol by `useLiveChannelKeysSync` into `liveChannelKeyStore`, and stamp fresh inserts (`messageStore`, `messageToDbRow`, `withMeshtasticChannelIdentity` on Meshtastic save paths; never stamped across a radio mismatch). On connect `db:backfillChannelKeys` (`src/main/channelIdentityDb.ts`) stamps only rows whose `radio_node_id` is already this radio (another radio's rows wait until it connects), then upsert-rehydrates. Null-radio history stays unkeyed; it is not attributed to the first tracked radio. Display: `remapChannelMessagesToLiveSlots` in `App.tsx` (`meshtasticUiMessages` / `meshcoreUiMessages`, so Chat, unread, tray and notifications agree) keeps the last published slot map when the channel list clears until the next radio publishes one (`useRetainedChannelRemapContext`), moves keyed rows to the slot holding that key (hides keys not on this radio), hides unkeyed rows from another radio, and collapses group rows that share sender, timestamp, payload, and channel key. Reply repair runs on the pre-remap list. Channel clear snapshots the live key when the dialog opens and aborts if it no longer matches. Meshtastic clear with no key deletes nothing (`messages.channel` is also the DM channel index). Own-node renumber rewrites `messages.radio_node_id` in the same transaction and in `remapMessageNodeId`.
 - **MQTT-origin reactions (Meshtastic, #1068):** React is disabled on MQTT-only rows (intentional reject, #341) with a translated reason; `chatActionError` clears when leaving Chat or changing view.
 - **Notifications:** `src/renderer/lib/chatNotifications.ts` — `playMessageNotification(type)` via Web Audio: `channel` = single 880 Hz pulse (150 ms); `dm` / `reply` = dual pulse (587.33 Hz then 783.99 Hz, 50 ms each, 35 ms gap); **`mecp`** = repeated ascending triple pulse for ROUTINE; **`mecpSafety`** = short–long (dit–dah) pairs × 6 at 1175 Hz square (~4.4s) for SAFETY; **`mecpSiren`** = six-cycle siren (~5s, aligned with URGENT) for MAYDAY; **`mecpEas`** = 853+960 Hz EAS attention (~5s) for URGENT (mute-bypass via `useMecpAlertWatcher` / `mecpAlert.ts`, not `pickAudibleNotificationType`). Resumes suspended `AudioContext` when the window is hidden/minimized. Type selection in `chatUnreadCounts.ts` (`resolveChatNotificationType`, `pickAudibleNotificationType`; batch priority reply > dm > channel). **ChatPanel** plays when the user is on Chat but reading another view; **App** plays for other panels / backgrounded window (avoids double beep). The App inactive-chat watchers also raise desktop notifications, but only while the window is inactive. They cover both chat surfaces: Meshtastic and MeshCore. The logic lives in `chatDesktopNotifications.ts` and `desktopNotification.ts`. These notifications are visual-only (`silent: true`) and use the same mute gates as the sound. Each conversation is tagged `<protocol>:<view>`. Clicking one calls `app:focusWindow` and opens the DM or channel. Typed Web Audio from App owns the sound. There is no runtime-local notifier. App → Notifications → Notification tones configures presets, imported short audio, volume and preview per event (`notificationSoundSettings.ts`; SQLite key `notificationSounds`). Main owns bounded per-event copies via `notificationSounds:*` IPC; existing sounds are defaults and missing custom audio falls back to the original. Preview cancellation is separate from incoming playback. See [`../notification-sounds.md`](../notification-sounds.md) for platform survey and boundaries. Global mute `mesh-client:notifMuted`; per-view mute in `mutedViews`. Main-process **tray** icon shows unread when chat or MeshCore Rooms traffic arrives while backgrounded (`src/main/index.ts` `buildTrayIcon`). MECP compose/export and red-dashed bubbles: see [`mecp.md`](mecp.md).
@@ -63,3 +64,67 @@ When refreshing translation upstreams, review the pinned Firefox loader sources 
 only after verifying checksums, model quality/version, native constructor compatibility and
 licenses, then rerun the real-model smoke. Do not automatically adopt a new CDN record or
 fetch a loader at runtime. Credits and license notices are in `docs/credits.md`.
+
+## Signal report quick replies
+
+Incoming messages with RF or BLE reception provenance expose **Send signal report** beside
+Reply across all chat protocols while connected. TCP/network-only, MQTT-only, paper and
+unknown-provenance messages do not expose the action.
+The action sends one reply to the same DM peer as the conversation (`resolveChatDmPeer`),
+or to the message channel when it is not a DM, and restores the saved flood-scope path.
+A direct message whose peer cannot be resolved is not sent, so a MeshCore DM stored with
+`channel: -1` and no `to` cannot fall through to public channel 0. Reticulum uses the
+normalized LXMF peer. The action preserves the composer draft and selected reply, and
+blocks duplicate clicks during a send.
+Reports use message-level SNR/RSSI/hops, including legitimate zero values. MeshCore channel
+routes and signal measurements are recovered on demand from local RF captures only after
+matching the channel key, sender, text and sender timestamp. Missing captures fall back to
+known message measurements; node telemetry and MQTT captures are never substituted. Route
+hashes are omitted as a whole when they exceed the UTF-8 budget including reply overhead.
+Measurements are receiver-local and can describe the final repeater hop. Raw captures are
+session-only; older history can therefore offer fewer stats. Wire copy uses the interoperable
+`ack:` format; UI labels remain localized. `chatSignalReport.ts` owns matching/formatting,
+with partial reports and 1/2/3-byte hashes rendered by `hopReportParse.ts` as human reports.
+
+Meshtastic reports use local packet measurements and RF reply IDs. Hybrid RF/MQTT merges
+retain the local RF measurements in either arrival order and never substitute a gateway's
+signal or hop count. Reticulum replies use LXMF message hashes. The sidecar binds
+opportunistic LXMF messages to an exact locally captured, destination-encrypted RX frame on
+a configured RF/BLE interface, carrying `rx_radio_transport` and available SNR/RSSI/hops
+through live and catch-up ingest. A bounded frame index preserves the first observed radio
+measurements. Missing/lagged captures leave the action unavailable. Cached peer-route labels
+are display hints and never qualify a Reticulum message for this action. Direct link,
+resource and propagated delivery remain unavailable until those delivery paths expose
+per-message ingress evidence. These measurements are session-only and are not inferred for
+restored database history.
+Runtime BLE Peer enable/disable changes refresh the shared reception allowlist before
+activation. Other live RNS interface classifications retain their startup configuration
+until the stack restarts.
+
+When a verified reception has no numeric measurements, the action sends only a receipt such
+as `ack: received via RF` or `ack: received via BLE`. A BLE label is reported as BLE and does
+not assert a LoRa path.
+
+## Chat display order and radio recovery
+
+**Order chats** opens the same ordering dialog for channel pills and direct messages on all
+protocols, MeshCore Rooms, and Reticulum RRC rooms. Drag a handle with a pointer or touch, use
+Up/Down on a focused handle, or use the arrow buttons. **Sort A–Z** orders by displayed name;
+**Default order** restores the surface's original order. Save applies the order; Cancel/Escape
+leaves it unchanged. Preferences persist through the renderer-preference map, scoped by protocol,
+radio/self id and surface (RRC uses the hub). This changes presentation only, never radio channel
+indices, message destinations, room membership, favorites or credentials. Temporarily absent
+entries retain their slots while visible entries are reordered.
+
+MeshCore Chat and Rooms offer **Sync chats from radio** for a connected companion after setup.
+This reads contacts and channel slots without changing the radio. Room contacts merge with local
+history, names, favorites and saved credentials. The explicit reader checks ChannelInfo indices,
+reads the v3+ DeviceInfo channel capacity, and rejects every
+busy/error/timeout response instead of accepting the SDK's partial-success result. Very old firmware without capacity
+metadata keeps the normal connect-time import; explicit sync asks for compatible firmware rather
+than reporting an unverifiable partial import. Absent slots
+in partial connect-time reads do not delete known channels; an explicit empty slot is respected.
+Sync is single-flight, excludes setup/channel writes, checks connection generation before applying
+asynchronous work, and awaits contact persistence before reporting success. Failure leaves the
+existing chat list available for retry. A companion cannot provide room passwords or local chat
+history that were never stored on it; it can restore the room contacts and configured channels.

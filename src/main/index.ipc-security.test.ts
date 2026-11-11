@@ -12,13 +12,26 @@ const SUPPORT_BUNDLE_SOURCE = readFileSync(join(__dirname, 'support-bundle.ts'),
 const TAK_IPC_SOURCE = readFileSync(join(__dirname, 'ipc/tak-handlers.ts'), 'utf-8');
 const GPS_IPC_SOURCE = readFileSync(join(__dirname, 'ipc/gps-handlers.ts'), 'utf-8');
 const TCP_BRIDGE_SOURCE = readFileSync(join(__dirname, 'ipc/tcp-bridge.ts'), 'utf-8');
+const LINUX_BLUETOOTH_IPC_SOURCE = readFileSync(
+  join(__dirname, 'ipc/linux-bluetooth-handlers.ts'),
+  'utf-8',
+);
+const LINUX_BLUEZ_MAC_SOURCE = readFileSync(join(__dirname, 'linux-bluez/mac.ts'), 'utf-8');
 const SERVICE_ANNOUNCEMENT_IPC_SOURCE = readFileSync(
   join(__dirname, 'ipc/service-announcement-handlers.ts'),
   'utf-8',
 );
 
 function ipcHandlerBody(channel: string, span = 400): string {
-  for (const src of [INDEX_SOURCE, TCP_BRIDGE_SOURCE, TAK_IPC_SOURCE, GPS_IPC_SOURCE]) {
+  for (const src of [
+    INDEX_SOURCE,
+    LINUX_BLUETOOTH_IPC_SOURCE,
+    TCP_BRIDGE_SOURCE,
+    TAK_IPC_SOURCE,
+    GPS_IPC_SOURCE,
+    readFileSync(join(__dirname, 'ipc/ai-handlers.ts'), 'utf8'),
+    readFileSync(join(__dirname, 'identityHydrationSnapshot.ts'), 'utf8'),
+  ]) {
     const markers = [
       `ipcMain.handle('${channel}'`,
       `ipcMain.handle(\n  '${channel}'`,
@@ -207,13 +220,15 @@ describe('secure-secret IPC contract (source contract)', () => {
 
 describe('bluetooth-pair input validation (source contract)', () => {
   it('validates MAC address format with isMacAddress', () => {
-    expect(INDEX_SOURCE).toContain('function isMacAddress(value: string): boolean');
+    expect(LINUX_BLUEZ_MAC_SOURCE).toContain(
+      'export function isMacAddress(value: string): boolean',
+    );
   });
 
   it('applies isMacAddress in bluetooth-pair handler', () => {
-    const handlerIdx = INDEX_SOURCE.indexOf("ipcMain.handle('bluetooth-pair'");
+    const handlerIdx = LINUX_BLUETOOTH_IPC_SOURCE.indexOf("ipcMain.handle('bluetooth-pair'");
     expect(handlerIdx).toBeGreaterThan(-1);
-    const body = INDEX_SOURCE.slice(handlerIdx, handlerIdx + 600);
+    const body = LINUX_BLUETOOTH_IPC_SOURCE.slice(handlerIdx, handlerIdx + 600);
     expect(body).toContain('isMacAddress(macAddress)');
   });
 });
@@ -231,10 +246,14 @@ describe('bluetooth IPC sender validation (source contract, H1)', () => {
     'bluetooth-get-info',
   ] as const;
 
+  it('registers linux bluetooth handlers from index', () => {
+    expect(INDEX_SOURCE).toContain('registerLinuxBluetoothIpcHandlers()');
+  });
+
   it.each(bluetoothChannels)('%s calls assertIpcSender', (channel) => {
-    const handlerIdx = INDEX_SOURCE.indexOf(`ipcMain.handle('${channel}'`);
+    const handlerIdx = LINUX_BLUETOOTH_IPC_SOURCE.indexOf(`ipcMain.handle('${channel}'`);
     expect(handlerIdx).toBeGreaterThan(-1);
-    const handlerBody = INDEX_SOURCE.slice(handlerIdx, handlerIdx + 300);
+    const handlerBody = LINUX_BLUETOOTH_IPC_SOURCE.slice(handlerIdx, handlerIdx + 300);
     expect(handlerBody).toContain(`assertIpcSender(event, '${channel}')`);
   });
 
@@ -255,33 +274,51 @@ describe('bluetooth IPC sender validation (source contract, H1)', () => {
     expect(body).toContain("err.message === 'File too large'");
     expect(body).not.toContain('fs.promises.readFile(filePath)');
   });
+
+  it('meshtastic:xmodemSaveDownload rejects payloads over the upload cap', () => {
+    const handlerIdx = INDEX_SOURCE.indexOf("ipcMain.handle('meshtastic:xmodemSaveDownload'");
+    expect(handlerIdx).toBeGreaterThan(-1);
+    const body = INDEX_SOURCE.slice(handlerIdx, handlerIdx + 1600);
+    const sizeIdx = body.indexOf('data.byteLength > MESHTASTIC_XMODEM_UPLOAD_MAX_BYTES');
+    const dialogIdx = body.indexOf('dialog.showSaveDialog');
+    expect(sizeIdx).toBeGreaterThan(-1);
+    expect(dialogIdx).toBeGreaterThan(sizeIdx);
+    expect(body.slice(sizeIdx, dialogIdx)).toContain('throw new Error(');
+  });
+
+  it('chat:outbox:add rejects an invalid identity id instead of storing it as legacy', () => {
+    const handlerIdx = INDEX_SOURCE.indexOf("ipcMain.handle('chat:outbox:add'");
+    expect(handlerIdx).toBeGreaterThan(-1);
+    const body = INDEX_SOURCE.slice(handlerIdx, handlerIdx + 1800);
+    expect(body).toContain('outboxIdentityIdForInsert(e.identityId)');
+    expect(body).not.toContain('e.identityId.length <= 128');
+  });
 });
 
-// ─── H4: bluetoothctl stop-scan / get-info hang guards ──────────────
+// ─── H4: BlueZ D-Bus stop-scan / get-info hang guards ──────────────
 
-describe('bluetoothctl timeout hardening (source contract, H4)', () => {
-  it('defines 5s timeouts for stop-scan and get-info', () => {
-    expect(INDEX_SOURCE).toContain('const BLUETOOTH_STOP_SCAN_TIMEOUT_MS = 5_000;');
-    expect(INDEX_SOURCE).toContain('const BLUETOOTH_GET_INFO_TIMEOUT_MS = 5_000;');
+describe('BlueZ D-Bus timeout hardening (source contract, H4)', () => {
+  const CLIENT_SOURCE = readFileSync(join(__dirname, 'linux-bluez/client.ts'), 'utf-8');
+
+  it('defines short timeouts for info/remove and a longer pair budget', () => {
+    expect(CLIENT_SOURCE).toContain('const PAIR_TIMEOUT_MS = 45_000;');
+    expect(CLIENT_SOURCE).toContain('const SHORT_TIMEOUT_MS = 5_000;');
   });
 
-  it('bluetooth-stop-scan kills the process and settles the promise on timeout', () => {
-    const idx = INDEX_SOURCE.indexOf("ipcMain.handle('bluetooth-stop-scan'");
+  it('bluetooth-stop-scan does not reject on failure', () => {
+    const idx = LINUX_BLUETOOTH_IPC_SOURCE.indexOf("ipcMain.handle('bluetooth-stop-scan'");
     expect(idx).toBeGreaterThan(-1);
-    const body = INDEX_SOURCE.slice(idx, idx + 1200);
-    expect(body).toContain('BLUETOOTH_STOP_SCAN_TIMEOUT_MS');
-    expect(body).toContain('proc.kill()');
-    // Must not leave the returned Promise pending forever — timeout resolves it.
-    expect(body).toMatch(/setTimeout\(\(\) => \{[\s\S]*?proc\.kill\(\);[\s\S]*?finish\(\);/);
+    const body = LINUX_BLUETOOTH_IPC_SOURCE.slice(idx, idx + 900);
+    expect(body).toContain('stopDiscovery');
+    expect(body).toContain("Don't reject — stop scan failure is not critical");
   });
 
-  it('bluetooth-get-info kills the process and resolves on timeout', () => {
-    const idx = INDEX_SOURCE.indexOf("ipcMain.handle('bluetooth-get-info'");
+  it('bluetooth-get-info resolves with sanitized text on failure', () => {
+    const idx = LINUX_BLUETOOTH_IPC_SOURCE.indexOf("ipcMain.handle('bluetooth-get-info'");
     expect(idx).toBeGreaterThan(-1);
-    const body = INDEX_SOURCE.slice(idx, idx + 1500);
-    expect(body).toContain('BLUETOOTH_GET_INFO_TIMEOUT_MS');
-    expect(body).toContain('proc.kill()');
-    expect(body).toMatch(/setTimeout\(\(\) => \{[\s\S]*?proc\.kill\(\);[\s\S]*?finish\(/);
+    const body = LINUX_BLUETOOTH_IPC_SOURCE.slice(idx, idx + 900);
+    expect(body).toContain('getDeviceInfoText');
+    expect(body).toContain('sanitizeLogMessage(msg)');
   });
 });
 
@@ -317,7 +354,10 @@ describe('session permission whitelist (source contract)', () => {
     // Search for the actual session method call, not a comment mention of the name
     const checkIdx = INDEX_SOURCE.indexOf('.setPermissionCheckHandler(');
     expect(checkIdx).toBeGreaterThan(-1);
-    const body = INDEX_SOURCE.slice(checkIdx, checkIdx + 450);
+    const body = INDEX_SOURCE.slice(
+      checkIdx,
+      INDEX_SOURCE.indexOf('// Grant geolocation', checkIdx),
+    );
     // Ensure the allowlist is serial + geolocation + media, not a wildcard
     expect(body).toContain("permission === 'serial'");
     expect(body).toContain("permission === 'geolocation'");
@@ -325,16 +365,24 @@ describe('session permission whitelist (source contract)', () => {
     // Renderer Notification.permission reads this handler; without it chat/node/ops/MECP
     // desktop notifications report `denied` and never show.
     expect(body).toContain("permission === 'notifications'");
+    expect(body).toContain('isAllowedRendererPermission');
+    expect(body).toContain('sameWebContents: requestingContents === win.webContents');
+    expect(body).toContain('trusted &&');
     expect(body).not.toContain('return true'); // Must be conditional, not blanket true
   });
 
   it('grants media via setPermissionRequestHandler for camera/audio', () => {
     const reqIdx = INDEX_SOURCE.indexOf('.setPermissionRequestHandler(');
     expect(reqIdx).toBeGreaterThan(-1);
-    const body = INDEX_SOURCE.slice(reqIdx, reqIdx + 450);
+    const body = INDEX_SOURCE.slice(
+      reqIdx,
+      INDEX_SOURCE.indexOf('// ─── Device permission', reqIdx),
+    );
     expect(body).toContain("permission === 'geolocation'");
     expect(body).toContain("permission === 'media'");
     expect(body).toContain("permission === 'notifications'");
+    expect(body).toContain('isAllowedRendererPermission');
+    expect(body).toContain('trusted &&');
     expect(body).not.toMatch(/callback\s*\(\s*true\s*\)/);
   });
 
@@ -447,6 +495,13 @@ describe('GPS/TAK IPC sender validation (source contract)', () => {
     'tak:getStyleSettings',
     'tak:setStyleSettings',
     'tak:pushChatMessage',
+    'tak:setChatChannels',
+    'tak:retireChatRooms',
+    'tak:pushDirectMessage',
+    'tak:setDirectMessaging',
+    'tak:dmStatus',
+    'tak:setDirectPeers',
+    'tak:setIncidentMarkers',
   ] as const;
 
   it.each(takChannels)('tak handler %s calls assertIpcSender', (channel) => {
@@ -523,6 +578,22 @@ describe('MeshCore clear-by-channel validation (source contract)', () => {
 
 describe('privileged IPC sender validation (source contract)', () => {
   const privilegedChannels = [
+    'ai:getStatus',
+    'ai:getHistory',
+    'ai:setEnabled',
+    'ai:probeOsAi',
+    'ai:setConfig',
+    'ai:testConfig',
+    'ai:listEndpointModels',
+    'ai:listLocalModels',
+    'ai:installLocalModel',
+    'ai:cancelLocalModel',
+    'ai:removeLocalModel',
+    'ai:selectLocalModel',
+    'ai:ensureMlxHelper',
+    'ai:summarize',
+    'ai:cancel',
+
     'mqtt:connect',
     'mqtt:disconnect',
     'mqtt:publish',
@@ -563,6 +634,9 @@ describe('privileged IPC sender validation (source contract)', () => {
     'db:getMessageChannels',
     'db:getNodeNote',
     'db:getMeshcoreMessages',
+    'db:getMeshcoreMessagesForHydration',
+    'db:getMeshtasticIdentityHydration',
+    'db:getMeshcoreIdentityHydration',
     'db:listMeshtasticDmPeers',
     'db:listMeshcoreDmPeers',
     'db:searchMessages',
@@ -592,7 +666,8 @@ describe('privileged IPC sender validation (source contract)', () => {
     expect(handlerBody.length).toBeGreaterThan(0);
     expect(
       handlerBody.includes('assertIpcSender(event') ||
-        handlerBody.includes('validateIpcSender(event)'),
+        handlerBody.includes('validateIpcSender(event)') ||
+        handlerBody.includes('guard(event,'),
     ).toBe(true);
   });
 
@@ -868,6 +943,9 @@ describe('db mutator IPC sender validation (source contract, H3)', () => {
   const dbReadChannels = [
     'db:getNodeNote',
     'db:getMeshcoreMessages',
+    'db:getMeshcoreMessagesForHydration',
+    'db:getMeshtasticIdentityHydration',
+    'db:getMeshcoreIdentityHydration',
     'db:listMeshtasticDmPeers',
     'db:listMeshcoreDmPeers',
     'db:searchMessages',
@@ -889,9 +967,8 @@ describe('db mutator IPC sender validation (source contract, H3)', () => {
   ] as const;
 
   it.each(dbReadChannels)('%s calls assertIpcSender', (channel) => {
-    const handlerIdx = INDEX_SOURCE.indexOf(`ipcMain.handle('${channel}'`);
-    expect(handlerIdx).toBeGreaterThan(-1);
-    const handlerBody = INDEX_SOURCE.slice(handlerIdx, handlerIdx + 400);
+    const handlerBody = ipcHandlerBody(channel);
+    expect(handlerBody.length).toBeGreaterThan(0);
     expect(handlerBody).toContain(`assertIpcSender(event, '${channel}')`);
   });
 
@@ -1036,7 +1113,7 @@ describe('navigation security (source contract)', () => {
 
   it('uses setWindowOpenHandler to gate all window.open calls', () => {
     expect(INDEX_SOURCE).toContain('setWindowOpenHandler');
-    const anchor = 'openExternalHttpOrHttpsIfExternal(currentUrl, url)';
+    const anchor = 'openExternalHttpOrHttpsIfExternal(trustedRendererUrl, url)';
     const anchorIdx = INDEX_SOURCE.indexOf(anchor);
     expect(anchorIdx).toBeGreaterThanOrEqual(0);
     const idx = INDEX_SOURCE.lastIndexOf('setWindowOpenHandler', anchorIdx);
@@ -1070,5 +1147,17 @@ describe('translation IPC security contract', () => {
     for (const channel of channels) expect(source).toContain(`guard(event, '${channel}'`);
     expect(source).toContain('assertIpcSender(event, channel)');
     expect(source).toContain('(write ? writes : reads).checkOrThrow()');
+  });
+});
+
+describe('AI IPC security contract', () => {
+  it('guards every handler and keeps configuration exclusively in the validated AI namespace', () => {
+    const source = readFileSync(join(__dirname, 'ipc/ai-handlers.ts'), 'utf8');
+    const channels = [...source.matchAll(/ipcMain.handle\(\s*'([^']+)'/g)].map((m) => m[1]);
+    expect(channels).toHaveLength(15);
+    for (const channel of channels) expect(source).toContain(`guard(event, '${channel}'`);
+    expect(source).toContain('assertIpcSender(event, channel)');
+    expect(source).toContain('(write ? writes : reads).checkOrThrow()');
+    expect(INDEX_SOURCE).toContain("row.key !== 'aiProviderConfig'");
   });
 });

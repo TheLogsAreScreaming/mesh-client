@@ -266,7 +266,9 @@ describe('CI workflow contracts', () => {
     const quality = ciWorkflow.split('  quality:')[1].split('  lint:')[0];
     expect(quality).toContain('run: pnpm run format:check');
     expect(quality).not.toMatch(/\bif:|continue-on-error:/);
-    expect(ciWorkflow).toContain('pnpm run lint --concurrency 2 --config eslint.ci.config.mjs');
+    // The lint lane's flags are pinned in scripts/ci-eslint-shard.test.mjs.
+    expect(ciWorkflow).toContain('run: node scripts/ci-eslint-shard.mjs');
+    expect(read('scripts/ci-eslint-shard.mjs')).toContain("'eslint.ci.config.mjs'");
     const scripts = JSON.parse(read('package.json')).scripts;
     expect(scripts['format:check']).toContain('**/*.{ts,tsx,js,jsx,json,css,md,sh}');
     expect(scripts.lint).toBe('eslint . --max-warnings 0');
@@ -288,10 +290,25 @@ describe('CI workflow contracts', () => {
     }
   }, 30_000); // Loads two full ESLint configs; slow under parallel pre-commit load.
 
+  it('partitions renderer UI into four shards while retaining both other projects', () => {
+    const workflow = load(testsWorkflow);
+    const matrix = workflow.jobs['test-shards'].strategy.matrix.include;
+    expect(matrix).toEqual([
+      { project: 'renderer-ui', shard: 1, shards: 4 },
+      { project: 'renderer-ui', shard: 2, shards: 4 },
+      { project: 'renderer-ui', shard: 3, shards: 4 },
+      { project: 'renderer-ui', shard: 4, shards: 4 },
+      { project: 'renderer-logic', shard: 1, shards: 1 },
+      { project: 'main', shard: 1, shards: 1 },
+    ]);
+    expect(workflow.jobs['test-shards'].strategy['fail-fast']).toBe(false);
+    expect(workflow.jobs['merge-reports'].needs).toContain('tests');
+  });
+
   it('uses distinct artifact names for shards and bounds lint concurrency', () => {
     expect(testsWorkflow).toContain('name: vitest-blob-${{ matrix.project }}-${{ matrix.shard }}');
     expect(testsWorkflow).toContain('VITEST_SHARD: ${{ matrix.shard }}/${{ matrix.shards }}');
-    expect(ciWorkflow).toContain('pnpm run lint --concurrency 2');
+    expect(read('scripts/ci-eslint-shard.mjs')).toMatch(/'--concurrency',\s+'2',/);
   });
 
   it('collects related JUnit reports without installing the application in the merge job', () => {
@@ -575,9 +592,11 @@ describe('Windows ARM64 sidecar builds', () => {
       .split('\n      - ')
       .find((step) => step.startsWith('name: Test sidecar'));
     expect(testStep).toBeDefined();
-    expect(testStep.split('\n').map((line) => line.trim())).toContain(
-      `run: cargo test${variant.features}`,
-    );
+    const expectedTestRun =
+      variant.features === ''
+        ? 'run: cargo test'
+        : `run: cargo test${variant.features} -- --test-threads=1`;
+    expect(testStep.split('\n').map((line) => line.trim())).toContain(expectedTestRun);
     expect(testStep).not.toMatch(/\bif:|cargo build/);
     expect(native).not.toMatch(/continue-on-error:/);
 

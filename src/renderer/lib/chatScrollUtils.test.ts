@@ -12,6 +12,7 @@ import {
   findMessageIndexByKey,
   getChatDayKey,
   getChatMessageVirtualizerKey,
+  revealElementWithinContainer,
   roomPostRowKey,
   roomPostVirtualizerKey,
   scrollElementWithinContainer,
@@ -80,7 +81,6 @@ describe('createChatScrollAdjustPredicate', () => {
       isAtEnd: () => atEnd,
       itemSizeCache: new Map<string, number>(opts.measured === false ? [] : [[item.key, 96]]),
       scrollOffset: opts.scrollOffset ?? 0,
-      scrollAdjustments: 0,
     };
   }
 
@@ -389,6 +389,50 @@ describe('estimateChatRowHeight', () => {
         unreadDividerExtra: CHAT_UNREAD_DIVIDER_ESTIMATE_EXTRA_PX,
       }),
     ).toBe(96 + CHAT_UNREAD_DIVIDER_ESTIMATE_EXTRA_PX);
+  });
+});
+
+describe('revealElementWithinContainer', () => {
+  function setup(target: { top: number; bottom: number }) {
+    const container = document.createElement('div');
+    const element = document.createElement('div');
+    container.appendChild(element);
+    Object.defineProperty(container, 'scrollTop', {
+      value: 500,
+      writable: true,
+      configurable: true,
+    });
+    vi.spyOn(container, 'getBoundingClientRect').mockReturnValue(
+      DOMRect.fromRect({ x: 0, y: 100, width: 300, height: 300 }),
+    );
+    vi.spyOn(element, 'getBoundingClientRect').mockReturnValue(
+      DOMRect.fromRect({ x: 0, y: target.top, width: 300, height: target.bottom - target.top }),
+    );
+    return container;
+  }
+
+  it('scrolls up to an element whose top is above the view', () => {
+    const container = setup({ top: 40, bottom: 240 });
+    revealElementWithinContainer(container, container.firstElementChild as HTMLElement);
+    expect(container.scrollTop).toBe(440);
+  });
+
+  it('scrolls down just far enough to show an element below the view', () => {
+    const container = setup({ top: 300, bottom: 450 });
+    revealElementWithinContainer(container, container.firstElementChild as HTMLElement);
+    expect(container.scrollTop).toBe(550);
+  });
+
+  it('keeps the top in view when the element is taller than the view', () => {
+    const container = setup({ top: 250, bottom: 700 });
+    revealElementWithinContainer(container, container.firstElementChild as HTMLElement);
+    expect(container.scrollTop).toBe(650);
+  });
+
+  it('leaves an element that is already in view alone', () => {
+    const container = setup({ top: 150, bottom: 350 });
+    revealElementWithinContainer(container, container.firstElementChild as HTMLElement);
+    expect(container.scrollTop).toBe(500);
   });
 });
 

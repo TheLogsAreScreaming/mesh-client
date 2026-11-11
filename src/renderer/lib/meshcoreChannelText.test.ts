@@ -1,6 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { mapMeshcoreDbRowsToChatMessages } from '../hooks/meshcore/meshcoreHookPreamble';
+import {
+  mapMeshcoreDbRowsToChatMessages,
+  type MeshcoreMessageDbRow,
+} from '../hooks/meshcore/meshcoreHookPreamble';
 import {
   buildMeshcoreChannelIncomingMessage,
   buildMeshcoreDmIncomingMessage,
@@ -25,6 +28,7 @@ import {
   resolveMeshcoreOutboundWireText,
   sanitizeMeshcoreWireName,
 } from './meshcoreChannelText';
+import { MESHCORE_LAST_SELF_NODE_LS_KEY } from './meshcoreLastSelfNodeId';
 import { computeMeshcoreOpenReactionHash } from './meshcoreOpenReaction';
 import {
   MESHCORE_UNKNOWN_SENDER_STUB_ID,
@@ -1057,6 +1061,123 @@ describe('repairMeshcoreDisplayMessages', () => {
     expect(out[3]?.replyPreviewText).toBe('message 2');
   });
 
+  /**
+   * A bot acks my test, then acks Alice's. I reply "Thank you" to the ack addressed to me.
+   * `recordedBy` sets `radioNodeId` on every row, as the store and the DB do for the radio that heard them.
+   */
+  function ownReplyToEarlierMessageThread(recordedBy?: number): ChatMessage[] {
+    const recorded = recordedBy != null ? { radioNodeId: recordedBy } : {};
+    return [
+      {
+        sender_id: 100,
+        sender_name: 'Me',
+        payload: 'Test good, 4 hops',
+        channel: 0,
+        timestamp: 1_000,
+        status: 'acked',
+        ...recorded,
+      },
+      {
+        sender_id: 200,
+        sender_name: 'Alice',
+        payload: 'Copy here',
+        channel: 0,
+        timestamp: 1_500,
+        status: 'acked',
+        receivedVia: 'rf',
+        ...recorded,
+      },
+      {
+        sender_id: 300,
+        sender_name: 'Signal Bot',
+        payload: ', ack: SNR 9.0 dB, 7 hops',
+        channel: 0,
+        timestamp: 2_000,
+        status: 'acked',
+        receivedVia: 'rf',
+        replyId: 1_000,
+        replyPreviewText: 'Test good, 4 hops',
+        replyPreviewSender: 'Me',
+        ...recorded,
+      },
+      {
+        sender_id: 300,
+        sender_name: 'Signal Bot',
+        payload: ', ack: SNR 12.0 dB, 4 hops',
+        channel: 0,
+        timestamp: 3_000,
+        status: 'acked',
+        receivedVia: 'rf',
+        replyId: 1_500,
+        replyPreviewText: 'Copy here',
+        replyPreviewSender: 'Alice',
+        ...recorded,
+      },
+      // Stored the way the channel send path writes it: the composer's replyId, no preview yet.
+      {
+        sender_id: 100,
+        sender_name: 'Me',
+        payload: 'Thank you',
+        channel: 0,
+        timestamp: 4_000,
+        status: 'acked',
+        replyId: 2_000,
+        ...recorded,
+      },
+    ];
+  }
+
+  it('keeps my reply on the message I picked when its sender posts again', () => {
+    const out = meshcoreChatMessagesForDisplay(ownReplyToEarlierMessageThread(), {
+      selfNodeId: 100,
+    });
+    const thanks = out.find((m) => m.payload === 'Thank you');
+    expect(thanks?.replyId).toBe(2_000);
+    expect(thanks?.replyPreviewText).toBe(', ack: SNR 9.0 dB, 7 hops');
+    expect(thanks?.replyPreviewSender).toBe('Signal Bot');
+  });
+
+  it('keeps my reply on the message I picked when only the recording radio is known', () => {
+    const out = meshcoreChatMessagesForDisplay(ownReplyToEarlierMessageThread(100));
+    const thanks = out.find((m) => m.payload === 'Thank you');
+    expect(thanks?.replyId).toBe(2_000);
+    expect(thanks?.replyPreviewText).toBe(', ack: SNR 9.0 dB, 7 hops');
+  });
+
+  it('threads my own row by name when it carries only the target name', () => {
+    // An echo of my keyless reply heard before its parent keeps the name but no replyId.
+    const thread = ownReplyToEarlierMessageThread(100).map((m) =>
+      m.payload === 'Thank you'
+        ? { ...m, replyId: undefined, replyPreviewSender: 'Signal Bot' }
+        : m,
+    );
+    const out = meshcoreChatMessagesForDisplay(thread, { selfNodeId: 100 });
+    const thanks = out.find((m) => m.payload === 'Thank you');
+    expect(thanks?.replyId).toBe(3_000);
+    expect(thanks?.replyPreviewText).toBe(', ack: SNR 12.0 dB, 4 hops');
+  });
+
+  it("still moves someone else's name-only reply to that sender's newest message", () => {
+    const thread = ownReplyToEarlierMessageThread(100);
+    const aliceThanks: ChatMessage = {
+      sender_id: 200,
+      sender_name: 'Alice',
+      payload: 'thanks',
+      channel: 0,
+      timestamp: 5_000,
+      status: 'acked',
+      receivedVia: 'rf',
+      radioNodeId: 100,
+      replyId: 2_000,
+      replyPreviewText: ', ack: SNR 9.0 dB, 7 hops',
+      replyPreviewSender: 'Signal Bot',
+    };
+    const out = meshcoreChatMessagesForDisplay([...thread, aliceThanks], { selfNodeId: 100 });
+    const repaired = out.find((m) => m.payload === 'thanks');
+    expect(repaired?.replyId).toBe(3_000);
+    expect(repaired?.replyPreviewText).toBe(', ack: SNR 12.0 dB, 4 hops');
+  });
+
   it('repairs stale incoming bracket reply when parent message arrived after first ingest', () => {
     const oldMsg: ChatMessage = {
       sender_id: 100,
@@ -1373,6 +1494,71 @@ describe('meshcoreReplyBodyReferencesParent', () => {
 });
 
 describe('mapMeshcoreDbRowsToChatMessages reply repair', () => {
+  it('keeps an own reply when the DB row has no radio_node_id', () => {
+    const memory = new Map<string, string>([[MESHCORE_LAST_SELF_NODE_LS_KEY, '100']]);
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => memory.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        memory.set(key, value);
+      },
+      removeItem: (key: string) => {
+        memory.delete(key);
+      },
+    });
+    try {
+      const row = (
+        partial: Partial<MeshcoreMessageDbRow> & Pick<MeshcoreMessageDbRow, 'id' | 'payload'>,
+      ): MeshcoreMessageDbRow => ({
+        sender_id: 100,
+        sender_name: 'Me',
+        channel_idx: 0,
+        timestamp: partial.id,
+        status: 'acked',
+        packet_id: null,
+        emoji: null,
+        reply_id: null,
+        to_node: null,
+        received_via: 'rf',
+        radio_node_id: null,
+        ...partial,
+      });
+      const mapped = mapMeshcoreDbRowsToChatMessages([
+        row({ id: 1, payload: 'Test good, 4 hops', timestamp: 1_000, sender_name: 'Me' }),
+        row({
+          id: 2,
+          sender_id: 300,
+          sender_name: 'Signal Bot',
+          payload: ', ack: SNR 9.0 dB, 7 hops',
+          timestamp: 2_000,
+          reply_id: 1_000,
+          reply_preview_text: 'Test good, 4 hops',
+          reply_preview_sender: 'Me',
+        }),
+        row({
+          id: 3,
+          sender_id: 300,
+          sender_name: 'Signal Bot',
+          payload: ', ack: SNR 12.0 dB, 4 hops',
+          timestamp: 3_000,
+          reply_id: 1_500,
+        }),
+        row({
+          id: 4,
+          payload: 'Thank you',
+          timestamp: 4_000,
+          reply_id: 2_000,
+          radio_node_id: null,
+        }),
+      ]);
+      const thanks = mapped.find((m) => m.payload === 'Thank you');
+      expect(thanks?.radioNodeId).toBeUndefined();
+      expect(thanks?.replyId).toBe(2_000);
+      expect(thanks?.replyPreviewSender).toBe('Signal Bot');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('repairs Wherewolf reply to b from DB rows (live ingest stale reply_id)', () => {
     const rows = [
       {
@@ -1483,6 +1669,55 @@ describe('mapMeshcoreDbRowsToChatMessages reply repair', () => {
     );
     const wherewolf = roundTripped.find((m) => m.payload === 'reply to b');
     expect(wherewolf?.replyId).toBe(1780240608140);
+  });
+
+  it('keeps my own reply on the message I picked when loading from the DB', () => {
+    const row = (
+      fields: Pick<
+        MeshcoreMessageDbRow,
+        'id' | 'sender_id' | 'sender_name' | 'payload' | 'timestamp' | 'reply_id'
+      > &
+        Partial<MeshcoreMessageDbRow>,
+    ): MeshcoreMessageDbRow => ({
+      channel_idx: 0,
+      status: 'acked',
+      packet_id: null,
+      emoji: null,
+      to_node: null,
+      radio_node_id: 100,
+      ...fields,
+    });
+    const rows = [
+      row({
+        id: 1,
+        sender_id: 300,
+        sender_name: 'Signal Bot',
+        payload: ', ack: SNR 9.0 dB, 7 hops',
+        timestamp: 2_000,
+        reply_id: null,
+        received_via: 'rf',
+      }),
+      row({
+        id: 2,
+        sender_id: 300,
+        sender_name: 'Signal Bot',
+        payload: ', ack: SNR 12.0 dB, 4 hops',
+        timestamp: 3_000,
+        reply_id: null,
+        received_via: 'rf',
+      }),
+      row({
+        id: 3,
+        sender_id: 100,
+        sender_name: 'Me',
+        payload: 'Thank you',
+        timestamp: 4_000,
+        reply_id: 2_000,
+      }),
+    ];
+    const thanks = mapMeshcoreDbRowsToChatMessages(rows).find((m) => m.payload === 'Thank you');
+    expect(thanks?.replyId).toBe(2_000);
+    expect(thanks?.replyPreviewText).toBe(', ack: SNR 9.0 dB, 7 hops');
   });
 });
 

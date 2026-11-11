@@ -3118,6 +3118,53 @@ function checkRoomsGuestPasswordAndNlMeshIssues(ctx) {
 }
 
 /**
+ * Contiguous mention examples in English (`@silver`, `@[Silver Eagle]`, `@@`).
+ * Prose such as "@ and" is ignored.
+ * @param {string} text
+ * @returns {string[]}
+ */
+function contiguousMentionTokens(text) {
+  const tokens = new Set();
+  for (const match of text.matchAll(/@\[[^\]\s][^\]]*\]/g)) tokens.add(match[0]);
+  if (text.includes('@@')) tokens.add('@@');
+  for (const match of text.matchAll(/(^|[^@\w])@([A-Za-z][\w-]*)/g)) {
+    tokens.add(`@${match[2]}`);
+  }
+  return [...tokens];
+}
+
+/**
+ * True when `val` contains a spaced form of a contiguous English mention token.
+ * @param {string} token
+ * @param {string} val
+ */
+function mentionTokenBroken(token, val) {
+  if (val.includes(token)) return false;
+  if (token.startsWith('@[')) {
+    // A translated name (`@[ Elang Perak]`) is still broken. Do not require the English inner text.
+    return /@\s+\[/.test(val) || /@\[\s/.test(val);
+  }
+  if (token.startsWith('@@')) return /@\s+@/.test(val);
+  return val.includes(`@ ${token.slice(1)}`);
+}
+
+/**
+ * Flag a translation that breaks a contiguous mention token, even when English
+ * also contains prose "@ and".
+ * @param {string} enVal
+ * @param {string} val
+ */
+function mentionSyntaxBroken(enVal, val) {
+  if (!/@\S/.test(enVal)) return false;
+  const enHasLooseAt = /@\s|@\[\s/.test(enVal);
+  if (!enHasLooseAt && /@\s|@\[\s/.test(val)) return true;
+  for (const token of contiguousMentionTokens(enVal)) {
+    if (mentionTokenBroken(token, val)) return true;
+  }
+  return false;
+}
+
+/**
  * @param {LocaleQualityCtx} ctx
  * @returns {string[]}
  */
@@ -3147,6 +3194,15 @@ function checkMqttWifiAndScriptIssues(ctx) {
 
   if (locale !== 'en' && /\bI2P\b/.test(enVal) && /I\s+2\s+P/.test(val)) {
     issues.push('keep I2P as contiguous token (not "I 2 P")');
+  }
+
+  // Users type mentions as shown; the parsers never match "@ [Name]", "@[ Name]" or "@ nick".
+  // English prose such as "@ and" must not skip the check for contiguous tokens
+  // the same string also demonstrates (@silver, @[Silver Eagle], @@).
+  if (locale !== 'en' && mentionSyntaxBroken(enVal, val)) {
+    issues.push(
+      'keep mention syntax contiguous: "@[Name]" and "@nickname", no space after "@" or "["',
+    );
   }
 
   if (!CJK_LOCALES.has(locale) && CJK_SCRIPT_RE.test(val) && !CJK_SCRIPT_RE.test(enVal)) {
@@ -4539,6 +4595,127 @@ function checkBareDashPlaceholderIssues(ctx) {
   return [`${flatKey} dash placeholder must equal English ${JSON.stringify(enVal)}`];
 }
 
+/** Keys that shipped as unchanged English prose and must be translated. */
+const AUDIT_MUST_TRANSLATE_KEYS = new Set([
+  'chatPanel.scheduleSendHint',
+  'scheduledBroadcasts.invalidTime',
+  'scheduledBroadcasts.invalidDayOfMonth',
+  'scheduledBroadcasts.invalidAnchorDate',
+  'scheduledBroadcasts.reasons.channelMissing',
+  'internetWeather.unitsTemp',
+]);
+
+/** Short product strings whose English `RRC` token must survive translation. */
+const AUDIT_RRC_TOKEN_KEYS = new Set([
+  'scheduledBroadcasts.intro',
+  'scheduledBroadcasts.targetKind.rrcRoom',
+  'mecp.rebroadcast.reticulumKindRrc',
+]);
+
+/** Exact false friends seen on internet weather condition labels. */
+const WEATHER_CONDITION_FORBIDDEN = [
+  { key: 'internetWeather.conditions.clear', re: /책임|^Сбросить$/ },
+  { key: 'internetWeather.conditions.rain', re: /정지훈/ },
+  { key: 'internetWeather.conditions.showers', re: /샤워실|^Душ$/ },
+  { key: 'internetWeather.conditions.violentShowers', re: /샤워/ },
+  { key: 'internetWeather.conditions.rimeFog', re: /라임/ },
+  { key: 'internetWeather.conditions.freezingDrizzle', re: /^우박$/ },
+  { key: 'internetWeather.conditions.lightDrizzle', re: /^Светлый$/ },
+  { key: 'internetWeather.conditions.lightFreezingRain', re: /^Светлый$/ },
+];
+
+/**
+ * Focused guards for the one-time locale audit (glossary junk, unchanged English,
+ * RRC, Open-Meteo, PLC, CAT `-0` suffixes). Not a general untranslated-prose scan.
+ * @param {LocaleQualityCtx} ctx
+ * @returns {string[]}
+ */
+function checkAuditLocaleFixes(ctx) {
+  const { locale, flatKey, val, enVal } = ctx;
+  if (locale === 'en') return [];
+  const issues = [];
+  if (AUDIT_MUST_TRANSLATE_KEYS.has(flatKey) && val === enVal) {
+    issues.push(`"${flatKey}" is still identical to English — translate it`);
+  }
+  if (flatKey.startsWith('internetWeather.conditions.')) {
+    if (/weather condition|weather forecast/i.test(val)) {
+      issues.push(
+        'glossary artifact "weather condition" or "weather forecast" is not a condition label',
+      );
+    }
+    if (val === enVal) {
+      issues.push('internetWeather condition is still identical to English');
+    }
+    for (const rule of WEATHER_CONDITION_FORBIDDEN) {
+      if (rule.key === flatKey && rule.re.test(val)) {
+        issues.push(`weather condition false friend on ${flatKey}`);
+      }
+    }
+  }
+  if (
+    flatKey === 'internetWeather.enableHint' &&
+    enVal.includes('Open-Meteo') &&
+    !val.includes('Open-Meteo')
+  ) {
+    issues.push('preserve the Open-Meteo name (not "Open - Meteo")');
+  }
+  if (
+    (flatKey === 'diagnosticAlerts.title' || flatKey === 'notificationSounds.diagnosticError') &&
+    val.includes('PLC-')
+  ) {
+    issues.push('mesh diagnostics must not use the PLC- prefix');
+  }
+  if (AUDIT_RRC_TOKEN_KEYS.has(flatKey) && enVal.includes('RRC') && !val.includes('RRC')) {
+    issues.push('preserve the RRC token');
+  }
+  // CAT tools glue "-0" plus digits onto translated prose ("День місяця-04").
+  // A single ASCII token such as "ESP32-01" is a code-like literal, not that artifact.
+  const catSuffix = /-0\d+$/.test(val) && !/-0\d+$/.test(enVal);
+  const catProse = /\s/.test(val) || /[^\u0020-\u007e]/.test(val);
+  if (catSuffix && catProse) {
+    issues.push('CAT suffix "-0" plus digits is not allowed');
+  }
+  if (flatKey === 'scheduledBroadcasts.status.missed' && locale === 'ja' && val === '欠席') {
+    issues.push('missed is a missed broadcast, not meeting absence 欠席');
+  }
+  if (
+    flatKey === 'scheduledBroadcasts.status.missed' &&
+    locale === 'zh' &&
+    val.includes('未抢到')
+  ) {
+    issues.push('missed is a missed broadcast, not 未抢到');
+  }
+  return issues;
+}
+
+/**
+ * skipped (not sent) and missed (time passed) must stay distinct when English is.
+ * @param {Record<string, string>} localeFlat
+ * @param {Record<string, string>} enFlat
+ * @returns {string[]}
+ */
+export function scheduledBroadcastStatusCrossKeyIssues(localeFlat, enFlat) {
+  const skippedKey = 'scheduledBroadcasts.status.skipped';
+  const missedKey = 'scheduledBroadcasts.status.missed';
+  const skipped = localeFlat[skippedKey];
+  const missed = localeFlat[missedKey];
+  const enSkipped = enFlat[skippedKey];
+  const enMissed = enFlat[missedKey];
+  if (
+    typeof skipped === 'string' &&
+    typeof missed === 'string' &&
+    typeof enSkipped === 'string' &&
+    typeof enMissed === 'string' &&
+    enSkipped !== enMissed &&
+    skipped === missed
+  ) {
+    return [
+      'status.missed must differ from status.skipped (missed occurrence vs intentionally skipped)',
+    ];
+  }
+  return [];
+}
+
 const LOCALE_STRING_QUALITY_CHECKS = [
   checkCatEncodingAndMeshtasticIssues,
   checkMustTranslateAndFormFieldIssues,
@@ -4574,6 +4751,7 @@ const LOCALE_STRING_QUALITY_CHECKS = [
   checkFloodRoutingUiIssues,
   checkGamesPanelQualityIssues,
   checkBareDashPlaceholderIssues,
+  checkAuditLocaleFixes,
 ];
 
 /**

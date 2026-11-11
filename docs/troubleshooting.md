@@ -58,6 +58,8 @@ Works on macOS, Windows, Linux (.deb / .rpm / AppImage), and Flatpak. Local data
 | `activeTab.liveSession`                                                 | `true`                    | Active protocol tab is connected                                                                           |
 | `warnings`                                                              | `[]`                      | No stuck-chat signatures detected                                                                          |
 | `mainLiveness` (top-level)                                              | object                    | `mainUptimeSec`, `lastRendererHeartbeatAgeMs`, `rendererUnresponsiveSeen`, `rss`, `heapUsed` — hang triage |
+| `rendererMemory` (top-level)                                            | object                    | Isolation/API availability and up to 24 in-session timestamped renderer memory totals                      |
+| `rendererMemoryDurable` (top-level)                                     | object                    | SQLite summary plus retention-bounded timestamped samples (2h auto + manual); both export modes            |
 | `meshcore.roomsUnreadEstimate`                                          | number                    | Computed Rooms tab badge (known room servers only)                                                         |
 | `meshcore.orphanRoomMessageCount`                                       | number                    | Room posts whose `room_server_id` is not in current contacts                                               |
 | `meshcore.roomNodeCount` / `roomMessageCount` / `roomsLastReadKeyCount` | numbers                   | Rooms triage counts                                                                                        |
@@ -118,6 +120,42 @@ Clone, compile, and local packaging issues moved to [development-environment.md 
 ## Installation and packaged apps
 
 Installers, Flatpak, Gatekeeper, and first-launch failures.
+
+### Renderer migration: blank window or older preferences
+
+Installed apps and `pnpm start` migrate localStorage from `file://` to `mesh-client://renderer` before using the
+new origin. If export, import, or verification fails, the app retains the file origin. Look for
+`Renderer origin migration/health check failed; retaining file origin` and the renderer load
+source in the startup log.
+
+`pnpm run dev` explicitly uses Vite with isolation headers. A Vite server running in another
+terminal does not change `pnpm start`. Use the [startup verification steps](development/renderer-origin-coi.md#verify-the-normal-local-start)
+to confirm the actual document origin, isolation, and migration completion.
+
+For recovery, fully quit the app and launch it with `MESH_CLIENT_FORCE_FILE_ORIGIN=1` in the
+launcher's environment. This uses the retained legacy preferences; changes saved only at the new
+origin can look older, while SQLite-backed records are shared. Do not delete browser storage or
+the `migration/` directory to troubleshoot this transition. Preserve the logs and recovery files
+under the [local data directory](#reporting-bugs-export-for-github-app-tab), and follow the
+[origin recovery runbook](development/renderer-origin-coi.md#support-recovery) for verified repair.
+
+USB serial may ask you to choose the port again because browser grants belong to an origin.
+LoRa Bluetooth uses the native sidecar and has no browser Bluetooth grant to migrate.
+
+### Linux AppImage: About still shows the previous version after downloading a newer AppImage
+
+**Symptom**: You download `Mesh-client-X.Y.Z.AppImage` from [GitHub Releases](https://github.com/Colorado-Mesh/mesh-client/releases), run it, and **Help → About** still shows the older version (for example `6.5.0` after downloading `6.6.0`).
+
+**Cause**: The published AppImage embeds the version from `package.json` (About uses Electron `app.getVersion()`). A filename that says `X.Y.Z` with About showing an older release usually means the process that actually started is still an older integrated copy — commonly **[AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher)** (or a leftover desktop entry under `~/Applications` / `~/.local/share/applications`) intercepting the new file and launching the previously integrated binary. In-app updates can hit the same trap when `$APPIMAGE` points at AppImageLauncher’s FUSE mount instead of the real file.
+
+**What to do**
+
+1. Fully quit Mesh-client (check the system tray / no leftover process).
+2. Confirm the file you downloaded matches the release checksum in `latest-linux.yml` / `latest-linux-arm64.yml` on the same release tag.
+3. If AppImageLauncher (or similar) is installed: remove the old Mesh-client integration, or move/delete the older AppImage under `~/Applications`, then run the new AppImage once and re-integrate if you want a launcher entry.
+4. Or run the new file directly from a terminal (`chmod +x` then `./Mesh-client-X.Y.Z.AppImage`) and check About again.
+
+Official release packaging smoke extracts each AppImage and asserts the embedded `app.asar` / `X-AppImage-Version` match `package.json`, so a mislabeled GitHub asset would fail CI.
 
 ### Linux packaged app: `Cannot find module 'readable-stream'`
 
@@ -450,6 +488,8 @@ The **outer Flatpak bubblewrap sandbox** still isolates the app when Chromium ru
 
 **Fix**: Click **Forget this device** if shown, then **Connect** and select the radio again.
 
+Startup auto-connect now runs on Linux as well (same remembered-peripheral path as macOS/Windows). If the radio is off or unpaired, the **Restore connection** card remains; for Linux re-pair guidance see **Linux-specific** under BLE known issues (`bluetoothctl` remove + re-pair from the app).
+
 ### Dual-radio BLE startup / wake stagger
 
 When both Meshtastic and MeshCore have **different** saved BLE peripherals, concurrent sidecar GATT sessions are allowed. Startup and wake still **stagger** auto-connect so both stacks do not contend on the adapter at once:
@@ -602,6 +642,25 @@ If mesh-client stays open for **days** on a busy mesh (especially **MeshCore BLE
 - If the app crashes, save **`~/Library/Logs/DiagnosticReports/Mesh-client-*.ips`** (macOS) before relaunching; include the `.ips` and exported log when reporting.
 - **Reporting a crash or lockup:** Prefer **Export for Developer / GitHub before restart** if the UI still responds. After a forced restart, export anyway — startup preserves the previous session log as `mesh-client.log.1` (also included in support bundles). Note app version, OS, uptime (`[main] long-session health` / snapshot `mainLiveness`), whether MeshCore BLE was connected, and any `[main] renderer heartbeat stalled` / `webContents unresponsive` lines.
 
+**Renderer memory:** App → Support shows the latest working-set estimate, optional JS heap /
+DOM counts, and deltas vs the previous sample. Use **Sample now** for an immediate reading.
+The main process records one renderer process working-set sample shortly after start, then
+about every **two hours** whether or not the window is backgrounded; those rows are
+persisted in SQLite and included as `rendererMemoryDurable.samples` (plus a summary;
+heap/DOM when the renderer recorded them) in both GitHub and Developer support bundles and
+Copy Debug Snapshot. The live Support ring (`rendererMemory`) retains up to 24 session
+totals and draws a **time-scaled** sparkline that breaks across long gaps. Interpreting
+deltas:
+
+- Working set ↑ and JS heap ↑ together → likely retained JavaScript.
+- Working set ↑ while JS heap flat → non-JS (wasm, GPU/code cache, OS working-set high water).
+- Either ↓ after a long idle → often reclaim, not a leak.
+
+If isolation or the browser memory API is unavailable, the section explains why; on-demand
+browser estimates still need a visible window. Compare trends within a session or durable
+export span; browser estimates vary between app versions and do not measure the same
+allocations as `mainLiveness`.
+
 After **24 hours** of uptime, the main process logs periodic **long-session health** lines (`[main] long-session health …`) with memory and per-session BLE timer state. While the window and renderer document are visible, missing renderer heartbeats for ~90s also log `[main] renderer heartbeat stalled`. Heartbeats intentionally pause for hidden documents, including windows fully covered by another window on macOS; the renderer reports that pause to the watchdog. Refocusing the app rearms detection. A heartbeat warning alone does not establish a renderer hang or a system-wide freeze.
 
 ### App shows "disconnected" but device is still on
@@ -681,7 +740,7 @@ After **24 hours** of uptime, the main process logs periodic **long-session heal
 
 ## Meshtastic
 
-Battery, voltage, or uptime for your own node looks wrong or never updates? See [Meshtastic: mesh vs local client telemetry](meshtastic-telemetry-local-client.md).
+Full guide: [Meshtastic](meshtastic.md). Battery, voltage, or uptime for your own node looks wrong or never updates? See [Meshtastic: mesh vs local client telemetry](meshtastic-telemetry-local-client.md).
 
 ### Meshtastic Modules tab: “waiting for settings”
 
@@ -730,7 +789,7 @@ When the Meshtastic SDK logs a routing / queue failure, mesh-client intercepts m
 
 ## MeshCore
 
-MeshCore-specific problems moved to [MeshCore troubleshooting](troubleshooting-meshcore.md):
+Full guide: [MeshCore](meshcore.md). MeshCore-specific problems moved to [MeshCore troubleshooting](troubleshooting-meshcore.md):
 
 - [MeshCore TCP connect stuck or reconnect loop on OpenHop](troubleshooting-meshcore.md#meshcore-tcp-connect-stuck-or-reconnect-loop-on-openhop)
 - [MeshCore TCP / pyMC: initial connect MsgWaiting drain slow or paused](troubleshooting-meshcore.md#meshcore-tcp--pymc-initial-connect-msgwaiting-drain-slow-or-paused)
@@ -747,7 +806,7 @@ MeshCore-specific problems moved to [MeshCore troubleshooting](troubleshooting-m
 
 ## TAK (CoT gateway)
 
-The **TAK** tab runs a local CoT server and a remote relay to an OpenTAKServer, FreeTAKServer, or TAK Server. The relay uses TLS or plain TCP; plain TCP is unencrypted and is not saved for launch auto-connect. TAK Servers that use logins issue a client certificate from a username and password on the enrollment port (usually 8446). Inbound CoT from local clients and the remote server shows as contacts on the map. The status bar uses one TAK label that combines the local server and the remote relay (for example, "TAK running, remote connected").
+Full guide: [TAK gateway](tak.md). The **TAK** tab runs a local CoT server and a remote relay to an OpenTAKServer, FreeTAKServer, or TAK Server. The relay uses TLS or plain TCP; plain TCP is unencrypted and is not saved for launch auto-connect. TAK Servers that use logins issue a client certificate from a username and password on the enrollment port (usually 8446). Inbound CoT from local clients and the remote server shows as contacts on the map. The status bar uses one TAK label that combines the local server and the remote relay (for example, "TAK running, remote connected").
 
 ### EUD reports “TLS certificate invalid” / cannot connect with a mesh-client data package
 
@@ -779,6 +838,8 @@ openssl pkcs12 -export -nokeys -in ca.pem -out truststore.p12 -caname mesh-clien
 ```
 
 ## Chat, nodes, and notifications
+
+Full guide: [Chat](chat.md).
 
 ### Unread messages but no app-icon badge
 
@@ -993,13 +1054,15 @@ Legacy SQLite rows could cross-contaminate the shared `nodes` table before proto
 
 ### Map tab without internet (offline / no WAN)
 
+See [Maps and offline maps](maps.md).
+
 **Basemap tiles:** The map background uses **OpenStreetMap** by default, with a **Dark (OpenStreetMap)** option styled locally without an API key. Use **Layers** under the status counts to switch basemaps and toggle overlays. Tiles are served through the privileged **`mesh-tiles:`** protocol and viewed tiles are cached automatically under the app **userData** `tile-cache/` directory (~1 GiB LRU). OpenStreetMap permits normal viewport caching but prohibits prefetching, so region downloads and **Auto-cache** are available only with **USGS Topo** selected. For USGS, **Download current view** estimates and confirms a region; downloads pause on a dropped connection and resume after ~60s stable online. **Clear tile cache** frees disk. **Without internet, uncached areas look blank**; cached tiles and local mesh overlays still render. Older CARTO dark tiles are kept on disk but are not displayed by the new dark source; view an area online once to cache its replacement. Developer reference: [`docs/development/offline-maps.md`](development/offline-maps.md).
 
 **Overlays:** **Node markers, polylines, position trails, and other vector layers** are separate from the tile layer. If nodes have latitude/longitude (from RF, MQTT, SQLite, or your session), those overlays can still **render on top of a missing or partial basemap**.
 
 **Your position offline:** Use **device GPS** when available, **Fixed Position** on the **Radio** tab, or **static coordinates** in app/GPS settings. The IP-geolocation fallback returns immediately with code `OFFLINE` when there is no WAN. See **GPS "Location unavailable" or stuck on the map** above. Positions heard over the mesh do not require internet.
 
-**USGS Topo blank offline:** **USGS Topo** covers the **United States only** — outside the US the basemap is blank by design. Tiles come from the fixed, allowlisted USGS National Map host (`basemap.nationalmap.gov`); if it is blocked by a firewall/proxy or down, uncached areas stay blank. Offline, only viewed or region-downloaded tiles render (select USGS Topo before **Download current view**). Above zoom 16 tiles are overzoomed and look soft. Custom tile URLs are rejected by design. See [offline-maps.md](development/offline-maps.md).
+**USGS Topo blank offline:** **USGS Topo** covers the **United States only** — outside the US the basemap is blank by design. Tiles come from the fixed, allowlisted USGS National Map host (`basemap.nationalmap.gov`); if it is blocked by a firewall/proxy or down, uncached areas stay blank. Offline, only viewed or region-downloaded tiles render (select USGS Topo before **Download current view**). Above zoom 16 tiles are overzoomed and look soft. Built-in basemaps still use fixed allowlisted hosts only; to add your own tiles, use a user-confirmed custom XYZ source or import an MBTiles package (Map → Offline maps → Custom sources). See [Maps and offline maps](maps.md#custom-map-sources) and [offline-maps.md](development/offline-maps.md).
 
 ### Verifying offline behavior (manual QA)
 

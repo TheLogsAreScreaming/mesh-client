@@ -1,11 +1,10 @@
 import dns from 'node:dns/promises';
-import type { LookupFunction } from 'node:net';
 
-import { Address4, Address6 } from 'ip-address';
-import { Agent, fetch as undiciFetch } from 'undici';
+import { fetch as undiciFetch } from 'undici';
 
 import { isLikelyDirectImageUrl } from '../shared/chatDirectImageUrl';
 import { stripConnectHostBrackets } from '../shared/connectHost';
+import { isValidIpv6Literal } from '../shared/ipLiteral';
 import {
   baseMimeFromContentType,
   bufferToRasterImageDataUrl,
@@ -13,6 +12,7 @@ import {
   LINK_PREVIEW_IMAGE_MIMES,
   resolveSafeRasterImageMime,
 } from '../shared/safeRasterImageMime';
+import { createPinnedPublicAgent, isGlobalPublicAddress } from './pinnedPublicConnect';
 import { sanitizeLogMessage } from './sanitize-log-message';
 
 export const LINK_PREVIEW_FETCH_TIMEOUT_MS = 10_000;
@@ -28,7 +28,8 @@ export const LINK_PREVIEW_IMAGE_NEGATIVE_CACHE_MS = 5 * 60 * 1000;
 /** Max IPC link-preview fetches per rolling window (DoS / resource guard). */
 export const LINK_PREVIEW_RATE_LIMIT_MAX = 20;
 export const LINK_PREVIEW_RATE_LIMIT_WINDOW_MS = 60_000;
-const LINK_PREVIEW_IMAGE_MAX_REDIRECTS = 5;
+/** Shared hop cap for HTML page and image preview redirect following. */
+export const LINK_PREVIEW_MAX_REDIRECTS = 5;
 const LINK_PREVIEW_MAX_CACHE_ENTRIES = 256;
 const LINK_PREVIEW_MAX_IMAGE_CACHE_ENTRIES = 128;
 
@@ -49,7 +50,7 @@ export function linkPreviewBaseMime(contentType: string): string {
 }
 
 export function isLinkPreviewImageMime(contentType: string): boolean {
-  return LINK_PREVIEW_IMAGE_MIMES.has(linkPreviewBaseMime(contentType));
+  return LINK_PREVIEW_IMAGE_MIMES.has(baseMimeFromContentType(contentType));
 }
 
 /** Cancel an unused body so the undici Agent pinned to the stream can close. */
@@ -74,41 +75,24 @@ export function isYouTubePreviewHostname(hostname: string): boolean {
 export function canonicalizeYouTubeWatchUrl(url: URL): string | null {
   const host = url.hostname.toLowerCase();
   if (!isYouTubePreviewHostname(host)) return null;
-
-  if (host === 'youtu.be' || host === 'www.youtu.be') {
-    const id = url.pathname.split('/').find((seg) => seg.length > 0);
-    if (id && YOUTUBE_VIDEO_ID.test(id)) {
-      return `https://www.youtube.com/watch?v=${id}`;
-    }
-    return null;
-  }
-
-  const fromQuery = url.searchParams.get('v');
-  if (fromQuery && YOUTUBE_VIDEO_ID.test(fromQuery)) {
-    return `https://www.youtube.com/watch?v=${fromQuery}`;
-  }
-
   const parts = url.pathname.split('/').filter(Boolean);
-  const kind = parts[0];
-  const id = parts[1];
-  if (
-    id &&
-    YOUTUBE_VIDEO_ID.test(id) &&
-    (kind === 'shorts' || kind === 'embed' || kind === 'live' || kind === 'v')
-  ) {
-    return `https://www.youtube.com/watch?v=${id}`;
-  }
-  return null;
+  const query = url.searchParams.get('v');
+  let id: string | undefined;
+  if (host.endsWith('youtu.be')) id = parts[0];
+  else if (query && YOUTUBE_VIDEO_ID.test(query)) id = query;
+  else if (['shorts', 'embed', 'live', 'v'].includes(parts[0])) id = parts[1];
+  return id && YOUTUBE_VIDEO_ID.test(id) ? `https://www.youtube.com/watch?v=${id}` : null;
 }
 
 function titleFromImageUrl(url: URL): string {
   const seg = url.pathname.split('/').findLast((s) => s.length > 0) ?? '';
+  let title = seg;
   try {
-    return decodeURIComponent(seg) || url.hostname;
+    title = decodeURIComponent(seg);
   } catch {
-    // catch-no-log-ok malformed percent-encoding in path segment
-    return seg || url.hostname;
+    // catch-no-log-ok malformed percent-encoding retains the original segment
   }
+  return title || url.hostname;
 }
 
 function evictOldestCacheEntry<K, V>(cache: Map<K, V>, maxEntries: number): void {
@@ -138,7 +122,7 @@ async function lookupHostname(hostname: string): Promise<string> {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
     const { address } = await Promise.race([
-      dns.lookup(hostname, { verbatim: true }),
+      dns.lookup(hostname, { order: 'verbatim' }),
       new Promise<never>((_, reject) => {
         timeoutId = setTimeout(() => {
           reject(new Error('dns lookup timeout'));
@@ -153,10 +137,7 @@ async function lookupHostname(hostname: string): Promise<string> {
 
 /** Returns whether an IP address is globally reachable. */
 function isGlobalIpAddress(address: string): boolean {
-  const bare = stripConnectHostBrackets(address.trim());
-  if (Address4.isValid(bare)) return new Address4(bare).isGlobal();
-  if (Address6.isValid(bare)) return new Address6(bare).isGlobal();
-  return false;
+  return isGlobalPublicAddress(address);
 }
 
 /** Single DNS resolution used for both block checks and pinned connect (avoids lookup TOCTOU). */
@@ -166,7 +147,7 @@ async function resolvePinnedPreviewAddress(hostname: string): Promise<string> {
     throw new Error('blocked hostname');
   }
 
-  if (Address6.isValid(bare)) {
+  if (isValidIpv6Literal(bare)) {
     if (!isGlobalIpAddress(bare)) throw new Error('blocked hostname');
     return bare;
   }
@@ -179,38 +160,11 @@ async function resolvePinnedPreviewAddress(hostname: string): Promise<string> {
   return address;
 }
 
-/** Returns the explicit URL port or the protocol default. */
-function defaultConnectPort(url: URL): number {
-  if (url.port) return Number(url.port);
-  return url.protocol === 'http:' ? 80 : 443;
-}
-
-/** Creates a socket lookup that always returns the validated address. */
-function pinnedLookup(address: string): LookupFunction {
-  const family = Address4.isValid(address) ? 4 : 6;
-  return (_hostname, options, callback) => {
-    if (options.all) {
-      callback(null, [{ address, family }]);
-      return;
-    }
-    callback(null, address, family);
-  };
-}
-
 /** Fetches a URL through an agent pinned to its validated DNS result. */
 async function fetchWithResolvedHost(urlString: string, init: RequestInit): Promise<Response> {
   const url = new URL(urlString);
   const address = await resolvePinnedPreviewAddress(url.hostname);
-  const hostname = stripConnectHostBrackets(url.hostname);
-  const servername =
-    Address4.isValid(hostname) || Address6.isValid(hostname) ? undefined : hostname;
-  const agent = new Agent({
-    connect: {
-      lookup: pinnedLookup(address),
-      port: defaultConnectPort(url),
-      servername,
-    },
-  });
+  const agent = createPinnedPublicAgent(url, address);
   try {
     const response = (await undiciFetch(urlString, {
       ...init,
@@ -235,32 +189,37 @@ async function fetchWithResolvedHost(urlString: string, init: RequestInit): Prom
     };
 
     const reader = upstream.getReader();
-    const stream = new ReadableStream<Uint8Array>({
-      async pull(controller) {
-        try {
-          const { done, value } = await reader.read();
-          if (done) {
-            controller.close();
+    // highWaterMark 0: do not auto-pull on construct. Default HWM can drain an empty
+    // upstream before discardResponseBody runs, so cancel never reaches the Agent body.
+    const stream = new ReadableStream<Uint8Array>(
+      {
+        async pull(controller) {
+          try {
+            const { done, value } = await reader.read();
+            if (done) {
+              controller.close();
+              closeAgent();
+              return;
+            }
+            controller.enqueue(value);
+          } catch (err) {
+            // catch-no-log-ok forward stream failure to consumer via controller.error
             closeAgent();
-            return;
+            controller.error(err);
           }
-          controller.enqueue(value);
-        } catch (err) {
-          // catch-no-log-ok forward stream failure to consumer via controller.error
-          closeAgent();
-          controller.error(err);
-        }
+        },
+        async cancel(reason) {
+          try {
+            await reader.cancel(reason);
+          } catch {
+            // catch-no-log-ok cancel may race with stream abort
+          } finally {
+            closeAgent();
+          }
+        },
       },
-      async cancel(reason) {
-        try {
-          await reader.cancel(reason);
-        } catch {
-          // catch-no-log-ok cancel may race with stream abort
-        } finally {
-          closeAgent();
-        }
-      },
-    });
+      { highWaterMark: 0 },
+    );
 
     return new Response(stream, {
       status: response.status,
@@ -353,12 +312,13 @@ export function shouldProxyPreviewImageUrl(imageUrl: string): boolean {
   }
 }
 
-async function isAllowedHttpsImageUrl(imageUrl: string): Promise<boolean> {
+/** HTTPS + SSRF checks for each preview fetch hop (page or image). */
+async function isAllowedHttpsPreviewUrl(urlString: string): Promise<boolean> {
   let parsed: URL;
   try {
-    parsed = new URL(imageUrl);
+    parsed = new URL(urlString);
   } catch {
-    // catch-no-log-ok invalid image URL string
+    // catch-no-log-ok invalid preview URL string
     return false;
   }
   if (parsed.protocol !== 'https:') return false;
@@ -388,27 +348,27 @@ async function readResponseBodyUpTo(
     }
   }
   if (total === 0) return null;
-  const merged = new Uint8Array(total);
-  let pos = 0;
-  for (const chunk of chunks) {
-    merged.set(chunk, pos);
-    pos += chunk.length;
-  }
-  return merged;
+  return Buffer.concat(chunks, total);
 }
 
-async function fetchImageResponseWithRedirectGuard(
-  imageUrl: string,
+/**
+ * Follow page/image HTTPS redirects with the same per-hop checks and body cleanup.
+ * Callers retain their Accept header and timeout, and pages retain the final URL.
+ */
+async function fetchPreviewResponseWithRedirectGuard(
+  urlString: string,
+  accept: string,
+  timeoutMs: number,
   redirectCount = 0,
-): Promise<Response | null> {
-  if (!(await isAllowedHttpsImageUrl(imageUrl))) return null;
-  if (redirectCount > LINK_PREVIEW_IMAGE_MAX_REDIRECTS) return null;
+): Promise<{ response: Response; finalUrl: string } | null> {
+  if (!(await isAllowedHttpsPreviewUrl(urlString))) return null;
+  if (redirectCount > LINK_PREVIEW_MAX_REDIRECTS) return null;
 
-  const response = await fetchWithResolvedHost(imageUrl, {
+  const response = await fetchWithResolvedHost(urlString, {
     method: 'GET',
-    headers: { Accept: 'image/*' },
     redirect: 'manual',
-    signal: AbortSignal.timeout(LINK_PREVIEW_IMAGE_FETCH_TIMEOUT_MS),
+    headers: { Accept: accept },
+    signal: AbortSignal.timeout(timeoutMs),
   });
 
   if (response.status >= 300 && response.status < 400) {
@@ -419,21 +379,32 @@ async function fetchImageResponseWithRedirectGuard(
     }
     let nextUrl: string;
     try {
-      nextUrl = new URL(location, imageUrl).href;
+      nextUrl = new URL(location, urlString).href;
     } catch {
       // catch-no-log-ok malformed redirect Location header
       await discardResponseBody(response);
       return null;
     }
     await discardResponseBody(response);
-    return fetchImageResponseWithRedirectGuard(nextUrl, redirectCount + 1);
+    return fetchPreviewResponseWithRedirectGuard(nextUrl, accept, timeoutMs, redirectCount + 1);
   }
 
-  return response;
+  return { response, finalUrl: urlString };
+}
+
+async function readPreviewImageResponse(
+  response: Response,
+): Promise<{ dataUrl: string; size: number } | null> {
+  const reader = response.body?.getReader();
+  if (!reader) return null;
+  const bytes = await readResponseBodyUpTo(reader, LINK_PREVIEW_IMAGE_MAX_BYTES);
+  if (!bytes) return null;
+  const mime = resolveSafeRasterImageMime(bytes, LINK_PREVIEW_IMAGE_MIMES);
+  return mime ? { dataUrl: bufferToRasterImageDataUrl(bytes, mime), size: bytes.length } : null;
 }
 
 async function fetchPreviewImageAsDataUrl(imageUrl: string): Promise<string | undefined> {
-  if (!(await isAllowedHttpsImageUrl(imageUrl))) return undefined;
+  if (!(await isAllowedHttpsPreviewUrl(imageUrl))) return undefined;
 
   const now = Date.now();
   const cached = imageCache.get(imageUrl);
@@ -443,7 +414,12 @@ async function fetchPreviewImageAsDataUrl(imageUrl: string): Promise<string | un
 
   return withInflightDedup(imageInFlight, imageUrl, async (): Promise<string | undefined> => {
     try {
-      const response = await fetchImageResponseWithRedirectGuard(imageUrl);
+      const fetched = await fetchPreviewResponseWithRedirectGuard(
+        imageUrl,
+        'image/*',
+        LINK_PREVIEW_IMAGE_FETCH_TIMEOUT_MS,
+      );
+      const response = fetched?.response;
       if (!response?.ok) {
         if (response) await discardResponseBody(response);
         imageCache.set(imageUrl, {
@@ -458,17 +434,11 @@ async function fetchPreviewImageAsDataUrl(imageUrl: string): Promise<string | un
         return undefined;
       }
 
-      const reader = response.body?.getReader();
-      if (!reader) return undefined;
-      const bytes = await readResponseBodyUpTo(reader, LINK_PREVIEW_IMAGE_MAX_BYTES);
-      if (!bytes) return undefined;
-
-      const mime = resolveSafeRasterImageMime(bytes, LINK_PREVIEW_IMAGE_MIMES);
-      if (!mime) return undefined;
-
-      const dataUrl = bufferToRasterImageDataUrl(bytes, mime);
+      const image = await readPreviewImageResponse(response);
+      if (!image) return undefined;
+      const { dataUrl, size } = image;
       // Only cache payloads within the tighter cache ceiling to bound main-process memory.
-      if (bytes.length <= LINK_PREVIEW_IMAGE_CACHE_MAX_BYTES) {
+      if (size <= LINK_PREVIEW_IMAGE_CACHE_MAX_BYTES) {
         evictOldestCacheEntry(imageCache, LINK_PREVIEW_MAX_IMAGE_CACHE_ENTRIES);
         imageCache.set(imageUrl, { value: dataUrl, expires: now + LINK_PREVIEW_CACHE_TTL_MS });
       }
@@ -542,6 +512,83 @@ async function fetchYouTubeOEmbedPreview(pageUrl: URL): Promise<LinkPreviewMetad
   };
 }
 
+/** Decode a minimal set of HTML entities in OG/meta content values. */
+export function decodeLinkPreviewHtmlEntities(value: string): string {
+  // Unescape &amp; last so sequences like &amp;lt; stay as &lt; (not <).
+  return value
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&(?:#39|apos);/gi, "'")
+    .replace(/&amp;/gi, '&');
+}
+
+const META_ATTR_RE = /([^\s=/>]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
+/** Cap meta attribute text before regex parse (ReDoS guard on long tokens without `=`). */
+export const LINK_PREVIEW_MAX_META_ATTR_CHARS = 4_096;
+
+/** Parse attributes from a single `<meta …>` attribute string (order-independent). */
+export function parseMetaTagAttributes(attrText: string): Record<string, string> {
+  const attrs: Record<string, string> = {};
+  META_ATTR_RE.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = META_ATTR_RE.exec(attrText)) !== null) {
+    // The pattern requires a nonempty name and one of the quoted-value captures.
+    const name = match[1].toLowerCase();
+    const raw = match[2] ?? match[3];
+    attrs[name] = decodeLinkPreviewHtmlEntities(raw);
+  }
+  return attrs;
+}
+
+const META_OPEN_RE = /<meta(?=[\s/>]|$)/gi;
+
+/** Scan each candidate once, respecting quotes and stopping at an unterminated suffix. */
+export function scanNextMetaTag(
+  html: string,
+  from: number,
+): { attrText: string; nextIndex: number } | null {
+  const start = Math.max(0, from);
+  if (!Number.isInteger(start)) return null;
+  META_OPEN_RE.lastIndex = start;
+  if (!META_OPEN_RE.exec(html)) return null;
+  const afterKeyword = META_OPEN_RE.lastIndex;
+  let quote = '';
+  for (let i = afterKeyword; i < html.length; i++) {
+    const ch = html[i];
+    if (quote) {
+      if (ch === quote) quote = '';
+    } else if (ch === '"' || ch === "'") quote = ch;
+    else if (ch === '>') return { attrText: html.slice(afterKeyword, i), nextIndex: i + 1 };
+  }
+  return null;
+}
+
+/**
+ * Extract meta `content` by Open Graph `property` or HTML `name`, ignoring extra
+ * attributes (e.g. React Helmet `data-react-helmet`) and attribute order.
+ */
+export function extractMetaContent(
+  html: string,
+  opts: { property?: string; name?: string },
+): string | undefined {
+  const wantProperty = opts.property?.toLowerCase();
+  const wantName = opts.name?.toLowerCase();
+  let cursor = 0;
+  while (cursor < html.length) {
+    const tag = scanNextMetaTag(html, cursor);
+    if (!tag) return undefined;
+    cursor = tag.nextIndex;
+    if (tag.attrText.length > LINK_PREVIEW_MAX_META_ATTR_CHARS) continue;
+    const attrs = parseMetaTagAttributes(tag.attrText);
+    const content = attrs.content?.trim();
+    if (!content) continue;
+    if (wantProperty && attrs.property?.toLowerCase() === wantProperty) return content;
+    if (wantName && attrs.name?.toLowerCase() === wantName) return content;
+  }
+  return undefined;
+}
+
 async function fetchHtmlLinkPreview(
   urlString: string,
   response: Response,
@@ -553,24 +600,22 @@ async function fetchHtmlLinkPreview(
 
   const html = new TextDecoder().decode(merged);
 
-  const ogTitle =
-    /<meta\s+property="og:title"\s+content="([^"]+)"/i.exec(html)?.[1] ??
-    /<meta\s+content="([^"]+)"\s+property="og:title"/i.exec(html)?.[1] ??
-    /<title[^>]*>([^<]+)<\/title>/i.exec(html)?.[1];
-  if (!ogTitle?.trim()) return null;
+  const metaTitle = extractMetaContent(html, { property: 'og:title' });
+  const titleTag = /<title[^>]*>([^<]+)<\/title>/i.exec(html)?.[1];
+  // Meta content is already entity-decoded in parseMetaTagAttributes; <title> is not.
+  const title = (
+    metaTitle ?? (titleTag ? decodeLinkPreviewHtmlEntities(titleTag) : undefined)
+  )?.trim();
+  if (!title) return null;
 
-  const title = ogTitle.trim();
-
-  const ogDesc =
-    /<meta\s+property="og:description"\s+content="([^"]+)"/i.exec(html)?.[1] ??
-    /<meta\s+content="([^"]+)"\s+property="og:description"/i.exec(html)?.[1] ??
-    /<meta\s+name="description"\s+content="([^"]+)"/i.exec(html)?.[1];
-  const description = ogDesc?.trim() || undefined;
+  const description =
+    extractMetaContent(html, { property: 'og:description' }) ??
+    extractMetaContent(html, { name: 'description' });
 
   const ogImage =
-    /<meta\s+property="og:image"\s+content="([^"]+)"/i.exec(html)?.[1] ??
-    /<meta\s+content="([^"]+)"\s+property="og:image"/i.exec(html)?.[1];
-  let image = ogImage?.trim().startsWith('https://') ? ogImage.trim() : undefined;
+    extractMetaContent(html, { property: 'og:image' }) ??
+    extractMetaContent(html, { name: 'twitter:image' });
+  let image = ogImage?.startsWith('https://') ? ogImage : undefined;
 
   if (image) {
     image = await fetchPreviewImageAsDataUrl(image);
@@ -583,17 +628,9 @@ async function fetchDirectImagePreviewFromResponse(
   url: URL,
   response: Response,
 ): Promise<LinkPreviewMetadata | null> {
-  const reader = response.body?.getReader();
-  if (!reader) return null;
-  const bytes = await readResponseBodyUpTo(reader, LINK_PREVIEW_IMAGE_MAX_BYTES);
-  if (!bytes) return null;
-  const mime = resolveSafeRasterImageMime(bytes, LINK_PREVIEW_IMAGE_MIMES);
-  if (!mime) return null;
-  return {
-    title: titleFromImageUrl(url),
-    image: bufferToRasterImageDataUrl(bytes, mime),
-    kind: 'image',
-  };
+  const image = await readPreviewImageResponse(response);
+  if (!image) return null;
+  return { title: titleFromImageUrl(url), image: image.dataUrl, kind: 'image' };
 }
 
 /** Extension-hinted HTTPS images via the dedicated image fetcher (follows redirects). */
@@ -635,15 +672,10 @@ async function fetchLinkPreviewFromHttpResponse(
   return await fetchHtmlLinkPreview(urlString, response);
 }
 
-async function fetchLinkPreviewUncached(urlString: string): Promise<LinkPreviewMetadata | null> {
-  let url: URL;
-  try {
-    url = new URL(urlString);
-  } catch {
-    // catch-no-log-ok invalid URL string — silent failure by design
-    return null;
-  }
-  if (url.protocol !== 'https:') return null;
+async function fetchLinkPreviewUncached(
+  urlString: string,
+  url: URL,
+): Promise<LinkPreviewMetadata | null> {
   if (await isBlockedHostnameResolved(url.hostname)) return null;
 
   try {
@@ -655,13 +687,14 @@ async function fetchLinkPreviewUncached(urlString: string): Promise<LinkPreviewM
     const direct = await tryDirectImageUrlPreview(url);
     if (direct) return direct;
 
-    const response = await fetchWithResolvedHost(urlString, {
-      method: 'GET',
-      redirect: 'manual',
-      headers: { Accept: 'text/html,image/*,*/*;q=0.8' },
-      signal: AbortSignal.timeout(LINK_PREVIEW_FETCH_TIMEOUT_MS),
-    });
-    return await fetchLinkPreviewFromHttpResponse(url, urlString, response);
+    const fetched = await fetchPreviewResponseWithRedirectGuard(
+      urlString,
+      'text/html,image/*,*/*;q=0.8',
+      LINK_PREVIEW_FETCH_TIMEOUT_MS,
+    );
+    if (!fetched) return null;
+    const finalUrl = new URL(fetched.finalUrl);
+    return await fetchLinkPreviewFromHttpResponse(finalUrl, fetched.finalUrl, fetched.response);
   } catch (err) {
     console.debug(
       '[chat] fetchLinkPreview error:',
@@ -672,8 +705,10 @@ async function fetchLinkPreviewUncached(urlString: string): Promise<LinkPreviewM
 }
 
 export async function fetchLinkPreview(urlString: string): Promise<LinkPreviewMetadata | null> {
+  let url: URL;
   try {
-    if (new URL(urlString).protocol !== 'https:') return null;
+    url = new URL(urlString);
+    if (url.protocol !== 'https:') return null;
   } catch {
     // catch-no-log-ok invalid URL strings fail closed without preview work
     return null;
@@ -698,7 +733,7 @@ export async function fetchLinkPreview(urlString: string): Promise<LinkPreviewMe
     previewInFlight,
     urlString,
     async (): Promise<LinkPreviewMetadata | null> => {
-      const value = await fetchLinkPreviewUncached(urlString);
+      const value = await fetchLinkPreviewUncached(urlString, url);
       evictOldestCacheEntry(previewCache, LINK_PREVIEW_MAX_CACHE_ENTRIES);
       previewCache.set(urlString, { value, expires: Date.now() + LINK_PREVIEW_CACHE_TTL_MS });
       return value;

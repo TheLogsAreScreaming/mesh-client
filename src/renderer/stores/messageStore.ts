@@ -2,10 +2,13 @@ import { create } from 'zustand';
 
 import { isMeshtasticBroadcastNodeNum } from '@/shared/nodeNameUtils';
 
+import { MAX_IN_MEMORY_CHAT_MESSAGES } from '../lib/chatInMemoryBuffer';
 import {
   clearHeardRepeatWindowIfMessage,
   renameHeardRepeatWindowMessageId,
 } from '../lib/meshcore/heardRepeatTracker';
+import { trimMeshcoreMemoryWindow } from '../lib/meshcoreMessageMemoryWindow';
+import { getMeshtasticMessageLoadLimit } from '../lib/meshtasticMessageLoadLimit';
 import { useRelayCoverageStore } from '../lib/relayCoverage/relayCoverageStore';
 import type { IdentityId } from '../lib/types';
 import { getIdentity } from './identityStore';
@@ -39,6 +42,7 @@ export interface MessageRecord {
   localOrder?: number;
   rxSnr?: number;
   rxRssi?: number;
+  rxRadioTransport?: 'rf' | 'ble';
   hopCount?: number;
   /** RF-derived hops away for this receive when known (Meshtastic hopStart−hopLimit; MeshCore path hops). */
   rxHops?: number;
@@ -59,6 +63,11 @@ export interface MessageRecord {
   channelKey?: string;
   /** Radio (local node number) that recorded this message, when known. */
   radioNodeId?: number;
+  /**
+   * MeshCore wire text used for dedupe (often `Name: body` or reply/reaction wire).
+   * Distinct from display `payload`, which may strip brackets / name prefixes.
+   */
+  meshcoreDedupeKey?: string;
 }
 
 interface MessageStoreState {
@@ -110,6 +119,7 @@ const MESSAGE_RECORD_KEYS: (keyof MessageRecord)[] = [
   'localOrder',
   'rxSnr',
   'rxRssi',
+  'rxRadioTransport',
   'hopCount',
   'rxHops',
   'tapback',
@@ -128,8 +138,17 @@ const MESSAGE_RECORD_KEYS: (keyof MessageRecord)[] = [
 ];
 
 function messageRecordFieldsEqual(a: MessageRecord, b: MessageRecord): boolean {
-  // MessageRecord fields are primitives (string/number/boolean/undefined); strict === is sufficient.
+  // Most MessageRecord fields are primitives; reticulumAttachments is a small object array.
   for (const key of MESSAGE_RECORD_KEYS) {
+    if (key === 'reticulumAttachments') {
+      if (
+        JSON.stringify(a.reticulumAttachments ?? null) !==
+        JSON.stringify(b.reticulumAttachments ?? null)
+      ) {
+        return false;
+      }
+      continue;
+    }
     if (a[key] !== b[key]) return false;
   }
   return true;
@@ -190,9 +209,113 @@ function carryChannelIdentity(existing: MessageRecord, incoming: MessageRecord):
   };
 }
 
+/**
+ * Live insert cap: Meshtastic matches the SQLite load setting (hard-capped at
+ * MAX_IN_MEMORY_CHAT_MESSAGES); other protocols use the hard in-memory ceiling.
+ */
+function resolveLiveMessageCap(identityId: IdentityId): number {
+  const protocol = getIdentity(identityId)?.protocol.type;
+  if (protocol === 'meshtastic') {
+    return Math.min(getMeshtasticMessageLoadLimit(), MAX_IN_MEMORY_CHAT_MESSAGES);
+  }
+  return MAX_IN_MEMORY_CHAT_MESSAGES;
+}
+
+function compareMessageRecordsForTrim(a: MessageRecord, b: MessageRecord): number {
+  if (a.timestamp !== b.timestamp) return a.timestamp - b.timestamp;
+  const aOrder = a.localOrder ?? 0;
+  const bOrder = b.localOrder ?? 0;
+  if (aOrder !== bOrder) return aOrder - bOrder;
+  return a.id.localeCompare(b.id);
+}
+
+function isProtectedFromLiveTrim(message: MessageRecord): boolean {
+  return message.status === 'sending';
+}
+
+/**
+ * MeshCore keeps each logical channel's hydration floor, then surplus up to `cap`.
+ * Other protocols drop the oldest rows down to `cap`.
+ */
+function trimIdentityBucketToNewest(
+  byIdentity: Record<string, MessageRecord>,
+  cap: number,
+  protocol: string | undefined,
+): { next: Record<string, MessageRecord>; evictedIds: string[] } {
+  const values = Object.values(byIdentity);
+  const size = values.length;
+  if (size <= cap) return { next: byIdentity, evictedIds: [] };
+  // MeshCore-only: SQL hydration floors are not the shared newest-N cap.
+  if (protocol === 'meshcore') return trimMeshcoreIdentityBucket(byIdentity, values, cap);
+
+  const protectedRows = values.filter(isProtectedFromLiveTrim);
+  const evictable = values
+    .filter((message) => !isProtectedFromLiveTrim(message))
+    .sort(compareMessageRecordsForTrim);
+  const evictCount = Math.min(evictable.length, Math.max(0, size - cap));
+  if (evictCount === 0) return { next: byIdentity, evictedIds: [] };
+
+  // Routine live insert is one over the cap: omit the oldest row that is not still sending.
+  if (size === cap + 1 && evictCount === 1) {
+    const oldest = evictable[0];
+    if (!oldest) return { next: byIdentity, evictedIds: [] };
+    return { next: omitRecordKey(byIdentity, oldest.id), evictedIds: [oldest.id] };
+  }
+
+  const evictedIds = evictable.slice(0, evictCount).map((m) => m.id);
+  const evicted = new Set(evictedIds);
+  const next: Record<string, MessageRecord> = {};
+  for (const message of protectedRows) {
+    if (!evicted.has(message.id)) next[message.id] = message;
+  }
+  for (const message of evictable.slice(evictCount)) next[message.id] = message;
+  return { next, evictedIds };
+}
+
+/** Drop MeshCore rows that sit outside each channel floor and the surplus cap. */
+function trimMeshcoreIdentityBucket(
+  byIdentity: Record<string, MessageRecord>,
+  values: MessageRecord[],
+  cap: number,
+): { next: Record<string, MessageRecord>; evictedIds: string[] } {
+  const kept = trimMeshcoreMemoryWindow(
+    values,
+    (message) => ({
+      timestamp: message.timestamp,
+      localOrder: message.localOrder,
+      channelIndex: message.channelIndex,
+      to: message.to,
+      roomServerId: message.roomServerId,
+      status: message.status,
+      trimId: message.id,
+    }),
+    cap,
+  );
+  if (kept.length === values.length) return { next: byIdentity, evictedIds: [] };
+  const keepIds = new Set<string>();
+  for (const message of kept) keepIds.add(message.id);
+  const next: Record<string, MessageRecord> = {};
+  const evictedIds: string[] = [];
+  for (const message of values) {
+    if (keepIds.has(message.id)) next[message.id] = message;
+    else evictedIds.push(message.id);
+  }
+  return { next, evictedIds };
+}
+
+function cleanupEvictedLiveMessages(identityId: IdentityId, evictedIds: string[]): void {
+  if (evictedIds.length === 0) return;
+  const relay = useRelayCoverageStore.getState();
+  for (const id of evictedIds) {
+    relay.remove(identityId, id);
+    clearHeardRepeatWindowIfMessage(identityId, id);
+  }
+}
+
 /** Insert or replace the full record when fields differ (no merge). Use upsertMessage for partial updates. */
 export function addMessage(identityId: IdentityId, incoming: MessageRecord): void {
   let inserted = null as MessageRecord | null;
+  let evictedIds: string[] = [];
   useMessageStore.setState((s) => {
     const byIdentity = s.messages[identityId] ?? {};
     const existing = byIdentity[incoming.id];
@@ -202,10 +325,23 @@ export function addMessage(identityId: IdentityId, incoming: MessageRecord): voi
     if (existing === message || (existing && messageRecordFieldsEqual(existing, message))) {
       return s;
     }
-    if (!existing) inserted = message;
-    return mergeIdentityMessages(s, identityId, { ...byIdentity, [message.id]: message });
+    const grown = { ...byIdentity, [message.id]: message };
+    if (!existing) {
+      inserted = message;
+      const trimmed = trimIdentityBucketToNewest(
+        grown,
+        resolveLiveMessageCap(identityId),
+        getIdentity(identityId)?.protocol.type,
+      );
+      evictedIds = trimmed.evictedIds;
+      return mergeIdentityMessages(s, identityId, trimmed.next);
+    }
+    return mergeIdentityMessages(s, identityId, grown);
   });
-  if (inserted) emitMessageStoreEvent({ type: 'added', identityId, record: inserted });
+  cleanupEvictedLiveMessages(identityId, evictedIds);
+  if (inserted && useMessageStore.getState().messages[identityId]?.[inserted.id]) {
+    emitMessageStoreEvent({ type: 'added', identityId, record: inserted });
+  }
 }
 
 /**
@@ -215,6 +351,7 @@ export function addMessage(identityId: IdentityId, incoming: MessageRecord): voi
  */
 export function upsertMessage(identityId: IdentityId, message: MessageRecord): void {
   let inserted = null as MessageRecord | null;
+  let evictedIds: string[] = [];
   useMessageStore.setState((s) => {
     const byIdentity = s.messages[identityId] ?? {};
     const existing = byIdentity[message.id];
@@ -228,10 +365,23 @@ export function upsertMessage(identityId: IdentityId, message: MessageRecord): v
     if (existing === merged || (existing && messageRecordFieldsEqual(existing, merged))) {
       return s;
     }
-    if (!existing) inserted = merged;
-    return mergeIdentityMessages(s, identityId, { ...byIdentity, [message.id]: merged });
+    const grown = { ...byIdentity, [message.id]: merged };
+    if (!existing) {
+      inserted = merged;
+      const trimmed = trimIdentityBucketToNewest(
+        grown,
+        resolveLiveMessageCap(identityId),
+        getIdentity(identityId)?.protocol.type,
+      );
+      evictedIds = trimmed.evictedIds;
+      return mergeIdentityMessages(s, identityId, trimmed.next);
+    }
+    return mergeIdentityMessages(s, identityId, grown);
   });
-  if (inserted) emitMessageStoreEvent({ type: 'added', identityId, record: inserted });
+  cleanupEvictedLiveMessages(identityId, evictedIds);
+  if (inserted && useMessageStore.getState().messages[identityId]?.[inserted.id]) {
+    emitMessageStoreEvent({ type: 'added', identityId, record: inserted });
+  }
 }
 
 /**

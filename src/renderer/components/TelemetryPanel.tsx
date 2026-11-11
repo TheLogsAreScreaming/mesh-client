@@ -17,9 +17,12 @@ import { formatDisplayTime } from '@/renderer/lib/formatDisplayTime';
 import { useParentIconTrigger } from '@/renderer/lib/icons/iconMotionContext';
 
 import { downloadBlob } from '../lib/downloadBlob';
+import { meshcoreFloodSendPercent } from '../lib/meshcore/meshcoreFloodSendPercent';
 import type { ProtocolCapabilities } from '../lib/radio/BaseRadioProvider';
 import type { EnvironmentTelemetryPoint, MeshCoreLocalStats, TelemetryPoint } from '../lib/types';
 import { useTimeFormatStore } from '../stores/timeFormatStore';
+import CayenneTelemetrySection from './CayenneTelemetrySection';
+import { HelpTooltip } from './HelpTooltip';
 import RefreshButton from './RefreshButton';
 import SignalMeter from './SignalMeter';
 import { buttonClassName } from './ui/Button';
@@ -277,7 +280,7 @@ export default function TelemetryPanel({
           {showLiveSignalMeter && <SignalMeter rssi={latestSignal?.rssi} snr={latestSignal?.snr} />}
         </div>
         <div className="flex items-center gap-2">
-          {showEnvironment && (hasTemp || hasMcuTemp) && (
+          {showEnvironment ? (
             <button
               type="button"
               onClick={onToggleFahrenheit}
@@ -287,7 +290,7 @@ export default function TelemetryPanel({
             >
               {useFahrenheit ? t('telemetryPanel.tempUnitF') : t('telemetryPanel.tempUnitC')}
             </button>
-          )}
+          ) : null}
           {(telemetry.length > 0 ||
             signalTelemetry.length > 0 ||
             environmentTelemetry.length > 0) && (
@@ -758,6 +761,25 @@ export default function TelemetryPanel({
                   </div>
                   <div className="text-muted text-label">{t('telemetryPanel.statDirect')}</div>
                 </div>
+                {(() => {
+                  const floodPct = meshcoreFloodSendPercent(
+                    meshcorePacketStats.nSentFlood,
+                    meshcorePacketStats.nSentDirect,
+                  );
+                  if (floodPct === null) return null;
+                  return (
+                    <div className="text-center">
+                      <div className="text-lg font-semibold text-cyan-600">{floodPct}%</div>
+                      <div className="text-muted inline-flex items-center justify-center gap-1 text-xs">
+                        <span>{t('telemetryPanel.statFloodPercent')}</span>
+                        <HelpTooltip
+                          text={t('telemetryPanel.statFloodPercentHint')}
+                          ariaLabel={t('telemetryPanel.statFloodPercentHintAria')}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
                 <div className="text-center">
                   <div className="text-heading font-semibold text-purple-600">
                     {meshcorePacketStats.nRecvFlood}
@@ -788,6 +810,9 @@ export default function TelemetryPanel({
           </div>
         </>
       )}
+
+      {/* Cayenne LPP sensor charts (Meshtastic CAYENNE_APP; hidden when capability/data absent). */}
+      <CayenneTelemetrySection capabilities={capabilities} />
     </div>
   );
 }

@@ -44,8 +44,22 @@ describe('release.sh full-suite gate', () => {
     expect(pkg.scripts['test:staged']).toMatch(/precommit-tests/);
   });
 
+  it('reticulum:sidecar:test serializes vault KDF (JOB_ACTIVE Busy flake)', () => {
+    // Ratspeak vault uses a process-wide JOB_ACTIVE guard; parallel cargo test
+    // threads flake with Busy — same as check:reticulum-sidecar / llvm-cov CI.
+    expect(pkg.scripts['reticulum:sidecar:test']).toMatch(/-- --test-threads=1\b/);
+  });
+
   it('runs pnpm run test:run for the full Vitest suite', () => {
     expect(script).toMatch(/^\s*if ! pnpm run test:run; then\s*$/m);
+  });
+
+  it('runs ESLint with CI concurrency and eslint.ci.config.mjs (avoids OOM)', () => {
+    // format:check already ran; same invocation as ci.yaml lint job.
+    expect(script).toMatch(
+      /^\s*if ! pnpm run lint --concurrency 2 --config eslint\.ci\.config\.mjs; then\s*$/m,
+    );
+    expect(script).not.toMatch(/^\s*if ! pnpm run lint; then\s*$/m);
   });
 
   it('never invokes staged/related/changed Vitest bypasses', () => {

@@ -59,6 +59,8 @@ vi.mock('@/renderer/lib/sessions/meshcoreSession', () => ({
   tryGetMeshcoreSession: mocks.tryGetMeshcoreSession,
 }));
 
+import { mockConsoleWarn } from '@/renderer/lib/vitestConsoleMock';
+
 import { useProtocolRfAutoConnect } from './useProtocolRfAutoConnect';
 
 const disconnected: DeviceState = {

@@ -23,6 +23,25 @@ describe('meshcore repeater CLI working state', () => {
     expect(cliBody).toMatch(/runMeshcoreRepeaterRpcOnce\(\s*'cli'/);
   });
 
+  it('passes a unique coalesceKey so CLI exchanges never share an in-flight slot', () => {
+    const cliBody = extractUseCallbackBody(RUNTIME_SOURCE, 'sendRepeaterCliCommand');
+    expect(cliBody).toContain('coalesceKey: cliCoalesceKey');
+    expect(cliBody).toContain('repeaterCliCoalesceSeqRef');
+  });
+
+  it('does not append wire-originated received CLI history on the success path', () => {
+    const cliBody = extractUseCallbackBody(RUNTIME_SOURCE, 'sendRepeaterCliCommand');
+    const successWait = cliBody.indexOf('const response = await onceResult.responsePromise');
+    expect(successWait).toBeGreaterThan(-1);
+    const catchIdx = cliBody.indexOf('} catch (e: unknown) {', successWait);
+    expect(catchIdx).toBeGreaterThan(successWait);
+    const successSlice = cliBody.slice(successWait, catchIdx);
+    expect(successSlice).not.toMatch(/type:\s*['"]received['"]/);
+    expect(cliBody).toMatch(
+      /type:\s*['"]received['"].*source-policy-ok meshcore-cli-received-single-writer/,
+    );
+  });
+
   it('checks the captured session and caller lifetime before queued CLI transmission', () => {
     const cliBody = extractUseCallbackBody(RUNTIME_SOURCE, 'sendRepeaterCliCommand');
     expect(cliBody).toContain('connectionAtRequest !== connRef.current');
@@ -30,9 +49,10 @@ describe('meshcore repeater CLI working state', () => {
     expect(cliBody).toContain('setupGenerationAtRequest !== meshcoreSetupGenerationRef.current');
     expect(cliBody).toContain('!opts.isCurrent()');
     const sendSlotStart = cliBody.indexOf('await repeaterRemoteRpcRef.current(async () => {');
-    const sendIdx = cliBody.indexOf('await conn.sendTextMessage', sendSlotStart);
+    const sendIdx = cliBody.indexOf('await conn.sendToRadioFrame(frame)', sendSlotStart);
     expect(sendIdx).toBeGreaterThan(sendSlotStart);
     expect(cliBody.slice(sendSlotStart, sendIdx)).toContain('assertRequestCurrent();');
+    expect(cliBody.slice(sendSlotStart, sendIdx)).toContain('buildSendTxtMsgFrame');
   });
 
   it('releases shared CLI holds only for the connection generation that acquired them', () => {
@@ -84,9 +104,10 @@ describe('meshcore repeater CLI working state', () => {
     expect(cliBody).not.toMatch(/pubKeyMapRef\.current\.get\(nodeId\)/);
   });
 
-  it('awaits ping settle and login with companion queue before CLI send', () => {
+  it('awaits soft ping settle and login with companion queue before CLI send', () => {
     const cliBody = extractUseCallbackBody(RUNTIME_SOURCE, 'sendRepeaterCliCommand');
     expect(cliBody).toContain('awaitMeshcoreRepeaterPingSettleForNode');
+    expect(cliBody).toContain('MESHCORE_REPEATER_PING_SETTLE_SOFT_MS');
     expect(cliBody).toContain('MESHCORE_CLI_PREEMPT_TRACE_REASON');
     expect(cliBody).toContain('cancelAllPendingMeshcoreTracePaths');
     expect(cliBody).toContain('beginMeshcoreCliReplyHold');
@@ -99,9 +120,37 @@ describe('meshcore repeater CLI working state', () => {
     expect(cliBody).toContain('responsePromise');
     expect(cliBody).toContain('meshcoreTryRemoteServerLogin');
     expect(cliBody).toContain('meshcoreRepeaterTryLoginWithPassword');
+    expect(cliBody).toContain('meshcoreRepeaterHasResolvablePassword');
+    expect(cliBody).toContain('withMeshcoreRepeaterRouteEscalation');
+    expect(cliBody).toContain('buildSendTxtMsgFrame');
     expect(cliBody).toContain('meshcoreCancelRoomLogin');
     expect(cliBody).toContain('resolveRoomAdminPassword');
     expect(cliBody).toContain('repeaterRemoteRpcRef.current');
+  });
+
+  it('traceRoute rethrows CLI-preempted traces instead of reporting a failed ping', () => {
+    const traceBody = extractUseCallbackBody(RUNTIME_SOURCE, 'traceRoute');
+    expect(traceBody).toContain('if (meshcoreTraceCancelledForCliPreempt(e)) throw e;');
+  });
+
+  it('applies the zero-hop login timeout policy to Room CLI ACL login', () => {
+    const cliBody = extractUseCallbackBody(RUNTIME_SOURCE, 'sendRepeaterCliCommand');
+    const roomBranch = extractIfBlockBody(cliBody, "hwModelForCli === 'Room'");
+    expect(roomBranch).toContain('meshcoreRepeaterTryLoginWithPassword');
+    expect(roomBranch).toMatch(/\.\.\.meshcoreRepeaterLoginTimeoutPolicy\(/);
+    expect(roomBranch).toContain('meshcoreRepeaterLoginTimeoutPolicy(loginOpts?.hopsAway)');
+    expect(roomBranch).toContain('restoreRadioContact: loginOpts?.restoreRadioContact');
+  });
+
+  it('uses the companion route for CLI drain, trace waits and login timeout decisions', () => {
+    const routeBody = extractUseCallbackBody(RUNTIME_SOURCE, 'resolveAdminHopsForNode');
+    expect(routeBody).toContain('resolveMeshcoreAdminHopsAway');
+    expect(routeBody).toContain('outPathMapRef.current.get(nodeId)');
+    const loginBody = extractUseCallbackBody(RUNTIME_SOURCE, 'makeRepeaterLoginOpts');
+    expect(loginBody).toContain('hopsAway: resolveAdminHopsForNode(nodeId)');
+    const cliBody = extractUseCallbackBody(RUNTIME_SOURCE, 'sendRepeaterCliCommand');
+    expect(cliBody).toContain('const hopsForDrain = resolveAdminHopsForNode(nodeId)');
+    expect(cliBody.match(/const hopsAwayCli = resolveAdminHopsForNode\(nodeId\)/g)).toHaveLength(2);
   });
 
   it('holds companion queue only until RESP_SENT; response wait is outside queue slot', () => {
@@ -140,8 +189,10 @@ describe('meshcore repeater CLI working state', () => {
   it('rejects CLI commands longer than REPEATER_CLI_MAX_COMMAND_LENGTH before send', () => {
     expect(REPEATER_CMD_SOURCE).toContain('export const REPEATER_CLI_MAX_COMMAND_LENGTH = 512');
     const cliBody = extractUseCallbackBody(RUNTIME_SOURCE, 'sendRepeaterCliCommand');
-    expect(cliBody).toContain('REPEATER_CLI_MAX_COMMAND_LENGTH');
-    expect(cliBody).toContain('repeatersPanel.cliCommandTooLong');
+    const assertIdx = cliBody.indexOf('assertMeshcoreRepeaterCliCommand(command)');
+    const queueIdx = cliBody.indexOf('repeaterCliQueueRef.current');
+    expect(assertIdx).toBeGreaterThan(-1);
+    expect(queueIdx).toBeGreaterThan(assertIdx);
   });
 
   it('requires confirmedDanger for dangerous CLI commands', () => {
@@ -161,5 +212,38 @@ describe('meshcore repeater CLI working state', () => {
     expect(cliBody).toContain("trimmed.toLowerCase() === 'clock sync'");
     expect(cliBody).toContain('syncDeviceTime');
     expect(cliBody).toContain('meshcoreRepeaterRpcErrorMessage(errMsg, cliTimeoutMs)');
+  });
+
+  it('schedules a post-reboot Status refresh only after the reboot left the radio', () => {
+    const cliBody = extractUseCallbackBody(RUNTIME_SOURCE, 'sendRepeaterCliCommand');
+    const sentAckIdx = cliBody.indexOf('markMeshcoreCompanionTx();');
+    const flagIdx = cliBody.search(
+      /if \(!isCompanionTarget && isMeshcoreRepeaterRebootCommand\(trimmed\)\) \{\s*rebootCommandSent = true;/,
+    );
+    expect(sentAckIdx).toBeGreaterThan(-1);
+    expect(flagIdx).toBeGreaterThan(sentAckIdx);
+    // Runs from `finally`, so a reboot whose reply times out still refreshes.
+    const finallyIdx = cliBody.lastIndexOf('} finally {');
+    const scheduleIdx = cliBody.indexOf(
+      'if (rebootCommandSent) scheduleRepeaterPostRebootStatus(nodeId);',
+    );
+    expect(scheduleIdx).toBeGreaterThan(finallyIdx);
+  });
+
+  it('clears cached Status and guards the post-reboot refresh on the captured session', () => {
+    const body = extractUseCallbackBody(RUNTIME_SOURCE, 'scheduleRepeaterPostRebootStatus');
+    expect(body).toContain('setMeshcoreNodeStatus');
+    expect(body).toContain('setMeshcoreStatusErrors');
+    expect(body).toContain('connectionAtReboot === connRef.current');
+    expect(body).toContain('identityAtReboot === meshcoreIdentityIdRef.current');
+    expect(body).toContain('setupGenerationAtReboot === meshcoreSetupGenerationRef.current');
+  });
+
+  it('cancels pending post-reboot refreshes on disconnect cleanup', () => {
+    const resetIdx = RUNTIME_SOURCE.indexOf('postRebootStatusSchedulerRef.current?.cancelAll();');
+    const statusClearIdx = RUNTIME_SOURCE.indexOf('setMeshcoreNodeStatus(new Map());');
+    expect(resetIdx).toBeGreaterThan(-1);
+    expect(statusClearIdx).toBeGreaterThan(resetIdx);
+    expect(RUNTIME_SOURCE).toContain('postRebootStatusScheduler?.cancelAll();');
   });
 });

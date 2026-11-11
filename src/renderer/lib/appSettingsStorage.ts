@@ -24,8 +24,12 @@ export function migrateLegacyAppSettingsIfNeeded(): void {
 }
 
 export function getAppSettingsRaw(): string | null {
-  migrateLegacyAppSettingsIfNeeded();
-  return localStorage.getItem(APP_SETTINGS_STORAGE_KEY);
+  // Eager module readers run before secure startup. Read the legacy source without copying
+  // any inline credentials; canonical preparation and secure migration own its retirement.
+  return (
+    localStorage.getItem(APP_SETTINGS_STORAGE_KEY) ??
+    localStorage.getItem(LEGACY_APP_SETTINGS_STORAGE_KEY)
+  );
 }
 
 export function setAppSettingsRaw(json: string): void {
@@ -75,13 +79,17 @@ export function getDistanceUnit(): 'miles' | 'km' {
   return parsed?.distanceUnit === 'km' ? 'km' : DEFAULT_APP_SETTINGS_SHARED.distanceUnit;
 }
 
-/** Whether mesh-client may look up host GPS and send the user's location on any protocol. */
-export function isShareMyLocationEnabled(): boolean {
-  const parsed = parseStoredJson<{ shareMyLocation?: boolean }>(
+/** Persisted app choice; absence stays distinct when preserving native configuration. */
+export function getShareMyLocationPreference(): boolean | undefined {
+  const parsed = parseStoredJson<{ shareMyLocation?: unknown }>(
     getAppSettingsRaw(),
     'isShareMyLocationEnabled',
   );
-  return parsed?.shareMyLocation ?? DEFAULT_APP_SETTINGS_SHARED.shareMyLocation;
+  return typeof parsed?.shareMyLocation === 'boolean' ? parsed.shareMyLocation : undefined;
+}
+
+export function isShareMyLocationEnabled(): boolean {
+  return getShareMyLocationPreference() === true;
 }
 
 /** Whether chat location share also sends a Meshtastic Waypoint packet. */
@@ -136,11 +144,78 @@ export function isWeatherOnlinePlaceLookupEnabled(): boolean {
     : DEFAULT_APP_SETTINGS_SHARED.weatherOnlinePlaceLookup;
 }
 
+export function isInternetWeatherEnabled(): boolean {
+  const parsed = parseStoredJson<{ internetWeatherEnabled?: unknown }>(
+    getAppSettingsRaw(),
+    'isInternetWeatherEnabled',
+  );
+  return typeof parsed?.internetWeatherEnabled === 'boolean'
+    ? parsed.internetWeatherEnabled
+    : DEFAULT_APP_SETTINGS_SHARED.internetWeatherEnabled;
+}
+
+export function setInternetWeatherEnabled(enabled: boolean): void {
+  mergeAppSetting('internetWeatherEnabled', enabled, 'setInternetWeatherEnabled');
+}
+
+export function getWeatherUnits(): {
+  wind: 'kmh' | 'mph' | 'ms' | 'kn';
+  precip: 'mm' | 'in';
+} {
+  const parsed = parseStoredJson<{
+    mapWeatherWindUnit?: unknown;
+    mapWeatherPrecipUnit?: unknown;
+  }>(getAppSettingsRaw(), 'getWeatherUnits');
+  const wind =
+    parsed?.mapWeatherWindUnit === 'kmh' ||
+    parsed?.mapWeatherWindUnit === 'mph' ||
+    parsed?.mapWeatherWindUnit === 'ms' ||
+    parsed?.mapWeatherWindUnit === 'kn'
+      ? parsed.mapWeatherWindUnit
+      : DEFAULT_APP_SETTINGS_SHARED.mapWeatherWindUnit;
+  const precip =
+    parsed?.mapWeatherPrecipUnit === 'mm' || parsed?.mapWeatherPrecipUnit === 'in'
+      ? parsed.mapWeatherPrecipUnit
+      : DEFAULT_APP_SETTINGS_SHARED.mapWeatherPrecipUnit;
+  return { wind, precip };
+}
+
+export function getRadarPreferences(): {
+  provider: 'auto' | 'rainviewer' | 'iem-nexrad';
+  opacity: number;
+  showCoverage: boolean;
+} {
+  const parsed = parseStoredJson<{
+    mapWeatherRadarProvider?: unknown;
+    mapWeatherRadarOpacity?: unknown;
+    mapWeatherRadarCoverage?: unknown;
+  }>(getAppSettingsRaw(), 'getRadarPreferences');
+  const provider =
+    parsed?.mapWeatherRadarProvider === 'auto' ||
+    parsed?.mapWeatherRadarProvider === 'rainviewer' ||
+    parsed?.mapWeatherRadarProvider === 'iem-nexrad'
+      ? parsed.mapWeatherRadarProvider
+      : DEFAULT_APP_SETTINGS_SHARED.mapWeatherRadarProvider;
+  const rawOpacity =
+    typeof parsed?.mapWeatherRadarOpacity === 'number' &&
+    Number.isFinite(parsed.mapWeatherRadarOpacity)
+      ? parsed.mapWeatherRadarOpacity
+      : DEFAULT_APP_SETTINGS_SHARED.mapWeatherRadarOpacity;
+  const opacity = Math.min(0.9, Math.max(0.2, rawOpacity));
+  const showCoverage =
+    typeof parsed?.mapWeatherRadarCoverage === 'boolean'
+      ? parsed.mapWeatherRadarCoverage
+      : DEFAULT_APP_SETTINGS_SHARED.mapWeatherRadarCoverage;
+  return { provider, opacity, showCoverage };
+}
+
 export interface OperationalAlertSettings {
   /** null = protocol capability defaults. */
   nodeSilenceAlertMinutes: number | null;
   nodeBatteryLowThreshold: number;
   notifyOnLinkDown: boolean;
+  /** Desktop + sound for new error-severity diagnostic rows (default off). */
+  notifyOnDiagnosticErrors: boolean;
   /** Standing banner + window attention for unseen MAYDAY/URGENT (Incident Command station). */
   mecpStandingAlertEnabled: boolean;
   /** Repeat interval for unseen MAYDAY/URGENT alerts; null = off. Requires the standing alert. */
@@ -155,6 +230,7 @@ export function getOperationalAlertSettings(): OperationalAlertSettings {
     nodeSilenceAlertMinutes?: unknown;
     nodeBatteryLowThreshold?: unknown;
     notifyOnLinkDown?: unknown;
+    notifyOnDiagnosticErrors?: unknown;
     mecpRepeatAlertMinutes?: unknown;
     mecpStandingAlertEnabled?: unknown;
   }>(getAppSettingsRaw(), 'getOperationalAlertSettings');
@@ -185,6 +261,10 @@ export function getOperationalAlertSettings(): OperationalAlertSettings {
       typeof parsed?.notifyOnLinkDown === 'boolean'
         ? parsed.notifyOnLinkDown
         : DEFAULT_APP_SETTINGS_SHARED.notifyOnLinkDown,
+    notifyOnDiagnosticErrors:
+      typeof parsed?.notifyOnDiagnosticErrors === 'boolean'
+        ? parsed.notifyOnDiagnosticErrors
+        : DEFAULT_APP_SETTINGS_SHARED.notifyOnDiagnosticErrors,
   };
 }
 

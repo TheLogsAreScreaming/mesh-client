@@ -5,6 +5,7 @@ import {
   resolveMeshcoreNodeIdFromPubKeyPrefix,
 } from './meshcore/meshcorePubKeyRegistry';
 import {
+  MESHCORE_TXT_TYPE_CLI_COMMAND,
   MESHCORE_TXT_TYPE_CLI_DATA,
   MESHCORE_TXT_TYPE_SIGNED_PLAIN,
   parseMeshcoreRoomPostPayload,
@@ -71,12 +72,25 @@ function resolveSenderIdFromPrefix(prefix: string, nodeIdByPrefix: Map<string, n
   return resolved;
 }
 
+/**
+ * Device-log line for an inbound remote CLI command our radio refused (sender lacks flag 0x10).
+ * The command text is never included: it may carry a WiFi password or PIN.
+ */
+export function meshcoreRemoteCliAttemptLogLine(pubKeyPrefixHexValue: string): string {
+  return `[remote-cli] refused command from ${pubKeyPrefixHexValue} (contact not allowed, flag 0x10 off)`;
+}
+
 /** Shared DM/room decode for MeshCoreProtocol.subscribe and event-131 waiting-message ingest. */
 export function decodeMeshcoreDirectMessageEvents(
   raw: DecodeMeshcoreDirectMessageInput,
   nodeIdByPrefix: Map<string, number>,
   roomNodeIds: ReadonlySet<number>,
 ): DomainEvent[] {
+  if (raw.txtType === MESHCORE_TXT_TYPE_CLI_COMMAND) {
+    return decodeTransportStatusDeviceLog(
+      meshcoreRemoteCliAttemptLogLine(pubKeyPrefixHex(raw.pubKeyPrefix)),
+    );
+  }
   if (raw.txtType === MESHCORE_TXT_TYPE_CLI_DATA) {
     const cliPrefix = pubKeyPrefixHex(raw.pubKeyPrefix);
     return [
@@ -115,10 +129,12 @@ export function decodeMeshcoreDirectMessageEvents(
     {
       type: 'text_message',
       payload: {
+        // A DM id carries the wire text, as a channel id does, so two different DMs from one
+        // contact in the same second stay two rows; a repeat delivery of the same DM keeps its id.
         id:
           roomServerId != null
             ? meshcoreRoomMessageId(roomServerId, raw.senderTimestamp, authorIdForId)
-            : `${senderId}:${raw.senderTimestamp}`,
+            : `${senderId}:${raw.senderTimestamp}:${raw.text}`,
         from: senderId,
         to: 0,
         payload: raw.text,

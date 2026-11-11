@@ -18,6 +18,9 @@ export default tseslint.config(
       '**/out/**',
       '**/node_modules/**',
       '.cache/**',
+      '**/.build/**',
+      'native/**',
+      'reticulum-sidecar/target/**',
       'src/renderer/lib/nomad/vendor/**',
       'src/main/translation/vendor/*.js',
       'eslint.config.mjs',
@@ -27,11 +30,14 @@ export default tseslint.config(
       'vite.config.mts',
       '*.config.{ts,js,mjs,cjs}',
       'dist-electron/**',
+      'release/**',
+      'site/**',
       'coverage/**',
       'playwright-report/**',
       'test-results/**',
     ],
   },
+
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
@@ -144,7 +150,7 @@ export default tseslint.config(
   },
   // Node scripts: no TS program — disable type-checked rules; keep security + Node globals
   {
-    files: ['scripts/**/*.{js,cjs}'],
+    files: ['scripts/**/*.{js,cjs}', 'e2e/fixtures/**/*.cjs'],
     languageOptions: {
       ...tseslint.configs.disableTypeChecked.languageOptions,
       ecmaVersion: 'latest',

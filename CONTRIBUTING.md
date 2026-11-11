@@ -7,7 +7,7 @@ Thank you for your interest in contributing.
 | Clone, prerequisites, commands, test harness, git hooks, i18n | [docs/development-environment.md](docs/development-environment.md) |
 | Code style, testing, architecture, security (AI assistants)   | [AGENTS.md](AGENTS.md)                                             |
 | Protocol additions (RF mesh only)                             | [Protocol scope](#protocol-scope)                                  |
-| PR flow and contribution expectations                         | **This file**                                                      |
+| PR flow and contribution expectations                         | [CONTRIBUTING.md](CONTRIBUTING.md#pr-process)                      |
 
 ## Code style & standards
 
@@ -35,7 +35,7 @@ Mesh Hub focuses on **RF mesh** networking (LoRa and related radio meshes). Addi
 ## PR process
 
 1. Describe your changes and what you tested
-2. Update docs if needed
+2. Update docs if needed. **New user-facing pages** need all three: a README feature bullet (when the change is user-visible), a section or link in the matching top-level user guide under `docs/`, and a `mkdocs.yml` nav entry (plus `src/shared/docsSite.ts` when in-app doc links apply). Prefer editing an existing guide over adding a new top-level page. Developer notes go under `docs/development/` and a matching row in [`AGENTS.md` §8](AGENTS.md#8-subsystem-quick-reference) / [`docs/development/index.md`](docs/development/index.md).
 3. Run the checks you need before review — at minimum the [local quality checks](docs/development-environment.md#4-test-harness-setup-and-local-quality-checks) and what the [pre-commit hook](docs/development-environment.md#6-git-hooks-and-pre-commit-behavior) runs
 4. Keep PR scope tight
 5. A maintainer will review

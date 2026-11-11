@@ -8,12 +8,25 @@ import {
   connectionPanelRadioStatusLabel,
   connectionPanelTakRemoteLabel,
   connectionPanelTakStatusLabel,
+  statusBarTransportLabel,
   takStatusBarLabels,
 } from './connectionPanelLabels';
 import type { ConnectionStatus, MQTTStatus } from './types';
 
 function mockT(): TFunction {
   return ((key: string) => key) as TFunction;
+}
+
+/** Stable English keys so status-bar copy stays aligned with Connection tiles. */
+function englishT(): TFunction {
+  const en: Record<string, string> = {
+    'connectionPanel.bluetooth': 'Bluetooth',
+    'connectionPanel.usbSerial': 'USB Serial',
+    'connectionPanel.wifiTcp': 'WiFi/TCP (fast)',
+    'connectionPanel.wifiHttp': 'WiFi/HTTP',
+    'connectionPanel.tcpIp': 'TCP/IP',
+  };
+  return ((key: string) => en[key] ?? key) as TFunction;
 }
 
 describe('connectionPanelRadioStatusLabel', () => {
@@ -26,6 +39,39 @@ describe('connectionPanelRadioStatusLabel', () => {
     ['reconnecting', 'app.deviceStatus.reconnecting'],
   ])('maps %s to %s', (status, key) => {
     expect(connectionPanelRadioStatusLabel(mockT(), status)).toBe(key);
+  });
+});
+
+describe('connectionPanelConnectionTypeLabel', () => {
+  it.each<[ConnectionType, MeshProtocol, string]>([
+    ['ble', 'meshtastic', 'connectionPanel.bluetooth'],
+    ['serial', 'meshtastic', 'connectionPanel.usbSerial'],
+    ['tcp', 'meshtastic', 'connectionPanel.wifiTcp'],
+    ['http', 'meshtastic', 'connectionPanel.wifiHttp'],
+    ['http', 'meshcore', 'connectionPanel.tcpIp'],
+    ['ble', 'meshcore', 'connectionPanel.bluetooth'],
+  ])('maps %s/%s to %s', (type, protocol, key) => {
+    expect(connectionPanelConnectionTypeLabel(mockT(), type, protocol)).toBe(key);
+  });
+});
+
+describe('statusBarTransportLabel', () => {
+  it('returns empty when there is no active transport', () => {
+    expect(statusBarTransportLabel(englishT(), null, 'meshcore')).toBe('');
+    expect(statusBarTransportLabel(englishT(), undefined, 'meshtastic')).toBe('');
+  });
+
+  it('shows TCP/IP for MeshCore WiFi companion (stored as http, not HTTP)', () => {
+    expect(statusBarTransportLabel(englishT(), 'http', 'meshcore')).toBe('TCP/IP');
+  });
+
+  it.each<[ConnectionType, MeshProtocol, string]>([
+    ['http', 'meshtastic', 'WiFi/HTTP'],
+    ['tcp', 'meshtastic', 'WiFi/TCP (fast)'],
+    ['ble', 'meshcore', 'Bluetooth'],
+    ['serial', 'meshcore', 'USB Serial'],
+  ])('maps %s/%s to %s for the status bar', (type, protocol, label) => {
+    expect(statusBarTransportLabel(englishT(), type, protocol)).toBe(label);
   });
 });
 

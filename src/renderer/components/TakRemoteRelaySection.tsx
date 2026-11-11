@@ -14,6 +14,7 @@ import { useTakRemoteRelay } from '../hooks/useTakRemoteRelay';
 import { localizeTakRemoteUserError } from '../lib/takRemoteUserError';
 import { buttonClassName } from './ui/Button';
 import { INPUT_BOX_CLASS } from './ui/formClasses';
+import { SettingsSection } from './ui/SettingsSection';
 
 const DEFAULT_TLS_PORT = 8089;
 const DEFAULT_TCP_PORT = 8087;
@@ -502,13 +503,15 @@ export default function TakRemoteRelaySection() {
   const { t } = useTranslation();
   const relay = useTakRemoteRelay();
   return (
-    <div className="bg-deep-black border-ink-800 rounded-container space-y-3 border p-4">
-      <h3 className="text-ink-300 text-body-lg font-medium">{t('takServerPanel.remoteTitle')}</h3>
-      <p className="text-ink-400 text-label">{t('takServerPanel.remoteDescription')}</p>
+    <SettingsSection
+      title={t('takServerPanel.remoteTitle')}
+      description={t('takServerPanel.remoteDescription')}
+      bodyClassName="space-y-3"
+    >
       {/* The form seeds its fields from saved settings, so mount it once they have loaded. */}
       {relay.savedSettings !== undefined && (
         <RemoteRelayForm initial={relay.savedSettings ?? DEFAULT_REMOTE_SETTINGS} relay={relay} />
       )}
-    </div>
+    </SettingsSection>
   );
 }

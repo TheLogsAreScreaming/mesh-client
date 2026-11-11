@@ -14,6 +14,12 @@ import {
   loadPersistedRoomsLastRead,
 } from './chatPanelProtocolStorage';
 import { computeChannelUnreadCounts, filterRegularChatMessages } from './chatUnreadCounts';
+import { type CoiMemorySnapshot, getCoiMemorySnapshot } from './coiMemorySampler';
+import {
+  type DebugSnapshotMeshcoreRadioContext,
+  getDebugSnapshotMeshcoreRadioContext,
+  isMeshcoreFloodFullyUnscoped,
+} from './debugSnapshotMeshcoreContext';
 import {
   type DebugSnapshotMeshtasticChannelConfigSummary,
   type DebugSnapshotMeshtasticChannelPill,
@@ -37,6 +43,7 @@ import { effectiveMessageTimestampMs, isUnreasonablyFutureMessageTimestampMs } f
 import { getOfflineIdentityIdForProtocol } from './offlineProtocolIdentities';
 import { parseStoredJson } from './parseStoredJson';
 import { getProtocolRegistration } from './protocols/protocolRegistry';
+import { getRendererTimingsSnapshot, type RendererTimingsSnapshot } from './rendererTimings';
 import { getStoredMeshProtocol } from './storedMeshProtocol';
 import { messageRecordsToChatMessages, nodeRecordToMeshNode } from './storeRecordAdapters';
 import type { ChatMessage, IdentityId, MeshProtocol, MQTTStatus } from './types';
@@ -140,7 +147,8 @@ export type DebugSnapshotWarningCode =
   | 'chatPanelFrozen'
   | 'connectedNoPrimaryMessages'
   | 'windowHiddenOnChat'
-  | 'lastReadSuppressesChannelUnread';
+  | 'lastReadSuppressesChannelUnread'
+  | 'meshcoreFloodUnscoped';
 
 export interface DebugSnapshotWarning {
   code: DebugSnapshotWarningCode;
@@ -161,8 +169,33 @@ export interface DebugSnapshot {
   ui: ReturnType<typeof getDebugSnapshotUiContext>;
   meshtastic: DebugMeshtasticBucketSnapshot;
   meshcore: DebugIdentityBucketSnapshot;
+  /** MeshCore radio params, path hash mode, and flood scope (radio default + per-view). */
+  meshcoreRadio: DebugSnapshotMeshcoreRadioContext;
   /** Main-process uptime / heartbeat age (export path only). */
   mainLiveness?: RendererLivenessSnapshot | null;
+  /** Bounded renderer totals, separate from Node/main-process memory. */
+  rendererMemory?: CoiMemorySnapshot;
+  /** Bounded high-res duration samples (Support / developer export). */
+  rendererTimings?: RendererTimingsSnapshot;
+  /** Durable memory sample summary plus retention-bounded timestamped rows. */
+  rendererMemoryDurable?: {
+    count: number;
+    firstAt: number | null;
+    lastAt: number | null;
+    minBytes: number | null;
+    maxBytes: number | null;
+    spanMs: number | null;
+    samples: {
+      capturedAt: number;
+      bytes: number;
+      source: 'user-agent' | 'renderer-process';
+      appVersion: string | null;
+      sessionId: string | null;
+      jsHeapBytes: number | null;
+      totalJsHeapBytes: number | null;
+      domNodes: number | null;
+    }[];
+  } | null;
   /** MeshCore SQLite contact hops + best path history bytes (redacted pubkeys). */
   meshcoreContactPathDiagnostics?: MeshcoreContactPathDiagnosticRow[];
   warnings: DebugSnapshotWarning[];
@@ -559,6 +592,7 @@ function buildDebugSnapshotBase(): Omit<DebugSnapshot, 'warnings'> {
     ui,
     meshtastic,
     meshcore,
+    meshcoreRadio: getDebugSnapshotMeshcoreRadioContext(),
   };
 }
 
@@ -572,6 +606,18 @@ export function analyzeDebugSnapshot(
   ];
 
   const { ui } = snap;
+  if (
+    (snap.storedProtocol === 'meshcore' || ui.activeProtocol === 'meshcore') &&
+    isMeshcoreFloodFullyUnscoped(snap.meshcoreRadio)
+  ) {
+    warnings.push({
+      code: 'meshcoreFloodUnscoped',
+      protocol: 'meshcore',
+      detail:
+        'No MeshCore flood scope set (radio default empty, no per-view named scope); floods are unscoped and may be dropped by region-restricted repeaters',
+    });
+  }
+
   if (
     ui.chatPanelFrozen &&
     ui.frozenMessageCount != null &&
@@ -616,11 +662,20 @@ export async function buildDebugSnapshotAsync(): Promise<DebugSnapshot> {
   } catch (e: unknown) {
     console.warn('[debugSnapshot] getRendererLiveness failed ' + errLikeToLogString(e));
   }
+  let rendererMemoryDurable: DebugSnapshot['rendererMemoryDurable'] = null;
+  try {
+    rendererMemoryDurable = await window.electronAPI.db.getRendererMemorySampleSummary();
+  } catch (e: unknown) {
+    console.warn('[debugSnapshot] getRendererMemorySampleSummary failed ' + errLikeToLogString(e));
+  }
   const base = buildDebugSnapshotBase();
   const meshcoreContactPathDiagnostics = await fetchMeshcoreContactPathDiagnostics();
   return {
     ...base,
     mainLiveness,
+    rendererMemory: getCoiMemorySnapshot(),
+    rendererTimings: getRendererTimingsSnapshot(),
+    rendererMemoryDurable,
     meshcoreContactPathDiagnostics,
     warnings: analyzeDebugSnapshot(base),
   };

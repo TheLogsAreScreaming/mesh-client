@@ -9,7 +9,13 @@ import {
 } from '../stores/identityStore';
 import { upsertMessage, useMessageStore } from '../stores/messageStore';
 import { useNodeStore } from '../stores/nodeStore';
-import { lastReadStorageKey } from './chatPanelProtocolStorage';
+import { APP_SETTINGS_STORAGE_KEY } from './appSettingsStorage';
+import {
+  FLOOD_SCOPE_OVERRIDE_UNSCOPED,
+  floodScopeOverridesStorageKey,
+  lastReadStorageKey,
+} from './chatPanelProtocolStorage';
+import * as memorySampler from './coiMemorySampler';
 import {
   analyzeDebugSnapshot,
   buildDebugSnapshot,
@@ -17,6 +23,11 @@ import {
   DEBUG_SNAPSHOT_ID_LEGEND,
   type DebugSnapshot,
 } from './debugSnapshot';
+import {
+  buildDebugSnapshotMeshcoreRadioLive,
+  resetDebugSnapshotMeshcoreContext,
+  setDebugSnapshotMeshcoreRadioLive,
+} from './debugSnapshotMeshcoreContext';
 import {
   resetDebugSnapshotMeshtasticContext,
   setDebugSnapshotMeshtasticContext,
@@ -129,6 +140,7 @@ function makeSyntheticSnapshot(overrides: Partial<DebugSnapshot> = {}): DebugSna
     ui,
     meshtastic,
     meshcore,
+    meshcoreRadio: makeMeshcoreRadio(),
     ...overrides,
   };
   return { ...base, warnings: analyzeDebugSnapshot(base) };
@@ -142,6 +154,7 @@ describe('buildDebugSnapshot', () => {
     useConnectionStore.setState({ connections: {} });
     resetDebugSnapshotUiContext();
     resetDebugSnapshotMeshtasticContext();
+    resetDebugSnapshotMeshcoreContext();
     localStorage.clear();
   });
 
@@ -226,6 +239,10 @@ describe('buildDebugSnapshot', () => {
   it('reports live session when hydration slot id is reused on connect', () => {
     ensureOfflineProtocolIdentities();
     localStorage.setItem(MESH_PROTOCOL_STORAGE_KEY, 'meshcore');
+    localStorage.setItem(
+      APP_SETTINGS_STORAGE_KEY,
+      JSON.stringify({ meshcoreFloodScopeHashtag: '#test' }),
+    );
     setDebugSnapshotUiContext({ activeProtocol: 'meshcore' });
     addTransport(OFFLINE_MESHCORE_IDENTITY_ID, {
       transportId: 't1',
@@ -396,6 +413,35 @@ describe('buildDebugSnapshot', () => {
 });
 
 describe('analyzeDebugSnapshot', () => {
+  it('flags meshcoreFloodUnscoped when no radio default or named per-view scope is set', () => {
+    const snap = makeSyntheticSnapshot({
+      meshcoreRadio: makeMeshcoreRadio({
+        floodScopeRadioDefault: '',
+        floodScopeOverrides: { 'ch:2': FLOOD_SCOPE_OVERRIDE_UNSCOPED },
+      }),
+    });
+    expect(snap.warnings.map((w) => w.code)).toContain('meshcoreFloodUnscoped');
+  });
+
+  it('does not flag meshcoreFloodUnscoped when a per-view named scope exists', () => {
+    const snap = makeSyntheticSnapshot({
+      meshcoreRadio: makeMeshcoreRadio({
+        floodScopeRadioDefault: '',
+        floodScopeOverrides: { 'ch:1': '#tn' },
+      }),
+    });
+    expect(snap.warnings.map((w) => w.code)).not.toContain('meshcoreFloodUnscoped');
+  });
+
+  it('does not flag meshcoreFloodUnscoped when MeshCore is not the active or stored protocol', () => {
+    const snap = makeSyntheticSnapshot({
+      storedProtocol: 'meshtastic',
+      ui: { ...getDebugSnapshotUiContext(), activeProtocol: 'meshtastic' },
+      meshcoreRadio: makeMeshcoreRadio({ floodScopeRadioDefault: '' }),
+    });
+    expect(snap.warnings.map((w) => w.code)).not.toContain('meshcoreFloodUnscoped');
+  });
+
   it('flags identitySplit and staleResolvedBucket for old bad shape', () => {
     const connectedId = 'id-mc-split';
     const snap = makeSyntheticSnapshot({

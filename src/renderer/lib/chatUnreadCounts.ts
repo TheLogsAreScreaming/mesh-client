@@ -15,6 +15,8 @@ import type { ChatMessage, MeshProtocol } from '@/renderer/lib/types';
 import { isHiddenWeatherPost } from '@/renderer/stores/weatherFilterStore';
 import { isMeshtasticBroadcastNodeNum } from '@/shared/nodeNameUtils';
 
+import { getChatNotificationMode, mentionsLocalChatIdentity } from './chatNotificationPolicy';
+
 /** Chat rows used for unread badges (excludes tapbacks and MeshCore room-server traffic). */
 export function filterRegularChatMessages(
   messages: readonly ChatMessage[],
@@ -286,6 +288,7 @@ const NOTIFICATION_TYPE_PRIORITY: Record<ChatNotificationType, number> = {
   // Operational alerts are not message-driven
   connectionLost: -1,
   batteryLow: -1,
+  diagnosticError: -1,
 };
 
 export function resolveChatNotificationType(
@@ -321,6 +324,11 @@ export function resolveChatNotificationType(
 
   if (peer != null) return 'dm';
 
+  if (
+    getChatNotificationMode() === 'mentions' &&
+    !mentionsLocalChatIdentity(msg.payload, protocol, ownNodeIds, msg.replyPreviewSender)
+  )
+    return null;
   return 'channel';
 }
 

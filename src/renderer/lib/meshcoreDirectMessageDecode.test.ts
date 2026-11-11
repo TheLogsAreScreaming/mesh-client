@@ -6,13 +6,18 @@ import { useNodeStore } from '../stores/nodeStore';
 import { packetRouter } from './drivers/PacketRouter';
 import { attachMeshcoreIngest } from './ingest/meshcoreIngest';
 import { registerMeshcorePubKey } from './meshcore/meshcorePubKeyRegistry';
-import { MESHCORE_TXT_TYPE_CLI_DATA, MESHCORE_TXT_TYPE_SIGNED_PLAIN } from './meshcoreChannelText';
+import {
+  MESHCORE_TXT_TYPE_CLI_COMMAND,
+  MESHCORE_TXT_TYPE_CLI_DATA,
+  MESHCORE_TXT_TYPE_SIGNED_PLAIN,
+} from './meshcoreChannelText';
 import {
   decodeMeshcoreDirectMessageEvents,
   dispatchMeshcoreWaitingContactMessage,
 } from './meshcoreDirectMessageDecode';
 import { meshcoreRoomMessageId } from './meshcoreRoomMessageRouting';
-import { pubkeyToNodeId } from './meshcoreUtils';
+import { listChatMessagesFromStore } from './meshcoreStoreDedup';
+import { meshcoreCompanionRxPathLenToHopCount, pubkeyToNodeId } from './meshcoreUtils';
 import { meshcoreProtocol } from './protocols/MeshCoreProtocol';
 
 const ID = 'meshcore-waiting-decode-test';
@@ -45,6 +50,28 @@ describe('decodeMeshcoreDirectMessageEvents', () => {
         pubKeyPrefixHex: prefixHex,
       },
     });
+  });
+
+  it('turns a refused inbound remote CLI command (txtType 3) into a device log, never chat', () => {
+    const pubKey = Uint8Array.from({ length: 32 }, (_, i) => i + 40);
+    const prefixHex = Array.from(pubKey.slice(0, 6))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+    const events = decodeMeshcoreDirectMessageEvents(
+      {
+        pubKeyPrefix: pubKey.slice(0, 6),
+        text: 'ab|set wifi.pwd hunter2',
+        senderTimestamp: 1_700_000_060,
+        txtType: MESHCORE_TXT_TYPE_CLI_COMMAND,
+      },
+      new Map(),
+      new Set(),
+    );
+    expect(events).toHaveLength(1);
+    expect(events[0]?.type).toBe('device_log');
+    const message = events[0]?.type === 'device_log' ? events[0].payload.message : '';
+    expect(message).toContain(prefixHex);
+    expect(message).not.toContain('hunter2');
   });
 
   it('includes author in room message id for SignedPlain posts', () => {
@@ -263,5 +290,75 @@ describe('dispatchMeshcoreWaitingContactMessage', () => {
 
     const storeId = meshcoreRoomMessageId(roomId, 1_700_000_300, authorId);
     expect(useMessageStore.getState().messages[ID][storeId].payload).toBe('From og app backlog');
+  });
+
+  function dmSender(firstByte: number) {
+    const pubKey = Uint8Array.from({ length: 32 }, (_, i) => i + firstByte);
+    const nodeId = pubkeyToNodeId(pubKey);
+    registerMeshcorePubKey(nodeId, pubKey);
+    const prefixMap = new Map<string, number>([
+      [
+        Array.from(pubKey.slice(0, 4))
+          .map((b) => b.toString(16).padStart(2, '0'))
+          .join(''),
+        nodeId,
+      ],
+    ]);
+    return { pubKey, nodeId, prefixMap };
+  }
+
+  function deliverDms(
+    sender: ReturnType<typeof dmSender>,
+    dms: readonly { text: string; senderTimestamp: number; pathLen: number }[],
+  ): void {
+    const detach = attachMeshcoreIngest(ID);
+    for (const dm of dms) {
+      dispatchMeshcoreWaitingContactMessage(
+        ID,
+        { pubKeyPrefix: sender.pubKey.slice(0, 6), ...dm },
+        sender.prefixMap,
+        new Set(),
+        (event, identityId) => {
+          packetRouter.dispatch(event, identityId);
+        },
+      );
+    }
+    detach();
+  }
+
+  function dmRowsFrom(nodeId: number) {
+    return listChatMessagesFromStore(ID)
+      .filter((m) => m.channel === -1 && m.sender_id === nodeId)
+      .sort((a, b) => (a.localOrder ?? 0) - (b.localOrder ?? 0))
+      .map((m) => ({ payload: m.payload, rxHops: m.rxHops }));
+  }
+
+  it('keeps two different DMs from one contact in the same second as two rows', () => {
+    const sender = dmSender(60);
+    deliverDms(sender, [
+      { text: 'first of two', senderTimestamp: 1_700_000_400, pathLen: 1 },
+      { text: 'second of two', senderTimestamp: 1_700_000_400, pathLen: 3 },
+    ]);
+
+    expect(dmRowsFrom(sender.nodeId)).toEqual([
+      { payload: 'first of two', rxHops: meshcoreCompanionRxPathLenToHopCount(1) },
+      { payload: 'second of two', rxHops: meshcoreCompanionRxPathLenToHopCount(3) },
+    ]);
+    expect(saveMeshcoreMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ payload: 'first of two' }),
+    );
+    expect(saveMeshcoreMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ payload: 'second of two' }),
+    );
+  });
+
+  it('merges a repeat delivery of the same DM into one row', () => {
+    const sender = dmSender(70);
+    const dm = { text: 'said once', senderTimestamp: 1_700_000_500, pathLen: 2 };
+    deliverDms(sender, [dm, dm]);
+
+    expect(dmRowsFrom(sender.nodeId)).toEqual([
+      { payload: 'said once', rxHops: meshcoreCompanionRxPathLenToHopCount(2) },
+    ]);
   });
 });

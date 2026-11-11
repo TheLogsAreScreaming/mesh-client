@@ -17,6 +17,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -63,6 +64,12 @@ import {
   saveDraft,
   saveFloodScopeOverride,
 } from '../lib/chatPanelProtocolStorage';
+import {
+  announceLateSend,
+  holdSendError,
+  subscribeLateSendOutcomes,
+  takeHeldSendError,
+} from '../lib/lateSendOutcomes';
 import { normalizeMeshcoreFloodScopeHashtag } from '../lib/meshcoreFloodScope';
 import {
   isValidMeshcoreFloodScopeHashtag,
@@ -77,9 +84,11 @@ import {
 import { isMeshcoreSendTooFast, recordMeshcoreSend } from '../lib/meshcoreSendRateNotice';
 import { withMeshtasticTextSendPacing } from '../lib/meshtasticTextSendPacing';
 import { useRadioProvider } from '../lib/radio/providerFactory';
+import { toScheduledEntry } from '../lib/scheduledSend';
 import { MESHCORE_FAST_SEND_WARN_INTERVAL_MS } from '../lib/timeConstants';
 import { ChatMacroBar } from './chat/ChatMacroBar';
 import { EditMacrosDialog } from './chat/EditMacrosDialog';
+import { ScheduledSendDialog } from './chat/ScheduledSendDialog';
 import { HelpTooltip } from './HelpTooltip';
 import MentionAutocomplete, {
   buildMentionCandidates,
@@ -243,8 +252,14 @@ export interface ChatComposerProps {
   composeSeed?: { text: string; token: number } | null;
   /** F1–F12 macro bar and shortcuts (default on). */
   showMacros?: boolean;
+  /**
+   * Show a Send-menu "Send later" action that queues the draft in the durable outbox for a later
+   * time (requires `queueOutbox`). Default off; ChatPanel enables it for channels and DMs.
+   */
+  allowScheduledSend?: boolean;
 }
 
+/** Shared channel/DM/room compose box: draft, mentions, macros, GIF, schedule, and send. */
 export function ChatComposer({
   protocol,
   viewKey,
@@ -283,6 +298,7 @@ export function ChatComposer({
   mentionAdapter,
   composeSeed,
   showMacros = true,
+  allowScheduledSend = false,
 }: ChatComposerProps) {
   const { t } = useTranslation();
   const { addToast } = useToast();
@@ -294,6 +310,7 @@ export function ChatComposer({
   const counterLiveId = useId();
   const floodScopeListboxId = useId();
   const floodScopeCustomInputId = useId();
+  const sendMenuPanelId = useId();
   const macroToolbarInline = useChatMacrosStore(
     (s) => showMacros && !s.collapsed && resolveChatMacroSize(s.size) === 'small',
   );
@@ -333,9 +350,18 @@ export function ChatComposer({
   const floodScopeMenuRef = useRef<HTMLDivElement | null>(null);
   const floodScopeSplitRef = useRef<HTMLDivElement | null>(null);
   const floodScopeCustomInputRef = useRef<HTMLInputElement | null>(null);
+  /** When true, the next menu open came from keyboard activation (focus first item). */
+  const floodScopeMenuOpenedByKeyboardRef = useRef(false);
   const inputValueRef = useRef(input);
   inputValueRef.current = input;
   const prevViewKeyRef = useRef<string | null>(null);
+  const mountedRef = useRef(false);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const closeFloodScopeMenu = useCallback(() => {
     setFloodScopeMenuOpen(false);
@@ -379,7 +405,7 @@ export function ChatComposer({
     [floodScopePresets, onRememberFloodScopePreset],
   );
 
-  // Close flood-scope menu on outside click (split button + portaled menu).
+  // Close flood-scope / Send-options menu on outside click (split button + portaled menu).
   useEffect(() => {
     if (!floodScopeMenuOpen) return;
     const handleMouseDown = (e: MouseEvent) => {
@@ -411,6 +437,38 @@ export function ChatComposer({
       window.removeEventListener('resize', handleDismiss);
     };
   }, [closeFloodScopeMenu, floodScopeMenuOpen]);
+
+  // Keyboard open: focus first enabled item. Pointer open: focus the chevron (mousedown is
+  // preventDefault'd so the textarea would otherwise keep focus and Enter would send).
+  useLayoutEffect(() => {
+    if (!floodScopeMenuOpen || !floodScopeMenuPos) return;
+    if (floodScopeMenuOpenedByKeyboardRef.current) {
+      floodScopeMenuOpenedByKeyboardRef.current = false;
+      const menu = floodScopeMenuRef.current;
+      if (!menu) return;
+      const firstEnabled = menu.querySelector<HTMLButtonElement>('button:not([disabled])');
+      (firstEnabled ?? menu).focus();
+      return;
+    }
+    floodScopeMenuButtonRef.current?.focus();
+  }, [floodScopeMenuOpen, floodScopeMenuPos]);
+
+  // Escape closes the menu and returns focus to the chevron (custom-editing Escape is local).
+  useEffect(() => {
+    if (!floodScopeMenuOpen) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (floodScopeCustomEditing) return;
+      e.preventDefault();
+      e.stopPropagation();
+      closeFloodScopeMenu();
+      floodScopeMenuButtonRef.current?.focus();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [closeFloodScopeMenu, floodScopeCustomEditing, floodScopeMenuOpen]);
 
   useEffect(() => {
     if (!floodScopeCustomEditing) return;
@@ -522,12 +580,14 @@ export function ChatComposer({
     prevViewKeyRef.current = viewKey;
     const drafts = loadDraftsInitial(protocol);
     const nextDraft = drafts[viewKey] ?? '';
+    const heldSendError = takeHeldSendError(protocol, viewKey);
     // Avoid a queued no-op restore overriding a reply seed applied by the next render.
 
     if (inputValueRef.current !== nextDraft) setInput(nextDraft);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- restore per-view draft and mention UI on tab switch
     setMentionQuery(null);
-    setChatActionError(null);
+    setChatActionError(heldSendError !== undefined ? { message: heldSendError, viewKey } : null);
+    clearMentionCycle();
     // Clear any lingering fast-send advisory when switching chat views.
     if (meshcoreFastSendWarnTimerRef.current) {
       clearTimeout(meshcoreFastSendWarnTimerRef.current);
@@ -536,7 +596,23 @@ export function ChatComposer({
     setMeshcoreFastSendWarn(false);
   }, [viewKey, protocol, showFloodScopeOverride]);
 
-  // Apply compose seeds without an effect (avoids set-state-in-effect).
+  // A send from a composer that has since unmounted can finish while this one shows its view.
+  useEffect(
+    () =>
+      subscribeLateSendOutcomes((outcome) => {
+        if (outcome.protocol !== protocol || outcome.viewKey !== viewKey) return;
+        if (outcome.kind === 'sent') {
+          // Drop the sent text this composer restored from the draft, unless it was edited since.
+          setInput((prev) => (prev === outcome.text ? '' : prev));
+          return;
+        }
+        const message = takeHeldSendError(protocol, viewKey);
+        if (message !== undefined) setChatActionError({ message, viewKey });
+      }),
+    [protocol, viewKey],
+  );
+
+  // Apply nicklist `/msg` seeds without an effect (avoids set-state-in-effect).
   const [appliedComposeSeedToken, setAppliedComposeSeedToken] = useState<number | null>(null);
   if (composeSeed && composeSeed.token !== appliedComposeSeedToken) {
     setAppliedComposeSeedToken(composeSeed.token);
@@ -574,6 +650,15 @@ export function ChatComposer({
 
   const clearSentDraft = useCallback(
     (draftSnapshot: string) => {
+      // `viewKey` is the view the send started in. If the composer has left it since (an RRC /msg
+      // opens its DM before resolving; the compact layout unmounts the composer on Back to list),
+      // the switch or unmount already saved the sent text as that view's draft, so clear the
+      // stored copy and tell any composer now showing that view, which may have loaded it.
+      if (!mountedRef.current || prevViewKeyRef.current !== viewKey) {
+        if (loadDraftsInitial(protocol)[viewKey] === draftSnapshot) clearDraft(protocol, viewKey);
+        announceLateSend(protocol, viewKey, draftSnapshot);
+        return;
+      }
       setInput((prev) => {
         if (prev === draftSnapshot) {
           clearDraft(protocol, viewKey);
@@ -654,13 +739,16 @@ export function ChatComposer({
       } catch (err) {
         console.error('[ChatComposer] Intercept send failed: ' + errLikeToLogString(err));
         const fallbackKey = variant === 'room' ? 'roomsPanel.postFailed' : 'chatPanel.sendFailed';
-        setChatActionError({
-          message: translateChatSendError(t, err, {
-            fallbackKey,
-            passthroughUnknown: true,
-          }),
-          viewKey,
+        const message = translateChatSendError(t, err, {
+          fallbackKey,
+          passthroughUnknown: true,
         });
+        // A view the user has left keeps the reason until a composer shows it again.
+        if (mountedRef.current && prevViewKeyRef.current === viewKey) {
+          setChatActionError({ message, viewKey });
+        } else {
+          holdSendError(protocol, viewKey, message);
+        }
         return;
       } finally {
         setSending(false);
@@ -785,10 +873,11 @@ export function ChatComposer({
         onSendSuccess?.();
         return;
       }
-      setChatActionError({
-        message: errMsg,
-        viewKey,
-      });
+      if (mountedRef.current && prevViewKeyRef.current === viewKey) {
+        setChatActionError({ message: errMsg, viewKey });
+      } else {
+        holdSendError(protocol, viewKey, errMsg);
+      }
     } finally {
       setSending(false);
     }
@@ -823,6 +912,65 @@ export function ChatComposer({
     finishSendCadence,
     suppressLimits,
   ]);
+
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+
+  /**
+   * Queue the current draft for `scheduledAt` via the durable outbox (survives restart; the
+   * shared drain sends it once due and a link is available). Resolves false on failure so the
+   * dialog stays open and the draft is kept.
+   */
+  const handleScheduleSend = useCallback(
+    async (scheduledAt: number): Promise<boolean> => {
+      if (!queueOutboxProp || !input.trim() || inputChunks === null) return false;
+      const draftSnapshot = input;
+      const texts = inputChunks.length === 0 ? [input.trim()] : inputChunks;
+      const groupId = texts.length > 1 ? crypto.randomUUID() : null;
+      try {
+        for (let i = 0; i < texts.length; i++) {
+          await queueOutboxProp(
+            toScheduledEntry(
+              {
+                protocol,
+                viewKey,
+                channel: outboxChannel,
+                toNode: outboxDestination ?? null,
+                payload: texts[i],
+                replyId: i === 0 && typeof replyKey === 'number' ? replyKey : null,
+                status: 'queued',
+                error: null,
+                nextRetryAt: null,
+                groupId,
+                groupIndex: groupId ? i : null,
+                groupTotal: groupId ? texts.length : null,
+              },
+              scheduledAt,
+            ),
+          );
+        }
+      } catch (err) {
+        console.warn('[ChatComposer] schedule send failed ' + errLikeToLogString(err));
+        return false;
+      }
+      clearSentDraft(draftSnapshot);
+      setMentionQuery(null);
+      onReplyClear?.();
+      setScheduleDialogOpen(false);
+      return true;
+    },
+    [
+      clearSentDraft,
+      input,
+      inputChunks,
+      onReplyClear,
+      outboxChannel,
+      outboxDestination,
+      protocol,
+      queueOutboxProp,
+      replyKey,
+      viewKey,
+    ],
+  );
 
   const macroComposerId = useId();
   const [macroDialogFocus, setMacroDialogFocus] = useState<number | null>(null);
@@ -895,6 +1043,10 @@ export function ChatComposer({
 
   const closeMacroDialog = useCallback(() => {
     setMacroDialogFocus(null);
+  }, []);
+
+  const closeScheduleDialog = useCallback(() => {
+    setScheduleDialogOpen(false);
   }, []);
 
   const sendGifWire = useCallback(
@@ -1220,7 +1372,21 @@ export function ChatComposer({
   // Suppress the hover tooltip while the scope menu is open so it cannot cover the options.
   const floodScopeChevronTooltipProps = floodScopeMenuOpen ? { 'data-no-instant-tooltip': '' } : {};
 
-  const emojiButtonClass = `flex h-[2.625rem] min-w-[2.625rem] shrink-0 items-center justify-center rounded-card border px-2.5 text-label font-semibold transition-colors disabled:opacity-50 ${
+  const scheduleSendAllowed = Boolean(allowScheduledSend && queueOutboxProp);
+  const showSendSplit = showFloodScopeOverride || scheduleSendAllowed;
+  // Same for Meshtastic, MeshCore, and Reticulum: Send later needs a non-empty sendable draft.
+  const scheduleSendDisabled =
+    disabled || sending || !input.trim() || inputChunks === null || (!isConnected && !allowOutbox);
+  const sendMenuChevronAria = showFloodScopeOverride
+    ? floodScopeOverrideIndicator
+      ? `${t('chatPanel.floodScopeOverrideMenuButton')}: ${floodScopeOverrideIndicator}`
+      : t('chatPanel.floodScopeOverrideMenuButton')
+    : t('chatPanel.sendMenuButton');
+  const sendMenuChevronTitle = showFloodScopeOverride
+    ? t('chatPanel.floodScopeOverrideHint')
+    : t('chatPanel.scheduleSendHint');
+
+  const emojiButtonClass = `flex h-[2.625rem] min-w-[2.625rem] shrink-0 items-center justify-center rounded-lg border px-2.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
     showComposePicker
       ? 'border-brand-green/35 bg-brand-green/12 text-bright-green'
       : 'border-secondary-dark bg-sidebar-active-bg text-muted hover:text-ink-200'
@@ -1437,12 +1603,14 @@ export function ChatComposer({
             type="button"
             onMouseDown={(e) => {
               e.preventDefault();
-              if (!isLinux) inputRef.current?.focus();
             }}
             onClick={() => {
               if (isLinux) {
                 setShowComposePicker((prev) => !prev);
               } else {
+                // The OS panel types into whatever has focus, and keyboard or
+                // assistive-tech presses arrive without a mousedown.
+                inputRef.current?.focus();
                 void window.electronAPI.showEmojiPanel().catch((e: unknown) => {
                   console.debug('[ChatComposer] showEmojiPanel failed ' + errLikeToLogString(e));
                 });
@@ -1488,227 +1656,292 @@ export function ChatComposer({
           </HelpTooltip>
         )}
         {actionSlot}
-        {showFloodScopeOverride ? (
-          <div ref={floodScopeSplitRef} className="inline-flex min-w-0 items-stretch">
-            <span className="sr-only">{t('chatPanel.floodScopeOverrideLabel')}</span>
-            <button
-              type="button"
-              onMouseDown={(e) => {
-                e.preventDefault();
-              }}
-              onClick={() => {
-                void handleSend();
-              }}
-              disabled={
-                !input.trim() || sending || (!suppressLimits && inputChunks === null) || disabled
-              }
-              aria-label={sendLabel}
-              className={sendButtonSplitMainClass}
-            >
-              {sendButtonIcon}
-              {sendLabel}
-            </button>
-            <button
-              ref={floodScopeMenuButtonRef}
-              type="button"
-              onMouseDown={(e) => {
-                e.preventDefault();
-              }}
-              onClick={() => {
-                if (floodScopeMenuOpen) {
-                  closeFloodScopeMenu();
-                  return;
-                }
-                const button = floodScopeMenuButtonRef.current;
-                if (button) {
-                  const rect = button.getBoundingClientRect();
-                  setFloodScopeMenuPos({
-                    bottom: window.innerHeight - rect.top + 4,
-                    right: window.innerWidth - rect.right,
-                  });
-                }
-                setFloodScopeMenuOpen(true);
-              }}
-              disabled={disabled || sending || scopeKey === null}
-              aria-label={
-                floodScopeOverrideIndicator
-                  ? `${t('chatPanel.floodScopeOverrideMenuButton')}: ${floodScopeOverrideIndicator}`
-                  : t('chatPanel.floodScopeOverrideMenuButton')
-              }
-              aria-haspopup="listbox"
-              aria-expanded={floodScopeMenuOpen}
-              aria-controls={floodScopeMenuOpen ? floodScopeListboxId : undefined}
-              title={floodScopeMenuOpen ? undefined : t('chatPanel.floodScopeOverrideHint')}
-              {...floodScopeChevronTooltipProps}
-              className={`${sendButtonSplitChevronClass} inline-flex max-w-[5.5rem] min-w-0 items-center gap-0.5`}
-            >
-              {floodScopeOverrideActive && floodScopeOverrideIndicator ? (
-                <span className="text-2xs truncate leading-none font-normal">
-                  {floodScopeOverrideIndicator}
-                </span>
-              ) : null}
-              {floodScopeMenuOpen ? (
-                <ChevronUp
-                  aria-hidden
-                  className="h-3.5 w-3.5 shrink-0"
-                  trigger={iconTrigger}
-                  size={14}
-                />
-              ) : (
-                <ChevronDown
-                  aria-hidden
-                  className="h-3.5 w-3.5 shrink-0"
-                  trigger={iconTrigger}
-                  size={14}
+        {showSendSplit ? (
+          <div className="flex items-center gap-1">
+            {onVoiceMemo != null &&
+              !showFloodScopeOverride &&
+              !sending &&
+              (memoRecordingActive || !input.trim()) && (
+                <VoiceMemoComposerButton
+                  onVoiceMemo={onVoiceMemo}
+                  disabled={disabled}
+                  idleClassName={emojiButtonClass}
                 />
               )}
-            </button>
-            {floodScopeMenuOpen && floodScopeMenuPos
-              ? createPortal(
-                  <div
-                    ref={floodScopeMenuRef}
-                    style={{
-                      position: 'fixed',
-                      bottom: floodScopeMenuPos.bottom,
-                      right: floodScopeMenuPos.right,
-                    }}
-                    className="bg-deep-black shadow-level-4 border-ink-700 rounded-card z-50 max-h-72 min-w-[12rem] overflow-y-auto border py-1"
-                  >
-                    {floodScopeCustomEditing ? (
-                      <div className="space-y-2 px-2 py-1.5">
-                        <label
-                          className="text-muted text-2xs block"
-                          htmlFor={floodScopeCustomInputId}
-                        >
-                          {t('chatPanel.floodScopeOverrideCustomLabel')}
-                        </label>
-                        <input
-                          id={floodScopeCustomInputId}
-                          type="text"
-                          value={floodScopeCustomDraft}
-                          onChange={(e) => {
-                            setFloodScopeCustomDraft(e.target.value);
-                            setFloodScopeCustomError(null);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Escape') {
-                              e.preventDefault();
-                              setFloodScopeCustomEditing(false);
-                              setFloodScopeCustomDraft('');
-                              setFloodScopeCustomError(null);
-                              return;
-                            }
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              commitCustomFloodScopeDraft();
-                            }
-                          }}
-                          ref={floodScopeCustomInputRef}
-                          placeholder={t('chatPanel.floodScopeOverrideCustomPlaceholder')}
-                          aria-label={t('chatPanel.floodScopeOverrideCustomLabel')}
-                          className={`${INPUT_BOX_SM_CLASS} w-full`}
-                        />
-                        {floodScopeCustomError ? (
-                          <p role="alert" className="text-2xs text-danger-400">
-                            {floodScopeCustomError}
-                          </p>
-                        ) : null}
-                        <div className="flex justify-end gap-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFloodScopeCustomEditing(false);
-                              setFloodScopeCustomDraft('');
+            <div ref={floodScopeSplitRef} className="inline-flex min-w-0 items-stretch">
+              {showFloodScopeOverride ? (
+                <span className="sr-only">{t('chatPanel.floodScopeOverrideLabel')}</span>
+              ) : null}
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                }}
+                onClick={() => {
+                  void handleSend();
+                }}
+                disabled={
+                  !input.trim() || sending || (!suppressLimits && inputChunks === null) || disabled
+                }
+                aria-label={sendLabel}
+                className={sendButtonSplitMainClass}
+              >
+                {sendButtonIcon}
+                {sendLabel}
+              </button>
+              <button
+                ref={floodScopeMenuButtonRef}
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    floodScopeMenuOpenedByKeyboardRef.current = true;
+                  }
+                }}
+                onClick={() => {
+                  if (floodScopeMenuOpen) {
+                    floodScopeMenuOpenedByKeyboardRef.current = false;
+                    closeFloodScopeMenu();
+                    return;
+                  }
+                  const button = floodScopeMenuButtonRef.current;
+                  if (button) {
+                    const rect = button.getBoundingClientRect();
+                    setFloodScopeMenuPos({
+                      bottom: window.innerHeight - rect.top + 4,
+                      right: window.innerWidth - rect.right,
+                    });
+                  }
+                  setFloodScopeMenuOpen(true);
+                }}
+                disabled={
+                  disabled ||
+                  sending ||
+                  // Null flood scopeKey must not block Send later when scheduling is allowed.
+                  (showFloodScopeOverride && !scheduleSendAllowed && scopeKey === null)
+                }
+                aria-label={sendMenuChevronAria}
+                aria-haspopup={showFloodScopeOverride ? 'listbox' : 'menu'}
+                aria-expanded={floodScopeMenuOpen}
+                aria-controls={
+                  floodScopeMenuOpen
+                    ? showFloodScopeOverride
+                      ? floodScopeListboxId
+                      : sendMenuPanelId
+                    : undefined
+                }
+                title={floodScopeMenuOpen ? undefined : sendMenuChevronTitle}
+                {...floodScopeChevronTooltipProps}
+                className={`${sendButtonSplitChevronClass} inline-flex max-w-[5.5rem] min-w-0 items-center gap-0.5`}
+              >
+                {showFloodScopeOverride &&
+                floodScopeOverrideActive &&
+                floodScopeOverrideIndicator ? (
+                  <span className="text-2xs truncate leading-none font-normal">
+                    {floodScopeOverrideIndicator}
+                  </span>
+                ) : null}
+                {floodScopeMenuOpen ? (
+                  <ChevronUp
+                    aria-hidden
+                    className="h-3.5 w-3.5 shrink-0"
+                    trigger={iconTrigger}
+                    size={14}
+                  />
+                ) : (
+                  <ChevronDown
+                    aria-hidden
+                    className="h-3.5 w-3.5 shrink-0"
+                    trigger={iconTrigger}
+                    size={14}
+                  />
+                )}
+              </button>
+              {floodScopeMenuOpen && floodScopeMenuPos
+                ? createPortal(
+                    <div
+                      ref={floodScopeMenuRef}
+                      id={showFloodScopeOverride ? undefined : sendMenuPanelId}
+                      tabIndex={-1}
+                      style={{
+                        position: 'fixed',
+                        bottom: floodScopeMenuPos.bottom,
+                        right: floodScopeMenuPos.right,
+                      }}
+                      className="bg-deep-black shadow-level-4 border-ink-700 z-50 max-h-72 min-w-[12rem] overflow-y-auto rounded-lg border py-1"
+                    >
+                      {floodScopeCustomEditing ? (
+                        <div className="space-y-2 px-2 py-1.5">
+                          <label
+                            className="text-muted text-2xs block"
+                            htmlFor={floodScopeCustomInputId}
+                          >
+                            {t('chatPanel.floodScopeOverrideCustomLabel')}
+                          </label>
+                          <input
+                            id={floodScopeCustomInputId}
+                            type="text"
+                            value={floodScopeCustomDraft}
+                            disabled={scopeKey === null}
+                            onChange={(e) => {
+                              setFloodScopeCustomDraft(e.target.value);
                               setFloodScopeCustomError(null);
                             }}
-                            className="text-muted text-2xs hover:text-ink-200 rounded px-2 py-1"
-                          >
-                            {t('common.cancel')}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              commitCustomFloodScopeDraft();
+                            onKeyDown={(e) => {
+                              if (e.key === 'Escape') {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setFloodScopeCustomEditing(false);
+                                setFloodScopeCustomDraft('');
+                                setFloodScopeCustomError(null);
+                                return;
+                              }
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (scopeKey === null) return;
+                                commitCustomFloodScopeDraft();
+                              }
                             }}
-                            className="bg-brand-green/20 text-brand-green hover:bg-brand-green/30 text-2xs rounded px-2 py-1 font-medium"
-                          >
-                            {t('chatPanel.floodScopeOverrideCustomApply')}
-                          </button>
+                            ref={floodScopeCustomInputRef}
+                            placeholder={t('chatPanel.floodScopeOverrideCustomPlaceholder')}
+                            aria-label={t('chatPanel.floodScopeOverrideCustomLabel')}
+                            className={`${INPUT_BOX_SM_CLASS} w-full`}
+                          />
+                          {floodScopeCustomError ? (
+                            <p role="alert" className="text-2xs text-red-400">
+                              {floodScopeCustomError}
+                            </p>
+                          ) : null}
+                          <div className="flex justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setFloodScopeCustomEditing(false);
+                                setFloodScopeCustomDraft('');
+                                setFloodScopeCustomError(null);
+                              }}
+                              className="text-muted text-2xs hover:text-ink-200 rounded px-2 py-1"
+                            >
+                              {t('common.cancel')}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={scopeKey === null}
+                              onClick={() => {
+                                commitCustomFloodScopeDraft();
+                              }}
+                              className="bg-brand-green/20 text-brand-green hover:bg-brand-green/30 text-2xs rounded px-2 py-1 font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {t('chatPanel.floodScopeOverrideCustomApply')}
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <ul
-                        id={floodScopeListboxId}
-                        role="listbox"
-                        aria-label={t('chatPanel.floodScopeOverrideAria')}
-                      >
-                        {(
-                          [
-                            { value: '', label: t('chatPanel.floodScopeOverrideDefault') },
-                            ...[
-                              ...new Set([
-                                ...floodScopePresets,
-                                ...(floodScopeOverride.startsWith('#') ? [floodScopeOverride] : []),
-                              ]),
-                            ].map((tag) => ({
-                              value: tag,
-                              label: tag,
-                            })),
-                            {
-                              value: FLOOD_SCOPE_OVERRIDE_UNSCOPED,
-                              label: t('chatPanel.floodScopeOverrideUnscoped'),
-                            },
-                          ] as const
-                        ).map((option) => {
-                          const selected = floodScopeOverride === option.value;
-                          return (
-                            <li
-                              key={option.value || '__default__'}
-                              role="option"
-                              aria-selected={selected}
+                      ) : (
+                        <>
+                          {scheduleSendAllowed ? (
+                            <div
+                              role="menu"
+                              aria-label={t('chatPanel.sendLater')}
+                              className={
+                                showFloodScopeOverride ? 'border-ink-700 border-b pb-1' : undefined
+                              }
                             >
                               <button
                                 type="button"
+                                role="menuitem"
+                                disabled={scheduleSendDisabled}
                                 onClick={() => {
-                                  persistFloodScopeOverride(option.value);
                                   closeFloodScopeMenu();
+                                  setScheduleDialogOpen(true);
                                 }}
-                                className={`text-label w-full px-3 py-1.5 text-left transition-colors ${
-                                  selected
-                                    ? 'text-brand-green bg-ink-800'
-                                    : 'text-ink-300 hover:bg-ink-800 hover:text-ink-100'
-                                }`}
+                                className="text-ink-300 hover:bg-ink-800 hover:text-ink-100 w-full px-3 py-1.5 text-left text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                               >
-                                {option.label}
+                                {t('chatPanel.sendLater')}
                               </button>
-                            </li>
-                          );
-                        })}
-                        <li role="presentation" className="border-ink-700 mt-1 border-t pt-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setFloodScopeCustomEditing(true);
-                              setFloodScopeCustomDraft(
-                                floodScopeOverride &&
-                                  floodScopeOverride !== FLOOD_SCOPE_OVERRIDE_UNSCOPED &&
-                                  !floodScopePresets.includes(floodScopeOverride)
-                                  ? floodScopeOverride
-                                  : '',
-                              );
-                              setFloodScopeCustomError(null);
-                            }}
-                            className="hover:bg-ink-800 text-label w-full px-3 py-1.5 text-left text-cyan-300 transition-colors hover:text-cyan-200"
-                          >
-                            {t('chatPanel.floodScopeOverrideCustom')}
-                          </button>
-                        </li>
-                      </ul>
-                    )}
-                  </div>,
-                  document.body,
-                )
-              : null}
+                            </div>
+                          ) : null}
+                          {showFloodScopeOverride ? (
+                            <ul
+                              id={floodScopeListboxId}
+                              role="listbox"
+                              aria-label={t('chatPanel.floodScopeOverrideAria')}
+                            >
+                              {(
+                                [
+                                  { value: '', label: t('chatPanel.floodScopeOverrideDefault') },
+                                  ...[
+                                    ...new Set([
+                                      ...floodScopePresets,
+                                      ...(floodScopeOverride.startsWith('#')
+                                        ? [floodScopeOverride]
+                                        : []),
+                                    ]),
+                                  ].map((tag) => ({
+                                    value: tag,
+                                    label: tag,
+                                  })),
+                                  {
+                                    value: FLOOD_SCOPE_OVERRIDE_UNSCOPED,
+                                    label: t('chatPanel.floodScopeOverrideUnscoped'),
+                                  },
+                                ] as const
+                              ).map((option) => {
+                                const selected = floodScopeOverride === option.value;
+                                return (
+                                  <li
+                                    key={option.value || '__default__'}
+                                    role="option"
+                                    aria-selected={selected}
+                                  >
+                                    <button
+                                      type="button"
+                                      disabled={scopeKey === null}
+                                      onClick={() => {
+                                        persistFloodScopeOverride(option.value);
+                                        closeFloodScopeMenu();
+                                      }}
+                                      className={`w-full px-3 py-1.5 text-left text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                                        selected
+                                          ? 'text-brand-green bg-ink-800'
+                                          : 'text-ink-300 hover:bg-ink-800 hover:text-ink-100'
+                                      }`}
+                                    >
+                                      {option.label}
+                                    </button>
+                                  </li>
+                                );
+                              })}
+                              <li role="presentation" className="border-ink-700 mt-1 border-t pt-1">
+                                <button
+                                  type="button"
+                                  disabled={scopeKey === null}
+                                  onClick={() => {
+                                    setFloodScopeCustomEditing(true);
+                                    setFloodScopeCustomDraft(
+                                      floodScopeOverride &&
+                                        floodScopeOverride !== FLOOD_SCOPE_OVERRIDE_UNSCOPED &&
+                                        !floodScopePresets.includes(floodScopeOverride)
+                                        ? floodScopeOverride
+                                        : '',
+                                    );
+                                    setFloodScopeCustomError(null);
+                                  }}
+                                  className="hover:bg-ink-800 w-full px-3 py-1.5 text-left text-xs text-cyan-300 transition-colors hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  {t('chatPanel.floodScopeOverrideCustom')}
+                                </button>
+                              </li>
+                            </ul>
+                          ) : null}
+                        </>
+                      )}
+                    </div>,
+                    document.body,
+                  )
+                : null}
+            </div>
           </div>
         ) : (
           <div className="flex items-center gap-1">
@@ -1796,6 +2029,14 @@ export function ChatComposer({
           useWireByteCount={useWireByteCount}
           initialFocusIndex={macroDialogFocus}
           onClose={closeMacroDialog}
+        />
+      )}
+      {scheduleDialogOpen && (
+        <ScheduledSendDialog
+          mode="create"
+          text={input.trim()}
+          onConfirm={({ scheduledAt }) => handleScheduleSend(scheduledAt)}
+          onCancel={closeScheduleDialog}
         />
       )}
 

@@ -67,6 +67,8 @@ export async function buildMainProcess(opts = {}) {
     format: 'cjs',
     define: {
       __MESH_CLIENT_BUILD_INFO__: JSON.stringify(buildInfoRaw),
+      // Drop Vitest-only Catch up prompt imports from the production main bundle.
+      'process.env.VITEST': 'undefined',
     },
     minify,
     metafile: Boolean(metafilePath),
@@ -84,6 +86,72 @@ export async function buildMainProcess(opts = {}) {
     logLevel: 'info',
   });
 
+  // Keep Catch up prompt text out of the measured main `index.js` budget.
+  await esbuild.build({
+    absWorkingDir,
+    entryPoints: ['src/shared/aiSummaryPrompt.ts'],
+    bundle: true,
+    platform: 'node',
+    format: 'cjs',
+    outfile: path.join(path.dirname(outfile), 'ai-summary-prompt.js'),
+    minify,
+    logLevel: 'info',
+  });
+  await esbuild.build({
+    absWorkingDir,
+    entryPoints: ['src/shared/aiFollowUpPrompt.ts'],
+    bundle: true,
+    platform: 'node',
+    format: 'cjs',
+    outfile: path.join(path.dirname(outfile), 'ai-follow-up-prompt.js'),
+    minify,
+    logLevel: 'info',
+  });
+  // Offline model catalog (HF pins) — keep out of measured main `index.js`.
+  await esbuild.build({
+    absWorkingDir,
+    entryPoints: ['src/main/ai/local/modelCatalogData.ts'],
+    bundle: true,
+    platform: 'node',
+    format: 'cjs',
+    outfile: path.join(path.dirname(outfile), 'ai-local-models.js'),
+    minify,
+    logLevel: 'info',
+  });
+  // OS AI / MLX Metal ensure+spawn — keep out of measured main `index.js`.
+  await esbuild.build({
+    absWorkingDir,
+    entryPoints: ['src/main/ai/nativeRuntime.ts'],
+    bundle: true,
+    platform: 'node',
+    format: 'cjs',
+    outfile: path.join(path.dirname(outfile), 'ai-native-runtime.js'),
+    minify,
+    logLevel: 'info',
+  });
+  // Combined identity hydration SQL — keep out of measured main `index.js`.
+  await esbuild.build({
+    absWorkingDir,
+    entryPoints: ['src/main/identityHydrationSnapshot.ts'],
+    bundle: true,
+    platform: 'node',
+    format: 'cjs',
+    outfile: path.join(path.dirname(outfile), 'identity-hydration.js'),
+    minify,
+    logLevel: 'info',
+  });
+  // Team roster IPC — keep out of measured main `index.js`.
+  await esbuild.build({
+    absWorkingDir,
+    entryPoints: ['src/main/ipc/team-roster-handlers.ts'],
+    bundle: true,
+    platform: 'node',
+    format: 'cjs',
+    outfile: path.join(path.dirname(outfile), 'team-roster-handlers.js'),
+    minify,
+    logLevel: 'info',
+  });
+
   const noticeDirectory = path.resolve(
     absWorkingDir,
     path.dirname(outfile),
@@ -94,6 +162,15 @@ export async function buildMainProcess(opts = {}) {
     fs.copyFileSync(
       path.resolve(absWorkingDir, 'src/main/translation/vendor', notice),
       path.join(noticeDirectory, notice),
+    );
+  }
+
+  const aiNoticeDirectory = path.resolve(absWorkingDir, path.dirname(outfile), 'ai-licenses');
+  fs.mkdirSync(aiNoticeDirectory, { recursive: true });
+  for (const notice of ['LICENSE-wllama.txt', 'LICENSE-llama-cpp.txt']) {
+    fs.copyFileSync(
+      path.resolve(absWorkingDir, 'src/main/ai/vendor', notice),
+      path.join(aiNoticeDirectory, notice),
     );
   }
 

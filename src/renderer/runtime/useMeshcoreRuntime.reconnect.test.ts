@@ -177,7 +177,7 @@ describe('useMeshcoreRuntime auto-reconnect (regression)', () => {
     const reconnectBody = extractUseCallbackBody(RUNTIME_SOURCE, 'attemptMeshcoreReconnect');
     expect(reconnectBody).toContain('resolveConnectedMeshcoreBleIdentity');
     expect(reconnectBody).toContain('commitConnectedMeshcoreBleSuppression');
-    expect(reconnectBody).toContain('readMeshcoreWebBluetoothDeviceId');
+    expect(reconnectBody).not.toContain('readMeshcoreWebBluetoothDeviceId');
     expect(reconnectBody).toMatch(
       /Reconnect succeeded[\s\S]*?commitConnectedMeshcoreBleSuppression\(bleIdentityOpts\)/,
     );
@@ -199,11 +199,11 @@ describe('useMeshcoreRuntime auto-reconnect (regression)', () => {
     );
   });
 
-  it('sets MeshCore BLE identity after connect attach including Linux Web Bluetooth without blePeripheralId', () => {
+  it('sets MeshCore sidecar BLE identity after connect attach with remembered-id fallback', () => {
     const connectBody = extractUseCallbackBody(RUNTIME_SOURCE, 'connect');
     expect(connectBody).toContain('resolveConnectedMeshcoreBleIdentity');
     expect(connectBody).toContain('commitConnectedMeshcoreBleSuppression');
-    expect(connectBody).toContain('readMeshcoreWebBluetoothDeviceId(opened.conn)');
+    expect(connectBody).not.toContain('readMeshcoreWebBluetoothDeviceId');
     expect(connectBody).toContain(
       "fallbackLastBlePeripheralId: resolveLastBlePeripheralId('meshcore')",
     );
@@ -252,7 +252,7 @@ describe('useMeshcoreRuntime auto-reconnect (regression)', () => {
       /const shouldAbortPing = evaluateMeshcorePingRouteAbort\(\{[\s\S]*?floodPrimeExhausted[\s\S]*?pathResolvedComposed: pathResolved\.composed/,
     );
     expect(RUNTIME_SOURCE).toMatch(
-      /radioContactPathLen != null &&[\s\S]*?radioContactPathLen >= 0[\s\S]*?ensureBestPathLoaded\(nodeId\)/,
+      /meshcoreRadioContactRoute\(radioContactPathLen\) != null\s*\) \{\s*try \{\s*const selPrime = await usePathHistoryStore\s*\.getState\(\)\s*\.ensureBestPathLoaded\(nodeId\)/,
     );
   });
 
@@ -718,6 +718,7 @@ describe('useMeshcoreRuntime manual disconnect must not auto-reconnect', () => {
     expect(RUNTIME_SOURCE).not.toMatch(
       /runPostConnectSelfTelemetryIfReady[\s\S]{0,800}MESHCORE_TELEMETRY_TIMEOUT_MS/,
     );
+    expect(RUNTIME_SOURCE).toMatch(/replyWaitCapMs:\s*opts\.timeoutMs/);
   });
 
   it('onPowerResume skips reconnect after explicit user disconnect', () => {

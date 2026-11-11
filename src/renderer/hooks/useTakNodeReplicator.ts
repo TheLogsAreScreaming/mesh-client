@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react';
 
 import { errLikeToLogString } from '@/renderer/lib/errLikeToLogString';
+import { readStoredStaticGps } from '@/renderer/lib/gpsSource';
+import { canTakDirectMessage } from '@/renderer/lib/tak/takDirectMessages';
 import {
   collectTakNodeUpdates,
   TAK_NODE_REFRESH_MS,
@@ -28,6 +30,7 @@ function readSources(inputs: ReplicatorInputs): TakFeedSources {
   return {
     nodesByProtocol: inputs.nodesByProtocol,
     trackerFixes: Object.values(inputs.trackerFixes),
+    canDirectMessage: canTakDirectMessage,
   };
 }
 

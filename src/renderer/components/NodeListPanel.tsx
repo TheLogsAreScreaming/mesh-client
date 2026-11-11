@@ -4,7 +4,6 @@ import {
   Download,
   KeyRound,
   MapPin,
-  Radio,
   RefreshCw,
   Search,
   Settings,
@@ -51,6 +50,7 @@ import { errLikeToLogString } from '../lib/errLikeToLogString';
 import { EXPORT_FORMAT_VERSION, nodesToCsv, TOPOLOGY_EXPORT_FORMAT } from '../lib/exportFormats';
 import { formatRelativeOrIsoDate } from '../lib/formatRelativeOrIsoDate';
 import { getIdentityIdForProtocol } from '../lib/identityByProtocol';
+import { homeCoordsForDistanceFilter } from '../lib/locationTrust';
 import {
   isMeshcoreOffloadAbortError,
   meshcoreOffloadAbortRemovedCount,
@@ -206,10 +206,6 @@ interface Props {
   /** MeshCore: show Refresh button on Contacts tab (paired with onRefreshContacts) */
   meshcoreShowRefreshControl?: boolean;
   onRefreshContacts?: () => Promise<void>;
-  /** MeshCore: flood advert (same as Radio panel Device Actions). */
-  onSendAdvert?: () => Promise<void>;
-  /** When false, Flood Advert is disabled (radio not operational). Ignored if onSendAdvert is unset. */
-  meshcoreRadioOperational?: boolean;
   meshcoreShowPublicKeys?: boolean;
   meshcorePublicKeyHexByNodeId?: Map<number, string>;
   onShowOnMap?: (nodeId: number, lat: number, lon: number) => void;
@@ -236,8 +232,6 @@ export default function NodeListPanel({
   contactGroupsEnabled = true,
   meshcoreShowRefreshControl = false,
   onRefreshContacts,
-  onSendAdvert,
-  meshcoreRadioOperational = true,
   meshcoreShowPublicKeys = false,
   meshcorePublicKeyHexByNodeId,
   onShowOnMap,
@@ -256,6 +250,7 @@ export default function NodeListPanel({
   const protocolDiagnosticRows = diagnosticRows;
   const ignoreMqttEnabled = useDiagnosticsStore((s) => s.ignoreMqttEnabled);
   const nodeRedundancy = useDiagnosticsStore((s) => s.nodeRedundancy);
+  const ourPositionReference = useDiagnosticsStore((s) => s.ourPositionReference);
   const [listTab, setListTab] = useState<NodeListTab>('all');
   const [dbDmPeers, setDbDmPeers] = useState<ChatDmPeerDbRow[]>([]);
   const [sortField, setSortField] = useState<SortField>('last_heard');
@@ -264,7 +259,6 @@ export default function NodeListPanel({
   const [statusFilter, setStatusFilter] = useState<NodeStatusFilter>('all');
   const [importLoading, setImportLoading] = useState(false);
   const [refreshLoading, setRefreshLoading] = useState(false);
-  const [advertLoading, setAdvertLoading] = useState(false);
 
   const identityId = getIdentityIdForProtocol(mode) ?? getOfflineIdentityIdForProtocol(mode);
   const identityMessages = useMessages(identityId);
@@ -391,23 +385,6 @@ export default function NodeListPanel({
     }
   };
 
-  const handleSendAdvert = async () => {
-    if (!onSendAdvert) return;
-    setAdvertLoading(true);
-    try {
-      await onSendAdvert();
-      addToast(t('nodeListPanel.floodAdvertSent'), 'success');
-    } catch (e) {
-      console.warn('[NodeListPanel] sendAdvert failed:', e instanceof Error ? e.message : e);
-      addToast(
-        t('nodeListPanel.advertFailed', { message: e instanceof Error ? e.message : String(e) }),
-        'error',
-      );
-    } finally {
-      setAdvertLoading(false);
-    }
-  };
-
   const handleOffloadContacts = async () => {
     try {
       const { offloadedCount, reconciledCount, refreshFailed } = await offloadAndReconcile(
@@ -519,12 +496,8 @@ export default function NodeListPanel({
     // Filter by distance
     if (listTab === 'all' && locationFilter.enabled) {
       const homeNode = myNodeNum ? nodes.get(myNodeNum) : undefined;
-      const homeHasLocation =
-        homeNode?.latitude != null &&
-        homeNode.latitude !== 0 &&
-        homeNode.longitude != null &&
-        homeNode.longitude !== 0;
-      if (homeHasLocation) {
+      const homeCoords = homeCoordsForDistanceFilter(homeNode, ourPositionReference);
+      if (homeCoords) {
         const maxKm =
           locationFilter.unit === 'miles'
             ? locationFilter.maxDistance * 1.60934
@@ -533,12 +506,7 @@ export default function NodeListPanel({
           if (n.node_id === myNodeNum) return true;
           // Nodes without GPS can't be distance-filtered — keep them visible
           if (n.latitude == null || n.longitude == null) return true;
-          const d = haversineDistanceKm(
-            homeNode.latitude!,
-            homeNode.longitude!,
-            n.latitude,
-            n.longitude,
-          );
+          const d = haversineDistanceKm(homeCoords.lat, homeCoords.lon, n.latitude, n.longitude);
           return d <= maxKm;
         });
       }
@@ -639,6 +607,7 @@ export default function NodeListPanel({
     mode,
     selectedGroupId,
     groupMemberIds,
+    ourPositionReference,
   ]);
 
   // Status depends on elapsed time, so the counts and the filter follow a once-a-minute clock
@@ -698,12 +667,8 @@ export default function NodeListPanel({
   const filterStatus = useMemo(() => {
     if (!locationFilter.enabled) return null;
     const homeNode = myNodeNum ? nodes.get(myNodeNum) : undefined;
-    const homeHasLocation =
-      homeNode?.latitude != null &&
-      homeNode.latitude !== 0 &&
-      homeNode.longitude != null &&
-      homeNode.longitude !== 0;
-    if (!homeHasLocation) return 'no-gps';
+    const homeCoords = homeCoordsForDistanceFilter(homeNode, ourPositionReference);
+    if (!homeCoords) return 'no-gps';
     const totalWithGps = Array.from(nodes.values()).filter(
       (n) => n.node_id !== myNodeNum && (n.latitude || n.longitude),
     ).length;
@@ -711,7 +676,7 @@ export default function NodeListPanel({
       (n) => n.node_id !== myNodeNum && (n.latitude || n.longitude),
     ).length;
     return { hidden: totalWithGps - visibleWithGps };
-  }, [locationFilter, myNodeNum, nodes, baseNodeList]);
+  }, [locationFilter, myNodeNum, nodes, baseNodeList, ourPositionReference]);
   const totalNodeCount = listTab === 'history' ? dmPeerIndex.size : nodes.size;
   const visibleNodeCount = nodeList.length;
   const headerCountLabel =
@@ -809,29 +774,6 @@ export default function NodeListPanel({
               }
             >
               {t('nodeListPanel.buttonRefresh')}
-            </Button>
-          ) : null}
-          {mode === 'meshcore' && onSendAdvert ? (
-            <Button
-              size="sm"
-              onClick={() => {
-                void handleSendAdvert();
-              }}
-              disabled={!meshcoreRadioOperational || advertLoading}
-              data-setting-anchor="nodes.contacts.floodAdvert"
-              aria-label={t('nodeListPanel.sendFloodAdvert')}
-              title={
-                meshcoreRadioOperational ? undefined : t('nodeListPanel.sendFloodAdvertUnavailable')
-              }
-              icon={
-                advertLoading ? (
-                  smallSpinner
-                ) : (
-                  <Radio aria-hidden className={ICON_SM_PLUS} size={14} />
-                )
-              }
-            >
-              {t('nodeListPanel.buttonFloodAdvert')}
             </Button>
           ) : null}
           {mode === 'meshcore' && onImportContacts ? (

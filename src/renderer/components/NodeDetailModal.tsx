@@ -13,6 +13,7 @@ import {
   isValidMeshtasticAdminKeyBase64,
   normalizeMeshtasticAdminKeyInput,
 } from '@/renderer/lib/meshtasticRemoteAdminKeyStorage';
+import type { TeamLinkCandidate } from '@/renderer/lib/teamRoster/durableKey';
 import { writeClipboardText } from '@/renderer/lib/writeClipboardText';
 import { formatIsoDateTime } from '@/shared/formatIsoDate';
 import { buildMeshcoreContactAddUri, type MeshcoreContactType } from '@/shared/meshClientDeepLink';
@@ -22,6 +23,8 @@ import { formatMeshtasticNodeId } from '@/shared/nodeNameUtils';
 import { touch } from '@/shared/touch';
 
 import { MESHCORE_NEIGHBORS_MAX_RECOMMENDED_HOPS } from '../hooks/meshcore/meshcoreHookPreamble';
+import type { MeshcoreCompanionRemoteActions } from '../hooks/meshcore/useMeshcoreCompanionRemote';
+import type { MeshcoreTelemetryPushActions } from '../hooks/meshcore/useMeshcoreTelemetryPush';
 import { useMeshcoreRepeaterRemoteAuth } from '../hooks/useMeshcoreRepeaterRemoteAuth';
 import { formatCoordPair } from '../lib/coordUtils';
 import { downloadBlob } from '../lib/downloadBlob';
@@ -30,6 +33,7 @@ import {
   getMeshcoreRadioMaxContacts,
   subscribeMeshcoreRadioMaxContacts,
 } from '../lib/meshcore/meshcoreContactCapacityPush';
+import { meshcoreFloodSendPercent } from '../lib/meshcore/meshcoreFloodSendPercent';
 import type {
   MeshCoreNeighborResult,
   MeshCoreNodeTelemetry,
@@ -54,11 +58,13 @@ import {
   meshcoreContactTypeFromHwModel,
   meshcoreTracePathLenToHops,
 } from '../lib/meshcoreUtils';
+import { meshtasticFirmwareSupportsKeyVerification } from '../lib/meshtastic/meshtasticKeyVerification';
 import {
   bytesToHex,
   computeRangeTestLossRate,
   latestPaxPoint,
   type ModulePortEvent,
+  type NodeStatusEntry,
   parseRangeTestPayload,
   type PaxCounterPoint,
 } from '../lib/meshtastic/meshtasticModuleEvents';
@@ -67,23 +73,30 @@ import { Z_NODE_DETAIL_MODAL } from '../lib/modalZIndex';
 import { nodeBearingRange } from '../lib/nodeBearingRange';
 import { getNodeStatus } from '../lib/nodeStatus';
 import { useRadioProvider } from '../lib/radio/providerFactory';
+import type { CliHistoryEntry } from '../lib/repeaterCommandService';
 import { MESHCORE_TRACE_PING_TOTAL_TIMEOUT_MS } from '../lib/timeConstants';
 import type { MeshCoreLocalStats, MeshNode, MeshProtocol, NeighborInfoRecord } from '../lib/types';
 import { useBlockStore } from '../stores/blockStore';
 import { useIsBotSender } from '../stores/botSendersStore';
+import { useConnectionStore } from '../stores/connectionStore';
 import { useCoordFormatStore } from '../stores/coordFormatStore';
 import { useDiagnosticsStore } from '../stores/diagnosticsStore';
+import { initiateKeyVerification } from '../stores/keyVerificationStore';
 import { useNodeStore } from '../stores/nodeStore';
 import { usePathHistoryStore } from '../stores/pathHistoryStore';
 import { useTimeFormatStore } from '../stores/timeFormatStore';
 import { useWatchedNodesStore } from '../stores/watchedNodesStore';
 import { BotBadge } from './BotBadge';
 import { HelpTooltip } from './HelpTooltip';
+import MeshcoreRemoteCliSection from './MeshcoreRemoteCliSection';
 import { MeshcoreRepeaterPasswordControls } from './MeshcoreRepeaterPasswordControls';
 import { MeshcoreRouteChain } from './MeshcoreRouteChain';
+import MeshcoreTelemetryPushSection from './MeshcoreTelemetryPushSection';
 import NodeInfoBody, { formatSecondsAgo } from './NodeInfoBody';
 import QrCodeImage from './QrCodeImage';
 import SnrIndicator from './SnrIndicator';
+import { SuggestToTeamContactModalLazy } from './teamRoster/SuggestToTeamContactModalLazy';
+import { useToast } from './Toast';
 import { Button, buttonClassName } from './ui/Button';
 import { DialogFrame } from './ui/DialogFrame';
 import { INPUT_BOX_SM_CLASS, NOTICE_CLASS, TEXTAREA_BOX_SM_CLASS } from './ui/formClasses';
@@ -130,6 +143,8 @@ interface NodeDetailModalProps {
   meshcoreNeighborError?: string;
   /** PaxCounter history from Meshtastic (capped session series per node) */
   paxCounterData?: Map<number, PaxCounterPoint[]>;
+  /** Latest NODE_STATUS_APP status string per node (session memory) */
+  nodeStatuses?: ReadonlyMap<number, NodeStatusEntry>;
   /** DetectionSensor events from Meshtastic (capped session list per node) */
   detectionSensorEvents?: Map<number, ModulePortEvent[]>;
   /** Range Test packets from Meshtastic (capped session list per node) */
@@ -155,6 +170,14 @@ interface NodeDetailModalProps {
   onConfigureRemotely?: (nodeNum: number) => void;
   /** Saved admin key for this node (enables configure remotely). */
   hasRemoteAdminKey?: boolean;
+  /** Companion CLI capability: remote CLI and the per-contact permission (flag 0x10). */
+  meshcoreRemoteCli?: {
+    remote: MeshcoreCompanionRemoteActions;
+    history: readonly CliHistoryEntry[];
+    onClearHistory?: (nodeId: number) => void;
+  };
+  /** Companion CLI capability: telemetry push subscriptions on v1.18+ sensors. */
+  meshcoreTelemetryPush?: MeshcoreTelemetryPushActions;
 }
 
 function meshcorePublicKeyToHex(publicKey: Uint8Array): string {
@@ -250,6 +273,7 @@ export default function NodeDetailModal({
   onRequestNeighbors,
   meshcoreNeighborError,
   paxCounterData,
+  nodeStatuses,
   detectionSensorEvents,
   rangeTestPackets,
   mapReports,
@@ -263,10 +287,17 @@ export default function NodeDetailModal({
   onSaveRemoteAdminKey,
   onConfigureRemotely,
   hasRemoteAdminKey,
+  meshcoreRemoteCli,
+  meshcoreTelemetryPush,
 }: NodeDetailModalProps) {
   const { t, i18n } = useTranslation();
+  const { addToast } = useToast();
   const parentIconTrigger = useParentIconTrigger();
   const use24HourTime = useTimeFormatStore((s) => s.use24HourTime);
+  const [suggestTeam, setSuggestTeam] = useState<{
+    candidate: TeamLinkCandidate;
+    preferSelf: boolean;
+  } | null>(null);
   const { ensureRepeaterAuth, promptRepeaterPassword, RemoteAuthModal } =
     useMeshcoreRepeaterRemoteAuth();
   const [repeaterSecretsEpoch, setRepeaterSecretsEpoch] = useState(0);
@@ -481,7 +512,15 @@ export default function NodeDetailModal({
     nodeStaleThresholdMs,
     nodeOfflineThresholdMs,
     protocol: activeProtocol,
+    hasKeyVerification,
   } = useRadioProvider(protocol ?? 'meshtastic');
+  const meshtasticIdentityId =
+    protocol === 'meshtastic' ? getIdentityIdForProtocol('meshtastic') : null;
+  const meshtasticFirmwareVersion = useConnectionStore((s) =>
+    meshtasticIdentityId ? (s.connections[meshtasticIdentityId]?.firmwareVersion ?? null) : null,
+  );
+  const keyVerificationFirmwareOk =
+    meshtasticFirmwareSupportsKeyVerification(meshtasticFirmwareVersion);
   const isMeshcoreProtocol = activeProtocol === 'meshcore';
   const nodeIsBot = useIsBotSender(activeProtocol, node?.node_id);
 
@@ -1015,6 +1054,60 @@ export default function NodeDetailModal({
       )}
     </div>
   );
+  // Contact Cards linking stays available for the local radio node (RF actions above do not).
+  const teamSuggestRow =
+    protocol === 'meshtastic' || protocol === 'meshcore' ? (
+      <div
+        className={`border-ink-800 flex flex-wrap items-center gap-2 px-5 py-3 ${
+          variant === 'pane' ? 'border-b' : actionsRow ? '' : 'border-t'
+        }`}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            const loraProtocol = protocol === 'meshcore' ? 'meshcore' : 'meshtastic';
+            const pubkeyHex =
+              contactPubkey ??
+              node.public_key_hex ??
+              (storeContactPublicKey ? meshcorePublicKeyToHex(storeContactPublicKey) : null);
+            void import('@/renderer/lib/teamRoster/durableKey')
+              .then(({ teamLinkFromLoraNode }) => {
+                const candidate = teamLinkFromLoraNode({
+                  protocol: loraProtocol,
+                  nodeId: node.node_id,
+                  longName: node.long_name,
+                  shortName: node.short_name,
+                  publicKeyHex: pubkeyHex,
+                  identityId: getIdentityIdForProtocol(loraProtocol),
+                });
+                if (!candidate) {
+                  addToast(t('teamRoster.linkFailed'), 'error');
+                  return;
+                }
+                setSuggestTeam({ candidate, preferSelf: isOurNode });
+              })
+              .catch((e: unknown) => {
+                console.warn('[NodeDetailModal] team link helper failed ' + errLikeToLogString(e));
+                addToast(t('teamRoster.linkFailed'), 'error');
+              });
+          }}
+          className={buttonClassName('secondary', 'md', 'min-w-[8rem] flex-1')}
+          aria-label={t('teamRoster.suggestButton')}
+        >
+          {t('teamRoster.suggestButton')}
+        </button>
+      </div>
+    ) : null;
+  const suggestTeamContactModal =
+    suggestTeam != null ? (
+      <SuggestToTeamContactModalLazy
+        candidate={suggestTeam.candidate}
+        preferSelf={suggestTeam.preferSelf}
+        onClose={() => {
+          setSuggestTeam(null);
+        }}
+      />
+    ) : null;
   const detailContent = (
     <>
       {/* Header */}
@@ -1219,6 +1312,7 @@ export default function NodeDetailModal({
 
       {/* Pane: actions right under the header, where Message and Trace are expected (Option B). */}
       {variant === 'pane' && actionsRow}
+      {variant === 'pane' && teamSuggestRow}
 
       {/* Body + footer actions — single scroll region so remote admin and controls stay reachable */}
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
@@ -1417,6 +1511,29 @@ export default function NodeDetailModal({
                   </>
                 )}
               </div>
+            </div>
+          )}
+
+          {meshcoreTelemetryPush && !isOurNode && node.hw_model === 'Sensor' && (
+            <div className="mt-3">
+              <MeshcoreTelemetryPushSection
+                nodeId={node.node_id}
+                push={meshcoreTelemetryPush}
+                ensureAccess={() => ensureRemoteRpcAccess(node.node_id, node.hw_model, 'admin')}
+                disabled={!isConnected}
+              />
+            </div>
+          )}
+
+          {meshcoreRemoteCli && !isOurNode && node.hw_model === 'Chat' && (
+            <div className="mt-3">
+              <MeshcoreRemoteCliSection
+                nodeId={node.node_id}
+                remote={meshcoreRemoteCli.remote}
+                history={meshcoreRemoteCli.history}
+                onClearHistory={meshcoreRemoteCli.onClearHistory}
+                disabled={!isConnected}
+              />
             </div>
           )}
 
@@ -1679,9 +1796,24 @@ export default function NodeDetailModal({
                 <div className="text-ink-200 font-mono">
                   {meshcoreRepeaterStatus.currTxQueueLen}
                 </div>
-                <div className="text-muted">{t('nodeDetailModal.floodDirectSentLabel')}</div>
+                <div className="text-muted inline-flex items-center gap-1">
+                  <span>{t('nodeDetailModal.floodDirectSentLabel')}</span>
+                  <HelpTooltip
+                    text={t('nodeDetailModal.floodSendPercentHint')}
+                    ariaLabel={t('nodeDetailModal.floodSendPercentHintAria')}
+                  />
+                </div>
                 <div className="text-ink-200 font-mono">
                   {meshcoreRepeaterStatus.nSentFlood} / {meshcoreRepeaterStatus.nSentDirect}
+                  {(() => {
+                    const floodPct = meshcoreFloodSendPercent(
+                      meshcoreRepeaterStatus.nSentFlood,
+                      meshcoreRepeaterStatus.nSentDirect,
+                    );
+                    return floodPct === null
+                      ? null
+                      : ` (${t('nodeDetailModal.floodSendPercentValue', { percent: floodPct })})`;
+                  })()}
                 </div>
                 <div className="text-muted">{t('nodeDetailModal.floodDirectRecvLabel')}</div>
                 <div className="text-ink-200 font-mono">
@@ -1761,10 +1893,25 @@ export default function NodeDetailModal({
               <h4 className="text-ink-300 text-label font-semibold">
                 {t('nodeDetailModal.packetsLocalHeading')}
               </h4>
-              <div className="bg-secondary-dark text-label grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2">
-                <div className="text-muted">{t('nodeDetailModal.sentFloodDirectLabel')}</div>
+              <div className="bg-secondary-dark grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2 text-xs">
+                <div className="text-muted inline-flex items-center gap-1">
+                  <span>{t('nodeDetailModal.sentFloodDirectLabel')}</span>
+                  <HelpTooltip
+                    text={t('nodeDetailModal.floodSendPercentHint')}
+                    ariaLabel={t('nodeDetailModal.floodSendPercentHintAria')}
+                  />
+                </div>
                 <div className="text-ink-200 font-mono">
                   {meshcoreLocalStats.nSentFlood} / {meshcoreLocalStats.nSentDirect}
+                  {(() => {
+                    const floodPct = meshcoreFloodSendPercent(
+                      meshcoreLocalStats.nSentFlood,
+                      meshcoreLocalStats.nSentDirect,
+                    );
+                    return floodPct === null
+                      ? null
+                      : ` (${t('nodeDetailModal.floodSendPercentValue', { percent: floodPct })})`;
+                  })()}
                 </div>
                 <div className="text-muted">{t('nodeDetailModal.recvFloodDirectLabel')}</div>
                 <div className="text-ink-200 font-mono">
@@ -1784,6 +1931,29 @@ export default function NodeDetailModal({
               </div>
             </div>
           )}
+
+          {(() => {
+            const entry = nodeStatuses?.get(node.node_id);
+            if (!entry) return null;
+            return (
+              <div className="space-y-2 px-5 pb-2">
+                <h4 className="text-ink-300 text-xs font-semibold">
+                  {t('nodeDetailModal.nodeStatus.heading')}
+                </h4>
+                <div className="bg-secondary-dark space-y-1 rounded p-2 text-xs">
+                  <p className="text-ink-200 break-words">{entry.status}</p>
+                  <p className="text-muted">
+                    {t('nodeDetailModal.nodeStatus.updated', {
+                      ago: formatSecondsAgo(
+                        Math.max(0, Math.floor((Date.now() - entry.timestamp) / 1000)),
+                        t,
+                      ),
+                    })}
+                  </p>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* PaxCounter section (Meshtastic only) */}
           {protocol === 'meshtastic' &&
@@ -2104,6 +2274,50 @@ export default function NodeDetailModal({
               </div>
             )}
 
+          {protocol === 'meshtastic' && hasKeyVerification && !isOurNode && (
+            <div className="border-ink-700 mt-4 space-y-2 rounded-lg border px-3 py-2 text-sm">
+              <p className="text-ink-200 text-xs font-medium">
+                {t('keyVerification.sectionTitle')}
+              </p>
+              {radioConnected && !keyVerificationFirmwareOk ? (
+                <p className={NOTICE_CLASS.warn} role="status">
+                  {t('keyVerification.unsupportedFirmware')}
+                </p>
+              ) : node.public_key_hex?.length !== 64 ? (
+                <p className={NOTICE_CLASS.info}>{t('keyVerification.noPublicKey')}</p>
+              ) : (
+                <Button
+                  size="sm"
+                  disabled={
+                    !radioConnected ||
+                    !keyVerificationFirmwareOk ||
+                    !meshtasticIdentityId ||
+                    node.key_manually_verified === true
+                  }
+                  aria-label={t('keyVerification.verifyButton')}
+                  onClick={() => {
+                    if (!meshtasticIdentityId) return;
+                    void initiateKeyVerification(
+                      meshtasticIdentityId,
+                      node.node_id,
+                      node.long_name || node.short_name || hexId,
+                    );
+                  }}
+                >
+                  {t('keyVerification.verifyButton')}
+                </Button>
+              )}
+              <details className="text-muted text-xs">
+                <summary className="cursor-pointer">{t('keyVerification.trustModelTitle')}</summary>
+                <div className="mt-1 space-y-1">
+                  <p>{t('keyVerification.trustModelManual')}</p>
+                  <p>{t('keyVerification.trustModelXeddsa')}</p>
+                  <p>{t('keyVerification.trustModelAdvice')}</p>
+                </div>
+              </details>
+            </div>
+          )}
+
           {protocol === 'meshtastic' && onSaveRemoteAdminKey && !isOurNode && (
             <div className="rounded-card border-info-700/40 bg-info-900/20 text-body-lg text-info-100 mt-4 space-y-2 border px-3 py-2">
               <p className="text-label text-info-300 font-medium">
@@ -2225,6 +2439,7 @@ export default function NodeDetailModal({
 
         {/* Footer actions (modal). The pane shows them under the header instead (Option B). */}
         {variant !== 'pane' && actionsRow}
+        {variant !== 'pane' && teamSuggestRow}
 
         {/* MQTT Ignore toggle */}
         <div className="border-ink-800 shrink-0 border-t px-5 py-3">
@@ -2344,6 +2559,7 @@ export default function NodeDetailModal({
           {detailContent}
         </aside>
         {RemoteAuthModal}
+        {suggestTeamContactModal}
       </>
     );
   }

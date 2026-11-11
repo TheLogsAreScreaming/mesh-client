@@ -267,6 +267,19 @@ html[data-reduce-motion='true'] [data-setting-anchor][data-setting-flash] {
   outline-color: var(--color-brand-green);
 }
 
+/* Global message search: flash the focused chat row after jump-to-hit. */
+[data-chat-message-flash] {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  animation: setting-anchor-flash 2.4s ease-out;
+  border-radius: var(--radius-card, 0.5rem);
+}
+
+html[data-reduce-motion='true'] [data-chat-message-flash] {
+  animation: none !important;
+  outline-color: var(--color-brand-green);
+}
+
 .mesh-basemap-dark .leaflet-tile {
   /* Apply only to OSM tile pixels: node markers, packet trails and controls keep their colors. */
   filter: grayscale(1) invert(1) brightness(0.82) contrast(0.9);
@@ -281,7 +294,7 @@ html[data-reduce-motion='true'] [data-setting-anchor][data-setting-flash] {
 /* Leaflet zoom, locate and attribution follow the dark map controls (MAP_CONTROL_CLASS). Leaflet's
    own CSS loads later with the map chunk, so every rule carries an extra class to win on specificity. */
 .leaflet-container .leaflet-control.leaflet-bar {
-  border: 1px solid var(--color-ink-700, #364156);
+  border: 1px solid var(--color-ink-700, #334155);
   border-radius: 0.5rem;
   box-shadow: var(--shadow-level-2);
   overflow: hidden;
@@ -295,7 +308,7 @@ html[data-reduce-motion='true'] [data-setting-anchor][data-setting-flash] {
 .leaflet-container .leaflet-bar a:hover,
 .leaflet-container .leaflet-bar a:focus-visible,
 .leaflet-container .leaflet-bar .leaflet-bar-part:hover {
-  background-color: var(--color-ink-800, #212d40);
+  background-color: var(--color-ink-800, #1e293b);
   color: #fff;
 }
 .leaflet-container .leaflet-bar a.leaflet-disabled {
@@ -319,7 +332,7 @@ html[data-reduce-motion='true'] [data-setting-anchor][data-setting-flash] {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-secondary-dark, #364156);
+  background: var(--color-secondary-dark, #334155);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {

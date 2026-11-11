@@ -93,14 +93,14 @@ describe('themeColors', () => {
     it('migrates persisted legacy readableGreen (#16a34a) to accessible default', () => {
       localStorage.setItem(THEME_COLORS_STORAGE_KEY, JSON.stringify({ readableGreen: '#16a34a' }));
       const colors = loadThemeColors();
-      expect(colors.readableGreen).toBe('#b35f00');
+      expect(colors.readableGreen).toBe(DEFAULT_THEME_COLORS.readableGreen);
       expect(localStorage.getItem(THEME_COLORS_STORAGE_KEY)).toBeNull();
     });
 
     it('resets a brandGreen override that is too dark for text or dark-on-green fills', () => {
       localStorage.setItem(THEME_COLORS_STORAGE_KEY, JSON.stringify({ brandGreen: '#14532d' }));
       const colors = loadThemeColors();
-      expect(colors.brandGreen).toBe('#ffa31a');
+      expect(colors.brandGreen).toBe(DEFAULT_THEME_COLORS.brandGreen);
       expect(localStorage.getItem(THEME_COLORS_STORAGE_KEY)).toBeNull();
     });
 
@@ -153,10 +153,10 @@ describe('themeColors', () => {
     it('sets appBg as bare hex', () => {
       const setProp = vi.fn();
       vi.spyOn(document.documentElement.style, 'setProperty').mockImplementation(setProp);
-      applyThemeColors({ ...DEFAULT_THEME_COLORS, appBg: '#11151c' });
+      applyThemeColors({ ...DEFAULT_THEME_COLORS, appBg: '#020617' });
       const call = setProp.mock.calls.find(([prop]) => prop === '--color-app-bg');
       expect(call).toBeDefined();
-      expect(call![1]).toBe('#11151c');
+      expect(call![1]).toBe('#020617');
       vi.restoreAllMocks();
     });
 
@@ -166,8 +166,8 @@ describe('themeColors', () => {
       const applied = applyThemeColors({ ...DEFAULT_THEME_COLORS, readableGreen: '#16a34a' });
       const call = setProp.mock.calls.find(([prop]) => prop === '--color-readable-green');
       expect(call).toBeDefined();
-      expect(call![1]).toBe('#b35f00');
-      expect(applied?.readableGreen).toBe('#b35f00');
+      expect(call![1]).toBe(DEFAULT_THEME_COLORS.readableGreen);
+      expect(applied?.readableGreen).toBe(DEFAULT_THEME_COLORS.readableGreen);
       expect(localStorage.getItem(THEME_COLORS_STORAGE_KEY)).toBeNull();
       vi.restoreAllMocks();
     });

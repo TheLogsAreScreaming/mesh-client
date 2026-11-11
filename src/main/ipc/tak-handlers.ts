@@ -15,7 +15,16 @@ import { MS_PER_MINUTE } from '../../shared/timeConstants';
 import { createIpcRateLimiter } from '../ipcRateLimit';
 import { sanitizeLogMessage } from '../log-service';
 import { enrollTakClientCertificate } from '../tak/enrollment';
-import { parseTakGeochatMessage } from '../tak/geochat-cot';
+import {
+  parseTakChannelChatMessage,
+  parseTakChatChannels,
+  parseTakDirectMessage,
+  parseTakDirectPeers,
+  parseTakDmProtocols,
+  parseTakDmStatus,
+  parseTakRetiredRooms,
+} from '../tak/geochat-cot';
+import { parseTakIncidentMarkers } from '../tak/incident-cot';
 import { parseTakNodeUpdate } from '../tak/node-update';
 import {
   clearTakRemoteCredentials,
@@ -244,7 +253,103 @@ export function registerTakIpcHandlers(deps: TakIpcDeps): void {
     const m = getTakServerManager();
     if (!m?.hasActiveSink()) return;
     chatPushes.checkOrThrow();
-    m.sendChat(parseTakGeochatMessage(message));
+    m.sendChat(parseTakChannelChatMessage(message));
+  });
+
+  const chatChannelUpdates = createIpcRateLimiter({
+    max: 60,
+    windowMs: MS_PER_MINUTE,
+    label: 'tak:setChatChannels',
+  });
+  ipcMain.handle('tak:setChatChannels', (event, channels: unknown) => {
+    assertIpcSender(event, 'tak:setChatChannels');
+    // No manager yet means no sink has started; the renderer sends the list again when one does.
+    const m = getTakServerManager();
+    if (!m) return;
+    chatChannelUpdates.checkOrThrow();
+    m.setChatChannels(parseTakChatChannels(channels));
+  });
+
+  const retiredRoomUpdates = createIpcRateLimiter({
+    max: 10,
+    windowMs: MS_PER_MINUTE,
+    label: 'tak:retireChatRooms',
+  });
+  ipcMain.handle('tak:retireChatRooms', (event, rooms: unknown) => {
+    assertIpcSender(event, 'tak:retireChatRooms');
+    // As for channels: the renderer sends the list again when a sink starts.
+    const m = getTakServerManager();
+    if (!m) return;
+    retiredRoomUpdates.checkOrThrow();
+    m.retireChatRooms(parseTakRetiredRooms(rooms));
+  });
+
+  const directPushes = createIpcRateLimiter({
+    max: 120,
+    windowMs: MS_PER_MINUTE,
+    label: 'tak:pushDirectMessage',
+  });
+  ipcMain.handle('tak:pushDirectMessage', (event, message: unknown) => {
+    assertIpcSender(event, 'tak:pushDirectMessage');
+    const m = getTakServerManager();
+    if (!m?.hasActiveSink()) return;
+    directPushes.checkOrThrow();
+    m.sendDirectMessage(parseTakDirectMessage(message));
+  });
+
+  const directMessagingUpdates = createIpcRateLimiter({
+    max: 60,
+    windowMs: MS_PER_MINUTE,
+    label: 'tak:setDirectMessaging',
+  });
+  ipcMain.handle('tak:setDirectMessaging', (event, protocols: unknown) => {
+    assertIpcSender(event, 'tak:setDirectMessaging');
+    // As for channels: the renderer sends the setting again when a sink starts.
+    const m = getTakServerManager();
+    if (!m) return;
+    directMessagingUpdates.checkOrThrow();
+    m.setDirectMessaging(parseTakDmProtocols(protocols));
+  });
+
+  const directPeerUpdates = createIpcRateLimiter({
+    max: 60,
+    windowMs: MS_PER_MINUTE,
+    label: 'tak:setDirectPeers',
+  });
+  ipcMain.handle('tak:setDirectPeers', (event, peers: unknown) => {
+    assertIpcSender(event, 'tak:setDirectPeers');
+    // As for channels: the renderer sends the list again when a sink starts.
+    const m = getTakServerManager();
+    if (!m) return;
+    directPeerUpdates.checkOrThrow();
+    m.setDirectPeers(parseTakDirectPeers(peers));
+  });
+
+  const incidentMarkerUpdates = createIpcRateLimiter({
+    max: 60,
+    windowMs: MS_PER_MINUTE,
+    label: 'tak:setIncidentMarkers',
+  });
+  ipcMain.handle('tak:setIncidentMarkers', (event, markers: unknown) => {
+    assertIpcSender(event, 'tak:setIncidentMarkers');
+    // As for channels: the renderer sends the list again when a sink starts.
+    const m = getTakServerManager();
+    if (!m) return;
+    incidentMarkerUpdates.checkOrThrow();
+    m.setIncidentMarkers(parseTakIncidentMarkers(markers));
+  });
+
+  const dmStatusUpdates = createIpcRateLimiter({
+    max: 120,
+    windowMs: MS_PER_MINUTE,
+    label: 'tak:dmStatus',
+  });
+  ipcMain.handle('tak:dmStatus', (event, update: unknown) => {
+    assertIpcSender(event, 'tak:dmStatus');
+    const m = getTakServerManager();
+    if (!m?.hasActiveSink()) return;
+    dmStatusUpdates.checkOrThrow();
+    m.reportDmOutcome(parseTakDmStatus(update));
   });
 
   // ─── Relayed node styling ────────────────────────────────────────
@@ -281,7 +386,7 @@ export function registerTakIpcHandlers(deps: TakIpcDeps): void {
       console.debug('[IPC] tak:remoteStart');
       validateTakRemoteSettings(settings);
       const m = await ensureTakServerManager();
-      m.startRemote(settings);
+      await m.startRemote(settings);
     } catch (err) {
       console.error('[IPC] tak:remoteStart failed:', errorMessage(err));
       throw err;
@@ -309,10 +414,10 @@ export function registerTakIpcHandlers(deps: TakIpcDeps): void {
     }
   });
 
-  ipcMain.handle('tak:remoteGetCredentials', (event) => {
+  ipcMain.handle('tak:remoteGetCredentials', async (event) => {
     assertIpcSender(event, 'tak:remoteGetCredentials');
     try {
-      return summarizeTakRemoteCredentials(loadTakRemoteCredentials());
+      return summarizeTakRemoteCredentials(await loadTakRemoteCredentials());
     } catch (err) {
       console.error('[IPC] tak:remoteGetCredentials failed:', errorMessage(err));
       throw err;
@@ -351,13 +456,13 @@ export function registerTakIpcHandlers(deps: TakIpcDeps): void {
         await readCredentialFiles(result.filePaths),
         password ?? '',
       );
-      saveTakRemoteCredentials(creds);
+      await saveTakRemoteCredentials(creds);
       // A running relay holds its credentials in memory; reconnect it with the new ones.
-      getTakServerManager()?.restartRemote();
+      await getTakServerManager()?.restartRemote();
       console.debug(
         `[IPC] tak:remoteImportCredentials: imported${creds.ca ? ' CA' : ''}${creds.cert ? ' client certificate' : ''}`,
       );
-      return summarizeTakRemoteCredentials(loadTakRemoteCredentials());
+      return summarizeTakRemoteCredentials(await loadTakRemoteCredentials());
     } catch (err) {
       console.error('[IPC] tak:remoteImportCredentials failed:', errorMessage(err));
       throw err;
@@ -394,11 +499,11 @@ export function registerTakIpcHandlers(deps: TakIpcDeps): void {
         password: request.password,
         verifyServer: request.verifyServer,
         allowNameMismatch: request.allowNameMismatch,
-        trustedCa: loadTakRemoteCredentials().ca,
+        trustedCa: (await loadTakRemoteCredentials()).ca,
       });
-      saveTakRemoteCredentials(creds);
-      getTakServerManager()?.restartRemote();
-      return summarizeTakRemoteCredentials(loadTakRemoteCredentials());
+      await saveTakRemoteCredentials(creds);
+      await getTakServerManager()?.restartRemote();
+      return summarizeTakRemoteCredentials(await loadTakRemoteCredentials());
     } catch (err) {
       console.error('[IPC] tak:remoteEnroll failed:', errorMessage(err));
       throw err;
@@ -407,7 +512,7 @@ export function registerTakIpcHandlers(deps: TakIpcDeps): void {
     }
   });
 
-  ipcMain.handle('tak:remoteClearCredentials', (event) => {
+  ipcMain.handle('tak:remoteClearCredentials', async (event) => {
     assertIpcSender(event, 'tak:remoteClearCredentials');
     console.debug('[IPC] tak:remoteClearCredentials');
     // An import still in its chooser would write its files after this clear finished.
@@ -417,6 +522,6 @@ export function registerTakIpcHandlers(deps: TakIpcDeps): void {
     // A running relay holds the credentials in memory; stop it so it cannot reconnect with them.
     getTakServerManager()?.stopRemote();
     clearTakRemoteCredentials();
-    return summarizeTakRemoteCredentials(loadTakRemoteCredentials());
+    return summarizeTakRemoteCredentials(await loadTakRemoteCredentials());
   });
 }

@@ -5,6 +5,7 @@ import { isBleScanBusyErrorMessage } from './bleAdapterLease';
 import {
   isMeshcoreMissingServicesErrorMessage,
   isMeshcoreSetupAbortError,
+  isReticulumSidecarResolveErrorMessage,
 } from './bleConnectErrors';
 import { errLikeToLogString } from './errLikeToLogString';
 import type { MeshProtocol } from './types';
@@ -146,6 +147,7 @@ export async function verifyGattRfLink(
 
 function shouldScanAfterConnectFailure(message: string): boolean {
   if (isMeshcoreMissingServicesErrorMessage(message)) return false;
+  if (isReticulumSidecarResolveErrorMessage(message)) return false;
   if (/runtime is not mounted/i.test(message)) return false;
   // Sidecar / adapter needs discovery before connect (Noble UUID cold start).
   if (/scan first|not found|unknown peripheral|no such device/i.test(message)) return true;

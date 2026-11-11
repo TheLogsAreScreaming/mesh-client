@@ -32,6 +32,43 @@ export function createElectronAPIMock(): ElectronAPI {
       disconnect: vi.fn().mockResolvedValue(undefined),
       onUpdate: vi.fn().mockReturnValue(() => {}),
     },
+    liveMap: {
+      available: true,
+      open: vi.fn().mockResolvedValue(undefined),
+      close: vi.fn().mockResolvedValue(undefined),
+      getOpen: vi.fn().mockResolvedValue([]),
+      publish: vi.fn(),
+      onState: vi.fn().mockReturnValue(() => {}),
+      onNodeSelected: vi.fn().mockReturnValue(() => {}),
+      init: vi.fn().mockResolvedValue(null),
+      onSnapshot: vi.fn().mockReturnValue(() => {}),
+      reportView: vi.fn(),
+      selectNode: vi.fn(),
+      setAlwaysOnTop: vi.fn().mockResolvedValue(false),
+      dock: vi.fn().mockResolvedValue(undefined),
+    },
+    ai: {
+      getHistory: vi.fn().mockResolvedValue([]),
+      getStatus: vi.fn().mockResolvedValue({ enabled: false }),
+      setEnabled: vi.fn(),
+      probeOsAi: vi.fn(),
+      setConfig: vi.fn(),
+      testConfig: vi.fn(),
+      listEndpointModels: vi.fn(),
+      listLocalModels: vi.fn(),
+      installLocalModel: vi.fn(),
+      cancelLocalModel: vi.fn(),
+      removeLocalModel: vi.fn(),
+      selectLocalModel: vi.fn(),
+      ensureMlxHelper: vi.fn(),
+      summarize: vi.fn(),
+      cancel: vi.fn(),
+      onSummaryChunk: vi.fn().mockReturnValue(() => {}),
+      onSummaryDone: vi.fn().mockReturnValue(() => {}),
+      onSummaryError: vi.fn().mockReturnValue(() => {}),
+      onModelProgress: vi.fn().mockReturnValue(() => {}),
+      onStatusChanged: vi.fn().mockReturnValue(() => {}),
+    },
     translation: {
       getStatus: vi.fn().mockResolvedValue({
         enabled: false,
@@ -53,8 +90,149 @@ export function createElectronAPIMock(): ElectronAPI {
       onPackProgress: vi.fn().mockReturnValue(() => {}),
     },
     db: {
+      getIncidents: vi.fn().mockResolvedValue({ incidents: {}, resolvedTombstones: {} }),
+      saveIncidents: vi.fn().mockResolvedValue(undefined),
+      seedIncidents: vi.fn().mockResolvedValue({ incidents: {}, resolvedTombstones: {} }),
+      listScheduledBroadcasts: vi.fn().mockResolvedValue([]),
+      saveScheduledBroadcast: vi
+        .fn()
+        .mockImplementation(
+          (input: {
+            slot: number;
+            label?: string;
+            text?: string;
+            enabled?: boolean;
+            interval?: string;
+            timeOfDayMin?: number;
+            weekday?: number | null;
+            dayOfMonth?: number | null;
+            anchorYmd?: string | null;
+            nextDueAt?: number | null;
+            lastAttemptAt?: number | null;
+            lastResult?: unknown;
+            targets?: unknown[];
+          }) =>
+            Promise.resolve({
+              slot: input.slot,
+              label: input.label ?? '',
+              text: input.text ?? '',
+              enabled: input.enabled ?? false,
+              interval: input.interval ?? 'weekly',
+              timeOfDayMin: input.timeOfDayMin ?? 540,
+              weekday: input.weekday ?? null,
+              dayOfMonth: input.dayOfMonth ?? null,
+              anchorYmd: input.anchorYmd ?? null,
+              nextDueAt: input.nextDueAt ?? null,
+              lastAttemptAt: input.lastAttemptAt ?? null,
+              lastResult: input.lastResult ?? null,
+              targets: input.targets ?? [],
+              updatedAt: Date.now(),
+            }),
+        ),
+      deleteScheduledBroadcast: vi.fn().mockResolvedValue(undefined),
+      clearScheduledBroadcasts: vi.fn().mockResolvedValue(undefined),
+      claimScheduledBroadcastDue: vi.fn().mockResolvedValue({ claimed: true }),
+      setScheduledBroadcastResult: vi.fn().mockResolvedValue(undefined),
+      listTeamMembers: vi.fn().mockResolvedValue([]),
+      allocateTeamUnitId: vi.fn().mockResolvedValue(1),
+      upsertTeamMember: vi
+        .fn()
+        .mockImplementation(
+          (input: {
+            unitId: number;
+            callsign: string;
+            role?: string | null;
+            isSelf?: boolean;
+            onRoster?: boolean;
+          }) =>
+            Promise.resolve({
+              unitId: input.unitId,
+              callsign: input.callsign,
+              role: input.role ?? null,
+              isSelf: input.isSelf ?? false,
+              onRoster: input.onRoster ?? false,
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+              links: [],
+            }),
+        ),
+      deleteTeamMember: vi.fn().mockResolvedValue(undefined),
+      setTeamMemberLink: vi
+        .fn()
+        .mockImplementation(
+          (input: {
+            unitId: number;
+            protocol: string;
+            durableKey: string;
+            nodeId?: number | null;
+            longName?: string | null;
+            identityId?: string | null;
+            onRoster?: boolean;
+          }) =>
+            Promise.resolve({
+              unitId: input.unitId,
+              callsign: 'mock',
+              role: null,
+              isSelf: false,
+              onRoster: input.onRoster === true,
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+              links: [
+                {
+                  protocol: input.protocol,
+                  durableKey: input.durableKey,
+                  nodeId: input.nodeId ?? null,
+                  longName: input.longName ?? null,
+                  identityId: input.identityId ?? null,
+                  onRoster: input.onRoster === true,
+                },
+              ],
+            }),
+        ),
+      setTeamMemberLinkRoster: vi
+        .fn()
+        .mockImplementation(
+          (input: { unitId: number; protocol: string; durableKey: string; onRoster: boolean }) =>
+            Promise.resolve({
+              unitId: input.unitId,
+              callsign: 'mock',
+              role: null,
+              isSelf: false,
+              onRoster: input.onRoster,
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+              links: [
+                {
+                  protocol: input.protocol,
+                  durableKey: input.durableKey,
+                  nodeId: null,
+                  longName: null,
+                  identityId: null,
+                  onRoster: input.onRoster,
+                },
+              ],
+            }),
+        ),
+      removeTeamMemberLink: vi.fn().mockImplementation((unitId: number) =>
+        Promise.resolve({
+          unitId,
+          callsign: 'mock',
+          role: null,
+          isSelf: false,
+          onRoster: false,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          links: [],
+        }),
+      ),
+      clearTeamMembers: vi.fn().mockResolvedValue(undefined),
       saveMessage: vi.fn().mockResolvedValue(undefined),
       getMessages: vi.fn().mockResolvedValue([]),
+      getMeshtasticIdentityHydration: vi.fn().mockResolvedValue({
+        nodes: [],
+        meshcoreContacts: [],
+        messages: [],
+      }),
       listMeshtasticDmPeers: vi.fn().mockResolvedValue([]),
       saveNode: vi.fn().mockResolvedValue(undefined),
       saveNodePath: vi.fn().mockResolvedValue(undefined),
@@ -78,6 +256,17 @@ export function createElectronAPIMock(): ElectronAPI {
       setNodeFavorited: vi.fn().mockResolvedValue(undefined),
       getNodeNote: vi.fn().mockResolvedValue(null),
       setNodeNote: vi.fn().mockResolvedValue(undefined),
+      recordRendererMemorySample: vi.fn().mockResolvedValue(undefined),
+      getRendererMemorySampleSummary: vi.fn().mockResolvedValue({
+        count: 0,
+        firstAt: null,
+        lastAt: null,
+        minBytes: null,
+        maxBytes: null,
+        spanMs: null,
+        samples: [],
+      }),
+      onRendererMemoryAutoSample: vi.fn().mockReturnValue(() => {}),
       deleteNodesBySource: vi.fn().mockResolvedValue(0),
       migrateRfStubNodes: vi.fn().mockResolvedValue(0),
       deleteNodesWithoutLongname: vi.fn().mockResolvedValue(0),
@@ -87,6 +276,13 @@ export function createElectronAPIMock(): ElectronAPI {
       updateMessageReceivedVia: vi.fn().mockResolvedValue(undefined),
       updateMessagePacketId: vi.fn().mockResolvedValue(undefined),
       getMeshcoreMessages: vi.fn().mockResolvedValue([]),
+      getMeshcoreMessagesForHydration: vi.fn().mockResolvedValue([]),
+      getMeshcoreIdentityHydration: vi.fn().mockResolvedValue({
+        contacts: [],
+        nodes: [],
+        hopHistory: [],
+        messages: [],
+      }),
       listMeshcoreDmPeers: vi.fn().mockResolvedValue([]),
       getBlockedContacts: vi.fn().mockResolvedValue([]),
       blockContact: vi.fn().mockResolvedValue({ changes: 1 }),
@@ -244,6 +440,13 @@ export function createElectronAPIMock(): ElectronAPI {
         sources: {},
       }),
       clear: vi.fn().mockResolvedValue({ ok: true }),
+      custom: {
+        list: vi.fn().mockResolvedValue([]),
+        addXyz: vi.fn().mockResolvedValue({ ok: false, code: 'io' }),
+        remove: vi.fn().mockResolvedValue({ ok: true }),
+        pickMbtiles: vi.fn().mockResolvedValue({ ok: false, code: 'cancelled' }),
+        importMbtiles: vi.fn().mockResolvedValue({ ok: false, code: 'io' }),
+      },
       onProgress: vi.fn().mockReturnValue(() => {}),
       onDone: vi.fn().mockReturnValue(() => {}),
       onError: vi.fn().mockReturnValue(() => {}),
@@ -462,6 +665,13 @@ export function createElectronAPIMock(): ElectronAPI {
       getStyleSettings: vi.fn().mockResolvedValue({ filters: [], sendUnmatched: true }),
       setStyleSettings: vi.fn().mockImplementation((s: unknown) => Promise.resolve(s)),
       pushChatMessage: vi.fn().mockResolvedValue(undefined),
+      setChatChannels: vi.fn().mockResolvedValue(undefined),
+      retireChatRooms: vi.fn().mockResolvedValue(undefined),
+      pushDirectMessage: vi.fn().mockResolvedValue(undefined),
+      setDirectMessaging: vi.fn().mockResolvedValue(undefined),
+      dmStatus: vi.fn().mockResolvedValue(undefined),
+      setDirectPeers: vi.fn().mockResolvedValue(undefined),
+      setIncidentMarkers: vi.fn().mockResolvedValue(undefined),
       onInboundChat: vi.fn().mockReturnValue(() => {}),
     },
     bleCoexistence: {
@@ -496,6 +706,36 @@ export function createElectronAPIMock(): ElectronAPI {
     },
     geo: {
       resolvePlace: vi.fn().mockResolvedValue(null),
+    },
+    weather: {
+      pointForecast: vi.fn().mockResolvedValue({
+        ok: false,
+        error: { code: 'offline', message: 'offline' },
+      }),
+      grid: vi.fn().mockResolvedValue({
+        ok: false,
+        error: { code: 'offline', message: 'offline' },
+      }),
+      radarFrames: vi.fn().mockResolvedValue({
+        ok: false,
+        error: { code: 'offline', message: 'offline' },
+      }),
+      clearMemoryCache: vi.fn().mockResolvedValue({ ok: true }),
+    },
+    elevation: {
+      sampleProfile: vi.fn().mockResolvedValue({
+        ok: false,
+        error: { code: 'offline', message: 'offline' },
+      }),
+      estimateHgt: vi.fn().mockResolvedValue({
+        ok: true,
+        data: { tileNames: [], missingTileNames: [], missingBytes: 0 },
+      }),
+      downloadHgt: vi.fn().mockResolvedValue({ ok: true, data: { completed: 0, failed: 0 } }),
+      cancelHgtDownload: vi.fn().mockResolvedValue({ ok: true }),
+      cacheStats: vi.fn().mockResolvedValue({ sampleEntries: 0, hgtTiles: 0, hgtBytes: 0 }),
+      clearCache: vi.fn().mockResolvedValue({ ok: true }),
+      onHgtProgress: vi.fn().mockReturnValue(() => {}),
     },
     gps: {
       exportGpx: vi.fn().mockResolvedValue({ success: false, reason: 'cancelled' }),

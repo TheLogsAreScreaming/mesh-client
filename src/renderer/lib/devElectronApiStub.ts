@@ -1,5 +1,13 @@
 import type { OutboxEntry, OutboxEntryInput } from '@/shared/electron-api.types';
+import { parseLegacyIncidentStorage } from '@/shared/incidentStorage';
+import type { IncidentSnapshot } from '@/shared/incidentTypes';
+import type { ScheduledBroadcastInput } from '@/shared/scheduledBroadcastTypes';
 import type { TakStyleSettings } from '@/shared/tak-types';
+import type {
+  TeamMemberInput,
+  TeamMemberLinkInput,
+  TeamMemberLinkRosterInput,
+} from '@/shared/teamRosterTypes';
 
 /* eslint-disable @typescript-eslint/require-await -- no-op async IPC stubs for browser dev */
 const noop = (): void => {};
@@ -22,6 +30,7 @@ function stubOutboxEntry(entry: OutboxEntryInput, id: number): OutboxEntry {
 export function createDevElectronApiStub(): typeof window.electronAPI {
   let nextOutboxId = 1;
   const secureSecrets = new Map<string, string>();
+  let incidents: IncidentSnapshot | null = null;
 
   return {
     beacon: {
@@ -29,9 +38,121 @@ export function createDevElectronApiStub(): typeof window.electronAPI {
       disconnect: noopAsync,
       onUpdate: noopUnsub,
     },
+    liveMap: {
+      available: false,
+      open: noopAsync,
+      close: noopAsync,
+      getOpen: async () => [],
+      publish: noop,
+      onState: noopUnsub,
+      onNodeSelected: noopUnsub,
+      init: async () => null,
+      onSnapshot: noopUnsub,
+      onApplyView: noopUnsub,
+      reportView: noop,
+      selectNode: noop,
+      setAlwaysOnTop: async () => false,
+      dock: noopAsync,
+    },
     db: {
+      getIncidents: async () => incidents ?? { incidents: {}, resolvedTombstones: {} },
+      saveIncidents: async (snapshot: IncidentSnapshot) => {
+        incidents = structuredClone(snapshot);
+      },
+      seedIncidents: async (legacyJson: string | null) => {
+        incidents ??= parseLegacyIncidentStorage(legacyJson);
+        return structuredClone(incidents);
+      },
+      listScheduledBroadcasts: async () => [],
+      saveScheduledBroadcast: async (input: ScheduledBroadcastInput) => ({
+        slot: input.slot,
+        label: input.label ?? '',
+        text: input.text ?? '',
+        enabled: input.enabled ?? false,
+        interval: input.interval ?? 'weekly',
+        timeOfDayMin: input.timeOfDayMin ?? 540,
+        weekday: input.weekday ?? null,
+        dayOfMonth: input.dayOfMonth ?? null,
+        anchorYmd: input.anchorYmd ?? null,
+        nextDueAt: input.nextDueAt ?? null,
+        lastAttemptAt: input.lastAttemptAt ?? null,
+        lastResult: input.lastResult ?? null,
+        targets: input.targets ?? [],
+        updatedAt: Date.now(),
+      }),
+      deleteScheduledBroadcast: noopAsync,
+      clearScheduledBroadcasts: noopAsync,
+      claimScheduledBroadcastDue: async () => ({ claimed: true }),
+      setScheduledBroadcastResult: noopAsync,
+      listTeamMembers: async () => [],
+      allocateTeamUnitId: async () => 1,
+      upsertTeamMember: async (input: TeamMemberInput) => ({
+        unitId: input.unitId,
+        callsign: input.callsign,
+        role: input.role ?? null,
+        isSelf: input.isSelf ?? false,
+        onRoster: input.onRoster ?? false,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        links: [],
+      }),
+      deleteTeamMember: noopAsync,
+      setTeamMemberLink: async (input: TeamMemberLinkInput) => ({
+        unitId: input.unitId,
+        callsign: 'stub',
+        role: null,
+        isSelf: false,
+        onRoster: input.onRoster === true,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        links: [
+          {
+            protocol: input.protocol,
+            durableKey: input.durableKey,
+            nodeId: input.nodeId ?? null,
+            longName: input.longName ?? null,
+            identityId: input.identityId ?? null,
+            onRoster: input.onRoster === true,
+          },
+        ],
+      }),
+      setTeamMemberLinkRoster: async (input: TeamMemberLinkRosterInput) => ({
+        unitId: input.unitId,
+        callsign: 'stub',
+        role: null,
+        isSelf: false,
+        onRoster: input.onRoster,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        links: [
+          {
+            protocol: input.protocol,
+            durableKey: input.durableKey,
+            nodeId: null,
+            longName: null,
+            identityId: null,
+            onRoster: input.onRoster,
+          },
+        ],
+      }),
+      removeTeamMemberLink: async (unitId: number) => ({
+        unitId,
+        callsign: 'stub',
+        role: null,
+        isSelf: false,
+        onRoster: false,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        links: [],
+      }),
+      clearTeamMembers: noopAsync,
       saveMessage: noopAsync,
       getMessages: async () => [],
+      getMeshtasticIdentityHydration: async () => ({
+        nodes: [],
+        meshcoreContacts: [],
+        messages: [],
+      }),
       listMeshtasticDmPeers: async () => [],
       saveNode: noopAsync,
       saveNodePath: noopAsync,
@@ -65,6 +186,13 @@ export function createDevElectronApiStub(): typeof window.electronAPI {
       updateMessageReceivedVia: noopAsync,
       updateMessagePacketId: noopAsync,
       getMeshcoreMessages: async () => [],
+      getMeshcoreMessagesForHydration: async () => [],
+      getMeshcoreIdentityHydration: async () => ({
+        contacts: [],
+        nodes: [],
+        hopHistory: [],
+        messages: [],
+      }),
       listMeshcoreDmPeers: async () => [],
       searchMessages: async () => [],
       searchMeshcoreMessages: async () => [],
@@ -364,6 +492,13 @@ export function createDevElectronApiStub(): typeof window.electronAPI {
       getStyleSettings: async () => ({ filters: [], sendUnmatched: true }),
       setStyleSettings: async (settings: TakStyleSettings) => settings,
       pushChatMessage: async () => {},
+      setChatChannels: async () => {},
+      retireChatRooms: async () => {},
+      pushDirectMessage: async () => {},
+      setDirectMessaging: async () => {},
+      dmStatus: async () => {},
+      setDirectPeers: async () => {},
+      setIncidentMarkers: async () => {},
       onInboundChat: noopUnsub,
     },
     bleCoexistence: {

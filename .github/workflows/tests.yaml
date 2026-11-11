@@ -65,13 +65,16 @@ jobs:
         include:
           - project: renderer-ui
             shard: 1
-            shards: 3
+            shards: 4
           - project: renderer-ui
             shard: 2
-            shards: 3
+            shards: 4
           - project: renderer-ui
             shard: 3
-            shards: 3
+            shards: 4
+          - project: renderer-ui
+            shard: 4
+            shards: 4
           - project: renderer-logic
             shard: 1
             shards: 1
@@ -179,10 +182,13 @@ jobs:
       - name: cargo llvm-cov (threshold)
         working-directory: ble-sidecar
         # Baseline ~45% lines (2026-07 CI); ratchet toward Vitest-aligned 52% over time.
+        # Ratspeak vault uses a process-wide JOB_ACTIVE guard; parallel vault
+        # tests otherwise flake with Busy (same as check:reticulum-sidecar).
         run: >-
           cargo llvm-cov
           --fail-under-lines 45
           --lcov --output-path lcov.info
+          -- --test-threads=1
       - name: Upload lcov
         if: always() && github.actor != 'nektos/act'
         # actions/upload-artifact v7.0.2

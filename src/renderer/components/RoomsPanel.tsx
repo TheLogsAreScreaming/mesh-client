@@ -38,16 +38,17 @@ import { useTranslation } from 'react-i18next';
 
 import { MessageTranslateButton } from '@/renderer/components/chat/MessageTranslateButton';
 import { TranslatedMessageBlock } from '@/renderer/components/chat/TranslatedMessageBlock';
+import { useChatOrder } from '@/renderer/hooks/useChatOrder';
+import { useConversationSummary } from '@/renderer/hooks/useConversationSummary';
+import { useDropStaleDividerRowSize } from '@/renderer/hooks/useDropStaleDividerRowSize';
 import { useMeshcoreRoomLoginQueueRevision } from '@/renderer/hooks/useMeshcoreRoomLoginQueueRevision';
 import { useMeshcoreRoomSessionRevision } from '@/renderer/hooks/useMeshcoreRoomSessionRevision';
 import { useAppWindowActivity } from '@/renderer/lib/appWindowActivity';
 import {
-  loadMutedViews,
   loadPersistedRoomsLastRead,
   loadStarred,
   mergeRoomLastReadWatermark,
   notifyPersistedRoomsLastReadChanged,
-  saveMutedViews,
   savePersistedRoomsLastRead,
   saveStarred,
   type StarredMessage,
@@ -73,7 +74,7 @@ import {
 import { mergeDisplayedRoomPostChunks } from '@/renderer/lib/meshcoreRoomChunkMerge';
 import {
   listMeshcoreRoomCredentialNodeIds,
-  setMeshcoreRoomCredential,
+  meshcoreRoomHasSavedGuestCredential,
 } from '@/renderer/lib/meshcoreRoomCredentialStorage';
 import {
   getMeshcoreRoomLoginQueueSnapshot,
@@ -84,6 +85,7 @@ import {
   disableMeshcoreRoomAutoLogin,
   forgetMeshcoreRoomSavedSecrets,
   getMeshcoreRoomSavedSecretsSummary,
+  saveMeshcoreRoomSessionPasswordIfUnsaved,
 } from '@/renderer/lib/meshcoreRoomSavedSecrets';
 import {
   meshcoreCancelAllRoomLogins,
@@ -105,9 +107,12 @@ import { isMeshcoreDmExcludedHwModel } from '@/renderer/lib/meshcoreUtils';
 import { clampReadWatermarkMs, effectiveMessageTimestampMs } from '@/renderer/lib/nodeStatus';
 import type { ChatMessage, MeshNode } from '@/renderer/lib/types';
 import { writeClipboardText } from '@/renderer/lib/writeClipboardText';
+import { useAiSummaryStore } from '@/renderer/stores/aiSummaryStore';
+import { MESHCORE_ROOMS_DOCS_URL } from '@/shared/docsSite';
 import { formatIsoDate, formatIsoDateTime } from '@/shared/formatIsoDate';
 import { touch } from '@/shared/touch';
 
+import { useConversationMutes } from '../hooks/useConversationMutes';
 import {
   CHAT_SCROLL_END_THRESHOLD,
   CHAT_UNREAD_DIVIDER_ESTIMATE_EXTRA_PX,
@@ -122,13 +127,18 @@ import {
   roomPostVirtualizerKey,
   scheduleVirtualRowRemeasure,
 } from '../lib/chatScrollUtils';
+import { CatchUpButton } from './chat/CatchUpButton';
+import { ChatOrderButton } from './chat/ChatOrderButton';
+import { ChatSummaryCard } from './chat/ChatSummaryCard';
 import { ConversationLayout, useConversationLayoutMode } from './chat/ConversationLayout';
+import { RadioChatSyncButton } from './chat/RadioChatSyncButton';
 import { ChatComposer } from './ChatComposer';
 import { ChatPayloadText } from './ChatPayloadText';
 import { ConfirmModal } from './ConfirmModal';
 import { MessageStatusBadge } from './MessageStatusBadge';
 import { useToast } from './Toast';
 import { Button, IconButton } from './ui/Button';
+import { DocsSiteLink } from './ui/DocsSiteLink';
 import {
   CHECKBOX_CLASS,
   FIELD_LABEL_CLASS,
@@ -196,6 +206,7 @@ interface Props {
       forceRelogin?: boolean;
     },
   ) => Promise<void>;
+  onSyncRadioChats?: () => Promise<void>;
   onLoginAllSaved?: (roomNodeIds: number[]) => Promise<void>;
   onCancelRoomLogin: (nodeId: number) => void;
   onLeaveRoom: (nodeId: number) => Promise<void>;
@@ -273,6 +284,7 @@ export default function RoomsPanel({
   onInitialRoomConsumed,
   onLoginRoom,
   onLoginAllSaved,
+  onSyncRadioChats,
   onCancelRoomLogin,
   onLeaveRoom,
   onSendRoomPost,
@@ -318,6 +330,8 @@ export default function RoomsPanel({
   );
   const [savedPasswordsOpen, setSavedPasswordsOpen] = useState(false);
   const [forgetConfirmNodeId, setForgetConfirmNodeId] = useState<number | null>(null);
+  /** Room id captured when Leave is clicked; null when the confirm dialog is closed. */
+  const [leaveConfirmRoomId, setLeaveConfirmRoomId] = useState<number | null>(null);
   const loginAttemptGenRef = useRef<Map<number, number>>(new Map());
   const leaveAttemptGenRef = useRef<Map<number, number>>(new Map());
   const consumedInitialRoomRef = useRef<number | null>(null);
@@ -357,7 +371,7 @@ export default function RoomsPanel({
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [jumpDate, setJumpDate] = useState('');
   const [filterSender, setFilterSender] = useState<number | null>(null);
-  const [mutedViews, setMutedViews] = useState<Set<string>>(() => loadMutedViews('meshcore'));
+  const [mutedViews, setMutedViews] = useConversationMutes('meshcore');
   const [roomListCollapsed, setRoomListCollapsed] = useState(
     () => localStorage.getItem(ROOMS_LIST_COLLAPSED_STORAGE_KEY) === 'true',
   );
@@ -420,6 +434,14 @@ export default function RoomsPanel({
     [nodes],
   );
 
+  const roomOrderItems = roomServers.map((room) => ({
+    id: String(room.node_id),
+    name: room.long_name ?? String(room.node_id),
+  }));
+  const roomOrder = useChatOrder(`meshcore:${myNodeNum}:rooms`, roomOrderItems);
+  const roomById = new Map(roomServers.map((room) => [room.node_id, room]));
+  const orderedRoomServers = roomOrder.ids.flatMap((id) => roomById.get(Number(id)) ?? []);
+
   const activeRoom = selectedRoomId != null ? nodes.get(selectedRoomId) : undefined;
 
   const roomPosts = useMemo(() => {
@@ -437,6 +459,40 @@ export default function RoomsPanel({
       nameByNodeId,
     );
   }, [messages, nodes, selectedRoomId]);
+
+  const aiEnabled = useAiSummaryStore((s) => s.status?.enabled === true);
+  const summaryMessages = useMemo(
+    () =>
+      aiEnabled
+        ? roomPosts.map((m) => ({
+            at: m.timestamp,
+            sender: m.sender_name.slice(0, 120),
+            body: m.payload,
+          }))
+        : [],
+    [aiEnabled, roomPosts],
+  );
+  const summary = useConversationSummary({
+    key: `meshcore:${myNodeNum}:room:${selectedRoomId}`,
+    label: activeRoom?.long_name ?? `Room ${selectedRoomId}`,
+    protocol: 'meshcore',
+    surface: 'room',
+    watermark:
+      unreadDividerTimestamp ||
+      (selectedRoomId != null ? persistedRoomsLastRead[selectedRoomId] : 0) ||
+      0,
+    messages: summaryMessages,
+    available: selectedRoomId != null,
+    history:
+      selectedRoomId == null
+        ? null
+        : {
+            protocol: 'meshcore',
+            surface: 'room',
+            roomServerId: selectedRoomId,
+            radioNodeId: myNodeNum > 0 ? myNodeNum : undefined,
+          },
+  });
 
   const filteredRoomPosts = useMemo(() => {
     let posts = roomPosts;
@@ -492,17 +548,22 @@ export default function RoomsPanel({
     [estimatePostSize],
   );
 
+  const postRowKey = useCallback(
+    (index: number) => {
+      const post = filteredRoomPosts[index];
+      if (!post) return `room-slot-${index}`;
+      return roomPostVirtualizerKey(post, index);
+    },
+    [filteredRoomPosts],
+  );
+
   const postVirtualizer = useVirtualizer({
     count: filteredRoomPosts.length,
     getScrollElement: () => streamRef.current,
     estimateSize: estimatePostSize,
     measureElement: measurePostElement,
     overscan: 10,
-    getItemKey: (index) => {
-      const post = filteredRoomPosts[index];
-      if (!post) return `room-slot-${index}`;
-      return roomPostVirtualizerKey(post, index);
-    },
+    getItemKey: (index) => postRowKey(index),
     anchorTo: 'end',
     followOnAppend: true,
     scrollEndThreshold: CHAT_SCROLL_END_THRESHOLD,
@@ -515,6 +576,15 @@ export default function RoomsPanel({
 
   const postVirtualizerRef = useRef(postVirtualizer);
   postVirtualizerRef.current = postVirtualizer;
+
+  useDropStaleDividerRowSize({
+    unreadStartIndex,
+    count: filteredRoomPosts.length,
+    rowKey: postRowKey,
+    estimateSize: estimatePostSize,
+    virtualizerRef: postVirtualizerRef,
+    containerRef: streamRef,
+  });
 
   const schedulePostRowRemeasure = useCallback((rowIndex: number) => {
     scheduleVirtualRowRemeasure(
@@ -800,12 +870,36 @@ export default function RoomsPanel({
     setSyncConfigDirty(false);
   }, []);
 
+  const syncConfigDirtyRef = useRef(syncConfigDirty);
+  useEffect(() => {
+    syncConfigDirtyRef.current = syncConfigDirty;
+  }, [syncConfigDirty]);
+
+  // Auto-login and auto-sync also change outside this panel: logging in with Remember password
+  // turns auto-login on, and a wrong password turns both off. Keep the selected room's switches
+  // on the stored values without discarding unsaved Auto-sync edits.
+  useEffect(() => {
+    const refresh = () => {
+      const nodeId = selectedRoomIdRef.current;
+      if (nodeId == null) return;
+      const config = getMeshcoreRoomSyncConfig(nodeId);
+      setAutoLoginOnConnect(config.autoLoginOnConnect ?? false);
+      if (!syncConfigDirtyRef.current) {
+        setSyncEnabled(config.enabled);
+        setSyncInterval(config.intervalMinutes);
+      }
+    };
+    window.addEventListener('mesh-client:appSettings', refresh);
+    return () => {
+      window.removeEventListener('mesh-client:appSettings', refresh);
+    };
+  }, []);
+
   const handleStopAutoLogin = useCallback(
     async (nodeId: number) => {
       await disableMeshcoreRoomAutoLogin(nodeId);
       if (selectedRoomId === nodeId) {
         setAutoLoginOnConnect(false);
-        setSyncConfigDirty(false);
       }
       refreshStoredRooms();
     },
@@ -832,6 +926,15 @@ export default function RoomsPanel({
         if (!enabled) {
           await disableMeshcoreRoomAutoLogin(nodeId);
         } else {
+          await saveMeshcoreRoomSessionPasswordIfUnsaved(nodeId);
+          if (!meshcoreRoomHasSavedGuestCredential(nodeId)) {
+            // The room logged out under the switch: with no session and no saved password,
+            // connect auto-login could never use the setting, so leave it off.
+            if (selectedRoomIdRef.current === nodeId) setAutoLoginOnConnect(false);
+            addToast(t('roomsPanel.autoLoginRequiresSavedPassword'), 'error');
+            refreshStoredRooms();
+            return;
+          }
           await setMeshcoreRoomSyncConfig(nodeId, {
             enabled: prev.enabled,
             intervalMinutes: prev.intervalMinutes,
@@ -839,7 +942,7 @@ export default function RoomsPanel({
           });
           clearMeshcoreRoomAutoLoginFailure(nodeId);
         }
-        if (selectedRoomIdRef.current === nodeId) setSyncConfigDirty(false);
+        // Auto-login saves on its own; an unsaved Auto-sync edit keeps its Save button.
       } catch (e: unknown) {
         console.warn('[RoomsPanel] save auto-login failed ' + errLikeToLogString(e));
         if (selectedRoomIdRef.current === nodeId) {
@@ -973,10 +1076,16 @@ export default function RoomsPanel({
     selectedRoomId,
   ]);
 
+  const savedGuestRoomIds = useMemo(
+    () => [...storedRoomIds].filter((id) => meshcoreRoomHasSavedGuestCredential(id)),
+    [storedRoomIds],
+  );
+
   const handleLoginAllSaved = useCallback(() => {
     if (!onLoginAllSaved) return;
+    const guestIds = new Set(savedGuestRoomIds);
     const targets = roomServers
-      .filter((r) => storedRoomIds.has(r.node_id) && !meshcoreIsRoomLoggedIn(r.node_id))
+      .filter((r) => guestIds.has(r.node_id) && !meshcoreIsRoomLoggedIn(r.node_id))
       .map((r) => r.node_id);
     if (targets.length === 0) return;
     for (const nodeId of targets) {
@@ -990,7 +1099,7 @@ export default function RoomsPanel({
       .finally(() => {
         setLocalLoginRoomIds(new Set());
       });
-  }, [onLoginAllSaved, roomServers, storedRoomIds]);
+  }, [onLoginAllSaved, roomServers, savedGuestRoomIds]);
 
   const handleLogin = useCallback(() => {
     if (selectedRoomId == null) return;
@@ -1029,29 +1138,29 @@ export default function RoomsPanel({
 
   const handleSaveSyncConfig = useCallback(async () => {
     if (selectedRoomId == null) return;
-    if (autoLoginOnConnect && !storedRoomIds.has(selectedRoomId)) {
-      const session = meshcoreGetRoomSession(selectedRoomId);
-      if (session) {
-        await setMeshcoreRoomCredential(selectedRoomId, {
-          guestPassword: session.guestPassword,
-          ...(session.adminPassword.length > 0 ? { adminPassword: session.adminPassword } : {}),
-        });
+    try {
+      if (autoLoginOnConnect && (await saveMeshcoreRoomSessionPasswordIfUnsaved(selectedRoomId))) {
         refreshStoredRooms();
       }
+      await setMeshcoreRoomSyncConfig(selectedRoomId, {
+        enabled: syncEnabled,
+        intervalMinutes: syncInterval,
+        autoLoginOnConnect,
+      });
+      setSyncConfigDirty(false);
+    } catch (e: unknown) {
+      // Keep the edit and its Save button so it can be saved again.
+      console.warn('[RoomsPanel] save sync settings failed ' + errLikeToLogString(e));
+      addToast(t('roomsPanel.syncSaveFailed'), 'error');
     }
-    await setMeshcoreRoomSyncConfig(selectedRoomId, {
-      enabled: syncEnabled,
-      intervalMinutes: syncInterval,
-      autoLoginOnConnect,
-    });
-    setSyncConfigDirty(false);
   }, [
+    addToast,
     autoLoginOnConnect,
     refreshStoredRooms,
     selectedRoomId,
-    storedRoomIds,
     syncEnabled,
     syncInterval,
+    t,
   ]);
 
   const roomViewKey = selectedRoomId != null ? `room:${selectedRoomId}` : 'room:none';
@@ -1068,14 +1177,17 @@ export default function RoomsPanel({
     });
   }, []);
 
-  const toggleMuteView = useCallback((viewKey: string) => {
-    setMutedViews((prev) => {
-      const next = new Set(prev);
-      if (next.has(viewKey)) next.delete(viewKey);
-      else next.add(viewKey);
-      return next;
-    });
-  }, []);
+  const toggleMuteView = useCallback(
+    (viewKey: string) => {
+      setMutedViews((prev) => {
+        const next = new Set(prev);
+        if (next.has(viewKey)) next.delete(viewKey);
+        else next.add(viewKey);
+        return next;
+      });
+    },
+    [setMutedViews],
+  );
 
   const handleRoomListToggle = useCallback(() => {
     setRoomListCollapsed((prev) => {
@@ -1098,10 +1210,6 @@ export default function RoomsPanel({
     },
     [filteredRoomPosts],
   );
-
-  useEffect(() => {
-    saveMutedViews('meshcore', mutedViews);
-  }, [mutedViews]);
 
   useEffect(() => {
     setShowSearch(false);
@@ -1294,8 +1402,23 @@ export default function RoomsPanel({
 
   const handleLeaveRoom = useCallback(() => {
     if (selectedRoomId == null || !isConnected) return;
-    startRoomLeave(selectedRoomId, () => onLeaveRoom(selectedRoomId));
-  }, [isConnected, onLeaveRoom, selectedRoomId, startRoomLeave]);
+    setLeaveConfirmRoomId(selectedRoomId);
+  }, [isConnected, selectedRoomId]);
+
+  const cancelLeaveRoomConfirm = useCallback(() => {
+    setLeaveConfirmRoomId(null);
+  }, []);
+
+  const confirmLeaveRoom = useCallback(() => {
+    if (leaveConfirmRoomId == null || !isConnected) return;
+    const nodeId = leaveConfirmRoomId;
+    setLeaveConfirmRoomId(null);
+    startRoomLeave(nodeId, () => onLeaveRoom(nodeId));
+  }, [isConnected, leaveConfirmRoomId, onLeaveRoom, startRoomLeave]);
+
+  useEffect(() => {
+    setLeaveConfirmRoomId(null);
+  }, [selectedRoomId, isActive]);
 
   const handleOpenRepeaterOps = useCallback(() => {
     if (selectedRoomId == null || !onOpenRepeaterOps) return;
@@ -1319,14 +1442,14 @@ export default function RoomsPanel({
       : '';
   const savedRoomsNotLoggedInCount = useMemo(() => {
     touch(roomSessionRevision);
-    return roomServers.filter(
-      (r) => storedRoomIds.has(r.node_id) && !meshcoreIsRoomLoggedIn(r.node_id),
-    ).length;
-  }, [roomServers, roomSessionRevision, storedRoomIds]);
-  const savedRoomCount = useMemo(
-    () => roomServers.filter((r) => storedRoomIds.has(r.node_id)).length,
-    [roomServers, storedRoomIds],
-  );
+    const guestIds = new Set(savedGuestRoomIds);
+    return roomServers.filter((r) => guestIds.has(r.node_id) && !meshcoreIsRoomLoggedIn(r.node_id))
+      .length;
+  }, [roomServers, roomSessionRevision, savedGuestRoomIds]);
+  const savedRoomCount = useMemo(() => {
+    const guestIds = new Set(savedGuestRoomIds);
+    return roomServers.filter((r) => guestIds.has(r.node_id)).length;
+  }, [roomServers, savedGuestRoomIds]);
   const loginAllSavedDisabled = !isConnected || savedRoomsNotLoggedInCount === 0;
   const loginAllSavedDisabledReason = !isConnected
     ? t('roomsPanel.loginAllSavedDisabledNotConnected')
@@ -1421,7 +1544,7 @@ export default function RoomsPanel({
       : []),
   ];
 
-  const roomRows = roomServers.map((room) => {
+  const roomRows = orderedRoomServers.map((room) => {
     const count = postCountByRoom.get(room.node_id) ?? 0;
     const selected = selectedRoomId === room.node_id;
     const unread = selected ? 0 : (roomUnreadCounts.get(room.node_id) ?? 0);
@@ -1537,11 +1660,28 @@ export default function RoomsPanel({
 
   const listColumn = (
     <>
-      <div className="border-ink-800 flex min-h-14 shrink-0 items-center gap-2 border-b pr-2 pl-3">
-        <h2 className="text-ink-100 text-body-lg min-w-0 flex-1 truncate font-semibold">
+      {/* The list column is 288px wide: icon actions share the title row, text actions get
+          their own row so the title is never squeezed. */}
+      <div className="border-ink-800 flex min-h-14 shrink-0 items-center gap-1.5 border-b pr-2 pl-3">
+        <h2 className="text-ink-100 min-w-0 flex-1 truncate text-sm font-semibold">
           {t('roomsPanel.title')}{' '}
           <span className="text-muted font-normal tabular-nums">({roomServers.length})</span>
         </h2>
+        <ChatOrderButton items={roomOrderItems} ids={roomOrder.ids} onSave={roomOrder.save} />
+        {onSyncRadioChats && (
+          <RadioChatSyncButton onSync={onSyncRadioChats} disabled={!isConnected} feedback="toast" />
+        )}
+        {!layoutMode.compact && (
+          <IconButton
+            size="sm"
+            aria-label={t('roomsPanel.collapseRoomList')}
+            aria-expanded
+            onClick={handleRoomListToggle}
+            icon={<PanelLeftClose aria-hidden className="h-4 w-4" size={16} />}
+          />
+        )}
+      </div>
+      <div className="border-ink-800 flex shrink-0 items-center gap-2 border-b px-3 py-2">
         {onLoginAllSaved && roomServers.length > 0 ? (
           <Button
             size="sm"
@@ -1558,15 +1698,8 @@ export default function RoomsPanel({
             {t('roomsPanel.loginAllSaved')}
           </Button>
         ) : null}
-        {!layoutMode.compact && (
-          <IconButton
-            size="sm"
-            aria-label={t('roomsPanel.collapseRoomList')}
-            aria-expanded
-            onClick={handleRoomListToggle}
-            icon={<PanelLeftClose aria-hidden className="h-4 w-4" size={16} />}
-          />
-        )}
+        <span className="flex-1" />
+        <DocsSiteLink href={MESHCORE_ROOMS_DOCS_URL} />
       </div>
       {roomServers.length > 0 && (
         <ul
@@ -1697,6 +1830,18 @@ export default function RoomsPanel({
     />
   ) : null;
 
+  const roomDetailsButton = (
+    <IconButton
+      aria-label={t('roomsPanel.details')}
+      aria-pressed={detailsOpen}
+      active={detailsOpen ? 'brand' : false}
+      onClick={() => {
+        setDetailsOpen(!detailsOpen);
+      }}
+      icon={<Info aria-hidden className="h-4 w-4" size={16} />}
+    />
+  );
+
   const conversationHeader =
     selectedRoomId != null ? (
       <header className="border-ink-800 flex min-h-14 shrink-0 flex-wrap items-center gap-2 border-b px-3 py-2">
@@ -1735,6 +1880,7 @@ export default function RoomsPanel({
         </div>
         {loggedIn && (
           <div className="flex items-center gap-0.5">
+            <CatchUpButton summary={summary} />
             <IconButton
               aria-label={t('chatPanel.searchMessages')}
               aria-pressed={showSearch}
@@ -1778,15 +1924,7 @@ export default function RoomsPanel({
                 }
               />
             )}
-            <IconButton
-              aria-label={t('roomsPanel.details')}
-              aria-pressed={detailsOpen}
-              active={detailsOpen ? 'brand' : false}
-              onClick={() => {
-                setDetailsOpen(!detailsOpen);
-              }}
-              icon={<Info aria-hidden className="h-4 w-4" size={16} />}
-            />
+            {roomDetailsButton}
             <IconButton
               aria-label={
                 selectedRoomLeaveLoading ? t('roomsPanel.leavingRoom') : t('roomsPanel.leaveRoom')
@@ -1803,6 +1941,8 @@ export default function RoomsPanel({
             />
           </div>
         )}
+        {/* Login & sync settings (auto-login, auto-sync) stay reachable before login. */}
+        {!loggedIn && roomDetailsButton}
       </header>
     ) : null;
 
@@ -1863,7 +2003,8 @@ export default function RoomsPanel({
                   {t('roomsPanel.stopAutoLogin')}
                 </Button>
               )}
-              {selectedRoomSecretsSummary.hasCredential &&
+              {selectedRoomId != null &&
+                meshcoreRoomHasSavedGuestCredential(selectedRoomId) &&
                 !selectedRoomSecretsSummary.autoLoginOnConnect && (
                   <Button
                     size="sm"
@@ -1916,7 +2057,7 @@ export default function RoomsPanel({
   );
 
   const detailsPanel =
-    selectedRoomId != null && loggedIn ? (
+    selectedRoomId != null ? (
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="border-ink-800 flex min-h-14 shrink-0 items-center gap-2 border-b pr-2 pl-3">
           <h3 className="text-ink-100 text-body-lg min-w-0 flex-1 truncate font-semibold">
@@ -1943,11 +2084,13 @@ export default function RoomsPanel({
                   void handleAutoLoginOnConnectChange(selectedRoomId, checked);
                 }}
                 disabled={
-                  !storedRoomIds.has(selectedRoomId) && !meshcoreIsRoomLoggedIn(selectedRoomId)
+                  !meshcoreRoomHasSavedGuestCredential(selectedRoomId) &&
+                  !meshcoreIsRoomLoggedIn(selectedRoomId)
                 }
                 label={t('roomsPanel.autoLoginOnConnect')}
                 description={
-                  !storedRoomIds.has(selectedRoomId) && !meshcoreIsRoomLoggedIn(selectedRoomId)
+                  !meshcoreRoomHasSavedGuestCredential(selectedRoomId) &&
+                  !meshcoreIsRoomLoggedIn(selectedRoomId)
                     ? t('roomsPanel.autoLoginRequiresSavedPassword')
                     : t('roomsPanel.autoLoginOnConnectTooltip')
                 }
@@ -2244,6 +2387,7 @@ export default function RoomsPanel({
             </div>
           )}
 
+          <ChatSummaryCard summary={summary} />
           <div className="relative min-h-0 flex-1">
             <div
               ref={streamRef}
@@ -2649,6 +2793,17 @@ export default function RoomsPanel({
           onCancel={() => {
             setForgetConfirmNodeId(null);
           }}
+        />
+      )}
+      {leaveConfirmRoomId != null && (
+        <ConfirmModal
+          title={t('roomsPanel.leaveRoomConfirmTitle')}
+          message={t('roomsPanel.leaveRoomConfirmMessage')}
+          confirmLabel={t('roomsPanel.leaveRoom')}
+          danger
+          confirmDisabled={!isConnected || leaveLoadingRoomIds.has(leaveConfirmRoomId)}
+          onConfirm={confirmLeaveRoom}
+          onCancel={cancelLeaveRoomConfirm}
         />
       )}
       <ConversationLayout

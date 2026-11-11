@@ -11,6 +11,8 @@ This file holds the always-on hard rules (workflow, security, style, testing, CI
 - **Pre-commit patience:** Pre-commit runs staged-related Vitest (`pnpm run test:staged`), staged ESLint, full typecheck, path-gated `typecheck:strict-shared` when `src/shared/` is staged, and path-gated `check:*` scripts. Typical small commits are much faster than a full suite; vitest infra still forces a full Vitest run, and a dependency bump does so only when source is staged alongside the manifests (a manifest-only commit takes the fast path in the hook order below). Be patient — do not interrupt or force-skip. **PR CI** ([`tests.yaml`](.github/workflows/tests.yaml)) runs `vitest related` against the pull request merge-base paths, skips docs-only changes, and selects every project lane for shared contracts. It fails closed to the full suite for test infrastructure, dependency manifests, deletions/renames, oversized detector output, or detector failures. `merge_group`, `main` push, and manual runs always run full Vitest with global coverage thresholds. i18n is gated via `locale-quality.test.ts` (subprocess of `check:i18n`). **`pnpm run check:pr`** (hand, before opening/updating a PR) remains the comprehensive local gate: full lint + typecheck + `typecheck:strict-shared` + `test:run` (+ full-feature sidecar check when the branch touches sidecar). **`pnpm run release`** (`scripts/release.sh`) runs full Vitest **plus ungated `check:*` scanners** (including a direct `check:i18n`). Green pre-commit ≠ green CI or release.
 - **Fresh clone:** Before other setup, run `node scripts/check-environment.mjs` (works before pnpm is installed). After `pnpm install`, re-run `pnpm run check:environment`. Fix required failures using printed hints and `setup:*` scripts; optional warnings can wait. Wrong/outdated pnpm is blocked by `scripts/check-package-manager.mjs` on `preinstall` and `pnpm run dev` (prints Corepack/`npm install -g pnpm@…` steps; Node 25+ needs Corepack installed separately).
 
+- **Bundle CI:** [bundle-size.yaml](.github/workflows/bundle-size.yaml) independently runs the production main bundle regression on every PR, including docs-only, draft, fork and stacked/non-main targets. Keep it independent of related-test selection, with the strict budget unchanged. See [CI/CD](docs/ci-cd.md#bundle-size-bundle-sizeyaml).
+
 ### Platform parity
 
 - **Default:** behavioral fixes and UI lifecycle changes apply to **linux, darwin, and win32** unless there is a documented, justified OS-specific exception.
@@ -18,6 +20,14 @@ This file holds the always-on hard rules (workflow, security, style, testing, CI
 - **When branching on `getPlatform()` / `process.platform`:** prefer shared state machines and teardown helpers; branch only at the boundary where the OS API differs (e.g. `showEmojiPanel()` vs inline `<emoji-picker>`).
 - **Document exceptions inline** with a short comment (`// OS-specific: …`) and, for non-obvious splits, a note in the PR body.
 - **Tests:** cover all three platforms when behavior is shared (`it.each(['linux', 'darwin', 'win32'])`); use platform-specific cases only when the mechanism under test exists on that OS.
+
+### Protocol parity
+
+- **Default:** feature and UI changes — especially **chat panel** and other shared UI — apply to **all three protocols (Meshtastic, MeshCore, Reticulum)** unless there is a documented, justified protocol-specific exception. Goal: every feature available everywhere with a consistent look and layout.
+- A single-protocol report or an obvious fit for one protocol does **not** by itself narrow scope — reason about the other protocols before gating a feature off.
+- Enable/disable parts of a shared surface with `ProtocolCapabilities` / `useRadioProvider(protocol)` rather than building the feature as protocol-specific from the start. "Consistent look" means shared components and tokens; protocol accent colors (emerald/cyan/yellow) still differ by design.
+- **Document exceptions** with a short inline comment or a note in the PR body for genuinely protocol-specific features (e.g. Meshtastic channel URLs, MeshCore Repeaters admin, Reticulum sidecar stack).
+- **Tests:** cover all three protocols when behavior is shared (protocol matrix or capability-driven cases); use protocol-specific cases only when the mechanism under test exists on that protocol.
 
 ## 2. Architecture & Domain
 
@@ -84,7 +94,7 @@ Adding a cross-boundary feature:
 - **Domain error tags:** Do not attach ad-hoc properties to `Error` with type assertions. Use `markPairingRelatedError()` / `isPairingRelatedError()` from `src/shared/blePairingError.ts` for BLE pairing classification.
 - **RF connect APIs:** Transport-specific connect args use discriminated unions in `src/renderer/lib/rfConnectionTypes.ts` (`RfConnectionTransportOpts`, `RfConnectFn`, `RfConnectAutomaticFn`). Do not pass `httpAddress` and `blePeripheralId` as unrelated optional params on a flat signature.
 - **React:** Function components only; `exhaustive-deps` is errors; `?.` in JSX; every interactive control needs `aria-label`.
-- **Zustand:** Module-level defaults for stable refs; prefer `useStore(s => s.field)` over broad subscriptions; avoid subscribing to whole Maps when one id suffices; for `connectionStore`, never bare `useConnectionStore()` — use a selector such as `useConnectionStore((s) => (identityId ? (s.connections[identityId] ?? null) : null))` so components re-render only when that identity's record changes; `persist` for localStorage, IPC from an effect for SQLite; extract time constants to `src/renderer/lib/timeConstants.ts`.
+- **Zustand:** Module-level defaults for stable refs; prefer `useStore(s => s.field)` over broad subscriptions; avoid subscribing to whole Maps when one id suffices; for `connectionStore`, never bare `useConnectionStore()` — use a selector such as `useConnectionStore((s) => (identityId ? (s.connections[identityId] ?? null) : null))` so components re-render only when that identity's record changes; `persist` for low-stakes localStorage, typed IPC for SQLite durables (see [renderer-storage.md](docs/development/renderer-storage.md)); extract time constants to `src/renderer/lib/timeConstants.ts`.
 - **Performance:** No hot-path O(n); lazy cleanup when collections grow large.
 
 ## 5. Testing
@@ -168,7 +178,7 @@ Deep, file-level subsystem detail lives in the developer docs ([`docs/developmen
 
 **Always-remember invariants** (details in the linked files):
 
-- Gate features with `ProtocolCapabilities` / `useRadioProvider(protocol)` — never `protocol === 'meshcore'`.
+- Gate features with `ProtocolCapabilities` / `useRadioProvider(protocol)` — never `protocol === 'meshcore'`; apply changes to all protocols by default (§1 Protocol parity).
 - Mount protocol runtimes **once** from `App.tsx`; do not remount in children. New protocol logic goes in `lib/` + thin runtime wiring, not monolithic runtimes.
 - Prefer `useProtocolFacade` and identity-scoped stores (`identityStore` / `nodeStore` / `messageStore` / `connectionStore`, keyed by `identityId`); SQLite→UI via `hydrateIdentityStoresFromDb`.
 - MeshCore zero-hop Status/Telemetry/Neighbors are pubkey-framed (no contact-list gate); multi-hop ping needs a hash-segment path (≥2 bytes), never the full destination pubkey. Do not change behavior guarded by `meshcoreZeroHopRepeaterWorkingState.test.ts` without explicit user request — see [`docs/development/meshcore-repeaters.md`](docs/development/meshcore-repeaters.md).

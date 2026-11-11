@@ -18,6 +18,7 @@ import {
   saveNotificationSoundSetting,
 } from '../lib/notificationSoundSettings';
 import { SELECT_BOX_CLASS } from './ui/formClasses';
+import { SettingsCollapsible } from './ui/SettingsSection';
 
 const EVENT_LABELS = {
   channel: 'notificationSounds.channel',
@@ -29,6 +30,7 @@ const EVENT_LABELS = {
   mecpSiren: 'notificationSounds.mecpSiren',
   connectionLost: 'notificationSounds.connectionLost',
   batteryLow: 'notificationSounds.batteryLow',
+  diagnosticError: 'notificationSounds.diagnosticError',
 } as const;
 const PRESET_LABELS = {
   default: 'notificationSounds.default',
@@ -131,12 +133,9 @@ export default function NotificationSoundSettings() {
   }
 
   return (
-    <details className="border-ink-700 rounded-card border p-3">
-      <summary className="text-ink-300 text-body-lg cursor-pointer">
-        {t('notificationSounds.title')}
-      </summary>
-      <p className="text-muted text-label mt-3 leading-relaxed">{t('notificationSounds.hint')}</p>
-      <p className="text-muted text-label mt-2 leading-relaxed">
+    <SettingsCollapsible title={t('notificationSounds.title')} titleAs="span">
+      <p className="text-muted text-xs leading-relaxed">{t('notificationSounds.hint')}</p>
+      <p className="text-muted mt-2 text-xs leading-relaxed">
         {t('notificationSounds.emergencyHint')}
       </p>
       <div className="divide-ink-700 mt-3 divide-y">
@@ -254,6 +253,6 @@ export default function NotificationSoundSettings() {
           {error}
         </p>
       )}
-    </details>
+    </SettingsCollapsible>
   );
 }

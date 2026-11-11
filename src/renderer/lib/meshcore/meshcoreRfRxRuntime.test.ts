@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { encodeMeshcoreGroupText } from '@/shared/meshcoreGroupText';
+
 import { useDiagnosticsStore } from '../../stores/diagnosticsStore';
+import { upsertMessage, useMessageStore } from '../../stores/messageStore';
 import { upsertNodeRecord, useNodeStore } from '../../stores/nodeStore';
+import { resetMeshcoreLateHopSeenPacketsForTests } from '../meshcoreLateRfHopEnrichment';
 import {
   markMeshcoreLocallyDeletedContact,
   resetMeshcoreLocallyDeletedContactsForTests,
@@ -13,7 +17,11 @@ import { getNodeStatus } from '../nodeStatus';
 import { useRelayCoverageStore } from '../relayCoverage/relayCoverageStore';
 import { meshNodeToNodeRecord } from '../storeRecordAdapters';
 import type { MeshNode, TelemetryPoint } from '../types';
-import { openHeardRepeatWindow, resetHeardRepeatWindowsForTests } from './heardRepeatTracker';
+import {
+  openHeardRepeatWindow,
+  resetHeardRepeatWindowsForTests,
+  setMeshcoreHeardRepeatChannelSecrets,
+} from './heardRepeatTracker';
 import type { DeviceLogEntry, MeshCoreSelfInfo, RxPacketEntry } from './meshcoreHookTypes';
 import { createMeshcoreMqttPacketLogBucket } from './meshcoreMqttPacketLogThrottle';
 import {
@@ -443,6 +451,31 @@ function hexToU8(hex: string): Uint8Array {
   return out;
 }
 
+const OWN_CHANNEL_IDX = 2;
+const OWN_CHANNEL_SECRET = Uint8Array.from({ length: 16 }, (_, i) => 0x40 + i);
+
+function u8ToHex(bytes: Uint8Array): string {
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** FLOOD GRP_TXT carrying our own `"Me: hello"` on OWN_CHANNEL_IDX, after the given path prefix. */
+function ownFloodGrpTxtHex(pathLenAndPathHex: string, sentAtSec: number): string {
+  const inner = encodeMeshcoreGroupText(OWN_CHANNEL_SECRET, sentAtSec, 'Me: hello');
+  return `15${pathLenAndPathHex}${u8ToHex(inner)}`;
+}
+
+function openOwnChannelWindow(identityId: string, messageId: string): number {
+  const sentAtSec = Math.floor(Date.now() / 1000);
+  setMeshcoreHeardRepeatChannelSecrets([{ index: OWN_CHANNEL_IDX, secret: OWN_CHANNEL_SECRET }]);
+  openHeardRepeatWindow(identityId, messageId, undefined, undefined, {
+    channelIndex: OWN_CHANNEL_IDX,
+    senderName: 'Me',
+    wireText: 'hello',
+    sentAtSec,
+  });
+  return sentAtSec;
+}
+
 describe('handleMeshcoreRfRx heard-repeat coverage', () => {
   const MSG = 'ch:0:heard-repeat';
   /** Node ids whose 1-byte meshcoreNodeHash matches path bytes 0x88 / 0x07. */
@@ -462,7 +495,7 @@ describe('handleMeshcoreRfRx heard-repeat coverage', () => {
     vi.restoreAllMocks();
   });
 
-  it('credits Repeater path hashes on GRP_TXT flood overhear without cleartext originator', () => {
+  it('credits Repeater path hashes when the GRP_TXT flood decrypts to our own message', () => {
     const nodes = new Map<number, MeshNode>([
       [REPEATER_88, makeNode(REPEATER_88, { hw_model: 'Repeater', long_name: 'Hill 88' })],
       [CHAT_07, makeNode(CHAT_07, { hw_model: 'Chat', long_name: 'Chat 07' })],
@@ -472,14 +505,33 @@ describe('handleMeshcoreRfRx heard-repeat coverage', () => {
       readNodes: () => nodes,
       selfInfoRef: ref({ name: 'Me', publicKey: new Uint8Array(32).fill(9) } as MeshCoreSelfInfo),
     });
-    openHeardRepeatWindow(ID, MSG);
+    const sentAtSec = openOwnChannelWindow(ID, MSG);
 
     // Realistic flood path: forwarders only (0x88 repeater, 0x07 chat) — originator is never in path.
-    handleMeshcoreRfRx({ lastSnr: 6, lastRssi: -50, raw: hexToU8(FLOOD_GRP_TXT_HEX) }, deps);
+    handleMeshcoreRfRx(
+      { lastSnr: 6, lastRssi: -50, raw: hexToU8(ownFloodGrpTxtHex('028807', sentAtSec)) },
+      deps,
+    );
 
     expect(useRelayCoverageStore.getState().coverageFor(ID, MSG)?.heardRepeaters).toEqual([
       { nodeId: REPEATER_88, name: 'Hill 88', snr: 6, rssi: -50 },
     ]);
+  });
+
+  it('does not credit forwarders of someone else’s channel message during our window', () => {
+    const nodes = new Map<number, MeshNode>([
+      [REPEATER_88, makeNode(REPEATER_88, { hw_model: 'Repeater', long_name: 'Hill 88' })],
+    ]);
+    const { deps } = makeDeps({
+      myNodeNumRef: ref(1),
+      readNodes: () => nodes,
+      selfInfoRef: ref({ name: 'Me', publicKey: new Uint8Array(32).fill(9) } as MeshCoreSelfInfo),
+    });
+    openOwnChannelWindow(ID, MSG);
+
+    handleMeshcoreRfRx({ lastSnr: 6, lastRssi: -50, raw: hexToU8(FLOOD_GRP_TXT_HEX) }, deps);
+
+    expect(useRelayCoverageStore.getState().coverageFor(ID, MSG)?.heardRepeaters).toEqual([]);
   });
 
   it('does not credit Chat path hops; unresolved forwarder hashes still count', () => {
@@ -491,9 +543,12 @@ describe('handleMeshcoreRfRx heard-repeat coverage', () => {
       readNodes: () => nodes,
       selfInfoRef: ref({ name: 'Me', publicKey: new Uint8Array(32).fill(9) } as MeshCoreSelfInfo),
     });
-    openHeardRepeatWindow(ID, MSG);
+    const sentAtSec = openOwnChannelWindow(ID, MSG);
 
-    handleMeshcoreRfRx({ lastSnr: 6, lastRssi: -50, raw: hexToU8(FLOOD_GRP_TXT_HEX) }, deps);
+    handleMeshcoreRfRx(
+      { lastSnr: 6, lastRssi: -50, raw: hexToU8(ownFloodGrpTxtHex('028807', sentAtSec)) },
+      deps,
+    );
 
     const heard = useRelayCoverageStore.getState().coverageFor(ID, MSG)?.heardRepeaters ?? [];
     // Path 0x88 (unknown forwarder) → hex credit; 0x07 (Chat) → ignored.
@@ -518,7 +573,7 @@ describe('handleMeshcoreRfRx heard-repeat coverage', () => {
     expect(pathSpy).not.toHaveBeenCalled();
   });
 
-  it('binds empty-path GRP_TXT and rejects a later foreign payload path credit', () => {
+  it('does not credit an unconfirmed empty-path GRP_TXT or a later foreign payload', () => {
     const pathSpy = vi.spyOn(meshcorePathChainDisplay, 'buildMeshcorePathResolutionFromNodes');
     const nodes = new Map<number, MeshNode>([
       [REPEATER_88, makeNode(REPEATER_88, { hw_model: 'Repeater', long_name: 'Hill 88' })],
@@ -607,20 +662,125 @@ describe('handleMeshcoreRfRx heard-repeat coverage', () => {
       [repId, makeNode(repId, { hw_model: 'Repeater', long_name: 'FNL-0647' })],
     ]);
     const pubKeyMap = new Map<number, Uint8Array>([[repId, repPub]]);
-    // FLOOD GRP_TXT, path_len=0x41 → 1 hop × 2-byte hash, path=06 47
-    const raw = hexToU8(`15410647${FLOOD_GRP_TXT_HEX.slice(8)}`);
     const { deps } = makeDeps({
       myNodeNumRef: ref(1),
       readNodes: () => nodes,
       pubKeyMapRef: ref(pubKeyMap),
       selfInfoRef: ref({ name: 'Me', publicKey: new Uint8Array(32).fill(9) } as MeshCoreSelfInfo),
     });
-    openHeardRepeatWindow(ID, MSG);
+    const sentAtSec = openOwnChannelWindow(ID, MSG);
+    // FLOOD GRP_TXT, path_len=0x41 → 1 hop × 2-byte hash, path=06 47
+    const raw = hexToU8(ownFloodGrpTxtHex('410647', sentAtSec));
 
     handleMeshcoreRfRx({ lastSnr: 7, lastRssi: -60, raw }, deps);
 
     expect(useRelayCoverageStore.getState().coverageFor(ID, MSG)?.heardRepeaters).toEqual([
       { nodeId: repId, name: 'FNL-0647', snr: 7, rssi: -60 },
     ]);
+  });
+});
+
+describe('handleMeshcoreRfRx DM-type packets (1-byte source hash)', () => {
+  const selfKey = new Uint8Array(32).fill(0x5a);
+  selfKey[0] = 0xab;
+  const alexKey = new Uint8Array(32).fill(0x5a);
+  alexKey.set([0xa1, 0x00, 0x51, 0x52], 0);
+  const alexId = pubkeyToNodeId(alexKey);
+  const alexPrefix = Array.from(alexKey.subarray(0, 6), (b) =>
+    b.toString(16).padStart(2, '0'),
+  ).join('');
+
+  afterEach(() => {
+    useNodeStore.setState({ nodes: {} });
+    useDiagnosticsStore.setState({ noiseRateStats: new Map() });
+    vi.restoreAllMocks();
+  });
+
+  /** TXT_MSG from AlexT1000 to this radio: dest 0xAB (our key), src 0xA1, MAC, ciphertext. */
+  function txtMsgToUs(route: 'FLOOD' | 'DIRECT', path: number[]): Uint8Array {
+    return Uint8Array.from([
+      (2 << 2) | (route === 'FLOOD' ? 1 : 2),
+      path.length,
+      ...path,
+      0xab,
+      0xa1,
+      0x3c,
+      0x7e,
+      ...Array.from({ length: 16 }, (_, i) => (i * 29 + 7) & 0xff),
+    ]);
+  }
+
+  /** Hops away starts unknown: the merge keeps the shortest count seen and never lowers it to 0. */
+  function setup() {
+    const alex = makeNode(alexId, { long_name: 'AlexT1000', last_heard: 100 });
+    upsertNodeRecord(ID, meshNodeToNodeRecord(alex));
+    return makeDeps({
+      myNodeNumRef: ref(pubkeyToNodeId(selfKey)),
+      readNodes: () => new Map([[alexId, alex]]),
+      pubKeyPrefixMapRef: ref(new Map([[alexPrefix, alexId]])),
+      selfInfoRef: ref({ name: 'Me', publicKey: selfKey } as MeshCoreSelfInfo),
+    });
+  }
+
+  it('names the contact on a flood DM to us and takes its hops away from the path', () => {
+    const { deps, rawPackets } = setup();
+
+    handleMeshcoreRfRx(
+      { lastSnr: 6, lastRssi: -80, raw: txtMsgToUs('FLOOD', [0xf8, 0xd4, 0x3a]) },
+      deps,
+    );
+
+    expect(rawPackets[0]).toMatchObject({ payloadTypeString: 'TXT_MSG', fromNodeId: alexId });
+    expect(useNodeStore.getState().nodes[ID][alexId]).toMatchObject({ hopsAway: 3 });
+  });
+
+  it('names the contact on a direct DM but leaves hops away alone', () => {
+    const { deps, rawPackets } = setup();
+
+    handleMeshcoreRfRx({ lastSnr: 6, lastRssi: -80, raw: txtMsgToUs('DIRECT', []) }, deps);
+
+    expect(rawPackets[0]).toMatchObject({ fromNodeId: alexId });
+    expect(useNodeStore.getState().nodes[ID][alexId].hopsAway).toBeUndefined();
+  });
+
+  it('does not count flood DMs toward the Discovery flood rate', () => {
+    const { deps } = setup();
+
+    for (let i = 0; i < 5; i++) {
+      handleMeshcoreRfRx({ lastSnr: 6, lastRssi: -80, raw: txtMsgToUs('FLOOD', [0x3a]) }, deps);
+    }
+
+    expect(useDiagnosticsStore.getState().noiseRateStats.get(alexId)).toBeUndefined();
+  });
+
+  it('leaves the stored DM from the contact alone when the log of the next DM arrives', () => {
+    // MeshCore logs a packet before it delivers the message (Dispatcher::checkRecv), so a log
+    // that arrives now belongs to a DM not stored yet, never to the one already shown.
+    const { deps } = setup();
+    resetMeshcoreLateHopSeenPacketsForTests();
+    const saveMeshcoreMessage = vi.fn().mockResolvedValue(undefined);
+    vi.spyOn(window.electronAPI.db, 'saveMeshcoreMessage').mockImplementation(saveMeshcoreMessage);
+    useMessageStore.setState({ messages: {} });
+    const storedId = `${alexId}:1700000000:first`;
+    upsertMessage(ID, {
+      id: storedId,
+      from: alexId,
+      to: pubkeyToNodeId(selfKey),
+      payload: 'first',
+      channelIndex: -1,
+      timestamp: Date.now(),
+      receivedVia: 'rf',
+      rxHops: 2,
+      hopCount: 2,
+    });
+
+    handleMeshcoreRfRx(
+      { lastSnr: 6, lastRssi: -80, raw: txtMsgToUs('FLOOD', [0xf8, 0xd4, 0x3a, 0x11]) },
+      deps,
+    );
+
+    expect(useMessageStore.getState().messages[ID][storedId].rxHops).toBe(2);
+    expect(saveMeshcoreMessage).not.toHaveBeenCalled();
+    useMessageStore.setState({ messages: {} });
   });
 });

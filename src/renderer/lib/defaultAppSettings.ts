@@ -33,6 +33,7 @@ export const DEFAULT_APP_SETTINGS_SHARED = {
   meshcoreFloodScopePresets: [] as string[],
   locale: 'en' as string,
   translationEnabled: false,
+  aiEnabled: false,
   translationReadLanguages: ['en'] as string[],
   translationTargetLanguage: 'en' as string,
   translationAutoEnabled: false,
@@ -65,7 +66,7 @@ export const DEFAULT_APP_SETTINGS_SHARED = {
    * When false, mesh-client skips host GPS lookups and blocks all app-initiated location
    * transmission (Meshtastic, MeshCore). Static coords remain for local map only.
    */
-  shareMyLocation: true,
+  shareMyLocation: false,
   /** MeshCore Open wire: keyed replies, r: reactions, g: GIF send (experimental). */
   meshcoreOpenWireCompatEnabled: false,
   /** MeshCore companion path hash mode: 0 = 1-byte, 1 = 2-byte, 2 = 3-byte (firmware v1.14+). */
@@ -76,6 +77,18 @@ export const DEFAULT_APP_SETTINGS_SHARED = {
    * Lets package-manager deployments own the artifact.
    */
   autoUpdateDownloadEnabled: true,
+  /**
+   * When true (default), closing the window while connected hides it to the
+   * system tray instead of minimizing (or quitting) — the app keeps running.
+   */
+  closeToTray: true,
+  /**
+   * Keep the computer awake while connected (`off` | `rf` | `always`).
+   * `rf` (default): only a BLE or USB-serial radio link holds the blocker;
+   * TCP/HTTP and MQTT do not
+   * (they reconnect after wake).
+   */
+  preventSleepWhileConnected: 'rf' as 'off' | 'rf' | 'always',
   /** When true, show the Chat MECP compose button (default off). */
   mecpComposeEnabled: false,
   /** Node silence alert threshold; null = use protocol capability defaults. */
@@ -84,6 +97,8 @@ export const DEFAULT_APP_SETTINGS_SHARED = {
   nodeBatteryLowThreshold: 10,
   /** Alert when an RF link drops unexpectedly (not manual, not mid-reconnect). */
   notifyOnLinkDown: true,
+  /** Desktop + sound when a new error-severity diagnostic row appears (default off). */
+  notifyOnDiagnosticErrors: false,
   /**
    * Incident Command station mode: standing banner + window attention for unseen MAYDAY/URGENT
    * (default off; the one-shot siren/toast fires regardless).
@@ -96,4 +111,16 @@ export const DEFAULT_APP_SETTINGS_SHARED = {
    * Stored as a hidden list so newly registered protocols default to enabled.
    */
   hiddenProtocols: [] as MeshProtocol[],
+  /** Master switch for Scheduled Broadcasts timers (default off — safe). */
+  scheduledBroadcastsEnabled: false,
+  /** Opt-in internet weather overlays on the shared map (default off). */
+  internetWeatherEnabled: false,
+  mapShowRadar: false,
+  mapShowWeatherTemperature: false,
+  mapShowWeatherWind: false,
+  mapWeatherRadarProvider: 'auto' as 'auto' | 'rainviewer' | 'iem-nexrad',
+  mapWeatherRadarOpacity: 0.65,
+  mapWeatherRadarCoverage: false,
+  mapWeatherWindUnit: 'kmh' as 'kmh' | 'mph' | 'ms' | 'kn',
+  mapWeatherPrecipUnit: 'mm' as 'mm' | 'in',
 };

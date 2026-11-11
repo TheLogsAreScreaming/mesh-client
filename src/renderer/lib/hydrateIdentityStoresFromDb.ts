@@ -1,11 +1,16 @@
 import {
+  MESHCORE_DB_MESSAGE_LOAD_LIMIT,
+  MESHCORE_DB_PER_CHANNEL_MESSAGE_LOAD_LIMIT,
+  MESHCORE_DB_ROOM_MESSAGE_LOAD_LIMIT,
+} from '@/shared/meshcoreMessageHydration';
+
+import {
   buildMeshcoreNodeMapFromDb,
   isMeshcoreRoomChatMessage,
   mapMeshcoreDbRowsToChatMessages,
   type MeshcoreSavedNodeHopRow,
   persistMeshcoreMessageSenderRepairs,
 } from '../hooks/meshcore/meshcoreHookPreamble';
-import { MESHCORE_ROOM_MESSAGE_CHANNEL } from '../hooks/meshcore/meshcoreHookPreamble';
 import {
   replaceMessageRecordsForIdentity,
   upsertMessageRecordsForIdentity,
@@ -26,6 +31,7 @@ import {
 } from './meshcoreDbCacheHydration';
 import { loadPersistedMeshcoreSelfNodeId } from './meshcoreLastSelfNodeId';
 import { rebuildMeshcoreDedupeIndex } from './meshcoreMessageDedupeIndex';
+import { trimMeshcoreChatMessages } from './meshcoreMessageMemoryWindow';
 import { meshcoreMessageStoreId } from './meshcoreStoreDedup';
 import { ensureMeshtasticChatSenderInNodeStore } from './meshtastic/meshtasticChatSenderNode';
 import {
@@ -39,49 +45,58 @@ import { lastHeardToUnixSeconds } from './nodeStatus';
 import { chatMessageToMessageRecord, meshNodeToNodeRecord } from './storeRecordAdapters';
 import type { IdentityId, MeshNode, MeshProtocol } from './types';
 
-/** MeshCore SQLite message load cap (matches runtime mount hydration). */
-export const MESHCORE_DB_MESSAGE_LOAD_LIMIT = 500;
+export {
+  MESHCORE_DB_MESSAGE_LOAD_LIMIT,
+  MESHCORE_DB_PER_CHANNEL_MESSAGE_LOAD_LIMIT,
+  MESHCORE_DB_ROOM_MESSAGE_LOAD_LIMIT,
+};
 
-/** Extra room BBS rows loaded by channel (-2) and merged with the global window. */
-export const MESHCORE_DB_ROOM_MESSAGE_LOAD_LIMIT = 200;
-
-/** Merge global + room-channel SQLite rows for hydration (dedupe by row id). */
+/** Merge hydration SQLite row lists (dedupe by row id; oldest-first). */
 export function mergeMeshcoreDbMessageRowsForHydration(
-  globalRows: MeshcoreMessageDbRow[],
-  roomRows: MeshcoreMessageDbRow[],
+  ...rowLists: MeshcoreMessageDbRow[][]
 ): MeshcoreMessageDbRow[] {
   const byId = new Map<number, MeshcoreMessageDbRow>();
-  for (const row of globalRows) {
-    if (typeof row.id === 'number') byId.set(row.id, row);
-  }
-  for (const row of roomRows) {
-    if (typeof row.id === 'number') byId.set(row.id, row);
+  for (const rows of rowLists) {
+    for (const row of rows) {
+      if (typeof row.id === 'number') byId.set(row.id, row);
+    }
   }
   return Array.from(byId.values()).sort((a, b) => a.id - b.id);
 }
 
 export async function loadMeshcoreMessagesForHydration(): Promise<MeshcoreMessageDbRow[]> {
-  const [globalRows, roomRows] = await Promise.all([
-    window.electronAPI.db.getMeshcoreMessages(undefined, MESHCORE_DB_MESSAGE_LOAD_LIMIT),
-    window.electronAPI.db.getMeshcoreMessages(
-      MESHCORE_ROOM_MESSAGE_CHANNEL,
-      MESHCORE_DB_ROOM_MESSAGE_LOAD_LIMIT,
-    ),
-  ]);
-  return mergeMeshcoreDbMessageRowsForHydration(
-    globalRows as MeshcoreMessageDbRow[],
-    roomRows as MeshcoreMessageDbRow[],
-  );
+  const rows = await window.electronAPI.db.getMeshcoreMessagesForHydration({
+    globalLimit: MESHCORE_DB_MESSAGE_LOAD_LIMIT,
+    perChannelLimit: MESHCORE_DB_PER_CHANNEL_MESSAGE_LOAD_LIMIT,
+    roomLimit: MESHCORE_DB_ROOM_MESSAGE_LOAD_LIMIT,
+  });
+  return rows as MeshcoreMessageDbRow[];
 }
 
-/** MeshCore chat rows → store records; packetless DMs retain their recipient in the fallback ID. */
+/**
+ * MeshCore chat rows → store records.
+ * Channel / room / packetless DM ids must match live ingest (`meshcoreMessageStoreId`), not
+ * `chatMessageToMessageRecord`'s `${sender}-${ts}-${channel}` fallback — otherwise RF merges
+ * that prefer PacketRouter `ch:…:wire` ids leave orphan hydrate rows (perfect UI duplicates).
+ */
 export function meshcoreHydratedMessageRecords(
   messages: ReturnType<typeof mapMeshcoreDbRowsToChatMessages>,
 ) {
+  const usedIds = new Set<string>();
   return messages.map((msg) => {
     const record = chatMessageToMessageRecord(msg);
-    if (isMeshcoreRoomChatMessage(msg) || (msg.channel === -1 && msg.packetId == null)) {
-      record.id = msg.storeId ?? meshcoreMessageStoreId(msg);
+    if (
+      isMeshcoreRoomChatMessage(msg) ||
+      msg.channel >= 0 ||
+      (msg.channel === -1 && msg.packetId == null)
+    ) {
+      let id = msg.storeId ?? meshcoreMessageStoreId(msg);
+      // Same sender + UTC second share one meshcoreMessageStoreId; keep later DB rows distinct.
+      if (usedIds.has(id) && msg.id != null) {
+        id = `${id}:${msg.id}`;
+      }
+      usedIds.add(id);
+      record.id = id;
     }
     return record;
   });
@@ -102,6 +117,45 @@ export interface MessageClearRefreshOptions {
   messagesMode?: 'upsert' | 'replace';
   clearedChannel?: number;
   clearedAll?: boolean;
+}
+
+/** Apply Meshtastic node rows (+ MeshCore hop overlays) into the identity node store. */
+function applyMeshtasticNodesFromRows(
+  identityId: IdentityId,
+  savedNodes: Awaited<ReturnType<typeof window.electronAPI.db.getNodes>>,
+  meshcoreContacts: { node_id: number; hops_away: number | null }[],
+  nodesMode: 'upsert' | 'replace',
+): void {
+  const nodeMap = buildMeshtasticNodeMapFromDbRows(savedNodes, meshcoreContacts);
+  if (nodesMode === 'replace') {
+    replaceNodesMapInIdentityStore(identityId, nodeMap);
+  } else {
+    syncNodesMapToIdentityStore(identityId, nodeMap);
+  }
+}
+
+/** Apply Meshtastic SavedMessage rows into the identity message store (orphan-send dedupe). */
+function applyMeshtasticMessagesFromRows(
+  identityId: IdentityId,
+  msgs: Awaited<ReturnType<typeof window.electronAPI.db.getMessages>>,
+  messagesMode: 'upsert' | 'replace',
+): void {
+  const sanitized = dedupeMeshtasticHydrationOrphanSends(msgs.map(savedMessageToChatMessage));
+  const reversed = sanitized.toReversed();
+  const trimmed = trimChatMessagesToMax(reversed, MAX_IN_MEMORY_CHAT_MESSAGES);
+  const records = trimmed.map((msg) => chatMessageToMessageRecord(msg));
+  if (messagesMode === 'replace') {
+    replaceMessageRecordsForIdentity(identityId, records);
+  } else {
+    upsertMessageRecordsForIdentity(identityId, records);
+  }
+  for (const msg of trimmed) {
+    if (msg.sender_id <= 0) continue;
+    ensureMeshtasticChatSenderInNodeStore(identityId, msg.sender_id, {
+      lastHeardAt: msg.timestamp,
+      source: msg.receivedVia === 'mqtt' ? 'mqtt' : 'rf',
+    });
+  }
 }
 
 export async function hydrateMeshtasticNodesFromDb(
@@ -125,22 +179,7 @@ export async function hydrateMeshtasticMessagesFromDb(
 ): Promise<void> {
   const msgs = await window.electronAPI.db.getMessages(undefined, getMeshtasticMessageLoadLimit());
   if (isCurrent && !isCurrent()) return;
-  const sanitized = dedupeMeshtasticHydrationOrphanSends(msgs.map(savedMessageToChatMessage));
-  const reversed = sanitized.toReversed();
-  const trimmed = trimChatMessagesToMax(reversed, MAX_IN_MEMORY_CHAT_MESSAGES);
-  const records = trimmed.map((msg) => chatMessageToMessageRecord(msg));
-  if (messagesMode === 'replace') {
-    replaceMessageRecordsForIdentity(identityId, records);
-  } else {
-    upsertMessageRecordsForIdentity(identityId, records);
-  }
-  for (const msg of trimmed) {
-    if (msg.sender_id <= 0) continue;
-    ensureMeshtasticChatSenderInNodeStore(identityId, msg.sender_id, {
-      lastHeardAt: msg.timestamp,
-      source: msg.receivedVia === 'mqtt' ? 'mqtt' : 'rf',
-    });
-  }
+  applyMeshtasticMessagesFromRows(identityId, msgs, messagesMode);
 }
 
 /** Merge nodes-table hop stubs with meshcore_hop_history for hydration backfill. */
@@ -166,11 +205,11 @@ export function mergeMeshcoreSavedHopRowsForHydration(
   return Array.from(byId.values());
 }
 
-export async function loadMeshcoreSavedHopRowsForHydration(): Promise<MeshcoreSavedNodeHopRow[]> {
-  const [nodesTableRows, hopHistoryRows] = await Promise.all([
-    window.electronAPI.db.getNodes(),
-    window.electronAPI.db.getAllMeshcoreHopHistory(),
-  ]);
+/** Build hop rows for MeshCore node map from nodes-table + hop-history snapshot parts. */
+export function meshcoreSavedHopRowsFromHydrationParts(
+  nodesTableRows: Awaited<ReturnType<typeof window.electronAPI.db.getNodes>>,
+  hopHistoryRows: readonly { node_id: number; hops: number | null }[],
+): MeshcoreSavedNodeHopRow[] {
   const hopRows: MeshcoreSavedNodeHopRow[] = nodesTableRows.map((row) => ({
     node_id: row.node_id,
     hops_away: row.hops_away ?? null,
@@ -179,18 +218,41 @@ export async function loadMeshcoreSavedHopRowsForHydration(): Promise<MeshcoreSa
   return mergeMeshcoreSavedHopRowsForHydration(hopRows, hopHistoryRows);
 }
 
+export async function loadMeshcoreSavedHopRowsForHydration(): Promise<MeshcoreSavedNodeHopRow[]> {
+  const [nodesTableRows, hopHistoryRows] = await Promise.all([
+    window.electronAPI.db.getNodes(),
+    window.electronAPI.db.getAllMeshcoreHopHistory(),
+  ]);
+  return meshcoreSavedHopRowsFromHydrationParts(nodesTableRows, hopHistoryRows);
+}
+
+/** Fetch MeshCore contacts, hops, and fair message window in one IPC round-trip. */
+export async function loadMeshcoreIdentityHydrationSnapshot(): Promise<{
+  contacts: MeshcoreContactDbRow[];
+  savedNodes: MeshcoreSavedNodeHopRow[];
+  messages: MeshcoreMessageDbRow[];
+}> {
+  const snap = await window.electronAPI.db.getMeshcoreIdentityHydration({
+    globalLimit: MESHCORE_DB_MESSAGE_LOAD_LIMIT,
+    perChannelLimit: MESHCORE_DB_PER_CHANNEL_MESSAGE_LOAD_LIMIT,
+    roomLimit: MESHCORE_DB_ROOM_MESSAGE_LOAD_LIMIT,
+  });
+  return {
+    contacts: snap.contacts as MeshcoreContactDbRow[],
+    savedNodes: meshcoreSavedHopRowsFromHydrationParts(snap.nodes, snap.hopHistory),
+    messages: snap.messages as MeshcoreMessageDbRow[],
+  };
+}
+
+/** Hydrate MeshCore node map from the combined identity snapshot (contacts + hops + msgs). */
 export async function hydrateMeshcoreNodesFromDb(
   identityId: IdentityId,
   nodesMode: 'upsert' | 'replace' = 'upsert',
   isCurrent?: () => boolean,
 ): Promise<void> {
-  const [rows, savedNodes] = await Promise.all([
-    window.electronAPI.db.getMeshcoreContacts(),
-    loadMeshcoreSavedHopRowsForHydration(),
-  ]);
-  const dbMsgs = await loadMeshcoreMessagesForHydration();
-  const mapped = mapMeshcoreDbRowsToChatMessages(dbMsgs);
-  const nodeMap = buildMeshcoreNodeMapFromDb(rows as MeshcoreContactDbRow[], savedNodes, mapped);
+  const snap = await loadMeshcoreIdentityHydrationSnapshot();
+  const mapped = mapMeshcoreDbRowsToChatMessages(snap.messages);
+  const nodeMap = buildMeshcoreNodeMapFromDb(snap.contacts, snap.savedNodes, mapped);
   if (isCurrent && !isCurrent()) return;
   if (nodesMode === 'replace') {
     replaceNodesMapInIdentityStore(identityId, nodeMap);
@@ -239,29 +301,25 @@ export function replaceNodesMapInIdentityStore(
   );
 }
 
-export async function hydrateMeshcoreMessagesFromDb(
+/** Apply MeshCore DB message rows (with room repairs) into the identity message store. */
+function applyMeshcoreMessagesFromSnapshot(
   identityId: IdentityId,
-  messagesMode: 'upsert' | 'replace' = 'upsert',
-  isCurrent?: () => boolean,
-): Promise<void> {
-  const [dbMsgs, contactRows] = await Promise.all([
-    loadMeshcoreMessagesForHydration(),
-    window.electronAPI.db.getMeshcoreContacts(),
-  ]);
-  if (isCurrent && !isCurrent()) return;
-  const rows = dbMsgs;
-  const roomServerIds = meshcoreRoomServerIdsFromContacts(contactRows as MeshcoreContactDbRow[]);
+  dbMsgs: MeshcoreMessageDbRow[],
+  contactRows: MeshcoreContactDbRow[],
+  messagesMode: 'upsert' | 'replace',
+): void {
+  const roomServerIds = meshcoreRoomServerIdsFromContacts(contactRows);
   const mapped = repairMeshcoreHydratedMessages(
-    mapMeshcoreDbRowsToChatMessages(rows),
+    mapMeshcoreDbRowsToChatMessages(dbMsgs),
     roomServerIds,
     loadPersistedMeshcoreSelfNodeId(),
   );
-  void Promise.resolve(persistMeshcoreMessageSenderRepairs(rows, mapped)).catch((e: unknown) => {
+  void Promise.resolve(persistMeshcoreMessageSenderRepairs(dbMsgs, mapped)).catch((e: unknown) => {
     console.warn(
       '[hydrateMeshcoreMessagesFromDb] sender repair persist failed ' + errLikeToLogString(e),
     );
   });
-  const trimmed = trimChatMessagesToMax(mapped, MAX_IN_MEMORY_CHAT_MESSAGES);
+  const trimmed = trimMeshcoreChatMessages(mapped);
   const records = meshcoreHydratedMessageRecords(trimmed);
   if (messagesMode === 'replace') {
     replaceMessageRecordsForIdentity(identityId, records);
@@ -274,12 +332,23 @@ export async function hydrateMeshcoreMessagesFromDb(
   }
 }
 
+export async function hydrateMeshcoreMessagesFromDb(
+  identityId: IdentityId,
+  messagesMode: 'upsert' | 'replace' = 'upsert',
+  isCurrent?: () => boolean,
+): Promise<void> {
+  const snap = await loadMeshcoreIdentityHydrationSnapshot();
+  if (isCurrent && !isCurrent()) return;
+  applyMeshcoreMessagesFromSnapshot(identityId, snap.messages, snap.contacts, messagesMode);
+}
+
 type IdentityHydratorFn = (
   identityId: IdentityId,
   opts: HydrateIdentityStoresOptions,
   isCurrent: () => boolean,
 ) => Promise<void>;
 
+/** Meshtastic identity hydrator: batched snapshot when both slices load, else single-path. */
 async function hydrateMeshtasticIdentity(
   identityId: IdentityId,
   opts: HydrateIdentityStoresOptions,
@@ -290,10 +359,18 @@ async function hydrateMeshtasticIdentity(
   const messagesMode = opts.messagesMode ?? 'upsert';
   const nodesMode = opts.nodesMode ?? 'upsert';
   if (loadNodes && loadMessages) {
-    await Promise.all([
-      hydrateMeshtasticNodesFromDb(identityId, nodesMode, isCurrent),
-      hydrateMeshtasticMessagesFromDb(identityId, messagesMode, isCurrent),
-    ]);
+    const snap = await window.electronAPI.db.getMeshtasticIdentityHydration(
+      getMeshtasticMessageLoadLimit(),
+    );
+    if (!isCurrent()) return;
+    applyMeshtasticNodesFromRows(
+      identityId,
+      snap.nodes,
+      snap.meshcoreContacts as { node_id: number; hops_away: number | null }[],
+      nodesMode,
+    );
+    if (!isCurrent()) return;
+    applyMeshtasticMessagesFromRows(identityId, snap.messages, messagesMode);
   } else if (loadNodes) {
     await hydrateMeshtasticNodesFromDb(identityId, nodesMode, isCurrent);
   } else if (loadMessages) {
@@ -301,6 +378,7 @@ async function hydrateMeshtasticIdentity(
   }
 }
 
+/** MeshCore identity hydrator: one snapshot covers nodes and/or messages. */
 async function hydrateMeshcoreIdentity(
   identityId: IdentityId,
   opts: HydrateIdentityStoresOptions,
@@ -310,15 +388,23 @@ async function hydrateMeshcoreIdentity(
   const loadMessages = opts.messages !== false;
   const messagesMode = opts.messagesMode ?? 'upsert';
   const nodesMode = opts.nodesMode ?? 'upsert';
-  if (loadNodes && loadMessages) {
-    await Promise.all([
-      hydrateMeshcoreNodesFromDb(identityId, nodesMode, isCurrent),
-      hydrateMeshcoreMessagesFromDb(identityId, messagesMode, isCurrent),
-    ]);
-  } else if (loadNodes) {
-    await hydrateMeshcoreNodesFromDb(identityId, nodesMode, isCurrent);
-  } else if (loadMessages) {
-    await hydrateMeshcoreMessagesFromDb(identityId, messagesMode, isCurrent);
+  if (loadNodes || loadMessages) {
+    const snap = await loadMeshcoreIdentityHydrationSnapshot();
+    if (!isCurrent()) return;
+    if (loadNodes) {
+      const mapped = mapMeshcoreDbRowsToChatMessages(snap.messages);
+      const nodeMap = buildMeshcoreNodeMapFromDb(snap.contacts, snap.savedNodes, mapped);
+      if (!isCurrent()) return;
+      if (nodesMode === 'replace') {
+        replaceNodesMapInIdentityStore(identityId, nodeMap);
+      } else {
+        syncNodesMapToIdentityStore(identityId, nodeMap);
+      }
+    }
+    if (loadMessages) {
+      if (!isCurrent()) return;
+      applyMeshcoreMessagesFromSnapshot(identityId, snap.messages, snap.contacts, messagesMode);
+    }
   }
 }
 
