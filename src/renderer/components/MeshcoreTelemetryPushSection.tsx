@@ -118,9 +118,9 @@ export default function MeshcoreTelemetryPushSection({
         description={t('meshcoreTelemetryPush.enableDescription')}
         disabled={disabled || busy}
       />
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <p className="text-body-lg text-danger-400">{error}</p>}
       {subscription && (
-        <p className="text-muted text-sm" role="status">
+        <p className="text-muted text-body-lg" role="status">
           {subscription.lastPushAt != null
             ? t('meshcoreTelemetryPush.lastPush', {
                 time: new Date(subscription.lastPushAt).toLocaleTimeString(),
@@ -129,13 +129,13 @@ export default function MeshcoreTelemetryPushSection({
         </p>
       )}
       <fieldset className="space-y-2" disabled={inputsDisabled}>
-        <legend className="text-ink-300 text-xs font-semibold">
+        <legend className="text-ink-300 text-label font-semibold">
           {t('meshcoreTelemetryPush.thresholdsLegend')}
         </legend>
-        <p className="text-muted text-xs">{t('meshcoreTelemetryPush.thresholdsHint')}</p>
+        <p className="text-muted text-label">{t('meshcoreTelemetryPush.thresholdsHint')}</p>
         <div className="grid grid-cols-2 gap-2">
           {MESHCORE_TELEMETRY_PUSH_METRICS.map((metric) => (
-            <label key={metric} className="text-ink-300 flex flex-col gap-1 text-xs">
+            <label key={metric} className="text-ink-300 flex flex-col gap-1 text-label">
               {metricLabels[metric]}
               <input
                 type="number"
@@ -148,12 +148,12 @@ export default function MeshcoreTelemetryPushSection({
                   const value = e.target.value;
                   setThresholds((prev) => ({ ...prev, [metric]: value }));
                 }}
-                className="bg-secondary-dark border-ink-600 text-ink-200 rounded-control border px-2 py-1 text-sm disabled:opacity-50"
+                className="bg-secondary-dark border-ink-600 text-ink-200 rounded-control border px-2 py-1 text-body-lg disabled:opacity-50"
               />
             </label>
           ))}
         </div>
-        <label className="text-ink-300 flex flex-col gap-1 text-xs">
+        <label className="text-ink-300 flex flex-col gap-1 text-label">
           {t('meshcoreTelemetryPush.leaseLabel')}
           <input
             type="number"
@@ -166,10 +166,10 @@ export default function MeshcoreTelemetryPushSection({
             onChange={(e) => {
               setLeaseMinutes(e.target.value);
             }}
-            className="bg-secondary-dark border-ink-600 text-ink-200 rounded-control border px-2 py-1 text-sm disabled:opacity-50"
+            className="bg-secondary-dark border-ink-600 text-ink-200 rounded-control border px-2 py-1 text-body-lg disabled:opacity-50"
           />
         </label>
-        <p className="text-muted text-xs">{t('meshcoreTelemetryPush.leaseHint')}</p>
+        <p className="text-muted text-label">{t('meshcoreTelemetryPush.leaseHint')}</p>
       </fieldset>
     </SettingsCollapsible>
   );

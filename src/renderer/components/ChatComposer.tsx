@@ -1385,7 +1385,7 @@ export function ChatComposer({
     ? t('chatPanel.floodScopeOverrideHint')
     : t('chatPanel.scheduleSendHint');
 
-  const emojiButtonClass = `flex h-[2.625rem] min-w-[2.625rem] shrink-0 items-center justify-center rounded-lg border px-2.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
+  const emojiButtonClass = `flex h-[2.625rem] min-w-[2.625rem] shrink-0 items-center justify-center rounded-modal border px-2.5 text-label font-semibold transition-colors disabled:opacity-50 ${
     showComposePicker
       ? 'border-brand-green/35 bg-brand-green/12 text-bright-green'
       : 'border-secondary-dark bg-sidebar-active-bg text-muted hover:text-ink-200'
@@ -1759,7 +1759,7 @@ export function ChatComposer({
                         bottom: floodScopeMenuPos.bottom,
                         right: floodScopeMenuPos.right,
                       }}
-                      className="bg-deep-black shadow-level-4 border-ink-700 z-50 max-h-72 min-w-[12rem] overflow-y-auto rounded-lg border py-1"
+                      className="bg-deep-black shadow-level-4 border-ink-700 z-50 max-h-72 min-w-[12rem] overflow-y-auto rounded-modal border py-1"
                     >
                       {floodScopeCustomEditing ? (
                         <div className="space-y-2 px-2 py-1.5">
@@ -1799,7 +1799,7 @@ export function ChatComposer({
                             className={`${INPUT_BOX_SM_CLASS} w-full`}
                           />
                           {floodScopeCustomError ? (
-                            <p role="alert" className="text-2xs text-red-400">
+                            <p role="alert" className="text-2xs text-danger-400">
                               {floodScopeCustomError}
                             </p>
                           ) : null}
@@ -1845,7 +1845,7 @@ export function ChatComposer({
                                   closeFloodScopeMenu();
                                   setScheduleDialogOpen(true);
                                 }}
-                                className="text-ink-300 hover:bg-ink-800 hover:text-ink-100 w-full px-3 py-1.5 text-left text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                                className="text-ink-300 hover:bg-ink-800 hover:text-ink-100 w-full px-3 py-1.5 text-left text-label transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                               >
                                 {t('chatPanel.sendLater')}
                               </button>
@@ -1891,7 +1891,7 @@ export function ChatComposer({
                                         persistFloodScopeOverride(option.value);
                                         closeFloodScopeMenu();
                                       }}
-                                      className={`w-full px-3 py-1.5 text-left text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                                      className={`w-full px-3 py-1.5 text-left text-label transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                                         selected
                                           ? 'text-brand-green bg-ink-800'
                                           : 'text-ink-300 hover:bg-ink-800 hover:text-ink-100'
@@ -1917,7 +1917,7 @@ export function ChatComposer({
                                     );
                                     setFloodScopeCustomError(null);
                                   }}
-                                  className="hover:bg-ink-800 w-full px-3 py-1.5 text-left text-xs text-cyan-300 transition-colors hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                  className="hover:bg-ink-800 w-full px-3 py-1.5 text-left text-label text-cyan-300 transition-colors hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   {t('chatPanel.floodScopeOverrideCustom')}
                                 </button>

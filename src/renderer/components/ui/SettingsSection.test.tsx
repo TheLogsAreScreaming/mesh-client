@@ -16,7 +16,7 @@ describe('SettingsSection', () => {
     const heading = screen.getByRole('heading', { name: 'Window' });
     expect(heading.className).toContain('text-muted');
     expect(screen.getByText('Tray behavior')).toBeInTheDocument();
-    const card = container.querySelector('.bg-deep-black.rounded-xl');
+    const card = container.querySelector('.bg-deep-black.rounded-container');
     expect(card).toBeTruthy();
     expect(card).toHaveTextContent('Close to tray');
   });
@@ -68,8 +68,8 @@ describe('SettingsCollapsible', () => {
       </SettingsCollapsible>,
     );
     const details = container.querySelector('details');
-    expect(details?.className).toContain('border-red-900');
-    expect(screen.getByText('Danger zone').closest('summary')?.className).toContain('text-red-300');
+    expect(details?.className).toContain('border-danger-900');
+    expect(screen.getByText('Danger zone').closest('summary')?.className).toContain('text-danger-300');
   });
 
   it('notifies onToggle when opened', () => {

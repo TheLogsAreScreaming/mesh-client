@@ -144,7 +144,7 @@ LoRa Bluetooth uses the native sidecar and has no browser Bluetooth grant to mig
 
 ### Linux AppImage: About still shows the previous version after downloading a newer AppImage
 
-**Symptom**: You download `Mesh-client-X.Y.Z.AppImage` from [GitHub Releases](https://github.com/Colorado-Mesh/mesh-client/releases), run it, and **Help → About** still shows the older version (for example `6.5.0` after downloading `6.6.0`).
+**Symptom**: You download `Mesh-client-X.Y.Z.AppImage` from [GitHub Releases](https://github.com/TheLogsAreScreaming/mesh-client-releases/releases), run it, and **Help → About** still shows the older version (for example `6.5.0` after downloading `6.6.0`).
 
 **Cause**: The published AppImage embeds the version from `package.json` (About uses Electron `app.getVersion()`). A filename that says `X.Y.Z` with About showing an older release usually means the process that actually started is still an older integrated copy — commonly **[AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher)** (or a leftover desktop entry under `~/Applications` / `~/.local/share/applications`) intercepting the new file and launching the previously integrated binary. In-app updates can hit the same trap when `$APPIMAGE` points at AppImageLauncher’s FUSE mount instead of the real file.
 

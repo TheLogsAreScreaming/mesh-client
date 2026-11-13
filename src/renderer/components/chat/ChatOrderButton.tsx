@@ -104,12 +104,12 @@ function ChatOrderDialog({ items, ids, onSave, onClose }: Props & { onClose: () 
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="bg-app-bg border-ink-800 flex max-h-[85vh] w-full max-w-md flex-col gap-3 rounded-xl border p-4"
+        className="bg-app-bg border-ink-800 flex max-h-[85vh] w-full max-w-md flex-col gap-3 rounded-container border p-4"
       >
-        <h2 id={titleId} className="text-ink-100 text-sm font-semibold">
+        <h2 id={titleId} className="text-ink-100 text-body-lg font-semibold">
           {t('chatOrder.title')}
         </h2>
-        <p className="text-muted text-xs">{t('chatOrder.hint')}</p>
+        <p className="text-muted text-label">{t('chatOrder.hint')}</p>
         <div className="flex flex-wrap gap-2">
           <Button
             size="sm"
@@ -177,7 +177,7 @@ function ChatOrderDialog({ items, ids, onSave, onClose }: Props & { onClose: () 
               >
                 <GripVertical aria-hidden size={16} />
               </button>
-              <span className="text-ink-200 min-w-0 flex-1 text-sm break-words">
+              <span className="text-ink-200 min-w-0 flex-1 text-body-lg break-words">
                 {names.get(id)}
               </span>
               <IconButton
@@ -200,7 +200,7 @@ function ChatOrderDialog({ items, ids, onSave, onClose }: Props & { onClose: () 
           ))}
         </ol>
         {error && (
-          <p role="alert" className="text-sm text-red-400">
+          <p role="alert" className="text-body-lg text-danger-400">
             {t('chatOrder.saveFailed')}
           </p>
         )}

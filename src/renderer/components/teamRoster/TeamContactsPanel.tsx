@@ -127,7 +127,7 @@ export default function TeamContactsPanel({
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex max-w-prose flex-col gap-1">
-          <h2 id="team-contacts-title" className="text-ink-100 text-base font-semibold">
+          <h2 id="team-contacts-title" className="text-ink-100 text-title font-semibold">
             {t('teamRoster.contactsTitle')}
           </h2>
           <p className="text-ink-300 text-label">{t('teamRoster.contactsIntro')}</p>
@@ -159,7 +159,7 @@ export default function TeamContactsPanel({
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <button
                     type="button"
-                    className="hover:bg-ink-800/80 min-w-0 flex-1 rounded-md p-1 text-start"
+                    className="hover:bg-ink-800/80 min-w-0 flex-1 rounded-card p-1 text-start"
                     aria-label={t('teamRoster.openContactCard', { callsign: member.callsign })}
                     onClick={() => {
                       setDetailUnitId(member.unitId);

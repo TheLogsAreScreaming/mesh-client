@@ -140,7 +140,7 @@ export function MapLayerControl({ extraRows }: { extraRows?: ReactNode }) {
                   onChange={setShowWeatherWind}
                 />
                 {showRadar ? (
-                  <label className="text-muted flex flex-col gap-1 text-xs">
+                  <label className="text-muted flex flex-col gap-1 text-label">
                     <span>{t('internetWeather.providerHeading')}</span>
                     <select
                       aria-label={t('internetWeather.providerHeading')}
@@ -160,7 +160,7 @@ export function MapLayerControl({ extraRows }: { extraRows?: ReactNode }) {
                   </label>
                 ) : null}
                 <div className="grid grid-cols-1 gap-1">
-                  <label className="text-muted flex flex-col gap-1 text-xs">
+                  <label className="text-muted flex flex-col gap-1 text-label">
                     <span>{t('internetWeather.unitsTemp')}</span>
                     <select
                       aria-label={t('internetWeather.unitsTemp')}
@@ -176,7 +176,7 @@ export function MapLayerControl({ extraRows }: { extraRows?: ReactNode }) {
                       <option value="f">{t('internetWeather.unitF')}</option>
                     </select>
                   </label>
-                  <label className="text-muted flex flex-col gap-1 text-xs">
+                  <label className="text-muted flex flex-col gap-1 text-label">
                     <span>{t('internetWeather.unitsWind')}</span>
                     <select
                       aria-label={t('internetWeather.unitsWind')}
@@ -195,7 +195,7 @@ export function MapLayerControl({ extraRows }: { extraRows?: ReactNode }) {
                       <option value="kn">{t('internetWeather.unitKn')}</option>
                     </select>
                   </label>
-                  <label className="text-muted flex flex-col gap-1 text-xs">
+                  <label className="text-muted flex flex-col gap-1 text-label">
                     <span>{t('internetWeather.unitsPrecip')}</span>
                     <select
                       aria-label={t('internetWeather.unitsPrecip')}
@@ -213,10 +213,10 @@ export function MapLayerControl({ extraRows }: { extraRows?: ReactNode }) {
                   </label>
                 </div>
                 {lastError?.code === 'offline' ? (
-                  <p className="text-2xs text-orange-400">{t('internetWeather.offline')}</p>
+                  <p className="text-2xs text-warning-400">{t('internetWeather.offline')}</p>
                 ) : null}
                 {lastError && lastError.code !== 'offline' ? (
-                  <p className="text-2xs text-orange-400">{t('internetWeather.loadFailed')}</p>
+                  <p className="text-2xs text-warning-400">{t('internetWeather.loadFailed')}</p>
                 ) : null}
               </>
             ) : null}

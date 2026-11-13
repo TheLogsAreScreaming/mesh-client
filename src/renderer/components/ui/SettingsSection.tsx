@@ -3,18 +3,18 @@ import { forwardRef, useId, useLayoutEffect, useRef } from 'react';
 
 import { DetailsChevron } from '@/renderer/lib/icons/detailsChevron';
 
-const STATIC_CARD_CLASS = 'bg-deep-black border-ink-800 rounded-xl border p-4';
+const STATIC_CARD_CLASS = 'bg-deep-black border-ink-800 rounded-container border p-4';
 
-const COLLAPSIBLE_DEFAULT_CLASS = 'group bg-deep-black border-secondary-dark rounded-lg border';
-const COLLAPSIBLE_DANGER_CLASS = 'group rounded-lg border border-red-900 bg-red-950/20';
+const COLLAPSIBLE_DEFAULT_CLASS = 'group bg-deep-black border-secondary-dark rounded-modal border';
+const COLLAPSIBLE_DANGER_CLASS = 'group rounded-modal border border-danger-900 bg-danger-950/20';
 
 const SUMMARY_DEFAULT_CLASS =
-  'text-muted hover:bg-ink-800/40 flex cursor-pointer list-none items-center justify-between gap-2 rounded-lg px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden';
+  'text-muted hover:bg-ink-800/40 flex cursor-pointer list-none items-center justify-between gap-2 rounded-modal px-4 py-3 text-body-lg font-medium [&::-webkit-details-marker]:hidden';
 const SUMMARY_DANGER_CLASS =
-  'flex cursor-pointer list-none items-center justify-between gap-2 rounded-lg px-4 py-3 text-sm font-medium text-red-300 hover:bg-red-950/40 [&::-webkit-details-marker]:hidden';
+  'flex cursor-pointer list-none items-center justify-between gap-2 rounded-modal px-4 py-3 text-body-lg font-medium text-danger-300 hover:bg-danger-950/40 [&::-webkit-details-marker]:hidden';
 
 const BODY_DEFAULT_CLASS = 'border-ink-700 space-y-3 border-t px-4 pt-3 pb-4';
-const BODY_DANGER_CLASS = 'space-y-4 border-t border-red-900/50 px-4 pt-3 pb-4';
+const BODY_DANGER_CLASS = 'space-y-4 border-t border-danger-900/50 px-4 pt-3 pb-4';
 
 function assignRef<T>(ref: Ref<T> | undefined, value: T | null): void {
   if (typeof ref === 'function') {
@@ -51,12 +51,12 @@ export function SettingsSection({
   return (
     <section className={`space-y-2 ${className ?? ''}`} aria-labelledby={titleId}>
       <div className="flex items-center gap-1">
-        <h3 id={titleId} className="text-muted text-sm font-medium">
+        <h3 id={titleId} className="text-muted text-body-lg font-medium">
           {title}
         </h3>
         {titleExtra}
       </div>
-      {description != null && <p className="text-muted text-xs">{description}</p>}
+      {description != null && <p className="text-muted text-label">{description}</p>}
       <div
         data-setting-anchor={anchorId}
         className={`${STATIC_CARD_CLASS}${bodyClassName ? ` ${bodyClassName}` : ''}`}
@@ -148,13 +148,13 @@ export const SettingsCollapsible = forwardRef<HTMLDetailsElement, SettingsCollap
             )}
           </span>
           <DetailsChevron
-            className={`h-4 w-4 shrink-0 transition-transform group-open:rotate-180 ${isDanger ? 'text-red-400' : 'text-muted'}`}
+            className={`h-4 w-4 shrink-0 transition-transform group-open:rotate-180 ${isDanger ? 'text-danger-400' : 'text-muted'}`}
           />
         </summary>
         <div
           className={`${isDanger ? BODY_DANGER_CLASS : BODY_DEFAULT_CLASS}${bodyClassName ? ` ${bodyClassName}` : ''}`}
         >
-          {description != null && <p className="text-muted text-xs">{description}</p>}
+          {description != null && <p className="text-muted text-label">{description}</p>}
           {children}
         </div>
       </details>

@@ -27,6 +27,5 @@ describe('GlobalMessageSearchDialog', () => {
       },
     ]);
     vi.mocked(window.electronAPI.db.searchMeshcoreMessages).mockResolvedValue([]);
-    vi.mocked(window.electronAPI.db.searchReticulumMessages).mockResolvedValue([]);
   });
 });

@@ -13,7 +13,7 @@ import {
 } from './conversationPinStorage';
 import type { MeshProtocol } from './types';
 
-const PROTOCOLS: MeshProtocol[] = ['meshtastic', 'meshcore', 'reticulum'];
+const PROTOCOLS: MeshProtocol[] = ['meshtastic', 'meshcore'];
 
 describe('conversationPinStorage', () => {
   beforeEach(() => {

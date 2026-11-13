@@ -9,6 +9,7 @@ import {
   hasAudibleBackgroundMessages,
   mostSevereMecp,
   pickAudibleNotificationType,
+  resolveChatDmPeer,
   resolveChatNotificationType,
   totalUnreadCount,
 } from './chatUnreadCounts';

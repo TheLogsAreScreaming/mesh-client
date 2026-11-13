@@ -1893,7 +1893,7 @@ export default function NodeDetailModal({
               <h4 className="text-ink-300 text-label font-semibold">
                 {t('nodeDetailModal.packetsLocalHeading')}
               </h4>
-              <div className="bg-secondary-dark grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2 text-xs">
+              <div className="bg-secondary-dark grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2 text-label">
                 <div className="text-muted inline-flex items-center gap-1">
                   <span>{t('nodeDetailModal.sentFloodDirectLabel')}</span>
                   <HelpTooltip
@@ -1937,10 +1937,10 @@ export default function NodeDetailModal({
             if (!entry) return null;
             return (
               <div className="space-y-2 px-5 pb-2">
-                <h4 className="text-ink-300 text-xs font-semibold">
+                <h4 className="text-ink-300 text-label font-semibold">
                   {t('nodeDetailModal.nodeStatus.heading')}
                 </h4>
-                <div className="bg-secondary-dark space-y-1 rounded p-2 text-xs">
+                <div className="bg-secondary-dark space-y-1 rounded p-2 text-label">
                   <p className="text-ink-200 break-words">{entry.status}</p>
                   <p className="text-muted">
                     {t('nodeDetailModal.nodeStatus.updated', {
@@ -2275,8 +2275,8 @@ export default function NodeDetailModal({
             )}
 
           {protocol === 'meshtastic' && hasKeyVerification && !isOurNode && (
-            <div className="border-ink-700 mt-4 space-y-2 rounded-lg border px-3 py-2 text-sm">
-              <p className="text-ink-200 text-xs font-medium">
+            <div className="border-ink-700 mt-4 space-y-2 rounded-modal border px-3 py-2 text-body-lg">
+              <p className="text-ink-200 text-label font-medium">
                 {t('keyVerification.sectionTitle')}
               </p>
               {radioConnected && !keyVerificationFirmwareOk ? (
@@ -2307,7 +2307,7 @@ export default function NodeDetailModal({
                   {t('keyVerification.verifyButton')}
                 </Button>
               )}
-              <details className="text-muted text-xs">
+              <details className="text-muted text-label">
                 <summary className="cursor-pointer">{t('keyVerification.trustModelTitle')}</summary>
                 <div className="mt-1 space-y-1">
                   <p>{t('keyVerification.trustModelManual')}</p>

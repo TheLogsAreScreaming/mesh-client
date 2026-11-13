@@ -5691,7 +5691,7 @@ function ConnectionBanner({
         <span aria-hidden className="text-warning-200 inline-block animate-spin">
           ⟳
         </span>
-        <span className="text-sm text-orange-200">
+        <span className="text-body-lg text-warning-200">
           {t(
             plannedReboot
               ? 'connectionBanner.rebootingReconnectAttempt'

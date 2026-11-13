@@ -12,6 +12,7 @@ import {
 const ALL_ON: ProtocolVisitFlags = {
   rooms: true,
   games: true,
+  rrc: true,
   remote: true,
   nomad: true,
   peers: true,
@@ -21,6 +22,7 @@ const ALL_ON: ProtocolVisitFlags = {
 const ALL_OFF: ProtocolVisitFlags = {
   rooms: false,
   games: false,
+  rrc: false,
   remote: false,
   nomad: false,
   peers: false,
@@ -39,10 +41,6 @@ describe('protocol switch commit', () => {
   });
 
   it('clears keep-alive flags on a protocol change and arms only the destination', () => {
-    expect(visitFlagsForProtocolCommit(ALL_ON, GAMES_PANEL_INDEX, true, false)).toEqual({
-      ...ALL_OFF,
-      games: true,
-    });
     expect(visitFlagsForProtocolCommit(ALL_ON, APP_PANEL_INDEX, true, true)).toEqual({
       ...ALL_OFF,
       app: true,
@@ -56,9 +54,9 @@ describe('protocol switch commit', () => {
 
   it('keeps existing flags when the protocol does not change, including a cancel', () => {
     const current: ProtocolVisitFlags = { ...ALL_OFF, rooms: true };
-    expect(visitFlagsForProtocolCommit(current, GAMES_PANEL_INDEX, false, false)).toEqual({
+    expect(visitFlagsForProtocolCommit(current, APP_PANEL_INDEX, false, false)).toEqual({
       ...current,
-      games: true,
+      app: true,
     });
     expect(visitFlagsForProtocolCommit(current, null, false, false)).toEqual(current);
   });

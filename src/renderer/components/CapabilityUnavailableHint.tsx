@@ -36,7 +36,7 @@ export default function CapabilityUnavailableHint({
       id={id}
       role="note"
       data-capability-unavailable={feature}
-      className={className ?? 'text-ink-300 text-xs'}
+      className={className ?? 'text-ink-300 text-label'}
     >
       {t(reason.reasonKey)}
     </p>

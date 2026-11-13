@@ -144,7 +144,7 @@ export function SuggestToTeamContactModal({
         aria-labelledby={titleId}
         className="border-ink-600 bg-ink-900 rounded-modal shadow-level-3 flex max-h-[90vh] w-full max-w-md flex-col border p-4"
       >
-        <h2 id={titleId} className="text-ink-100 mb-3 text-base font-semibold">
+        <h2 id={titleId} className="text-ink-100 mb-3 text-title font-semibold">
           {t('teamRoster.suggestTitle')}
         </h2>
 
@@ -212,7 +212,7 @@ export function SuggestToTeamContactModal({
                       <li key={m.unitId}>
                         <button
                           type="button"
-                          className={`hover:bg-ink-800 w-full px-3 py-2 text-left text-sm ${
+                          className={`hover:bg-ink-800 w-full px-3 py-2 text-left text-body-lg ${
                             selectedUnitId === m.unitId ? 'bg-ink-800 text-ink-100' : 'text-ink-200'
                           }`}
                           aria-pressed={selectedUnitId === m.unitId}

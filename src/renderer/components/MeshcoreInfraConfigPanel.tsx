@@ -107,7 +107,7 @@ function SectionHeading({
   badge?: ReactNode;
 }) {
   return (
-    <summary className="text-muted hover:bg-sidebar-active-bg grid cursor-pointer list-none grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-4 py-4 text-sm font-medium transition-colors sm:grid-cols-[auto_minmax(0,1fr)_auto_auto] [&::-webkit-details-marker]:hidden">
+    <summary className="text-muted hover:bg-sidebar-active-bg grid cursor-pointer list-none grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-4 py-4 text-body-lg font-medium transition-colors sm:grid-cols-[auto_minmax(0,1fr)_auto_auto] [&::-webkit-details-marker]:hidden">
       <span className="bg-app-bg text-muted rounded-control flex h-10 w-10 shrink-0 items-center justify-center">
         {icon}
       </span>
@@ -364,7 +364,7 @@ function ConfigSection({
       <div className="border-ink-800 space-y-4 border-t px-4 py-4">
         {showRegions && (
           <div className="space-y-2">
-            <h3 className="text-ink-200 text-sm font-medium">
+            <h3 className="text-ink-200 text-body-lg font-medium">
               {t('infraConfig.configuredRegions')}
             </h3>
             {regions && (
@@ -375,7 +375,7 @@ function ConfigSection({
                 {regions.entries.map((region, index) => (
                   <li
                     key={index}
-                    className="flex flex-wrap items-center justify-between gap-2 py-2 text-xs"
+                    className="flex flex-wrap items-center justify-between gap-2 py-2 text-label"
                   >
                     <span className="text-ink-200 min-w-0 wrap-anywhere">
                       <span className="font-mono whitespace-pre">
@@ -386,7 +386,7 @@ function ConfigSection({
                         <span className="text-muted ml-2">{t('infraConfig.homeRegion')}</span>
                       )}
                     </span>
-                    <span className={region.floodAllowed ? 'text-green-400' : 'text-muted'}>
+                    <span className={region.floodAllowed ? 'text-success-400' : 'text-muted'}>
                       {t(
                         region.floodAllowed
                           ? 'infraConfig.floodAllowed'
@@ -405,7 +405,7 @@ function ConfigSection({
                 {regionsError}
               </p>
             )}
-            <p className="text-muted text-xs">{t('infraConfig.regionsHint')}</p>
+            <p className="text-muted text-label">{t('infraConfig.regionsHint')}</p>
           </div>
         )}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

@@ -86,7 +86,7 @@ export function TeamRosterDevicePickerDialog({
         aria-labelledby={titleId}
         className="border-ink-600 bg-ink-900 rounded-modal shadow-level-3 flex max-h-[90vh] w-full max-w-md flex-col border p-4"
       >
-        <h2 id={titleId} className="text-ink-100 mb-1 text-base font-semibold">
+        <h2 id={titleId} className="text-ink-100 mb-1 text-title font-semibold">
           {title}
         </h2>
         <p className="text-ink-300 text-label mb-3">
@@ -119,7 +119,7 @@ export function TeamRosterDevicePickerDialog({
                       })}
                     />
                     <span className="min-w-0 flex-1">
-                      <span className="text-ink-100 block text-sm">
+                      <span className="text-ink-100 block text-body-lg">
                         {t(TEAM_PROTOCOL_LABEL_KEYS[link.protocol])}
                         {link.longName ? ` · ${link.longName}` : ''}
                       </span>

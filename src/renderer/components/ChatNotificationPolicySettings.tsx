@@ -14,7 +14,7 @@ export function ChatNotificationPolicySettings() {
   const [failed, setFailed] = useState(false);
   return (
     <div className="space-y-2">
-      <label htmlFor="chatNotificationMode" className="text-ink-300 block text-sm">
+      <label htmlFor="chatNotificationMode" className="text-ink-300 block text-body-lg">
         {t('notificationPolicy.label')}
       </label>
       <select
@@ -32,11 +32,11 @@ export function ChatNotificationPolicySettings() {
         <option value="all">{t('notificationPolicy.all')}</option>
         <option value="mentions">{t('notificationPolicy.mentions')}</option>
       </select>
-      <p id="chatNotificationModeHelp" className="text-muted text-xs leading-relaxed">
+      <p id="chatNotificationModeHelp" className="text-muted text-label leading-relaxed">
         {t('notificationPolicy.help')}
       </p>
       {failed && (
-        <p role="alert" className="text-xs text-red-400">
+        <p role="alert" className="text-label text-danger-400">
           {t('notificationPolicy.saveFailed')}
         </p>
       )}

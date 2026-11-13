@@ -205,7 +205,7 @@ export function ElevationOfflineSection(): React.JSX.Element {
           <button
             type="button"
             aria-label={t('mapPanel.terrainProfile.hgtCancelAria')}
-            className="w-full rounded border border-orange-700 px-1 py-0.5 text-orange-200"
+            className="w-full rounded border border-warning-700 px-1 py-0.5 text-warning-200"
             onClick={() => {
               void cancel();
             }}

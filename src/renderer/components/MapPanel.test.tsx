@@ -194,7 +194,7 @@ describe('MapPanel accessibility', () => {
     );
     expect(screen.getByRole('link', { name: /docs/i })).toHaveAttribute(
       'href',
-      'https://colorado-mesh.github.io/mesh-client/maps/',
+      'https://thelogsarescreaming.github.io/mesh-client/maps/',
     );
   });
 

@@ -91,14 +91,14 @@ export function MeshtasticExtraConfigField({
       const mask = typeof value === 'number' ? value : 0;
       control = (
         <fieldset data-setting-anchor={anchorId} aria-labelledby={legendId} className="space-y-1">
-          <legend id={legendId} className="text-muted text-sm">
+          <legend id={legendId} className="text-muted text-body-lg">
             {label}
           </legend>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1">
             {(spec.options ?? []).map((o) => {
               const optionLabel = extraFieldOptionLabel(o, t);
               return (
-                <label key={o.value} className="text-ink-300 flex items-center gap-2 text-sm">
+                <label key={o.value} className="text-ink-300 flex items-center gap-2 text-body-lg">
                   <input
                     type="checkbox"
                     checked={(mask & o.value) !== 0}
@@ -113,7 +113,7 @@ export function MeshtasticExtraConfigField({
               );
             })}
           </div>
-          {description && <p className="text-muted text-xs">{description}</p>}
+          {description && <p className="text-muted text-label">{description}</p>}
         </fieldset>
       );
       break;
@@ -136,7 +136,7 @@ export function MeshtasticExtraConfigField({
     <div className="space-y-1">
       {control}
       {invalid && (
-        <p role="alert" className="text-xs text-red-400">
+        <p role="alert" className="text-label text-danger-400">
           {t('meshtasticExtraConfig.invalidValue', { field: label })}
         </p>
       )}
@@ -148,8 +148,8 @@ export function MeshtasticExtraConfigField({
 export function MeshtasticAdvancedHardwareGroup({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   return (
-    <details className="group border-ink-700 rounded-lg border">
-      <summary className="text-ink-300 hover:bg-ink-800 flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors">
+    <details className="group border-ink-700 rounded-modal border">
+      <summary className="text-ink-300 hover:bg-ink-800 flex cursor-pointer items-center justify-between rounded-modal px-3 py-2 text-body-lg transition-colors">
         <span>{t('meshtasticExtraConfig.advancedHardware')}</span>
         <DetailsChevron />
       </summary>

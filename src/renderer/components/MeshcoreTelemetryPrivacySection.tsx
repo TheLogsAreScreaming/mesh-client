@@ -154,7 +154,7 @@ export default function MeshcoreTelemetryPrivacySection({
       titleAs="span"
       anchorId="radio.telemetryPrivacy.section"
     >
-      <p className="text-muted text-xs">{t('meshcoreTelemetryPrivacy.description')}</p>
+      <p className="text-muted text-label">{t('meshcoreTelemetryPrivacy.description')}</p>
       <TriStateRow
         anchorId="radio.telemetryPrivacy.allowTelemetry"
         title={t('meshcoreTelemetryPrivacy.allowTelemetryTitle')}
@@ -216,7 +216,7 @@ export default function MeshcoreTelemetryPrivacySection({
             );
           })
         }
-        className="bg-brand-green text-app-bg rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
+        className="bg-brand-green text-app-bg rounded-modal px-4 py-2 text-body-lg font-medium disabled:opacity-50"
       >
         {applying
           ? t('meshcoreTelemetryPrivacy.applying')

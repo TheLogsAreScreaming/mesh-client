@@ -212,7 +212,7 @@ describe('ChatRfHopLabel', () => {
       routeDetail: 'none',
       describeRoute: undefined,
     });
-    expect(pill.className).toContain('text-orange-400');
+    expect(pill.className).toContain('text-warning-400');
     fireEvent.mouseEnter(pill);
     expect(screen.getByRole('tooltip').textContent).toBe(
       [

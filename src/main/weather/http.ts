@@ -25,7 +25,7 @@ export interface WeatherFetchDeps {
 }
 
 export function weatherUserAgent(appVersion: string): string {
-  return `mesh-client/${appVersion} (+https://github.com/Colorado-Mesh/mesh-client)`;
+  return `mesh-client/${appVersion} (+https://github.com/TheLogsAreScreaming/mesh-client)`;
 }
 
 async function defaultResolveHost(host: string): Promise<string[]> {

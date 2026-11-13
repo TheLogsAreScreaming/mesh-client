@@ -94,7 +94,7 @@ export function HelpTooltip({
           aria-describedby={descriptionId}
           {...showHandlers}
         >
-          <span className="text-muted text-xs select-none" aria-hidden="true">
+          <span className="text-muted text-label select-none" aria-hidden="true">
             ⓘ
           </span>
           {hiddenDescription}

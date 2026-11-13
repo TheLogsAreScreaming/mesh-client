@@ -158,17 +158,17 @@ export default function TakServerPanel({
   return (
     <div className="w-full space-y-6 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-ink-200 text-xl font-semibold">{t('takServerPanel.title')}</h2>
+        <h2 className="text-ink-200 text-display font-semibold">{t('takServerPanel.title')}</h2>
         <a
           href={TAK_DOCS_URL}
           target="_blank"
           rel="noreferrer"
-          className="text-muted hover:text-brand-green text-xs transition-colors"
+          className="text-muted hover:text-brand-green text-label transition-colors"
         >
           {t('common.docsLink')}
         </a>
       </div>
-      <p className="text-ink-400 text-sm">{t('takServerPanel.description')}</p>
+      <p className="text-ink-400 text-body-lg">{t('takServerPanel.description')}</p>
 
       {/* Status */}
       <div className="bg-deep-black border-ink-800 rounded-container flex items-center gap-4 border p-4">
@@ -281,11 +281,11 @@ export default function TakServerPanel({
                 aria-describedby={`${id}-mecp-alarm-hint`}
                 className="accent-brand-green"
               />
-              <label htmlFor={`${id}-mecp-alarm`} className="text-ink-300 cursor-pointer text-sm">
+              <label htmlFor={`${id}-mecp-alarm`} className="text-ink-300 cursor-pointer text-body-lg">
                 {t('takServerPanel.mecpAlarm')}
               </label>
             </div>
-            <p id={`${id}-mecp-alarm-hint`} className="text-muted mt-1 text-xs">
+            <p id={`${id}-mecp-alarm-hint`} className="text-muted mt-1 text-label">
               {t('takServerPanel.mecpAlarmHint')}
             </p>
           </div>
@@ -460,7 +460,7 @@ export default function TakServerPanel({
         >
           {t('takServerPanel.regenerateCerts')}
         </button>
-        <p className="text-muted text-xs">{t('takServerPanel.regenerateWarning')}</p>
+        <p className="text-muted text-label">{t('takServerPanel.regenerateWarning')}</p>
       </SettingsSection>
     </div>
   );

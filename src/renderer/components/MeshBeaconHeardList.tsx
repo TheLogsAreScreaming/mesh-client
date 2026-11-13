@@ -107,10 +107,10 @@ export function MeshBeaconHeardList({
 
   return (
     <div className="border-ink-700 space-y-3 border-t pt-3">
-      <h4 className="text-ink-300 text-sm font-medium">{t('modulePanel.beacon.heardTitle')}</h4>
-      {!canJoin && <p className="text-muted text-xs">{t('modulePanel.beacon.remoteHint')}</p>}
+      <h4 className="text-ink-300 text-body-lg font-medium">{t('modulePanel.beacon.heardTitle')}</h4>
+      {!canJoin && <p className="text-muted text-label">{t('modulePanel.beacon.remoteHint')}</p>}
       {list.length === 0 ? (
-        <p className="text-muted text-xs">{t('modulePanel.beacon.none')}</p>
+        <p className="text-muted text-label">{t('modulePanel.beacon.none')}</p>
       ) : (
         <ul className="space-y-2">
           {list.map((b) => {
@@ -123,7 +123,7 @@ export function MeshBeaconHeardList({
             return (
               <li
                 key={b.from}
-                className="bg-ink-800/50 space-y-1 rounded px-3 py-2 text-xs"
+                className="bg-ink-800/50 space-y-1 rounded px-3 py-2 text-label"
                 aria-label={t('modulePanel.beacon.itemAria', { name: nodeName })}
               >
                 <div className="text-ink-300 flex justify-between gap-2">
@@ -157,11 +157,11 @@ export function MeshBeaconHeardList({
                   <div className="flex flex-wrap items-center gap-2 pt-1">
                     {b.offerChannel &&
                       (joinedIndex != null ? (
-                        <span className="text-green-400">
+                        <span className="text-success-400">
                           {t('modulePanel.beacon.alreadyJoined', { index: joinedIndex })}
                         </span>
                       ) : freeSlot == null ? (
-                        <span className="text-orange-300">
+                        <span className="text-warning-300">
                           {t('modulePanel.beacon.noFreeSlot')}
                         </span>
                       ) : (
@@ -200,7 +200,7 @@ export function MeshBeaconHeardList({
                       </button>
                     )}
                     {plan.kind === 'regionMismatch' && (
-                      <span className="text-orange-300">
+                      <span className="text-warning-300">
                         {t('modulePanel.beacon.regionMismatch', {
                           offer: meshtasticRegionLabel(plan.offerRegion, t),
                           local: meshtasticRegionLabel(plan.localRegion, t),
@@ -208,7 +208,7 @@ export function MeshBeaconHeardList({
                       </span>
                     )}
                     {plan.kind === 'alreadyMatching' && (
-                      <span className="text-green-400">
+                      <span className="text-success-400">
                         {t('modulePanel.beacon.alreadyMatching')}
                       </span>
                     )}

@@ -112,7 +112,7 @@ export default function MeshcoreRemoteCliSection({
       >
         <div className="space-y-2">
           {allow.kind === 'notOnRadio' ? (
-            <p className="text-muted text-sm">{t('meshcoreRemoteCli.notOnRadio')}</p>
+            <p className="text-muted text-body-lg">{t('meshcoreRemoteCli.notOnRadio')}</p>
           ) : (
             <Switch
               checked={allow.kind === 'loaded' && allow.allowed}
@@ -128,14 +128,14 @@ export default function MeshcoreRemoteCliSection({
               disabled={disabled || flagBusy || allow.kind !== 'loaded'}
             />
           )}
-          {flagError && <p className="text-sm text-red-400">{flagError}</p>}
+          {flagError && <p className="text-body-lg text-danger-400">{flagError}</p>}
         </div>
 
         <div className="space-y-2">
-          <p className="text-muted text-xs">{t('meshcoreRemoteCli.consoleHint')}</p>
+          <p className="text-muted text-label">{t('meshcoreRemoteCli.consoleHint')}</p>
           <ol
             aria-label={t('meshcoreRemoteCli.consoleLog')}
-            className="bg-app-bg border-ink-700 rounded-control max-h-48 space-y-0.5 overflow-y-auto border p-2 font-mono text-xs"
+            className="bg-app-bg border-ink-700 rounded-control max-h-48 space-y-0.5 overflow-y-auto border p-2 font-mono text-label"
           >
             {history.length === 0 ? (
               <li className="text-muted italic">{t('repeatersPanel.cliNoCommandsYet')}</li>
@@ -169,12 +169,12 @@ export default function MeshcoreRemoteCliSection({
               onChange={(e) => {
                 setInput(e.target.value);
               }}
-              className="bg-secondary-dark border-ink-600 text-ink-200 rounded-control min-w-0 flex-1 border px-3 py-1.5 font-mono text-sm"
+              className="bg-secondary-dark border-ink-600 text-ink-200 rounded-control min-w-0 flex-1 border px-3 py-1.5 font-mono text-body-lg"
             />
             <button
               type="submit"
               disabled={disabled || sending || input.trim() === ''}
-              className="bg-brand-green text-app-bg rounded-lg px-4 py-1.5 text-sm font-medium disabled:opacity-50"
+              className="bg-brand-green text-app-bg rounded-modal px-4 py-1.5 text-body-lg font-medium disabled:opacity-50"
             >
               {sending ? t('meshcoreRemoteCli.sending') : t('meshcoreRemoteCli.send')}
             </button>
@@ -185,7 +185,7 @@ export default function MeshcoreRemoteCliSection({
               onClick={() => {
                 onClearHistory(nodeId);
               }}
-              className="text-muted hover:text-ink-300 text-xs underline"
+              className="text-muted hover:text-ink-300 text-label underline"
             >
               {t('repeatersPanel.cliClearHistory')}
             </button>

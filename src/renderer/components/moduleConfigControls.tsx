@@ -42,7 +42,7 @@ export function ConfigSelect({
 }) {
   return (
     <div data-setting-anchor={anchorId} className="space-y-1">
-      <label className="text-muted text-sm">{label}</label>
+      <label className="text-muted text-body-lg">{label}</label>
       <select
         value={value}
         onChange={(e) => {
@@ -60,7 +60,7 @@ export function ConfigSelect({
           </option>
         ))}
       </select>
-      {description && <p className="text-muted text-xs">{description}</p>}
+      {description && <p className="text-muted text-label">{description}</p>}
     </div>
   );
 }
@@ -83,7 +83,7 @@ export function ConfigToggle({
   return (
     <div data-setting-anchor={anchorId} className="space-y-1">
       <div className="flex items-center justify-between">
-        <span className="text-ink-300 text-sm">{label}</span>
+        <span className="text-ink-300 text-body-lg">{label}</span>
         <button
           type="button"
           role="switch"
@@ -104,7 +104,7 @@ export function ConfigToggle({
           />
         </button>
       </div>
-      {description && <p className="text-muted text-xs">{description}</p>}
+      {description && <p className="text-muted text-label">{description}</p>}
     </div>
   );
 }
@@ -137,7 +137,7 @@ export function ConfigNumber({
   return (
     <div data-setting-anchor={anchorId} className="space-y-1">
       <div className="flex items-center gap-1.5">
-        <label className="text-muted text-sm">{label}</label>
+        <label className="text-muted text-body-lg">{label}</label>
         {tooltip && <HelpTooltip text={tooltip} />}
       </div>
       <div className="flex items-center gap-2">
@@ -156,9 +156,9 @@ export function ConfigNumber({
           aria-label={label}
           className={`${INPUT_BOX_CLASS} w-28`}
         />
-        {unit && <span className="text-muted text-sm">{unit}</span>}
+        {unit && <span className="text-muted text-body-lg">{unit}</span>}
       </div>
-      {description && <p className="text-muted text-xs">{description}</p>}
+      {description && <p className="text-muted text-label">{description}</p>}
     </div>
   );
 }
@@ -186,7 +186,7 @@ export function ConfigText({
   const [show, setShow] = useState(false);
   return (
     <div data-setting-anchor={anchorId} className="space-y-1">
-      <label className="text-muted text-sm">{label}</label>
+      <label className="text-muted text-body-lg">{label}</label>
       <div className="flex items-center gap-1">
         <input
           type={password && !show ? 'password' : 'text'}
@@ -205,13 +205,13 @@ export function ConfigText({
             onClick={() => {
               setShow((s) => !s);
             }}
-            className="text-muted hover:text-ink-300 px-2 py-2 text-xs"
+            className="text-muted hover:text-ink-300 px-2 py-2 text-label"
           >
             {show ? t('common.hide') : t('common.show')}
           </button>
         )}
       </div>
-      {description && <p className="text-muted text-xs">{description}</p>}
+      {description && <p className="text-muted text-label">{description}</p>}
     </div>
   );
 }
@@ -245,7 +245,7 @@ export function ModuleSection({
   return (
     <SettingsCollapsible title={title} anchorId={anchorId} titleAs="span">
       {showSliceWaiting && !sliceReady && (
-        <p className="text-xs text-orange-300/90">
+        <p className="text-label text-warning-300/90">
           {t('radioPanel.waitingForConfigSection', { section: title })}
         </p>
       )}
@@ -295,7 +295,7 @@ export function ModuleStatus({
   const { t } = useTranslation();
   if (!packets || packets.size === 0) {
     return (
-      <div className="bg-ink-800/50 rounded px-3 py-2 text-xs">
+      <div className="bg-ink-800/50 rounded px-3 py-2 text-label">
         <span className="text-muted">{t('modulePanel.statusNoPackets', { label })}</span>
       </div>
     );
@@ -306,7 +306,7 @@ export function ModuleStatus({
   );
   const lastSeen = formatTimeAgo(latest, t);
   return (
-    <div className="bg-ink-800/50 rounded px-3 py-2 text-xs">
+    <div className="bg-ink-800/50 rounded px-3 py-2 text-label">
       <span className="text-ink-400">
         {t('modulePanel.statusLine', {
           count: packets.size,

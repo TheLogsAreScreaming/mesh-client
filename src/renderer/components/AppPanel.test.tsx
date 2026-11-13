@@ -98,7 +98,7 @@ describe('AppPanel docs link', () => {
     await screen.findByText('App Settings');
     expect(screen.getByRole('link', { name: /docs/i })).toHaveAttribute(
       'href',
-      'https://colorado-mesh.github.io/mesh-client/settings/',
+      'https://thelogsarescreaming.github.io/mesh-client/settings/',
     );
   });
 });

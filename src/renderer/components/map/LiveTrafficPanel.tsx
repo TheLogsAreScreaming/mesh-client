@@ -949,10 +949,10 @@ export default function LiveTrafficPanel({
               <div className="pointer-events-none absolute inset-0 z-[450] flex items-center justify-center p-5">
                 <div className="border-ink-700 bg-deep-black/95 rounded-card shadow-level-2 max-w-xs border p-5 text-center">
                   <Radio aria-hidden className="text-muted mx-auto mb-3 h-6 w-6" />
-                  <h3 className="mb-1 text-sm font-medium">
+                  <h3 className="mb-1 text-body-lg font-medium">
                     {t(regional ? 'liveTraffic.waiting' : localEmptyCopy.waiting)}
                   </h3>
-                  <p className="text-muted text-xs leading-relaxed">
+                  <p className="text-muted text-label leading-relaxed">
                     {t(
                       regional
                         ? beacon.status === 'live'
@@ -1091,7 +1091,7 @@ export default function LiveTrafficPanel({
               <>
                 <div className="min-h-16 flex-1 overflow-y-auto">
                   {feed.length === 0 ? (
-                    <p className="text-muted p-4 text-xs leading-relaxed">
+                    <p className="text-muted p-4 text-label leading-relaxed">
                       {t(
                         events.length
                           ? 'liveTraffic.noFilterMatches'

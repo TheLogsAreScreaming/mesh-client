@@ -87,7 +87,7 @@ export function AppSupportSection({ exporting, onExport }: AppSupportSectionProp
             >
               {exporting === 'github' ? t('common.loading') : t('appPanel.exportForGitHubButton')}
             </button>
-            <p className="text-muted text-xs">{t('appPanel.exportForGitHubDesc')}</p>
+            <p className="text-muted text-label">{t('appPanel.exportForGitHubDesc')}</p>
           </div>
           <div data-setting-anchor="app.support.exportForDeveloper" className="space-y-2">
             <button
@@ -101,7 +101,7 @@ export function AppSupportSection({ exporting, onExport }: AppSupportSectionProp
                 ? t('common.loading')
                 : t('appPanel.exportForDeveloperButton')}
             </button>
-            <p className="text-xs text-orange-300">{t('appPanel.exportForDeveloperWarning')}</p>
+            <p className="text-label text-warning-300">{t('appPanel.exportForDeveloperWarning')}</p>
           </div>
         </div>
       </SettingsCollapsible>
@@ -123,25 +123,25 @@ export function AppSupportSection({ exporting, onExport }: AppSupportSectionProp
           </button>
         </div>
         <div
-          className="border-ink-800 bg-ink-900/40 space-y-1 rounded-lg border p-2"
+          className="border-ink-800 bg-ink-900/40 space-y-1 rounded-modal border p-2"
           data-setting-anchor="app.support.coiCapability"
           aria-label={t('appPanel.coiCapabilityTitle')}
         >
-          <p className="text-ink-200 text-xs font-medium">{t('appPanel.coiCapabilityTitle')}</p>
-          <p className="text-muted text-xs">
+          <p className="text-ink-200 text-label font-medium">{t('appPanel.coiCapabilityTitle')}</p>
+          <p className="text-muted text-label">
             {t('appPanel.coiCapabilityIsolated', {
               value: memory.crossOriginIsolated ? t('appPanel.coiYes') : t('appPanel.coiNo'),
             })}
           </p>
-          <p className="text-muted text-xs">
+          <p className="text-muted text-label">
             {t('appPanel.coiCapabilitySab', {
               value: sabAvailable ? t('appPanel.coiYes') : t('appPanel.coiNo'),
             })}
           </p>
-          <p className="text-muted text-xs">
+          <p className="text-muted text-label">
             {t('appPanel.coiCapabilityThreads', { count: threadBudget })}
           </p>
-          <p className="text-muted text-xs">
+          <p className="text-muted text-label">
             {t('appPanel.coiCapabilityTiming', {
               value:
                 timings.resolutionLabel === 'fine'
@@ -150,57 +150,57 @@ export function AppSupportSection({ exporting, onExport }: AppSupportSectionProp
             })}
           </p>
         </div>
-        <p className="text-muted text-xs">
+        <p className="text-muted text-label">
           {source === 'renderer-process'
             ? t('appPanel.memoryRendererProcess')
             : t('appPanel.memoryDescription')}
         </p>
         {!memory.crossOriginIsolated && source === 'renderer-process' && (
-          <p className="text-muted text-xs">{t('appPanel.memoryProcessOnly')}</p>
+          <p className="text-muted text-label">{t('appPanel.memoryProcessOnly')}</p>
         )}
-        <p className="text-muted text-xs">
+        <p className="text-muted text-label">
           {memory.crossOriginIsolated
             ? t('appPanel.memoryIsolated')
             : t('appPanel.memoryNotIsolated')}
         </p>
         {!memory.supported && (
-          <p className="text-muted text-xs">{t('appPanel.memoryUnsupported')}</p>
+          <p className="text-muted text-label">{t('appPanel.memoryUnsupported')}</p>
         )}
-        <div role="status" className="text-ink-200 space-y-1 text-sm">
+        <div role="status" className="text-ink-200 space-y-1 text-body-lg">
           {memory.failed ? (
-            <p className="text-orange-300">{t('appPanel.memoryFailed')}</p>
+            <p className="text-warning-300">{t('appPanel.memoryFailed')}</p>
           ) : latest ? (
             <>
               <p className="font-mono tabular-nums">
                 {t('appPanel.memoryLatest', { value: formatMemory(latest.bytes) })}
               </p>
               {latest.jsHeapBytes != null && (
-                <p className="text-muted font-mono text-xs tabular-nums">
+                <p className="text-muted font-mono text-label tabular-nums">
                   {t('appPanel.memoryJsHeap', { value: formatMemory(latest.jsHeapBytes) })}
                 </p>
               )}
               {workingSetDelta != null && (
-                <p className="text-muted font-mono text-xs tabular-nums">
+                <p className="text-muted font-mono text-label tabular-nums">
                   {t('appPanel.memoryDeltaWorkingSet', {
                     value: formatSignedMemory(workingSetDelta, formatMemory),
                   })}
                 </p>
               )}
               {jsHeapDelta != null && (
-                <p className="text-muted font-mono text-xs tabular-nums">
+                <p className="text-muted font-mono text-label tabular-nums">
                   {t('appPanel.memoryDeltaJsHeap', {
                     value: formatSignedMemory(jsHeapDelta, formatMemory),
                   })}
                 </p>
               )}
               {latest.domNodes != null && (
-                <p className="text-muted text-xs">
+                <p className="text-muted text-label">
                   {t('appPanel.memoryDomNodes', { count: latest.domNodes })}
                 </p>
               )}
             </>
           ) : memory.supported ? (
-            <p className="text-muted text-xs">{t('appPanel.memoryEmpty')}</p>
+            <p className="text-muted text-label">{t('appPanel.memoryEmpty')}</p>
           ) : null}
         </div>
         {sparklineSegments.length > 0 && (
@@ -222,7 +222,7 @@ export function AppSupportSection({ exporting, onExport }: AppSupportSectionProp
           </svg>
         )}
         {latest && (
-          <details className="text-muted text-xs">
+          <details className="text-muted text-label">
             <summary className="cursor-pointer">{t('appPanel.memoryHistory')}</summary>
             <ul className="mt-2 space-y-1 font-mono tabular-nums">
               {samples.map((sample, index) => (

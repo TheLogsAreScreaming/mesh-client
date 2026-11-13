@@ -51,17 +51,17 @@ export function KeyVerificationDialog() {
   switch (session.phase) {
     case 'initiating':
       body = (
-        <p className="text-muted text-sm">{t('keyVerification.dialog.initiatingHint', { name })}</p>
+        <p className="text-muted text-body-lg">{t('keyVerification.dialog.initiatingHint', { name })}</p>
       );
       break;
     case 'showNumber':
       body = (
         <>
-          <p className="text-muted text-sm">
+          <p className="text-muted text-body-lg">
             {t('keyVerification.dialog.showNumberHint', { name })}
           </p>
           <div className="space-y-1 text-center">
-            <p className="text-muted text-xs">{t('keyVerification.dialog.securityNumberLabel')}</p>
+            <p className="text-muted text-label">{t('keyVerification.dialog.securityNumberLabel')}</p>
             <p
               className="text-ink-100 font-mono text-3xl tracking-widest"
               data-testid="key-verification-security-number"
@@ -85,7 +85,7 @@ export function KeyVerificationDialog() {
       break;
     case 'awaitingFinal':
       body = (
-        <p className="text-muted text-sm">
+        <p className="text-muted text-body-lg">
           {t('keyVerification.dialog.awaitingFinalHint', { name })}
         </p>
       );
@@ -93,14 +93,14 @@ export function KeyVerificationDialog() {
     case 'compare':
       body = (
         <>
-          <p className="text-muted text-sm">{t('keyVerification.dialog.compareHint', { name })}</p>
+          <p className="text-muted text-body-lg">{t('keyVerification.dialog.compareHint', { name })}</p>
           {session.errorCode === 'missing_node' ? (
             <p role="alert" className={NOTICE_CLASS.error}>
               {t('keyVerification.dialog.missingNode')}
             </p>
           ) : null}
           <div className="space-y-1 text-center">
-            <p className="text-muted text-xs">
+            <p className="text-muted text-label">
               {t('keyVerification.dialog.verificationCharactersLabel')}
             </p>
             <p
@@ -169,7 +169,7 @@ export function KeyVerificationDialog() {
         aria-labelledby={titleId}
         className="bg-deep-black rounded-modal shadow-level-3 border-ink-600 relative mx-4 w-full max-w-sm space-y-4 border p-6"
       >
-        <h3 id={titleId} className="text-ink-200 text-lg font-semibold">
+        <h3 id={titleId} className="text-ink-200 text-heading font-semibold">
           {t('keyVerification.dialog.titleWithNode', { name })}
         </h3>
         {body}
@@ -224,8 +224,8 @@ function EnterNumberForm({
         void submitKeyVerificationSecurityNumber(numberInput);
       }}
     >
-      <p className="text-muted text-sm">{t('keyVerification.dialog.enterNumberHint', { name })}</p>
-      <label className="text-muted block text-xs" htmlFor={inputId}>
+      <p className="text-muted text-body-lg">{t('keyVerification.dialog.enterNumberHint', { name })}</p>
+      <label className="text-muted block text-label" htmlFor={inputId}>
         {t('keyVerification.dialog.enterNumberLabel', { name })}
       </label>
       <input

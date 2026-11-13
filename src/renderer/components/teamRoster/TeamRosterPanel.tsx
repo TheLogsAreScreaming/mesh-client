@@ -280,7 +280,7 @@ export default function TeamRosterPanel({
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex max-w-prose flex-col gap-1">
-          <h2 id="team-roster-title" className="text-ink-100 text-base font-semibold">
+          <h2 id="team-roster-title" className="text-ink-100 text-title font-semibold">
             {t('teamRoster.rosterTitle')}
           </h2>
           <p className="text-ink-300 text-label">{t('teamRoster.rosterIntro')}</p>
@@ -367,7 +367,7 @@ export default function TeamRosterPanel({
                       <td className="px-2 py-2 align-top">
                         {presence ? <TeamPresenceDot status={presence.aggregateStatus} /> : null}
                       </td>
-                      <td className="text-ink-100 px-2 py-2 align-top font-mono text-sm">
+                      <td className="text-ink-100 px-2 py-2 align-top font-mono text-body-lg">
                         {member.unitId}
                         {member.isSelf ? (
                           <span className="rounded-badge bg-brand-green text-app-bg text-2xs ml-2 inline-flex px-1.5 py-0.5">
@@ -375,7 +375,7 @@ export default function TeamRosterPanel({
                           </span>
                         ) : null}
                       </td>
-                      <td className="text-ink-100 px-2 py-2 align-top text-sm">
+                      <td className="text-ink-100 px-2 py-2 align-top text-body-lg">
                         <button
                           type="button"
                           className="hover:text-bright-green inline-flex items-center gap-2"
@@ -389,7 +389,7 @@ export default function TeamRosterPanel({
                           {member.callsign}
                         </button>
                       </td>
-                      <td className="text-ink-300 px-2 py-2 align-top text-sm">
+                      <td className="text-ink-300 px-2 py-2 align-top text-body-lg">
                         {member.role ?? '—'}
                       </td>
                       <td className="px-2 py-2 align-top">
@@ -442,7 +442,7 @@ export default function TeamRosterPanel({
                           </button>
                         </div>
                       </td>
-                      <td className="text-ink-300 px-2 py-2 align-top text-sm">
+                      <td className="text-ink-300 px-2 py-2 align-top text-body-lg">
                         {presence?.lastActive
                           ? t(TEAM_PROTOCOL_LABEL_KEYS[presence.lastActive.link.protocol])
                           : '—'}
@@ -486,7 +486,7 @@ export default function TeamRosterPanel({
               aria-labelledby="team-roster-compose"
               className="border-ink-700 flex flex-col gap-2 rounded border p-3"
             >
-              <h3 id="team-roster-compose" className="text-ink-100 text-sm font-semibold">
+              <h3 id="team-roster-compose" className="text-ink-100 text-body-lg font-semibold">
                 {t('teamRoster.teamMessageTitle')}
               </h3>
               <p className="text-ink-400 text-label">{t('teamRoster.teamMessageIntro')}</p>
@@ -546,7 +546,7 @@ export default function TeamRosterPanel({
             aria-labelledby={cardPickerTitleId}
             className="border-ink-600 bg-ink-900 rounded-modal shadow-level-3 flex max-h-[90vh] w-full max-w-md flex-col border p-4"
           >
-            <h2 id={cardPickerTitleId} className="text-ink-100 mb-1 text-base font-semibold">
+            <h2 id={cardPickerTitleId} className="text-ink-100 mb-1 text-title font-semibold">
               {t('teamRoster.addExistingToRoster')}
             </h2>
             <p className="text-ink-400 text-label mb-3">{t('teamRoster.addExistingDeviceHint')}</p>
@@ -561,7 +561,7 @@ export default function TeamRosterPanel({
                   <li key={member.unitId}>
                     <button
                       type="button"
-                      className="hover:bg-ink-800 text-ink-200 w-full px-3 py-2 text-left text-sm"
+                      className="hover:bg-ink-800 text-ink-200 w-full px-3 py-2 text-left text-body-lg"
                       disabled={busyUnitId === member.unitId}
                       aria-label={t('teamRoster.pickCardForRosterAria', {
                         callsign: member.callsign,

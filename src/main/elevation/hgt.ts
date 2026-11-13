@@ -223,7 +223,7 @@ export async function downloadHgtTile(
         method: 'GET',
         headers: {
           Accept: 'application/gzip,application/octet-stream,*/*',
-          'User-Agent': `mesh-client/${deps.getAppVersion()} (+https://github.com/Colorado-Mesh/mesh-client)`,
+          'User-Agent': `mesh-client/${deps.getAppVersion()} (+https://github.com/TheLogsAreScreaming/mesh-client)`,
         },
         signal: hgtFetchSignal(deps.signal),
       });
@@ -238,7 +238,7 @@ export async function downloadHgtTile(
           method: 'GET',
           headers: {
             Accept: 'application/gzip,application/octet-stream,*/*',
-            'User-Agent': `mesh-client/${deps.getAppVersion()} (+https://github.com/Colorado-Mesh/mesh-client)`,
+            'User-Agent': `mesh-client/${deps.getAppVersion()} (+https://github.com/TheLogsAreScreaming/mesh-client)`,
           },
           signal: hgtFetchSignal(deps.signal),
           dispatcher: agent,

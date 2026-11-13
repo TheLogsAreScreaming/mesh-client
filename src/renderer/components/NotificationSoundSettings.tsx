@@ -134,8 +134,8 @@ export default function NotificationSoundSettings() {
 
   return (
     <SettingsCollapsible title={t('notificationSounds.title')} titleAs="span">
-      <p className="text-muted text-xs leading-relaxed">{t('notificationSounds.hint')}</p>
-      <p className="text-muted mt-2 text-xs leading-relaxed">
+      <p className="text-muted text-label leading-relaxed">{t('notificationSounds.hint')}</p>
+      <p className="text-muted mt-2 text-label leading-relaxed">
         {t('notificationSounds.emergencyHint')}
       </p>
       <div className="divide-ink-700 mt-3 divide-y">

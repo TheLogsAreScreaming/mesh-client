@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-const DEFAULT_CLASS = 'text-muted hover:text-brand-green text-xs transition-colors';
+const DEFAULT_CLASS = 'text-muted hover:text-brand-green text-label transition-colors';
 
 export interface DocsSiteLinkProps {
   href: string;

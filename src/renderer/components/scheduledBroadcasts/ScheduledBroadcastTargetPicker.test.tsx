@@ -37,12 +37,6 @@ beforeEach(() => {
   useDeviceStore.setState({ devices: {} });
   useConnectionStore.setState({ connections: {} });
   useNodeStore.setState({ nodes: {} });
-  useRrcHubStore.setState({ hubs: new Map(), lastRefreshAt: null });
-  useRrcSessionStore.setState({
-    hubDestHash: null,
-    rooms: new Map(),
-    sessionsByHub: new Map(),
-  });
   useIdentityStore.setState({
     identities: {
       mt: {

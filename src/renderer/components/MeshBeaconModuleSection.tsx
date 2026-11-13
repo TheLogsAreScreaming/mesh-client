@@ -249,7 +249,7 @@ export function MeshBeaconModuleSection({
           disabled={fieldsDisabled || !broadcast}
           description={t('modulePanel.fields.mbMessageDesc')}
         />
-        <p className="text-muted text-right text-xs">
+        <p className="text-muted text-right text-label">
           {t('modulePanel.fields.mbMessageBytes', {
             used: messageBytes,
             max: MESH_BEACON_MESSAGE_MAX_BYTES,
@@ -267,10 +267,10 @@ export function MeshBeaconModuleSection({
       />
 
       <div className="border-ink-700 space-y-3 border-t pt-3">
-        <h4 className="text-ink-300 text-sm font-medium">
+        <h4 className="text-ink-300 text-body-lg font-medium">
           {t('modulePanel.fields.mbOfferHeading')}
         </h4>
-        <p className="text-muted text-xs">{t('modulePanel.fields.mbOfferHint')}</p>
+        <p className="text-muted text-label">{t('modulePanel.fields.mbOfferHint')}</p>
         <ConfigSelect
           label={t('modulePanel.fields.mbOfferChannel')}
           value={offerChannel}
@@ -304,21 +304,21 @@ export function MeshBeaconModuleSection({
       </div>
 
       <div className="border-ink-700 space-y-3 border-t pt-3">
-        <h4 className="text-ink-300 text-sm font-medium">
+        <h4 className="text-ink-300 text-body-lg font-medium">
           {t('modulePanel.fields.mbTargetsHeading')}
         </h4>
-        <p className="text-muted text-xs">{t('modulePanel.fields.mbTargetsHint')}</p>
+        <p className="text-muted text-label">{t('modulePanel.fields.mbTargetsHint')}</p>
         {targets.map((d, i) => {
           const err = targetErrors[i];
           const n = i + 1;
           return (
             <fieldset
               key={i}
-              className="border-ink-700 space-y-2 rounded-lg border p-3"
+              className="border-ink-700 space-y-2 rounded-modal border p-3"
               aria-label={t('modulePanel.fields.mbTargetLabel', { n })}
             >
               <div className="flex items-center justify-between">
-                <legend className="text-ink-300 text-sm">
+                <legend className="text-ink-300 text-body-lg">
                   {t('modulePanel.fields.mbTargetLabel', { n })}
                 </legend>
                 <button
@@ -371,7 +371,7 @@ export function MeshBeaconModuleSection({
                 description={t('modulePanel.fields.mbTargetSlotDesc')}
               />
               {err && (
-                <p className="text-xs text-red-400" role="alert">
+                <p className="text-label text-danger-400" role="alert">
                   {t(`modulePanel.fields.mbTargetErrors.${err}`)}
                 </p>
               )}

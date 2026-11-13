@@ -108,13 +108,13 @@ export default function ScheduledBroadcastsPanel() {
       className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto p-3"
     >
       <div className="flex flex-col gap-2">
-        <h2 id="scheduled-broadcasts-title" className="text-ink-100 text-base font-semibold">
+        <h2 id="scheduled-broadcasts-title" className="text-ink-100 text-title font-semibold">
           {t('scheduledBroadcasts.title')}
         </h2>
         <p className="text-ink-300 text-label max-w-prose">{t('scheduledBroadcasts.intro')}</p>
         <p
           role="note"
-          className="text-label rounded-card max-w-prose border border-orange-800/60 bg-orange-950/40 px-3 py-2 text-orange-200"
+          className="text-label rounded-card max-w-prose border border-warning-800/60 bg-warning-950/40 px-3 py-2 text-warning-200"
         >
           {t('scheduledBroadcasts.respectWarning')}
         </p>
@@ -136,7 +136,7 @@ export default function ScheduledBroadcastsPanel() {
             row.interval === 'hourly' &&
             row.targets.filter((x) => x.enabled).length > 2,
         ) ? (
-          <p className="text-label text-orange-400">{t('scheduledBroadcasts.airtimeWarning')}</p>
+          <p className="text-label text-warning-400">{t('scheduledBroadcasts.airtimeWarning')}</p>
         ) : null}
       </div>
 
@@ -211,7 +211,7 @@ export default function ScheduledBroadcastsPanel() {
                     </button>
                     <button
                       type="button"
-                      className="rounded-control text-label bg-red-900 px-2 py-1 text-white"
+                      className="rounded-control text-label bg-danger-900 px-2 py-1 text-white"
                       onClick={() => void handleDelete(n)}
                       aria-label={t('scheduledBroadcasts.delete')}
                     >

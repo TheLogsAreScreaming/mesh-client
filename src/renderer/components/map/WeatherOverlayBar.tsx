@@ -46,7 +46,7 @@ export function WeatherOverlayBar(): React.JSX.Element | null {
   if (!frames || frames.frames.length === 0) {
     return (
       <div className={`${MAP_OVERLAY_PANEL_CLASS} max-w-xs`}>
-        <div className="text-ink-300 text-xs">{t('internetWeather.noRadar')}</div>
+        <div className="text-ink-300 text-label">{t('internetWeather.noRadar')}</div>
       </div>
     );
   }
@@ -77,7 +77,7 @@ export function WeatherOverlayBar(): React.JSX.Element | null {
             <Play className="h-3.5 w-3.5" aria-hidden />
           )}
         </button>
-        <span className="text-ink-100 text-xs">{timeLabel}</span>
+        <span className="text-ink-100 text-label">{timeLabel}</span>
         <span className="text-ink-400 text-2xs">
           {frames.provider === 'iem-nexrad'
             ? t('internetWeather.providerNexrad')
@@ -127,7 +127,7 @@ export function WeatherOverlayBar(): React.JSX.Element | null {
         </label>
       ) : null}
       {stale && lastUpdatedMs != null ? (
-        <div className="text-2xs text-orange-400">
+        <div className="text-2xs text-warning-400">
           {t('internetWeather.stale', {
             time: formatDisplayDateTime(lastUpdatedMs, { use24Hour: use24h }),
           })}

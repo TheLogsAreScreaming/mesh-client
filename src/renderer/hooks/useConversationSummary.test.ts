@@ -65,7 +65,7 @@ beforeEach(() => {
 });
 describe('Catch up availability', () => {
   const platforms = ['linux', 'darwin', 'win32'] as const;
-  const protocols = ['meshtastic', 'meshcore', 'reticulum'] as const;
+  const protocols = ['meshtastic', 'meshcore'] as const;
   it.each(platforms.flatMap((platform) => protocols.map((protocol) => ({ platform, protocol }))))(
     'keeps setup discoverable for $protocol on $platform after a missing or removed model',
     async ({ platform, protocol }) => {

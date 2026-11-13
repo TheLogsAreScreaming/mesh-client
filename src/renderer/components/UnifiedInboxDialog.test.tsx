@@ -23,7 +23,7 @@ function msg(id: number, over: Partial<ChatMessage> = {}): ChatMessage {
   };
 }
 
-const ALL: MeshProtocol[] = ['meshtastic', 'meshcore', 'reticulum'];
+const ALL: MeshProtocol[] = ['meshtastic', 'meshcore'];
 
 function renderInbox(over: Partial<UnifiedInboxDialogProps> = {}) {
   const props: UnifiedInboxDialogProps = {
@@ -33,9 +33,6 @@ function renderInbox(over: Partial<UnifiedInboxDialogProps> = {}) {
     messagesByProtocol: {
       meshtastic: [msg(1), msg(2, { to: 5 })],
       meshcore: [msg(3, { channel: 2 })],
-      reticulum: [
-        msg(4, { reticulum_message_hash: 'aa11', reticulum_sender_hash: 'bb22', storeId: 'aa11' }),
-      ],
     },
     onSelectItem: vi.fn(),
     ...over,
@@ -48,7 +45,6 @@ describe('UnifiedInboxDialog', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.mocked(window.electronAPI.chat.export).mockClear();
-    vi.mocked(window.electronAPI.db.deleteReticulumMessage).mockClear();
   });
 
   it('renders nothing when closed', () => {

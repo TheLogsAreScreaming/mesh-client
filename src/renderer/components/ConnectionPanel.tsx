@@ -2164,7 +2164,7 @@ export default function ConnectionPanel({
       <DocsSiteLink
         href={LETSMESH_MQTT_AUTH_DOCS_URL}
         labelKey="connectionPanel.mqttAuthDocsLink"
-        className="hover:text-bright-green text-muted text-xs transition-colors"
+        className="hover:text-bright-green text-muted text-label transition-colors"
       />
     ) : null;
 
@@ -3023,7 +3023,7 @@ export default function ConnectionPanel({
     />
   );
 
-  const docsLinkClass = 'hover:text-bright-green text-muted text-xs transition-colors';
+  const docsLinkClass = 'hover:text-bright-green text-muted text-label transition-colors';
   const protocolGuideUrl = protocol === 'meshcore' ? MESHCORE_DOCS_URL : MESHTASTIC_DOCS_URL;
   const docsLink = (
     <>

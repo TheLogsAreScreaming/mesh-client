@@ -138,7 +138,7 @@ export function ScheduledSendDialog({
         aria-labelledby={titleId}
         className="bg-deep-black rounded-modal shadow-level-3 border-ink-600 relative mx-4 w-full max-w-sm space-y-4 border p-6"
       >
-        <h3 id={titleId} className="text-ink-200 text-lg font-semibold">
+        <h3 id={titleId} className="text-ink-200 text-heading font-semibold">
           {mode === 'edit'
             ? t('chatPanel.scheduleSendEditTitle')
             : t('chatPanel.scheduleSendTitle')}
@@ -156,12 +156,12 @@ export function ScheduledSendDialog({
               onChange={(e) => {
                 setDraftText(e.target.value);
               }}
-              className="bg-app-bg border-secondary-dark text-body text-ink-200 focus:border-brand-green w-full rounded-lg border px-2.5 py-1.5 focus:outline-none"
+              className="bg-app-bg border-secondary-dark text-body text-ink-200 focus:border-brand-green w-full rounded-modal border px-2.5 py-1.5 focus:outline-none"
             />
           </div>
         ) : (
           <p
-            className="text-ink-300 bg-ink-800 max-h-24 overflow-y-auto rounded-lg px-3 py-2 text-sm break-words whitespace-pre-wrap"
+            className="text-ink-300 bg-ink-800 max-h-24 overflow-y-auto rounded-modal px-3 py-2 text-body-lg break-words whitespace-pre-wrap"
             data-testid="scheduled-send-preview"
           >
             {text}
@@ -179,7 +179,7 @@ export function ScheduledSendDialog({
               setWhenValue(e.target.value);
               setError(null);
             }}
-            className="bg-app-bg border-secondary-dark text-body text-ink-200 focus:border-brand-green w-full rounded-lg border px-2.5 py-1.5 focus:outline-none"
+            className="bg-app-bg border-secondary-dark text-body text-ink-200 focus:border-brand-green w-full rounded-modal border px-2.5 py-1.5 focus:outline-none"
           />
           <div className="flex flex-wrap gap-1 pt-1">
             {[
@@ -193,7 +193,7 @@ export function ScheduledSendDialog({
                 onClick={() => {
                   applyPreset(preset.at);
                 }}
-                className="bg-ink-700 text-ink-200 hover:bg-ink-600 rounded px-2 py-1 text-xs"
+                className="bg-ink-700 text-ink-200 hover:bg-ink-600 rounded px-2 py-1 text-label"
               >
                 {preset.label}
               </button>
@@ -202,7 +202,7 @@ export function ScheduledSendDialog({
         </div>
         <p className="text-muted text-label">{t('chatPanel.scheduleSendHint')}</p>
         {error ? (
-          <p role="alert" className="text-sm text-red-400">
+          <p role="alert" className="text-body-lg text-danger-400">
             {error}
           </p>
         ) : null}
@@ -210,7 +210,7 @@ export function ScheduledSendDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="bg-secondary-dark text-ink-300 hover:bg-ink-600 flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
+            className="bg-secondary-dark text-ink-300 hover:bg-ink-600 flex-1 rounded-modal px-4 py-2.5 text-body-lg font-medium transition-colors"
           >
             {t('common.cancel')}
           </button>
@@ -220,7 +220,7 @@ export function ScheduledSendDialog({
             onClick={() => {
               void submit();
             }}
-            className="bg-brand-green text-app-bg flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
+            className="bg-brand-green text-app-bg flex-1 rounded-modal px-4 py-2.5 text-body-lg font-medium transition-colors disabled:opacity-50"
           >
             {mode === 'edit' ? t('chatPanel.scheduleSendSave') : t('chatPanel.scheduleSendConfirm')}
           </button>

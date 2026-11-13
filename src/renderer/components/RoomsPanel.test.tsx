@@ -811,7 +811,7 @@ describe('RoomsPanel', () => {
     renderRoomsPanel(new Map([[room.node_id, room]]));
     expect(screen.getByRole('link', { name: 'common.docsLink' })).toHaveAttribute(
       'href',
-      'https://colorado-mesh.github.io/mesh-client/meshcore/#rooms-bbs',
+      'https://thelogsarescreaming.github.io/mesh-client/meshcore/#rooms-bbs',
     );
   });
 

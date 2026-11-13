@@ -87,9 +87,9 @@ export function TerrainProfileChart({
 
   const statusClass =
     result?.clearance === 'clear'
-      ? 'text-green-400'
+      ? 'text-success-400'
       : result?.clearance === 'obstructed'
-        ? 'text-red-400'
+        ? 'text-danger-400'
         : 'text-ink-300';
 
   return (
@@ -99,18 +99,18 @@ export function TerrainProfileChart({
       aria-label={t('mapPanel.terrainProfile.chartAria')}
     >
       <div className="mb-1 flex items-center justify-between gap-2">
-        <span className="text-ink-100 text-xs font-medium">
+        <span className="text-ink-100 text-label font-medium">
           {t('mapPanel.terrainProfile.title')}
         </span>
         {statusLabel ? (
-          <span className={`text-xs font-medium ${statusClass}`}>{statusLabel}</span>
+          <span className={`text-label font-medium ${statusClass}`}>{statusLabel}</span>
         ) : null}
       </div>
       {loading ? (
-        <p className="text-ink-300 text-xs">{t('mapPanel.terrainProfile.loading')}</p>
+        <p className="text-ink-300 text-label">{t('mapPanel.terrainProfile.loading')}</p>
       ) : null}
       {errorKey ? (
-        <p className="text-xs text-red-400" role="alert">
+        <p className="text-label text-danger-400" role="alert">
           {t(errorKey)}
         </p>
       ) : null}
@@ -134,7 +134,7 @@ export function TerrainProfileChart({
               d={paths.fresnelLower}
               fill="none"
               stroke="currentColor"
-              className="text-orange-400/70"
+              className="text-warning-400/70"
               strokeWidth={1}
               strokeDasharray="4 3"
             />

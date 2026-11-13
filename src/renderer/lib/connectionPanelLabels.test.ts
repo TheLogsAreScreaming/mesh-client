@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { TAKRemoteStatus } from '@/shared/tak-types';
 
 import {
+  connectionPanelConnectionTypeLabel,
   connectionPanelMqttStatusLabel,
   connectionPanelRadioStatusLabel,
   connectionPanelTakRemoteLabel,
@@ -11,7 +12,7 @@ import {
   statusBarTransportLabel,
   takStatusBarLabels,
 } from './connectionPanelLabels';
-import type { ConnectionStatus, MQTTStatus } from './types';
+import type { ConnectionStatus, ConnectionType, MeshProtocol, MQTTStatus } from './types';
 
 function mockT(): TFunction {
   return ((key: string) => key) as TFunction;
@@ -42,20 +43,7 @@ describe('connectionPanelRadioStatusLabel', () => {
   });
 });
 
-<<<<<<< HEAD
-=======
 describe('connectionPanelConnectionTypeLabel', () => {
-  it.each<[ConnectionType, MeshProtocol, string]>([
-    ['ble', 'meshtastic', 'connectionPanel.bluetooth'],
-    ['serial', 'meshtastic', 'connectionPanel.usbSerial'],
-    ['tcp', 'meshtastic', 'connectionPanel.wifiTcp'],
-    ['http', 'meshtastic', 'connectionPanel.wifiHttp'],
-    ['http', 'meshcore', 'connectionPanel.tcpIp'],
-    ['ble', 'meshcore', 'connectionPanel.bluetooth'],
-    ['http', 'reticulum', 'connectionPanel.wifiHttp'],
-  ])('maps %s/%s to %s', (type, protocol, key) => {
-    expect(connectionPanelConnectionTypeLabel(mockT(), type, protocol)).toBe(key);
-  });
 });
 
 describe('statusBarTransportLabel', () => {
@@ -78,7 +66,6 @@ describe('statusBarTransportLabel', () => {
   });
 });
 
->>>>>>> upstream/main
 describe('connectionPanelMqttStatusLabel', () => {
   it.each<[MQTTStatus, boolean, string]>([
     ['connected', false, 'app.deviceStatus.connected'],

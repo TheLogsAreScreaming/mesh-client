@@ -3,8 +3,8 @@ import { useTranslation } from 'react-i18next';
 import type { NodeStatus } from '@/renderer/lib/nodeStatus';
 
 const DOT_CLASS: Record<NodeStatus, string> = {
-  online: 'bg-green-500',
-  stale: 'bg-orange-500',
+  online: 'bg-success-500',
+  stale: 'bg-warning-500',
   offline: 'bg-ink-500',
 };
 

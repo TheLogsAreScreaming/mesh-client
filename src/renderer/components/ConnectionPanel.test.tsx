@@ -1013,7 +1013,7 @@ describe('ConnectionPanel status i18n and pulse', () => {
     );
     expect(screen.getByRole('link', { name: 'Protocol guide ↗' })).toHaveAttribute(
       'href',
-      'https://colorado-mesh.github.io/mesh-client/meshtastic/',
+      'https://thelogsarescreaming.github.io/mesh-client/meshtastic/',
     );
     expect(screen.queryByText('configured')).not.toBeInTheDocument();
     expect(screen.queryByText('ble')).not.toBeInTheDocument();
@@ -1022,13 +1022,13 @@ describe('ConnectionPanel status i18n and pulse', () => {
   it.each([
     [
       'meshtastic',
-      'https://colorado-mesh.github.io/mesh-client/troubleshooting/',
-      'https://colorado-mesh.github.io/mesh-client/meshtastic/',
+      'https://thelogsarescreaming.github.io/mesh-client/troubleshooting/',
+      'https://thelogsarescreaming.github.io/mesh-client/meshtastic/',
     ],
     [
       'meshcore',
-      'https://colorado-mesh.github.io/mesh-client/troubleshooting-meshcore/',
-      'https://colorado-mesh.github.io/mesh-client/meshcore/',
+      'https://thelogsarescreaming.github.io/mesh-client/troubleshooting-meshcore/',
+      'https://thelogsarescreaming.github.io/mesh-client/meshcore/',
     ],
   ] as const)(
     'links %s Docs to troubleshooting and protocol guide on the docs site',
@@ -1049,7 +1049,7 @@ describe('ConnectionPanel status i18n and pulse', () => {
     renderWithFirmware(undefined, undefined, 'meshcore');
     expect(screen.getByRole('link', { name: 'MQTT auth ↗' })).toHaveAttribute(
       'href',
-      'https://colorado-mesh.github.io/mesh-client/letsmesh-mqtt-auth/',
+      'https://thelogsarescreaming.github.io/mesh-client/letsmesh-mqtt-auth/',
     );
   });
 

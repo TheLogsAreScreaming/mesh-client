@@ -98,11 +98,11 @@ export default function MeshtasticRemoteShellSection({
 
   return (
     <details
-      className="group rounded-lg border border-red-900"
+      className="group rounded-modal border border-danger-900"
       data-testid="admin-remote-shell"
       data-setting-anchor="admin.remoteShell"
     >
-      <summary className="hover:bg-ink-800 flex cursor-pointer items-center justify-between rounded-lg px-4 py-3 text-sm font-medium text-red-400 transition-colors">
+      <summary className="hover:bg-ink-800 flex cursor-pointer items-center justify-between rounded-modal px-4 py-3 text-body-lg font-medium text-danger-400 transition-colors">
         <span>{t('remoteShell.title')}</span>
         <DetailsChevron />
       </summary>
@@ -110,7 +110,7 @@ export default function MeshtasticRemoteShellSection({
         <div
           role="group"
           aria-label={t('remoteShell.warningTitle')}
-          className="space-y-1 rounded-lg border border-red-500/50 bg-red-950/40 p-3 text-xs text-red-200"
+          className="space-y-1 rounded-modal border border-danger-500/50 bg-danger-950/40 p-3 text-label text-danger-200"
           data-testid="remote-shell-warning"
         >
           <p className="font-semibold">{t('remoteShell.warningTitle')}</p>
@@ -123,7 +123,7 @@ export default function MeshtasticRemoteShellSection({
           </ul>
         </div>
 
-        <label className="text-ink-200 flex items-start gap-2 text-xs">
+        <label className="text-ink-200 flex items-start gap-2 text-label">
           <input
             type="checkbox"
             checked={acknowledged}
@@ -137,7 +137,7 @@ export default function MeshtasticRemoteShellSection({
         </label>
 
         <div className="flex flex-wrap items-end gap-2">
-          <label className="text-muted flex flex-col gap-1 text-xs">
+          <label className="text-muted flex flex-col gap-1 text-label">
             {t('remoteShell.node')}
             <input
               type="text"
@@ -176,24 +176,24 @@ export default function MeshtasticRemoteShellSection({
           )}
         </div>
 
-        <p className="text-muted text-xs" role="status" data-testid="remote-shell-status">
+        <p className="text-muted text-label" role="status" data-testid="remote-shell-status">
           {t(`remoteShell.phase.${phase}`, {
             node: nodeNum != null ? `!${nodeNum.toString(16).padStart(8, '0')}` : '',
           })}
         </p>
         {errorCode && (
-          <p className="text-xs text-red-400" role="alert" data-testid="remote-shell-error">
+          <p className="text-label text-danger-400" role="alert" data-testid="remote-shell-error">
             {t(ERROR_KEYS[errorCode])}
             {errorDetail ? `: ${errorDetail}` : ''}
           </p>
         )}
         {gapCount > 0 && (
-          <p className="text-xs text-orange-300" data-testid="remote-shell-gaps">
+          <p className="text-label text-warning-300" data-testid="remote-shell-gaps">
             {t('remoteShell.gaps', { count: gapCount })}
           </p>
         )}
         {outputTruncated && (
-          <p className="text-muted text-xs">{t('remoteShell.outputTruncated')}</p>
+          <p className="text-muted text-label">{t('remoteShell.outputTruncated')}</p>
         )}
 
         <pre
@@ -203,7 +203,7 @@ export default function MeshtasticRemoteShellSection({
           // Keyboard users must be able to focus and scroll the transcript.
           // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable log region
           tabIndex={0}
-          className="bg-deep-black text-ink-200 h-64 overflow-auto rounded-lg p-3 font-mono text-xs whitespace-pre-wrap"
+          className="bg-deep-black text-ink-200 h-64 overflow-auto rounded-modal p-3 font-mono text-label whitespace-pre-wrap"
           data-testid="remote-shell-output"
         >
           {output}

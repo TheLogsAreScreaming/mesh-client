@@ -1461,7 +1461,7 @@ describe('TakServerManager direct messages', () => {
   /** A manager with the local server running and direct messages on for every radio. */
   function dmManager(): TakServerManager {
     const manager = chatManager([]);
-    manager.setDirectMessaging(['meshcore', 'meshtastic', 'reticulum']);
+    manager.setDirectMessaging(['meshcore', 'meshtastic']);
     return manager;
   }
 

@@ -227,7 +227,7 @@ export function ScheduledBroadcastEditorDialog({
         ref={panelRef}
         className="bg-ink-900 rounded-modal shadow-level-3 flex max-h-[90vh] w-full max-w-lg flex-col gap-3 overflow-y-auto overscroll-contain p-4"
       >
-        <h2 id="sb-editor-title" className="text-ink-100 text-base font-semibold">
+        <h2 id="sb-editor-title" className="text-ink-100 text-title font-semibold">
           {t('scheduledBroadcasts.edit')} — {t('scheduledBroadcasts.slotLabel', { n: slot })}
         </h2>
         <label className="text-label text-ink-200 flex flex-col gap-1">
@@ -358,8 +358,8 @@ export function ScheduledBroadcastEditorDialog({
           <h3 className="text-label text-ink-200 mb-1">{t('scheduledBroadcasts.targets')}</h3>
           <ScheduledBroadcastTargetPicker targets={targets} onChange={setTargets} />
         </div>
-        {saveReason ? <p className="text-label text-orange-400">{saveReason}</p> : null}
-        {error ? <p className="text-label text-red-400">{error}</p> : null}
+        {saveReason ? <p className="text-label text-warning-400">{saveReason}</p> : null}
+        {error ? <p className="text-label text-danger-400">{error}</p> : null}
         <div className="flex justify-end gap-2">
           <button
             type="button"

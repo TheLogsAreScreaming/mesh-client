@@ -62,16 +62,16 @@ export default function LockdownSection({ isConnected, onSendLockdownAuth }: Pro
       title={
         <span className="inline-flex items-center gap-2">
           {locked ? (
-            <Lock className="h-4 w-4 text-orange-400" aria-hidden="true" />
+            <Lock className="h-4 w-4 text-warning-400" aria-hidden="true" />
           ) : (
-            <LockOpen className="h-4 w-4 text-green-400" aria-hidden="true" />
+            <LockOpen className="h-4 w-4 text-success-400" aria-hidden="true" />
           )}
           {t('radioPanel.lockdown.title')}
         </span>
       }
       description={t('radioPanel.lockdown.description')}
     >
-      <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-label">
         <dt className="text-muted">{t('radioPanel.lockdown.stateLabel')}</dt>
         <dd className="text-ink-200">
           {state === null
@@ -158,7 +158,7 @@ export default function LockdownSection({ isConnected, onSendLockdownAuth }: Pro
         </button>
       </div>
 
-      {error !== null && <p className="text-xs text-red-400">{error}</p>}
+      {error !== null && <p className="text-label text-danger-400">{error}</p>}
     </SettingsSection>
   );
 }

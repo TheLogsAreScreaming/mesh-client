@@ -23,18 +23,18 @@ export function ChatSummaryCard({ summary }: { summary: ConversationSummaryContr
     !!state.text.trim();
   return (
     <section
-      className="border-ink-700 bg-deep-black mx-3 my-2 max-h-96 shrink-0 overflow-y-auto rounded-lg border p-3 text-sm"
+      className="border-ink-700 bg-deep-black mx-3 my-2 max-h-96 shrink-0 overflow-y-auto rounded-modal border p-3 text-body-lg"
       aria-label={t('aiSummary.catchUp')}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-ink-100 font-semibold">{t('aiSummary.catchUp')}</h3>
-        <span className="text-muted text-xs">
+        <span className="text-muted text-label">
           {state.disclosure
             ? t('aiSummary.sentTo', { host: state.disclosure })
             : t('aiSummary.onDevice')}
         </span>
       </div>
-      <p className="text-muted text-xs">
+      <p className="text-muted text-label">
         {state.messageCount === null
           ? t('aiSummary.providerCollected', {
               provider: state.provider,
@@ -48,7 +48,7 @@ export function ChatSummaryCard({ summary }: { summary: ConversationSummaryContr
               included: state.messageCount,
             })}
       </p>
-      <p className="text-muted text-xs">{t('aiSummary.countSnapshot')}</p>
+      <p className="text-muted text-label">{t('aiSummary.countSnapshot')}</p>
       <div
         role="status"
         aria-live="polite"
@@ -77,22 +77,22 @@ export function ChatSummaryCard({ summary }: { summary: ConversationSummaryContr
                       : t('aiSummary.working'))}
       </div>
       {state.ceilingTruncated && (
-        <p className="text-xs text-orange-300">
+        <p className="text-label text-warning-300">
           {t('aiSummary.ceilingTruncated', { count: state.collectedMessageCount })}
         </p>
       )}
-      {state.truncated && <p className="text-xs text-orange-300">{t('aiSummary.truncated')}</p>}
-      <p className="text-muted text-xs">{t('aiSummary.verify')}</p>
+      {state.truncated && <p className="text-label text-warning-300">{t('aiSummary.truncated')}</p>}
+      <p className="text-muted text-label">{t('aiSummary.verify')}</p>
       {state.followUps?.length ? (
         <div className="mt-3 space-y-2" aria-label={t('aiSummary.followUps')}>
           {state.followUps.map((turn) => (
             <div key={turn.id} className="border-ink-800 border-t pt-2">
-              <p className="text-ink-100 text-xs font-semibold">{turn.question}</p>
+              <p className="text-ink-100 text-label font-semibold">{turn.question}</p>
               <div
                 role="status"
                 aria-live="polite"
                 aria-atomic="true"
-                className="text-ink-100 mt-1 text-sm whitespace-pre-wrap"
+                className="text-ink-100 mt-1 text-body-lg whitespace-pre-wrap"
               >
                 {turn.error
                   ? t(`aiSummary.error.${turn.error}`)
@@ -106,7 +106,7 @@ export function ChatSummaryCard({ summary }: { summary: ConversationSummaryContr
                           : t('aiSummary.followUpWorking'))}
               </div>
               {turn.truncated && (
-                <p className="mt-1 text-xs text-orange-300">
+                <p className="mt-1 text-label text-warning-300">
                   {t('aiSummary.followUpContextLimited')}
                 </p>
               )}
@@ -163,7 +163,7 @@ export function ChatSummaryCard({ summary }: { summary: ConversationSummaryContr
         !!state.text.trim() &&
         !state.error &&
         !state.streaming && (
-          <p className="text-muted mt-1 text-xs">{t('aiSummary.followUpContextLimited')}</p>
+          <p className="text-muted mt-1 text-label">{t('aiSummary.followUpContextLimited')}</p>
         )}
       <div className="mt-2 flex flex-wrap gap-2">
         <Button

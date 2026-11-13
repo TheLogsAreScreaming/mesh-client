@@ -769,8 +769,8 @@ export default function TelemetryPanel({
                   if (floodPct === null) return null;
                   return (
                     <div className="text-center">
-                      <div className="text-lg font-semibold text-cyan-600">{floodPct}%</div>
-                      <div className="text-muted inline-flex items-center justify-center gap-1 text-xs">
+                      <div className="text-heading font-semibold text-cyan-600">{floodPct}%</div>
+                      <div className="text-muted inline-flex items-center justify-center gap-1 text-label">
                         <span>{t('telemetryPanel.statFloodPercent')}</span>
                         <HelpTooltip
                           text={t('telemetryPanel.statFloodPercentHint')}

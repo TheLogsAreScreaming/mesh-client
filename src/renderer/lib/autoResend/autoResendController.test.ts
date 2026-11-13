@@ -18,6 +18,7 @@ import {
   subscribeAutoResendOutcomes,
   useAutoResendStore,
 } from './autoResendController';
+import { AUTO_RESEND_DELAYS_MS, REGULAR_MESSAGE_MAX_AUTO_RESENDS } from './autoResendPolicy';
 
 const PROTOCOLS = ['meshtastic', 'meshcore'] as const;
 

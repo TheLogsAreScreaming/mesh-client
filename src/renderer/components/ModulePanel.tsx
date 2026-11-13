@@ -1946,15 +1946,15 @@ export default function ModulePanel({
             disabled={disabled || !remoteHardwareEnabled}
             description={t('modulePanel.fields.remoteHardwareAllowUndefinedPinsDesc')}
           />
-          <p className="text-muted text-xs">{t('modulePanel.fields.remoteHardwareHint')}</p>
+          <p className="text-muted text-label">{t('modulePanel.fields.remoteHardwareHint')}</p>
           <div className="space-y-1">
-            <p className="text-muted text-sm">{t('meshtasticExtraConfig.availablePins')}</p>
+            <p className="text-muted text-body-lg">{t('meshtasticExtraConfig.availablePins')}</p>
             {remoteHardwarePins.length === 0 ? (
-              <p className="text-muted text-xs">{t('meshtasticExtraConfig.availablePinsNone')}</p>
+              <p className="text-muted text-label">{t('meshtasticExtraConfig.availablePinsNone')}</p>
             ) : (
               <ul
                 aria-label={t('meshtasticExtraConfig.availablePins')}
-                className="text-ink-300 space-y-0.5 text-xs"
+                className="text-ink-300 space-y-0.5 text-label"
               >
                 {remoteHardwarePins.map((pin) => (
                   <li key={pin.gpioPin}>

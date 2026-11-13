@@ -190,7 +190,7 @@ export function AppAiSection() {
     >
       <label
         data-setting-anchor="app.aiProvider.enabled"
-        className="flex items-center gap-2 text-sm"
+        className="flex items-center gap-2 text-body-lg"
       >
         <input
           type="checkbox"
@@ -209,10 +209,10 @@ export function AppAiSection() {
         />
         {t('aiSummary.enabled')}
       </label>
-      <p className="text-muted mt-2 text-xs">{t('aiSummary.optIn')}</p>
+      <p className="text-muted mt-2 text-label">{t('aiSummary.optIn')}</p>
       {enabled && (
         <div className="mt-3 space-y-3">
-          <label data-setting-anchor="app.aiProvider.engine" className="block text-sm">
+          <label data-setting-anchor="app.aiProvider.engine" className="block text-body-lg">
             {t('aiSummary.engine')}
             <select
               aria-label={t('aiSummary.engine')}
@@ -237,7 +237,7 @@ export function AppAiSection() {
               <option value="remote">{t('aiSummary.remoteEngine')}</option>
             </select>
           </label>
-          <p data-setting-anchor="app.aiProvider.capacity" className="text-muted text-xs">
+          <p data-setting-anchor="app.aiProvider.capacity" className="text-muted text-label">
             {engine
               ? t('aiSummary.capacityHint', {
                   count: estimateAiSummaryMessageCapacity(engine),
@@ -249,7 +249,7 @@ export function AppAiSection() {
                   ceiling: Number(maxCollectedMessages) || AI_DEFAULT_MAX_COLLECTED_MESSAGES,
                 })}
           </p>
-          <div data-setting-anchor="app.aiProvider.osAi" className="text-muted text-xs">
+          <div data-setting-anchor="app.aiProvider.osAi" className="text-muted text-label">
             {t('aiSummary.osAvailability', {
               model: status.osAi.available ? status.osAi.modelLabel : t('aiSummary.osUnavailable'),
             })}
@@ -259,24 +259,24 @@ export function AppAiSection() {
               {engine === 'bundled' && (
                 <>
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <h4 className="text-sm font-medium">{t('aiSummary.catalog')}</h4>
+                    <h4 className="text-body-lg font-medium">{t('aiSummary.catalog')}</h4>
                     <DocsSiteLink href={AI_CATCH_UP_DOCS_URL} />
                   </div>
-                  <p className="text-muted text-xs">{t('aiSummary.offlineSummaryHint')}</p>
+                  <p className="text-muted text-label">{t('aiSummary.offlineSummaryHint')}</p>
                   {status.mlxHelperStatus === 'ready' &&
                     models.some((item) => item.runtime === 'mlx') && (
-                      <p className="text-bright-green text-xs">
+                      <p className="text-bright-green text-label">
                         {t('aiSummary.mlxRecommendedOnMacos')}
                       </p>
                     )}
                   {status.mlxHelperStatus === 'preparing' && (
-                    <p role="status" className="text-muted text-xs">
+                    <p role="status" className="text-muted text-label">
                       {t('aiSummary.mlxHelperPreparing')}
                     </p>
                   )}
                   {status.mlxHelperStatus === 'unavailable' && status.mlxHelperReason && (
                     <div className="space-y-2">
-                      <p role="status" className="text-muted text-xs">
+                      <p role="status" className="text-muted text-label">
                         {t(`aiSummary.mlxHelperReason.${status.mlxHelperReason}`)}
                       </p>
                       <Button
@@ -310,12 +310,12 @@ export function AppAiSection() {
                     models.some(
                       (item) => item.id === status.localEngine.modelId && item.runtime === 'mlx',
                     ) && (
-                      <p role="alert" className="text-xs text-orange-400">
+                      <p role="alert" className="text-label text-warning-400">
                         {t('aiSummary.mlxHelperMissingSelected')}
                       </p>
                     )}
                   {isBundledWllamaThreadBudgetLow() && (
-                    <p role="alert" className="text-xs text-orange-400">
+                    <p role="alert" className="text-label text-warning-400">
                       {t('aiSummary.lowThreadBudgetWarning', {
                         count: bundledWllamaThreadCount(),
                       })}
@@ -332,29 +332,29 @@ export function AppAiSection() {
                       p && ['queued', 'downloading', 'verifying'].includes(p.state);
                     const mlxBlocked = item.runtime === 'mlx' && !status.mlxHelperAvailable;
                     return (
-                      <div key={item.id} className="border-ink-700 rounded-lg border p-2 text-sm">
+                      <div key={item.id} className="border-ink-700 rounded-modal border p-2 text-body-lg">
                         <p>{item.name}</p>
-                        <p className="text-muted text-xs">
+                        <p className="text-muted text-label">
                           {item.paramsLabel} · {(item.downloadBytes / 1024 / 1024).toFixed(0)} MB ·{' '}
                           {item.license}
                         </p>
                         {item.recommendation === 'quality' && (
-                          <p className="text-bright-green text-xs">
+                          <p className="text-bright-green text-label">
                             {t('aiSummary.modelRecommendQuality')}
                           </p>
                         )}
                         {item.recommendation === 'fasterMachines' && (
-                          <p className="text-muted text-xs">
+                          <p className="text-muted text-label">
                             {t('aiSummary.modelRecommendFasterMachines')}
                           </p>
                         )}
                         {item.runtime === 'mlx' && (
-                          <p className="text-bright-green text-xs">
+                          <p className="text-bright-green text-label">
                             {t('aiSummary.modelRuntimeMlx')}
                           </p>
                         )}
                         {item.runtime === 'wllama' && (
-                          <p className="text-muted text-xs">{t('aiSummary.modelRuntimeCpu')}</p>
+                          <p className="text-muted text-label">{t('aiSummary.modelRuntimeCpu')}</p>
                         )}
                         <div className="mt-2 flex flex-wrap gap-2">
                           {downloading ? (
@@ -437,14 +437,14 @@ export function AppAiSection() {
                   })}
               {models.some((item) => item.orphan) && (
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium">{t('aiSummary.unusedDownloads')}</h4>
-                  <p className="text-muted text-xs">{t('aiSummary.unusedDownloadsHint')}</p>
+                  <h4 className="text-body-lg font-medium">{t('aiSummary.unusedDownloads')}</h4>
+                  <p className="text-muted text-label">{t('aiSummary.unusedDownloadsHint')}</p>
                   {models
                     .filter((item) => item.orphan)
                     .map((item) => (
-                      <div key={item.id} className="border-ink-700 rounded-lg border p-2 text-sm">
+                      <div key={item.id} className="border-ink-700 rounded-modal border p-2 text-body-lg">
                         <p>{item.id}</p>
-                        <p className="text-muted text-xs">
+                        <p className="text-muted text-label">
                           {(item.diskBytes / 1024 / 1024).toFixed(0)} MB ·{' '}
                           {t('aiSummary.unusedDownloadRetired')}
                         </p>
@@ -471,7 +471,7 @@ export function AppAiSection() {
           )}
           {(engine === 'local' || engine === 'remote') && (
             <>
-              <label data-setting-anchor="app.aiProvider.format" className="block text-sm">
+              <label data-setting-anchor="app.aiProvider.format" className="block text-body-lg">
                 {t('aiSummary.format')}
                 <select
                   className={`${SELECT_BOX_CLASS} mt-1 w-full`}
@@ -487,7 +487,7 @@ export function AppAiSection() {
                   <option value="ollama">Ollama</option>
                 </select>
               </label>
-              <label data-setting-anchor="app.aiProvider.baseUrl" className="block text-sm">
+              <label data-setting-anchor="app.aiProvider.baseUrl" className="block text-body-lg">
                 {t('aiSummary.baseUrl')}
                 <input
                   className={`${INPUT_BOX_CLASS} mt-1 w-full`}
@@ -534,7 +534,7 @@ export function AppAiSection() {
                   ))}
                 </div>
               )}
-              <label data-setting-anchor="app.aiProvider.model" className="block text-sm">
+              <label data-setting-anchor="app.aiProvider.model" className="block text-body-lg">
                 {t('aiSummary.model')}
                 <input
                   className={`${INPUT_BOX_CLASS} mt-1 w-full`}
@@ -551,7 +551,7 @@ export function AppAiSection() {
                   ))}
                 </datalist>
               </label>
-              <label data-setting-anchor="app.aiProvider.apiKey" className="block text-sm">
+              <label data-setting-anchor="app.aiProvider.apiKey" className="block text-body-lg">
                 {t('aiSummary.apiKey')}
                 <input
                   className={`${INPUT_BOX_CLASS} mt-1 w-full`}
@@ -566,7 +566,7 @@ export function AppAiSection() {
                 />
               </label>
               {insecureKey && (
-                <p role="alert" className="text-xs text-orange-400">
+                <p role="alert" className="text-label text-warning-400">
                   {t('aiSummary.insecureKeyWarning')}
                 </p>
               )}
@@ -584,7 +584,7 @@ export function AppAiSection() {
               {engine === 'remote' && (
                 <label
                   data-setting-anchor="app.aiProvider.allowRemote"
-                  className="flex items-start gap-2 text-sm"
+                  className="flex items-start gap-2 text-body-lg"
                 >
                   <input
                     type="checkbox"
@@ -598,10 +598,10 @@ export function AppAiSection() {
                   {t('aiSummary.allowRemote')}
                 </label>
               )}
-              <p className="text-muted text-xs">{t('aiSummary.urlHint')}</p>
+              <p className="text-muted text-label">{t('aiSummary.urlHint')}</p>
             </>
           )}
-          <label data-setting-anchor="app.aiProvider.timeout" className="block text-sm">
+          <label data-setting-anchor="app.aiProvider.timeout" className="block text-body-lg">
             {t('aiSummary.timeoutSeconds')}
             <input
               className={`${INPUT_BOX_CLASS} mt-1 w-full`}
@@ -615,11 +615,11 @@ export function AppAiSection() {
                 setTimeoutSeconds(event.target.value);
               }}
             />
-            <span className="text-muted mt-1 block text-xs">{t('aiSummary.timeoutHint')}</span>
+            <span className="text-muted mt-1 block text-label">{t('aiSummary.timeoutHint')}</span>
           </label>
           <label
             data-setting-anchor="app.aiProvider.maxCollectedMessages"
-            className="block text-sm"
+            className="block text-body-lg"
           >
             {t('aiSummary.maxCollectedMessages')}
             <input
@@ -634,7 +634,7 @@ export function AppAiSection() {
                 setMaxCollectedMessages(event.target.value);
               }}
             />
-            <span className="text-muted mt-1 block text-xs">
+            <span className="text-muted mt-1 block text-label">
               {t('aiSummary.maxCollectedMessagesHint')}
             </span>
           </label>
@@ -693,7 +693,7 @@ export function AppAiSection() {
       <p
         data-setting-anchor="app.aiProvider.status"
         role="status"
-        className="text-muted mt-2 text-xs"
+        className="text-muted mt-2 text-label"
       >
         {notice}
       </p>

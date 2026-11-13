@@ -30,10 +30,10 @@ export function ScheduledBroadcastStatusBadge({
     .join('\n');
   const color =
     result.outcome === 'sent'
-      ? 'bg-green-800 text-white'
+      ? 'bg-success-800 text-white'
       : result.outcome === 'partial' || result.outcome === 'missed' || result.outcome === 'skipped'
-        ? 'bg-orange-800 text-white'
-        : 'bg-red-800 text-white';
+        ? 'bg-warning-800 text-white'
+        : 'bg-danger-800 text-white';
   return (
     <span className={`rounded-badge text-2xs px-1.5 py-0.5 ${color}`} title={title}>
       {label}

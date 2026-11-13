@@ -11,7 +11,6 @@ import { setTakSinkActive } from '../../stores/takSinkStore';
 import type { MeshNode } from '../types';
 import {
   canTakDirectMessage,
-  listTakConversationPeers,
   listTakDmProtocols,
   relayDirectMessageToTak,
   resetTakRelayedDirectMessages,
@@ -19,8 +18,6 @@ import {
 
 const MC = 'tak-dm-meshcore';
 const MT = 'tak-dm-meshtastic';
-const RN = 'tak-dm-reticulum';
-const LXMF = 'ab'.repeat(16);
 const NOW = Date.parse('2026-10-16T12:00:00Z');
 
 function node(overrides: Partial<MeshNode> = {}): MeshNode {
@@ -47,10 +44,6 @@ beforeEach(() => {
   setTakRadio('meshtastic', MT);
   setConnection(MC, { myNodeNum: 1 });
   setConnection(MT, { myNodeNum: 2 });
-  setTakRadio('reticulum', RN);
-  setConnection(RN, { myNodeNum: 3 });
-  clearReticulumHashRegistry();
-  useReticulumIdentityActivityStore.setState({ byDestination: new Map() });
 });
 
 afterEach(() => {

@@ -87,7 +87,7 @@ function customSourceErrorText(
 type MbtilesPreview = Extract<MbtilesPickResult, { ok: true }>;
 
 const BUTTON_CLASS =
-  'bg-secondary-dark border-ink-600 text-ink-200 hover:border-ink-500 w-full rounded border px-2 py-1 text-xs transition-colors disabled:opacity-50';
+  'bg-secondary-dark border-ink-600 text-ink-200 hover:border-ink-500 w-full rounded border px-2 py-1 text-label transition-colors disabled:opacity-50';
 const SMALL_BUTTON_CLASS =
   'text-2xs border-ink-700 text-ink-300 hover:border-ink-500 shrink-0 rounded border px-1.5 py-0.5';
 
@@ -396,7 +396,7 @@ export function CustomMapSourcesSection() {
           <div className="flex gap-1">
             <button
               type="button"
-              className="flex-1 rounded border border-green-700 bg-green-950/50 px-1 py-0.5 text-green-200 disabled:opacity-50"
+              className="flex-1 rounded border border-success-700 bg-success-950/50 px-1 py-0.5 text-success-200 disabled:opacity-50"
               aria-label={t('mapPanel.customSources.importConfirmAria')}
               disabled={busy || !confirmed || name.trim() === '' || attribution.trim() === ''}
               onClick={() => {
@@ -450,7 +450,7 @@ export function CustomMapSourcesSection() {
             }}
           />
           {showTemplateError ? (
-            <p role="alert" className="text-red-300">
+            <p role="alert" className="text-danger-300">
               {errorText(template.ok ? 'invalid' : template.code)}
             </p>
           ) : null}
@@ -501,7 +501,7 @@ export function CustomMapSourcesSection() {
           <div className="flex gap-1">
             <button
               type="button"
-              className="flex-1 rounded border border-green-700 bg-green-950/50 px-1 py-0.5 text-green-200 disabled:opacity-50"
+              className="flex-1 rounded border border-success-700 bg-success-950/50 px-1 py-0.5 text-success-200 disabled:opacity-50"
               aria-label={t('mapPanel.customSources.addConfirmAria')}
               disabled={!canAddXyz}
               onClick={() => {

@@ -291,7 +291,7 @@ export function GlobalMessageSearchDialog({
               {t('globalMessageSearch.searching')}
             </p>
           ) : error ? (
-            <p className="text-label px-3 py-4 text-red-400" role="alert">
+            <p className="text-label px-3 py-4 text-danger-400" role="alert">
               {error}
             </p>
           ) : query.trim() === '' ? (
@@ -313,7 +313,7 @@ export function GlobalMessageSearchDialog({
                   type="button"
                   role="option"
                   aria-selected={active}
-                  className={`hover:bg-sidebar-active-bg flex w-full flex-col gap-0.5 rounded-md px-3 py-2 text-start ${
+                  className={`hover:bg-sidebar-active-bg flex w-full flex-col gap-0.5 rounded-card px-3 py-2 text-start ${
                     active ? 'bg-sidebar-active-bg' : ''
                   }`}
                   onMouseEnter={() => {

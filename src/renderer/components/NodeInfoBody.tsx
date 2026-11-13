@@ -697,11 +697,11 @@ export default function NodeInfoBody({
                   : t('nodeInfoBody.echoReliability')}
               </span>
               <span
-                className={`text-xs font-medium ${
+                className={`text-label font-medium ${
                   reliabilityProxy.pct >= 67
                     ? 'text-lime-400'
                     : reliabilityProxy.pct >= 33
-                      ? 'text-orange-400'
+                      ? 'text-warning-400'
                       : 'text-muted'
                 }`}
               >

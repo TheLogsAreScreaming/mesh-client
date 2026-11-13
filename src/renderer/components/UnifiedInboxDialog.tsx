@@ -351,7 +351,7 @@ function UnifiedInboxDialogBody({
         {confirmingDelete && selectedCount > 0 ? (
           <div
             role="alert"
-            className="border-ink-800 flex flex-wrap items-center gap-2 border-b bg-red-950/40 px-3 py-2"
+            className="border-ink-800 flex flex-wrap items-center gap-2 border-b bg-danger-950/40 px-3 py-2"
           >
             <p className="text-label text-ink-100 flex-1">
               {t('unifiedInbox.deleteConfirm', { count: selectedCount })}
@@ -367,7 +367,7 @@ function UnifiedInboxDialogBody({
             </button>
             <button
               type="button"
-              className="text-label rounded-control bg-red-700 px-2 py-1 text-white hover:bg-red-600"
+              className="text-label rounded-control bg-danger-700 px-2 py-1 text-white hover:bg-danger-600"
               onClick={handleDeleteLocal}
             >
               {t('unifiedInbox.deleteConfirmAction')}
@@ -387,7 +387,7 @@ function UnifiedInboxDialogBody({
               return (
                 <li
                   key={item.key}
-                  className={`hover:bg-sidebar-active-bg flex items-start gap-2 rounded-md px-2 py-1.5 ${
+                  className={`hover:bg-sidebar-active-bg flex items-start gap-2 rounded-card px-2 py-1.5 ${
                     checked ? 'bg-sidebar-active-bg' : ''
                   }`}
                 >
