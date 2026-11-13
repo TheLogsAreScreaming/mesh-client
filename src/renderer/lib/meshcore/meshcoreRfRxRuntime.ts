@@ -11,8 +11,10 @@ import { errLikeToLogString } from '@/renderer/lib/errLikeToLogString';
 
 import {
   meshCorePathInvariantPayloadId,
+  meshCorePathInvariantPayloadIdHex,
   parseMeshCoreRfPacket,
 } from '../../../shared/meshcoreRfPacketParse';
+import { meshCorePayloadTypeNibble } from '../../../shared/meshcoreRfPath';
 import { MAX_DEVICE_LOGS, MAX_TELEMETRY_POINTS } from '../../hooks/meshcore/meshcoreHookPreamble';
 import { useDiagnosticsStore } from '../../stores/diagnosticsStore';
 import { upsertNode, upsertNodeRecord, useNodeStore } from '../../stores/nodeStore';
@@ -23,9 +25,13 @@ import {
   meshtasticSenderIdForRawLogFallback,
   type PacketClass,
 } from '../foreignLoraDetection';
-import { applyMeshcoreLateRfHopEnrichment } from '../meshcoreLateRfHopEnrichment';
+import {
+  applyMeshcoreLateRfHopEnrichment,
+  decodeMeshcoreLateHopGroupText,
+} from '../meshcoreLateRfHopEnrichment';
 import { buildMeshcorePathResolutionFromNodes } from '../meshcorePathChainDisplay';
 import {
+  meshcoreIsDatagramPayloadType,
   meshcoreRawPacketLogFromBytesFallback,
   meshcoreRawPacketResolveFromParsed,
   meshcoreRfIsSelfOriginated,
@@ -47,6 +53,7 @@ import { meshNodeToNodeRecord } from '../storeRecordAdapters';
 import { MESHCORE_RAW_SELF_FLOOD_ADVERT_COALESCE_MS } from '../timeConstants';
 import type { MeshNode, MQTTStatus, TelemetryPoint } from '../types';
 import {
+  getMeshcoreChannelSecretsByIndex,
   hasOpenHeardRepeatWindow,
   recordMeshcoreRfRx,
   resolveMeshcoreHeardRepeaterFromNode,
@@ -248,10 +255,11 @@ function appendMeshcoreRfSignalTelemetry(
 function buildMeshcoreRfParseContext(
   rawU8: Uint8Array,
   pubKeyPrefixMap: Map<string, number>,
+  selfPublicKey: Uint8Array | null,
 ): MeshcoreRfParseContext {
   const parsed = parseMeshCoreRfPacket(rawU8);
   if (parsed.ok) {
-    const fromNodeId = meshcoreRawPacketResolveFromParsed(parsed, pubKeyPrefixMap);
+    const fromNodeId = meshcoreRawPacketResolveFromParsed(parsed, pubKeyPrefixMap, selfPublicKey);
     if (fromNodeId != null && parsed.transportCodes) {
       persistMeshcoreContactRfTransport(fromNodeId, parsed.transportCodes);
     }
@@ -274,7 +282,7 @@ function buildMeshcoreRfParseContext(
     };
   }
 
-  const fb = meshcoreRawPacketLogFromBytesFallback(rawU8, pubKeyPrefixMap);
+  const fb = meshcoreRawPacketLogFromBytesFallback(rawU8, pubKeyPrefixMap, selfPublicKey);
   return {
     parsed,
     routeTypeString: fb?.routeTypeString ?? null,
@@ -292,6 +300,27 @@ function buildMeshcoreRfParseContext(
     advertTimestampSec: null,
     parseOk: false,
   };
+}
+
+/** Our own public key; DM-type packets name their sender only when addressed to it. */
+function meshcoreRfSelfPublicKey(
+  deps: Pick<MeshcoreRfRxDeps, 'myNodeNumRef' | 'pubKeyMapRef' | 'selfInfoRef'>,
+): Uint8Array | null {
+  const myNodeNum = deps.myNodeNumRef.current;
+  const fromRegistry = myNodeNum !== 0 ? deps.pubKeyMapRef.current.get(myNodeNum) : undefined;
+  return fromRegistry ?? deps.selfInfoRef.current?.publicKey ?? null;
+}
+
+/**
+ * Sender whose hops away this packet may set. A direct-routed DM-type packet reaches us with the
+ * rest of its route (empty), not the hops it travelled from the sender.
+ */
+function meshcoreRfHopsAwaySenderId(
+  ctx: MeshcoreRfParseContext,
+  isDatagram: boolean,
+): number | null {
+  const flood = ctx.routeTypeString === 'FLOOD' || ctx.routeTypeString === 'TRANSPORT_FLOOD';
+  return isDatagram && !flood ? null : ctx.fromNodeId;
 }
 
 /** Update hops_away/SNR/RSSI on a known MeshCore node from the RF packet's own hop count. */
@@ -479,8 +508,12 @@ function buildMeshcoreRfMqttPacketLogFields(
 function recordMeshcoreRfNoisePorts(
   ctx: MeshcoreRfParseContext,
   effectiveFromNodeId: number | null,
+  isDatagram: boolean,
 ): void {
   if (effectiveFromNodeId == null || ctx.routeTypeString !== 'FLOOD') return;
+  // A flood DM / request is normal while the sender has no path to us; counting it here
+  // (Discovery flood warns at 3/hr) would flag ordinary chat partners.
+  if (isDatagram) return;
   const port = ctx.parsed.ok && ctx.parsed.advert != null ? 1002 : 1001;
   useDiagnosticsStore.getState().recordNoisePort(effectiveFromNodeId, port);
 }
@@ -795,8 +828,21 @@ export function handleMeshcoreRfRx(payload: MeshcoreRfRxPayload, deps: MeshcoreR
   let mqttFields: MeshcoreRfMqttPacketLogFields | null = null;
 
   if (rawU8) {
-    const ctx = buildMeshcoreRfParseContext(rawU8, deps.pubKeyPrefixMapRef.current);
-    applyMeshcoreRfHopsAwayUpdate(ctx.fromNodeId, ctx.hopCount, now, snr, rssi, cachedDeps);
+    const isDatagram =
+      rawU8.length > 0 && meshcoreIsDatagramPayloadType(meshCorePayloadTypeNibble(rawU8[0]));
+    const ctx = buildMeshcoreRfParseContext(
+      rawU8,
+      deps.pubKeyPrefixMapRef.current,
+      meshcoreRfSelfPublicKey(deps),
+    );
+    applyMeshcoreRfHopsAwayUpdate(
+      meshcoreRfHopsAwaySenderId(ctx, isDatagram),
+      ctx.hopCount,
+      now,
+      snr,
+      rssi,
+      cachedDeps,
+    );
     applyMeshcoreRfAdvertToStore(ctx, now, snr, rssi, deps);
 
     const effectiveFromNodeId =
@@ -805,23 +851,35 @@ export function handleMeshcoreRfRx(payload: MeshcoreRfRxPayload, deps: MeshcoreR
     pushMeshcoreRfRawPacketLog(deps, rxEntry);
     applyMeshcoreHeardRepeatFromRfRx(ctx, effectiveFromNodeId, rawU8, snr, rssi, now, cachedDeps);
 
+    const lateHopIdentityId = deps.meshcoreIdentityIdRef.current;
     if (
+      lateHopIdentityId &&
       ctx.parseOk &&
+      ctx.parsed.ok &&
       (ctx.payloadTypeString === 'TXT_MSG' || ctx.payloadTypeString === 'GRP_TXT')
     ) {
-      applyMeshcoreLateRfHopEnrichment(deps.meshcoreIdentityIdRef.current, {
+      const { payloadTypeNibble, innerPayload } = ctx.parsed;
+      applyMeshcoreLateRfHopEnrichment(lateHopIdentityId, {
         payloadTypeString: ctx.payloadTypeString,
         hopCount: ctx.hopCount,
-        fromNodeId: effectiveFromNodeId,
         messageFingerprintHex: ctx.messageFingerprintHex,
         parseOk: true,
         now,
         myNodeNum: deps.myNodeNumRef.current,
+        payloadIdHex: meshCorePathInvariantPayloadIdHex(payloadTypeNibble, innerPayload),
+        ...(ctx.payloadTypeString === 'GRP_TXT'
+          ? {
+              groupText: decodeMeshcoreLateHopGroupText(
+                innerPayload,
+                getMeshcoreChannelSecretsByIndex(),
+              ),
+            }
+          : {}),
       });
     }
 
     mqttFields = buildMeshcoreRfMqttPacketLogFields(ctx, rawU8);
-    recordMeshcoreRfNoisePorts(ctx, effectiveFromNodeId);
+    recordMeshcoreRfNoisePorts(ctx, effectiveFromNodeId, isDatagram);
 
     const bridgeResult = bridgeMeshcoreRfToForeignLora(
       ctx,

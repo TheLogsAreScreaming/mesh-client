@@ -1,12 +1,16 @@
 import { packetRouter } from '@/renderer/lib/drivers/PacketRouter';
 import { errLikeToLogString } from '@/renderer/lib/errLikeToLogString';
 import {
+  MESHCORE_TXT_TYPE_CLI_COMMAND,
   MESHCORE_TXT_TYPE_CLI_DATA,
   parseMeshcoreChannelIncomingFromThread,
   parseMeshcoreDmIncomingFromThread,
   resolveMeshcoreChannelMessageSender,
 } from '@/renderer/lib/meshcoreChannelText';
-import { dispatchMeshcoreWaitingContactMessage } from '@/renderer/lib/meshcoreDirectMessageDecode';
+import {
+  dispatchMeshcoreWaitingContactMessage,
+  meshcoreRemoteCliAttemptLogLine,
+} from '@/renderer/lib/meshcoreDirectMessageDecode';
 import { setMeshcoreRoomLastPostAt } from '@/renderer/lib/meshcoreRoomSyncStorage';
 import {
   isMeshcoreTransportStatusChatLine,
@@ -50,7 +54,12 @@ export function processMeshcoreWaitingMessageItem(
       .map((b) => b.toString(16).padStart(2, '0'))
       .join('');
     const senderId = deps.pubKeyPrefixMap.get(prefix) ?? 0;
-    if (d.txtType === MESHCORE_TXT_TYPE_CLI_DATA) {
+    if (d.txtType === MESHCORE_TXT_TYPE_CLI_COMMAND) {
+      deps.logTransportLineAsDevice(meshcoreRemoteCliAttemptLogLine(prefix));
+    } else if (d.txtType === MESHCORE_TXT_TYPE_CLI_DATA) {
+      // Protocol already emits meshcore_cli_response from the same ContactMsgRecv
+      // (syncNextMessage / getWaitingMessages both surface via that emit). Do not
+      // re-dispatch here — that double-appends CLI history for every reply.
       if (senderId !== 0) {
         const sender = deps.workingNodes.get(senderId);
         if (sender) {
@@ -61,34 +70,6 @@ export function processMeshcoreWaitingMessageItem(
           nodesDirty = true;
           updatedNodeIds.push(senderId);
         }
-      }
-      const identityId = deps.meshcoreIdentityId;
-      if (identityId) {
-        const roomNodeIds = new Set<number>();
-        for (const [nodeId, node] of deps.workingNodes) {
-          if (node.hw_model === 'Room') roomNodeIds.add(nodeId);
-        }
-        dispatchMeshcoreWaitingContactMessage(
-          identityId,
-          {
-            pubKeyPrefix: d.pubKeyPrefix,
-            text: d.text,
-            senderTimestamp: d.senderTimestamp,
-            txtType: MESHCORE_TXT_TYPE_CLI_DATA,
-            ...(d.pathLen != null ? { pathLen: d.pathLen } : {}),
-          },
-          deps.pubKeyPrefixMap,
-          roomNodeIds,
-          (event, id) => {
-            packetRouter.dispatch(event, id);
-          },
-          deps.logTransportLineAsDevice,
-        );
-      } else {
-        console.warn(
-          '[meshcoreProcessWaitingMessageItem] CLI waiting message skipped (no identityId)',
-          senderId,
-        );
       }
     } else if (senderId === 0) {
       console.warn(

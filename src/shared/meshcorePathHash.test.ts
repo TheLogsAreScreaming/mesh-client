@@ -7,6 +7,7 @@ import {
   meshcorePathHashSizeFromMode,
   meshcorePathHashSizeFromTraceFlags,
   meshcorePubkeyPathPrefix,
+  meshcoreRadioContactRoute,
   meshcoreResolvePathSenderFromBytes,
   meshcoreSplitPathHashSegments,
   meshcoreTraceDataHashLayout,
@@ -31,6 +32,24 @@ describe('meshcorePathHash', () => {
     });
   });
 
+  it('reads a radio contact path length the way firmware packs it', () => {
+    expect(meshcoreRadioContactRoute(0x00)).toEqual({ hopCount: 0, hashSizeBytes: 1 });
+    expect(meshcoreRadioContactRoute(0x02)).toEqual({ hopCount: 2, hashSizeBytes: 1 });
+    expect(meshcoreRadioContactRoute(0x41)).toEqual({ hopCount: 1, hashSizeBytes: 2 });
+    // meshcore.js reads the byte as int8, so 3-byte-hash lengths arrive negative.
+    expect(meshcoreRadioContactRoute(0x81 - 256)).toEqual({ hopCount: 1, hashSizeBytes: 3 });
+    expect(meshcoreRadioContactRoute(0x81)).toEqual({ hopCount: 1, hashSizeBytes: 3 });
+  });
+
+  it('reads 0xFF, the reserved size code and a missing length as no known route', () => {
+    expect(meshcoreRadioContactRoute(-1)).toBeNull();
+    expect(meshcoreRadioContactRoute(0xff)).toBeNull();
+    expect(meshcoreRadioContactRoute(0xc1)).toBeNull();
+    expect(meshcoreRadioContactRoute(null)).toBeNull();
+    expect(meshcoreRadioContactRoute(undefined)).toBeNull();
+    expect(meshcoreRadioContactRoute(Number.NaN)).toBeNull();
+  });
+
   it('rejects hop counts above mode limit', () => {
     expect(() => meshcorePackPathLenByte(33, 2)).toThrow(/exceeds max 32/);
   });
@@ -51,6 +70,32 @@ describe('meshcorePathHash', () => {
       snrByteLength: 6,
     });
     expect(meshcorePathHashSizeFromTraceFlags(1)).toBe(2);
+  });
+
+  it('reads trace entry width as 1 << (flags & 3): 1, 2, 4 or 8 bytes', () => {
+    // Firmware Mesh::onRecvPacket; not the 1/2/3-byte path hash sizes.
+    expect([0, 1, 2, 3].map((flags) => meshcorePathHashSizeFromTraceFlags(flags))).toEqual([
+      1, 2, 4, 8,
+    ]);
+    // A full-key ping retry is one 8-byte entry: one hop, one SNR plus the final SNR.
+    expect(meshcoreTraceDataHashLayout(8, 3)).toEqual({
+      hopCount: 1,
+      hashSizeBytes: 8,
+      hashByteLength: 8,
+      snrByteLength: 2,
+    });
+    expect(meshcoreTraceDataHashLayout(8, 2)).toEqual({
+      hopCount: 2,
+      hashSizeBytes: 4,
+      hashByteLength: 8,
+      snrByteLength: 3,
+    });
+  });
+
+  it('splits an 8-byte trace entry as one segment', () => {
+    const segs = meshcoreSplitPathHashSegments([1, 2, 3, 4, 5, 6, 7, 8], 8);
+    expect(segs).toHaveLength(1);
+    expect(Array.from(segs.at(0)!)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
   });
 
   it('resolves 2-byte path sender from pubkey prefix', () => {

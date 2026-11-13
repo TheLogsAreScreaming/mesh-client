@@ -2,6 +2,13 @@ import type { MeshProtocol } from '@/shared/meshProtocol';
 import { MS_PER_DAY, MS_PER_HOUR } from '@/shared/timeConstants';
 
 /**
+ * What a received message's packet records about the nodes that relayed it (Chat hop pill
+ * tooltip): every repeater hash (MeshCore flood path), only the last relay's low byte
+ * (Meshtastic `relay_node`), or nothing beyond the hop count (Reticulum).
+ */
+export type MessageRouteDetail = 'floodPath' | 'lastRelay' | 'none';
+
+/**
  * Protocol-agnostic capability descriptor. Each radio protocol adapter exposes
  * one of these so UI and diagnostic engines can branch on features rather than
  * on protocol name strings.
@@ -64,6 +71,11 @@ export interface ProtocolCapabilities {
   hasCompanionContactManagementConfig: boolean;
   /** MeshCore companion: telemetry request / location / environment privacy (NodePrefs telemetry modes) */
   hasCompanionTelemetryPrivacyConfig: boolean;
+  /**
+   * MeshCore companion: local CLI (CMD_RUN_CLI_COMMAND) settings, remote companion CLI and
+   * sensor telemetry push. Also requires companion protocol v14+ at runtime.
+   */
+  hasCompanionCli: boolean;
   /** Whether shutdown button is available */
   hasShutdown: boolean;
   /** Whether Reset NodeDB button is available */
@@ -86,6 +98,24 @@ export interface ProtocolCapabilities {
   hasRangeTest: boolean;
   /** Whether Pax Counter (people counter) is available */
   hasPaxCounter: boolean;
+  /** Whether nodes broadcast a free-text status (Meshtastic NODE_STATUS_APP) */
+  hasNodeStatusMessage: boolean;
+  /**
+   * Whether manual PKC key verification (Meshtastic KEY_VERIFICATION_APP) is available.
+   * Protocol exception: Meshtastic firmware feature only; MeshCore/Reticulum have no
+   * equivalent handshake.
+   */
+  hasKeyVerification: boolean;
+  /**
+   * Whether Cayenne LPP sensor payloads (Meshtastic CAYENNE_APP) are decoded and charted.
+   * Protocol exception: Meshtastic firmware port only.
+   */
+  hasCayenneTelemetry: boolean;
+  /**
+   * Whether the remote shell UI (Meshtastic REMOTE_SHELL_APP PTY session) is available.
+   * Protocol exception: Meshtastic firmware port only; Reticulum has its own rnsh panel.
+   */
+  hasRemoteShell: boolean;
   /** Whether Audio packets are available */
   hasAudio: boolean;
   /** Whether Detection Sensor packets are available */
@@ -134,6 +164,8 @@ export interface ProtocolCapabilities {
    * channel floods only report companion accept, so failed-send auto-resend skips them.
    */
   hasChannelDeliveryAck: boolean;
+  /** Relay detail a received message carries, shown when hovering its hop count in Chat. */
+  messageRouteDetail: MessageRouteDetail;
   /** Meshtastic-centric routing/RF diagnostics (Hop Goblins, CU, foreign LoRa). */
   hasDiagnosticsPanel: boolean;
   /**
@@ -141,6 +173,11 @@ export interface ProtocolCapabilities {
    * MeshCore ids are pubkey-derived; UI shows names and opens detail on click.
    */
   showsNodeNumHexId: boolean;
+  /**
+   * Admin tab: flash Meshtastic / MeshCore device firmware over USB (narrow board matrix in
+   * `lib/flasher/deviceFirmwareBoards.ts`). Reticulum uses the RNode flasher instead.
+   */
+  hasDeviceFirmwareFlash: boolean;
   /** Whether Cancel/disconnect should stop GATT BLE scanning (Meshtastic/MeshCore). */
   hasGattBleScanning: boolean;
 }
@@ -171,6 +208,7 @@ export const MESHTASTIC_CAPABILITIES: ProtocolCapabilities = {
   hasUserManagedContactGroups: true,
   hasCompanionContactManagementConfig: false,
   hasCompanionTelemetryPrivacyConfig: false,
+  hasCompanionCli: false,
   hasShutdown: true,
   hasNodeDbReset: true,
   hasFactoryReset: true,
@@ -182,6 +220,10 @@ export const MESHTASTIC_CAPABILITIES: ProtocolCapabilities = {
   hasSerial: true,
   hasRangeTest: true,
   hasPaxCounter: true,
+  hasNodeStatusMessage: true,
+  hasKeyVerification: true,
+  hasCayenneTelemetry: true,
+  hasRemoteShell: true,
   hasAudio: true,
   hasDetectionSensor: true,
   hasStoreForward: true,
@@ -203,8 +245,10 @@ export const MESHTASTIC_CAPABILITIES: ProtocolCapabilities = {
   prefersDeviceOwnerLongNameInHeader: false,
   prefersDeviceDeliveryStatusOverMqtt: false,
   hasChannelDeliveryAck: true,
+  messageRouteDetail: 'lastRelay',
   hasDiagnosticsPanel: true,
   showsNodeNumHexId: true,
+  hasDeviceFirmwareFlash: false,
   hasGattBleScanning: true,
 };
 
@@ -235,6 +279,7 @@ export const MESHCORE_CAPABILITIES: ProtocolCapabilities = {
   hasUserManagedContactGroups: true,
   hasCompanionContactManagementConfig: true,
   hasCompanionTelemetryPrivacyConfig: true,
+  hasCompanionCli: true,
   hasShutdown: false,
   hasNodeDbReset: false,
   hasFactoryReset: false,
@@ -246,6 +291,10 @@ export const MESHCORE_CAPABILITIES: ProtocolCapabilities = {
   hasSerial: false,
   hasRangeTest: false,
   hasPaxCounter: false,
+  hasNodeStatusMessage: false,
+  hasKeyVerification: false,
+  hasCayenneTelemetry: false,
+  hasRemoteShell: false,
   hasAudio: false,
   hasDetectionSensor: false,
   hasStoreForward: false,
@@ -267,7 +316,9 @@ export const MESHCORE_CAPABILITIES: ProtocolCapabilities = {
   prefersDeviceOwnerLongNameInHeader: true,
   prefersDeviceDeliveryStatusOverMqtt: true,
   hasChannelDeliveryAck: false,
+  messageRouteDetail: 'floodPath',
   hasDiagnosticsPanel: true,
   showsNodeNumHexId: false,
+  hasDeviceFirmwareFlash: false,
   hasGattBleScanning: true,
 };

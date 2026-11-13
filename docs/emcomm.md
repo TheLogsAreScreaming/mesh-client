@@ -80,11 +80,28 @@ Every inbound MECP report is appended to `mecp-received.log` in the app data fol
 
 ## RF rebroadcast (bridge)
 
-**App → MECP** can bridge MECP reports between a Meshtastic channel and a MeshCore channel. It is **off** by default.
+It is **off** by default.
 
-- Each rule has endpoint **A** and endpoint **B** (channel indices 0–7). Reports go **A → B** by default; turn on **Bidirectional** to also send **B → A**.
+- Each rule has endpoint **A** and endpoint **B**. Reports go **A → B** by default; turn on **Bidirectional** to also send **B → A**.
 - Only reports heard over RF are bridged (not MQTT-only), and never your own reports, history, or drills. A loop guard prevents ping-ponging the same report.
-- After each bridged report, a short plain-text notice follows: `MECP from <sender> via <Meshtastic|MeshCore> (<channel name>)`.
+- After each bridged report, a short plain-text notice follows: `MECP from <sender> via <protocol> (<channel or room name>)`.
+
+## Reports in ATAK
+
+Full TAK server setup, data packages, and relay configuration are in [TAK gateway](tak.md). This section covers only how MECP reports and Incident markers appear in ATAK once TAK is running.
+
+When the TAK server is running and a channel is served to ATAK (or direct messages are on for the radio), an MECP report heard there reaches ATAK in words, in the app's language, with its code line kept below it, the same way MeshCore TAK Bridge shows one:
+
+```
+🆘 MAYDAY: Injury · Fracture / immobile · 2 people · 48.6520, 20.1305
+MECP/0/M01 M07 2pax 48.6520,20.1305
+```
+
+A drill starts with `DRILL`. Anything else is passed on to ATAK as it is.
+
+Each open incident with a position, the same ones the Map shows under **Layers → Emergency incidents**, is also a spot marker on every connected ATAK device's map: red for MAYDAY, orange for URGENT, yellow for SAFETY, white for ROUTINE, grey for a drill. It is named with the severity and the sender (`🆘 MAYDAY Alice`), and its remarks hold the report in words, the code line, when it was last heard, where the position came from when it is the sender's last known one rather than the report's, a distress beacon, and the acknowledgements heard. A marker updates as the incident does and is removed from ATAK when the incident is resolved in mesh-client. Cancelling your own beacon resolves it; a cancel heard from another station clears the beacon line, and the marker stays until someone resolves the incident. At most 50 are shown, most severe first. Markers are not sent to a remote TAK server.
+
+**Sound ATAK's emergency alarm for an MECP MAYDAY** (in the TAK server's settings) also sets off ATAK's own emergency alarm, the one ATAK raises for a 911 alert, on every connected device, the same as MeshCore TAK Bridge's option. Anyone on a channel can send a MAYDAY, so it is off unless you turn it on, and it takes effect at once, whether the server is running or not. It sounds once for a MAYDAY with a position that mesh-client is alerting about too: never for a drill, an URGENT or lesser report, your own beacon, a blocked sender, or a sender whose alerts have been silenced for sending too many, and not for a report read from history or one you had already seen when the alarm was turned on. The alarm is linked to the incident's marker and named for the sender (`Alice-Alert`). It is cancelled on ATAK when the incident is resolved, its beacon is cancelled, the sender is blocked, or the option is turned off. It sounds on the devices connected when it starts; one that connects later sees the marker but not the alarm. An alarm is sent once and not refreshed: if no cancel reaches it, for example because the server stopped, ATAK drops it 30 minutes after it went off. Alarms are not sent to a remote TAK server.
 
 ## Operational alerts
 

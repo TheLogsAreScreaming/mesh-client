@@ -1,0 +1,228 @@
+import { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import { errLikeToLogString } from '@/renderer/lib/errLikeToLogString';
+
+import type { MeshcoreCompanionRemoteActions } from '../hooks/meshcore/useMeshcoreCompanionRemote';
+import { translateRepeaterCliHistoryText } from '../lib/meshcore/meshcoreMessageI18n';
+import { isMeshcoreRepeaterCliDangerCommand } from '../lib/meshcoreRepeaterCliDanger';
+import type { CliHistoryEntry } from '../lib/repeaterCommandService';
+import { ConfirmModal } from './ConfirmModal';
+import { SettingsCollapsible } from './ui/SettingsSection';
+import { Switch } from './ui/Switch';
+
+export interface MeshcoreRemoteCliSectionProps {
+  nodeId: number;
+  remote: MeshcoreCompanionRemoteActions;
+  history: readonly CliHistoryEntry[];
+  onClearHistory?: (nodeId: number) => void;
+  /** Radio not connected: everything is read-only. */
+  disabled: boolean;
+}
+
+type AllowState = { kind: 'idle' } | { kind: 'loaded'; allowed: boolean } | { kind: 'notOnRadio' };
+
+/** Remote CLI on another v1.18+ companion, plus our own per-contact permission (flag 0x10). */
+export default function MeshcoreRemoteCliSection({
+  nodeId,
+  remote,
+  history,
+  onClearHistory,
+  disabled,
+}: MeshcoreRemoteCliSectionProps) {
+  const { t } = useTranslation();
+  const [allow, setAllow] = useState<AllowState>({ kind: 'idle' });
+  const [flagBusy, setFlagBusy] = useState(false);
+  const [flagError, setFlagError] = useState<string | null>(null);
+  const [confirmAllow, setConfirmAllow] = useState(false);
+  const [dangerCommand, setDangerCommand] = useState<string | null>(null);
+  const [input, setInput] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const loadAllow = useCallback(async () => {
+    setFlagBusy(true);
+    setFlagError(null);
+    try {
+      const allowed = await remote.getRemoteCliAllowed(nodeId);
+      setAllow(allowed == null ? { kind: 'notOnRadio' } : { kind: 'loaded', allowed });
+    } catch (e) {
+      console.warn(
+        '[MeshcoreRemoteCliSection] read remote CLI flag failed ' + errLikeToLogString(e),
+      );
+      setFlagError(t('meshcoreRemoteCli.flagReadFailed'));
+    } finally {
+      setFlagBusy(false);
+    }
+  }, [nodeId, remote, t]);
+
+  const writeAllow = useCallback(
+    async (allowed: boolean) => {
+      setFlagBusy(true);
+      setFlagError(null);
+      try {
+        const next = await remote.setRemoteCliAllowed(nodeId, allowed);
+        setAllow(next == null ? { kind: 'notOnRadio' } : { kind: 'loaded', allowed: next });
+      } catch (e) {
+        console.warn(
+          '[MeshcoreRemoteCliSection] write remote CLI flag failed ' + errLikeToLogString(e),
+        );
+        setFlagError(t('meshcoreRemoteCli.flagWriteFailed'));
+      } finally {
+        setFlagBusy(false);
+      }
+    },
+    [nodeId, remote, t],
+  );
+
+  const send = useCallback(
+    async (command: string, confirmedDanger: boolean) => {
+      setSending(true);
+      try {
+        await remote.sendRemoteCli(nodeId, command, { confirmedDanger });
+        setInput('');
+      } catch {
+        // catch-no-log-ok the runtime logs the failure and appends it to the CLI history
+      } finally {
+        setSending(false);
+      }
+    },
+    [nodeId, remote],
+  );
+
+  const submit = () => {
+    const command = input.trim();
+    if (!command) return;
+    if (isMeshcoreRepeaterCliDangerCommand(command)) {
+      setDangerCommand(command);
+      return;
+    }
+    void send(command, false);
+  };
+
+  return (
+    <>
+      <SettingsCollapsible
+        title={t('meshcoreRemoteCli.summary')}
+        titleAs="span"
+        onToggle={(open) => {
+          if (open && allow.kind === 'idle' && !flagBusy && !disabled) {
+            void loadAllow();
+          }
+        }}
+      >
+        <div className="space-y-2">
+          {allow.kind === 'notOnRadio' ? (
+            <p className="text-muted text-body-lg">{t('meshcoreRemoteCli.notOnRadio')}</p>
+          ) : (
+            <Switch
+              checked={allow.kind === 'loaded' && allow.allowed}
+              onChange={(on) => {
+                if (on) {
+                  setConfirmAllow(true);
+                } else {
+                  void writeAllow(false);
+                }
+              }}
+              label={t('meshcoreRemoteCli.allowLabel')}
+              description={t('meshcoreRemoteCli.allowDescription')}
+              disabled={disabled || flagBusy || allow.kind !== 'loaded'}
+            />
+          )}
+          {flagError && <p className="text-body-lg text-danger-400">{flagError}</p>}
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-muted text-label">{t('meshcoreRemoteCli.consoleHint')}</p>
+          <ol
+            aria-label={t('meshcoreRemoteCli.consoleLog')}
+            className="bg-app-bg border-ink-700 rounded-control text-label max-h-48 space-y-0.5 overflow-y-auto border p-2 font-mono"
+          >
+            {history.length === 0 ? (
+              <li className="text-muted italic">{t('repeatersPanel.cliNoCommandsYet')}</li>
+            ) : (
+              history.map((entry, idx) => (
+                <li
+                  key={`${entry.timestamp}-${idx}`}
+                  className={entry.type === 'sent' ? 'text-ink-300' : 'text-ink-100'}
+                >
+                  {entry.type === 'sent' ? '> ' : ''}
+                  {translateRepeaterCliHistoryText(t, entry.type, entry.text)}
+                </li>
+              ))
+            )}
+          </ol>
+          <form
+            className="flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              submit();
+            }}
+          >
+            <input
+              type="text"
+              autoComplete="off"
+              spellCheck={false}
+              aria-label={t('meshcoreRemoteCli.consoleInput')}
+              placeholder={t('meshcoreRemoteCli.consolePlaceholder')}
+              value={input}
+              disabled={disabled || sending}
+              onChange={(e) => {
+                setInput(e.target.value);
+              }}
+              className="bg-secondary-dark border-ink-600 text-ink-200 rounded-control text-body-lg min-w-0 flex-1 border px-3 py-1.5 font-mono"
+            />
+            <button
+              type="submit"
+              disabled={disabled || sending || input.trim() === ''}
+              className="bg-brand-green text-app-bg rounded-modal text-body-lg px-4 py-1.5 font-medium disabled:opacity-50"
+            >
+              {sending ? t('meshcoreRemoteCli.sending') : t('meshcoreRemoteCli.send')}
+            </button>
+          </form>
+          {onClearHistory && history.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                onClearHistory(nodeId);
+              }}
+              className="text-muted hover:text-ink-300 text-label underline"
+            >
+              {t('repeatersPanel.cliClearHistory')}
+            </button>
+          )}
+        </div>
+      </SettingsCollapsible>
+      {confirmAllow && (
+        <ConfirmModal
+          title={t('meshcoreRemoteCli.confirmAllow.title')}
+          message={t('meshcoreRemoteCli.confirmAllow.message')}
+          confirmLabel={t('meshcoreRemoteCli.confirmAllow.confirm')}
+          danger
+          onConfirm={() => {
+            setConfirmAllow(false);
+            void writeAllow(true);
+          }}
+          onCancel={() => {
+            setConfirmAllow(false);
+          }}
+        />
+      )}
+      {dangerCommand && (
+        <ConfirmModal
+          title={t('repeatersPanel.cliDangerConfirmTitle')}
+          message={t('repeatersPanel.cliDangerConfirmMessage', { command: dangerCommand })}
+          confirmLabel={t('repeatersPanel.cliDangerConfirmAction')}
+          danger
+          onConfirm={() => {
+            const command = dangerCommand;
+            setDangerCommand(null);
+            void send(command, true);
+          }}
+          onCancel={() => {
+            setDangerCommand(null);
+          }}
+        />
+      )}
+    </>
+  );
+}

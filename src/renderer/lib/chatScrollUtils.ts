@@ -103,6 +103,17 @@ export function scrollElementWithinContainer(
   container.scrollTo({ top: Math.max(0, targetTop), behavior });
 }
 
+/** Scroll `container` the least distance that shows `element`, or its top when it is taller. */
+export function revealElementWithinContainer(container: HTMLElement, element: HTMLElement): void {
+  const box = container.getBoundingClientRect();
+  const target = element.getBoundingClientRect();
+  if (target.top < box.top) {
+    container.scrollTop += target.top - box.top;
+  } else if (target.bottom > box.bottom) {
+    container.scrollTop += Math.min(target.bottom - box.bottom, target.top - box.top);
+  }
+}
+
 type ScrollMeasureInstance = Pick<
   Virtualizer<HTMLDivElement, Element>,
   'indexFromElement' | 'scrollDirection' | 'measurementsCache' | 'itemSizeCache' | 'options'
@@ -175,16 +186,14 @@ export function createChatScrollAdjustPredicate(deps: ChatScrollAdjustDeps) {
     _delta: number,
     instance: Pick<
       Virtualizer<HTMLDivElement, Element>,
-      'scrollDirection' | 'isAtEnd' | 'itemSizeCache' | 'scrollOffset' | 'scrollAdjustments'
+      'scrollDirection' | 'isAtEnd' | 'itemSizeCache' | 'scrollOffset'
     >,
   ): boolean => {
     // First measurement of a row above the fold: the estimate→actual delta must be
     // compensated in either direction, or content shifts under the reader while
     // scrolling up into unmeasured history.
-    if (
-      !instance.itemSizeCache.has(item.key) &&
-      item.start < (instance.scrollOffset ?? 0) + instance.scrollAdjustments
-    ) {
+    // scrollOffset alone: TanStack folds corrections into it (scrollAdjustments is always 0).
+    if (!instance.itemSizeCache.has(item.key) && item.start < (instance.scrollOffset ?? 0)) {
       return true;
     }
     if (instance.scrollDirection === 'backward') return false;

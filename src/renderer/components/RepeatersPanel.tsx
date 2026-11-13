@@ -35,6 +35,7 @@ import {
 } from '../lib/meshcore/meshcoreMessageI18n';
 import {
   forgetAdminPassword,
+  hasResolvableAdminPassword,
   listSavedAdminPasswords,
   type MeshcoreInfraAdminPasswordEntry,
 } from '../lib/meshcoreInfraAdminSecrets';
@@ -50,6 +51,11 @@ import type { MeshcoreRepeaterRpcPendingMap } from '../lib/meshcoreRepeaterAdmin
 import { isRepeaterAdminRpcPending } from '../lib/meshcoreRepeaterAdminPending';
 import { isMeshcoreRepeaterCliDangerCommand } from '../lib/meshcoreRepeaterCliDanger';
 import { normalizeMeshcoreCliCommand } from '../lib/meshcoreRepeaterCliQueue';
+import {
+  awaitMeshcoreCliReplyHoldClear,
+  meshcoreCliReplyHoldActive,
+} from '../lib/meshcoreRepeaterRpcInFlight';
+import { meshcoreTraceCancelledForCliPreempt } from '../lib/meshcoreRepeaterTracePath';
 import { meshcoreTracePathLenToHops } from '../lib/meshcoreUtils';
 import { effectiveLastHeardMs, getNodeStatus } from '../lib/nodeStatus';
 import type { PathRecord } from '../lib/pathHistoryTypes';
@@ -205,6 +211,8 @@ interface Props {
     command: string,
     opts?: MeshcoreRepeaterCliOptions,
   ) => Promise<string>;
+  /** Read the current companion route instead of the last displayed advert hop count. */
+  resolveCliHopsAway?: (nodeId: number) => number;
   meshcoreCliHistories?: Map<number, CliHistoryEntry[]>;
   meshcoreCliErrors?: Map<number, string>;
   onClearCliHistory?: (nodeId: number) => void;
@@ -415,6 +423,7 @@ export default function RepeatersPanel({
   meshcoreTelemetryErrors,
   onSelectRepeater,
   onSendCliCommand,
+  resolveCliHopsAway,
   meshcoreCliHistories,
   meshcoreCliErrors,
   onClearCliHistory,
@@ -830,24 +839,41 @@ export default function RepeatersPanel({
     });
   };
 
-  const ensureCliRoutePrimed = async (nodeId: number): Promise<boolean> => {
-    if (meshcoreTraceResultsRef.current.get(nodeId) != null) return true;
-    const hops = nodes.get(nodeId)?.hops_away ?? 0;
-    if (hops <= 0) return true;
+  /**
+   * Best-effort multi-hop route prime via Ping. Advisory only — CLI still proceeds when ping
+   * fails (firmware may still have a usable path; a hard gate caused false timeouts).
+   */
+  const ensureCliRoutePrimed = async (nodeId: number): Promise<void> => {
+    if (meshcoreTraceResultsRef.current.get(nodeId) != null) return;
+    const hops = resolveCliHopsAway?.(nodeId) ?? nodes.get(nodeId)?.hops_away ?? 0;
+    if (hops <= 0) return;
+    // Traces fail fast while another node's CLI holds the reply path; wait briefly then continue.
+    if (meshcoreCliReplyHoldActive()) {
+      addToast(t('repeatersPanel.cliAutoPingWaitingForCli'), 'info');
+      try {
+        await awaitMeshcoreCliReplyHoldClear();
+      } catch (e) {
+        console.warn('[RepeatersPanel] CLI auto-ping wait failed ' + errLikeToLogString(e));
+        addToast(t('repeatersPanel.cliAutoPingAdvisory'), 'info');
+        return;
+      }
+    }
     addToast(t('repeatersPanel.cliAutoPingToast'), 'info');
     try {
       const pingOk = await onPing(nodeId);
-      if (pingOk === false) {
-        addToast(t('repeatersPanel.cliAutoPingFailed'), 'error');
-        return false;
+      if (pingOk === false || meshcoreTraceResultsRef.current.get(nodeId) == null) {
+        addToast(t('repeatersPanel.cliAutoPingAdvisory'), 'info');
       }
-      if (meshcoreTraceResultsRef.current.get(nodeId) != null || pingOk === true) return true;
-      addToast(t('repeatersPanel.cliAutoPingFailed'), 'error');
-      return false;
     } catch (e) {
       console.warn('[RepeatersPanel] CLI auto-ping failed ' + errLikeToLogString(e));
-      addToast(t('repeatersPanel.cliAutoPingFailed'), 'error');
-      return false;
+      addToast(
+        t(
+          meshcoreTraceCancelledForCliPreempt(e)
+            ? 'repeatersPanel.cliAutoPingBusy'
+            : 'repeatersPanel.cliAutoPingAdvisory',
+        ),
+        'info',
+      );
     }
   };
 
@@ -874,8 +900,17 @@ export default function RepeatersPanel({
     if (opts?.isCurrent && !opts.isCurrent()) throw new Error(t('infraConfig.sessionChanged'));
     if (!auth.ok) throw new Error(t('infraConfig.authCancelled'));
     if (auth.saved) refreshStoredSecrets();
-    const primed = await ensureCliRoutePrimed(nodeId);
-    if (!primed) throw new Error(t('repeatersPanel.cliAutoPingFailed'));
+    // Firmware drops CLI unless the sender is ACL admin — skip / no password must not send.
+    if (opts?.target !== 'companion' && !hasResolvableAdminPassword(nodeId, node?.hw_model)) {
+      throw new Error(
+        t(
+          node?.hw_model === 'Room'
+            ? 'repeatersPanel.roomCliNeedsAdminPassword'
+            : 'repeatersPanel.repeaterCliNeedsAdminPassword',
+        ),
+      );
+    }
+    await ensureCliRoutePrimed(nodeId);
     if (opts?.isCurrent && !opts.isCurrent()) throw new Error(t('infraConfig.sessionChanged'));
     return onSendCliCommand(nodeId, normalizeMeshcoreCliCommand(command), opts);
   };
@@ -1205,7 +1240,7 @@ export default function RepeatersPanel({
                   const cliHopCount =
                     traceResult != null
                       ? meshcoreTracePathLenToHops(traceResult.pathLen)
-                      : (node.hops_away ?? 0);
+                      : (resolveCliHopsAway?.(node.node_id) ?? node.hops_away ?? 0);
                   const showCliMultiHopHint = cliHopCount > 0 && traceResult == null;
                   const neighborErrorRaw = meshcoreNeighborErrors?.get(node.node_id);
                   const statusErrorText = statusErrorRaw
@@ -1395,7 +1430,25 @@ export default function RepeatersPanel({
                             <span className="text-muted">—</span>
                           )}
                         </td>
-                        <td className="py-2 pr-4">{formatUptime(t, status?.totalUpTimeSecs)}</td>
+                        <td
+                          className="py-2 pr-4"
+                          title={
+                            status?.fetchedAt
+                              ? t('repeatersPanel.uptimeFetchedAgo', {
+                                  time: formatRelativeTime(t, status.fetchedAt),
+                                })
+                              : undefined
+                          }
+                        >
+                          {formatUptime(t, status?.totalUpTimeSecs)}
+                          {status?.fetchedAt && status.totalUpTimeSecs ? (
+                            <span className="text-muted text-label block">
+                              {t('repeatersPanel.uptimeFetchedAgo', {
+                                time: formatRelativeTime(t, status.fetchedAt),
+                              })}
+                            </span>
+                          ) : null}
+                        </td>
                         <td className="py-2 pr-4">
                           {airPct != null ? `${airPct.toFixed(1)}%` : '—'}
                         </td>

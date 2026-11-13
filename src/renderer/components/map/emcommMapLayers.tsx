@@ -1,6 +1,6 @@
-import type { LeafletMouseEvent } from 'leaflet';
+import { DomEvent, type LeafletMouseEvent } from 'leaflet';
 import { Ruler } from 'lucide-react-motion';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CircleMarker, Polyline, Rectangle, Tooltip, useMap } from 'react-leaflet';
 
@@ -12,6 +12,7 @@ import {
 } from '@/renderer/lib/map/mgrsGrid';
 import type { EmergencyIncident } from '@/renderer/lib/mecp/incidentTypes';
 import { useIncidentStore } from '@/renderer/stores/incidentStore';
+import { useMapToolStore } from '@/renderer/stores/mapToolStore';
 
 import { MAP_CONTROL_CLASS } from './mapControlClasses';
 
@@ -123,8 +124,27 @@ export function MgrsGridLayer() {
 export function MeasureControl() {
   const map = useMap();
   const { t } = useTranslation();
-  const [active, setActive] = useState(false);
+  const controlRef = useRef<HTMLDivElement>(null);
   const [points, setPoints] = useState<LatLon[]>([]);
+  const active = useMapToolStore((s) => s.measureActive);
+  const setMeasureActive = useMapToolStore((s) => s.setMeasureActive);
+  const setProfileActive = useMapToolStore((s) => s.setProfileActive);
+
+  useEffect(() => {
+    const el = controlRef.current;
+    if (!el) return;
+    DomEvent.disableClickPropagation(el);
+    DomEvent.disableScrollPropagation(el);
+    return () => {
+      DomEvent.off(el);
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      setMeasureActive(false);
+    };
+  }, [setMeasureActive]);
 
   useEffect(() => {
     if (!active) return;
@@ -142,6 +162,7 @@ export function MeasureControl() {
     <>
       <div className="leaflet-top leaflet-left" style={{ pointerEvents: 'none' }}>
         <div
+          ref={controlRef}
           className="leaflet-control flex flex-col items-start gap-1"
           style={{ marginTop: '120px', pointerEvents: 'auto' }}
         >
@@ -151,8 +172,11 @@ export function MeasureControl() {
             aria-label={t(active ? 'mapPanel.measureStopAria' : 'mapPanel.measureStartAria')}
             title={t(active ? 'mapPanel.measureStopAria' : 'mapPanel.measureStartAria')}
             className={MAP_CONTROL_CLASS}
-            onClick={() => {
-              setActive((a) => !a);
+            onClick={(e) => {
+              e.stopPropagation();
+              const next = !active;
+              if (next) setProfileActive(false);
+              setMeasureActive(next);
               setPoints([]);
             }}
           >

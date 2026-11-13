@@ -8,6 +8,11 @@ export const MapPanel = lazy(() => import('./components/MapPanel'));
 export const ModulePanel = lazy(() => import('./components/ModulePanel'));
 export const RadioPanel = lazy(() => import('./components/RadioPanel'));
 export const IncidentPanel = lazy(() => import('./components/incident/IncidentPanel'));
+export const ScheduledBroadcastsPanel = lazy(
+  () => import('./components/scheduledBroadcasts/ScheduledBroadcastsPanel'),
+);
+export const TeamContactsPanel = lazy(() => import('./components/teamRoster/TeamContactsPanel'));
+export const TeamRosterPanel = lazy(() => import('./components/teamRoster/TeamRosterPanel'));
 export const RepeatersPanel = lazy(() => import('./components/RepeatersPanel'));
 export const RoomsPanel = lazy(() => import('./components/RoomsPanel'));
 export const SecurityPanel = lazy(() => import('./components/SecurityPanel'));

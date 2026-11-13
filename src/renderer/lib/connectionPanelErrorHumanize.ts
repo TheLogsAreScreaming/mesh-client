@@ -17,6 +17,7 @@ import {
   gattBleErrorI18nKey,
   isMeshcoreSetupAbortError,
 } from './bleConnectErrors';
+import { isDeviceChooserCancel } from './deviceChooserCancel';
 import { isMeshcoreI18nKey } from './meshcore/meshcoreMessageI18n';
 
 export function hostFromAddressInput(address: string): string {
@@ -56,6 +57,7 @@ function runtimePlatform(): RuntimePlatform {
 }
 
 export function humanizeSerialError(err: unknown, t: TFunction): string {
+  if (isDeviceChooserCancel(err)) return '';
   const msg = err instanceof Error ? err.message : String(err);
   const platform = runtimePlatform();
   if (/access denied|permission|not allowed/i.test(msg)) {
@@ -65,6 +67,16 @@ export function humanizeSerialError(err: unknown, t: TFunction): string {
         : platform === 'linux'
           ? t('connectionPanel.humanize.serial.accessDeniedLinuxHint')
           : t('connectionPanel.humanize.serial.disconnectedHint');
+    return t('connectionPanel.humanize.prefixedHint', { message: msg, hint });
+  }
+  // Chromium often reports EACCES/EBUSY as this generic string (no "access denied").
+  if (/failed to open serial port/i.test(msg)) {
+    const hint =
+      platform === 'linux'
+        ? t('connectionPanel.humanize.serial.openFailedLinuxHint')
+        : platform === 'win32'
+          ? t('connectionPanel.humanize.serial.openFailedWindowsHint')
+          : t('connectionPanel.humanize.serial.openFailedGenericHint');
     return t('connectionPanel.humanize.prefixedHint', { message: msg, hint });
   }
   if (/no port|not found|disconnected|device not found/i.test(msg)) {
@@ -181,13 +193,7 @@ export function humanizeBleError(err: unknown, t: TFunction): string {
       : t('connectionPanel.humanize.ble.adapterGenericHint');
     return t('connectionPanel.humanize.prefixedHint', { message: msg, hint });
   }
-  if (/User cancelled the requestDevice\(\) chooser/i.test(msg)) {
-    return t('connectionPanel.humanize.prefixedHint', {
-      message: msg,
-      hint: t('connectionPanel.humanize.ble.chooserCancelledHint'),
-    });
-  }
-  if (/bluetoothctl not found/i.test(msg)) {
+  if (/bluetoothctl not found|BlueZ D-Bus unavailable/i.test(msg)) {
     return t('connectionPanel.humanize.prefixedHint', {
       message: msg,
       hint: t('connectionPanel.humanize.ble.bluetoothctlMissingHint'),

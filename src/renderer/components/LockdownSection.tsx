@@ -9,6 +9,7 @@ import {
 } from '@/renderer/lib/meshtastic/meshtasticLockdown';
 
 import { INPUT_BOX_CLASS } from './ui/formClasses';
+import { SettingsSection } from './ui/SettingsSection';
 
 interface Props {
   isConnected: boolean;
@@ -55,20 +56,21 @@ export default function LockdownSection({ isConnected, onSendLockdownAuth }: Pro
   const controlsDisabled = !isConnected || busy;
 
   return (
-    <div
-      data-setting-anchor="radio.lockdown.passphrase"
-      className="bg-deep-black border-ink-800 rounded-container space-y-3 border p-4"
+    <SettingsSection
+      anchorId="radio.lockdown.passphrase"
+      bodyClassName="space-y-3"
+      title={
+        <span className="inline-flex items-center gap-2">
+          {locked ? (
+            <Lock className="text-warning-400 h-4 w-4" aria-hidden="true" />
+          ) : (
+            <LockOpen className="text-success-400 h-4 w-4" aria-hidden="true" />
+          )}
+          {t('radioPanel.lockdown.title')}
+        </span>
+      }
+      description={t('radioPanel.lockdown.description')}
     >
-      <h3 className="text-ink-300 text-body-lg flex items-center gap-2 font-medium">
-        {locked ? (
-          <Lock className="text-warning-400 h-4 w-4" aria-hidden="true" />
-        ) : (
-          <LockOpen className="text-success-400 h-4 w-4" aria-hidden="true" />
-        )}
-        {t('radioPanel.lockdown.title')}
-      </h3>
-      <p className="text-ink-400 text-label">{t('radioPanel.lockdown.description')}</p>
-
       <dl className="text-label grid grid-cols-2 gap-x-4 gap-y-1">
         <dt className="text-muted">{t('radioPanel.lockdown.stateLabel')}</dt>
         <dd className="text-ink-200">
@@ -157,6 +159,6 @@ export default function LockdownSection({ isConnected, onSendLockdownAuth }: Pro
       </div>
 
       {error !== null && <p className="text-label text-danger-400">{error}</p>}
-    </div>
+    </SettingsSection>
   );
 }

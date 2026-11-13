@@ -287,3 +287,12 @@ describe('meshNodeToCot user icon', () => {
     expect(meshNodeToCot(node, 'meshcore')).not.toContain('<usericon');
   });
 });
+
+describe('chat endpoint', () => {
+  it('makes the marker a chat contact only when asked', () => {
+    expect(meshNodeToCot(makeNode(), 'meshcore', { chatEndpoint: true })).toContain(
+      '<contact callsign="Test Node" endpoint="*:-1:stcp"/>',
+    );
+    expect(meshNodeToCot(makeNode(), 'meshcore')).toContain('<contact callsign="Test Node"/>');
+  });
+});

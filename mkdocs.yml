@@ -97,10 +97,21 @@ nav:
   - Home: index.md
   - Install: install.md
   - Features: features.md
+  - Release notes:
+      - Catch up (unreleased): release-notes/ai-catch-up.md
   - User Guide:
+      - Chat and messaging: chat.md
+      - Catch up (AI summaries): ai-catch-up.md
+      - Scheduled Broadcasts: scheduled-broadcasts.md
+      - Maps and offline maps: maps.md
+      - TAK gateway: tak.md
+      - Meshtastic guide: meshtastic.md
+      - MeshCore guide: meshcore.md
+      - Settings and shortcuts: settings.md
       - Live Traffic Map: live-traffic-map.md
       - EMCOMM (MECP & Incident Command): emcomm.md
       - Key Backup & Crypto: key-backup-and-crypto.md
+      - Database Encryption Decision: database-encryption-decision.md
       - Meshtastic Telemetry: meshtastic-telemetry-local-client.md
       - Notification Sounds: notification-sounds.md
       - Localization: localization.md
@@ -125,16 +136,24 @@ nav:
           - Architecture quick reference: development/architecture-quick-ref.md
           - Common issues: development/common-issues.md
           - Renderer hooks: development/renderer-hooks.md
+          - Renderer storage: development/renderer-storage.md
+          - Renderer origin and recovery: development/renderer-origin-coi.md
           - BLE and serial: development/ble-serial.md
           - Chat: development/chat.md
+          - Scheduled Broadcasts: development/scheduled-broadcasts.md
+          - Contact Cards / Team Roster: development/team-roster.md
+          - AI summaries: development/ai-summarization.md
           - Connection panel: development/connection-panel.md
           - Meshtastic: development/meshtastic.md
           - MQTT: development/mqtt.md
           - MeshCore Repeaters: development/meshcore-repeaters.md
           - MeshCore Rooms: development/meshcore-rooms.md
+          - MeshCore companion CLI: development/meshcore-companion-cli.md
           - EMCOMM: development/emcomm.md
           - MECP: development/mecp.md
+          - TAK gateway: development/tak.md
           - Offline maps: development/offline-maps.md
+          - Internet weather: development/internet-weather.md
           - Live packet map: development/live-packet-map.md
           - Settings search: development/settings-search.md
   - Project:

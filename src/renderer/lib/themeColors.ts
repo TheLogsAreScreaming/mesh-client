@@ -52,7 +52,7 @@ export const THEME_CSS_VARS: Record<ThemeColorKey, string> = {
   messageActionButtonHover: '--color-message-action-button-hover',
 };
 
-/** Default hex values — must match src/renderer/styles.css @theme block. */
+/** Default hex values — must match src/renderer/styles.css @theme block (Slate + Sky). */
 export const DEFAULT_THEME_COLORS: Record<ThemeColorKey, string> = {
   appBg: '#1b1b1b',
   sidebarActiveBg: '#333333',

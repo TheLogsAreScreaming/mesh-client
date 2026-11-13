@@ -6,8 +6,8 @@ import { isValidLatLon } from '../../../shared/geoCoords';
 import { meshcoreContactDisplayName } from '../../../shared/meshcoreContactSanitize';
 import { withTimeout } from '../../../shared/withTimeout';
 import { resolveChannelKeyForPersist } from '../../lib/channelIdentity';
-import { MAX_IN_MEMORY_CHAT_MESSAGES, trimChatMessagesToMax } from '../../lib/chatInMemoryBuffer';
 import { errLikeToLogString } from '../../lib/errLikeToLogString';
+import { hasStoredStaticGps, overlayStoredStaticGpsOnSelfNode } from '../../lib/gpsSource';
 import type {
   MeshCoreConnection,
   MeshcoreContactDbRow,
@@ -19,14 +19,16 @@ import {
 } from '../../lib/meshcore/meshcorePubKeyRegistry';
 import {
   meshcoreChatMessagesForDisplay,
+  meshcoreDbMessageDisplay,
   meshcoreMessageMatchesReplyKey,
   meshcorePayloadIsTapbackEmojiOnly,
-  normalizeMeshcoreIncomingText,
 } from '../../lib/meshcoreChannelText';
+import { loadPersistedMeshcoreSelfNodeId } from '../../lib/meshcoreLastSelfNodeId';
 import {
   isMeshcoreLocallyDeletedContact,
   shouldApplyMeshcoreContact,
 } from '../../lib/meshcoreLocallyDeletedContacts';
+import { trimMeshcoreChatMessages } from '../../lib/meshcoreMessageMemoryWindow';
 import { observeMeshcoreMessageLocalOrder } from '../../lib/meshcoreMessageOrder';
 import {
   CONTACT_TYPE_LABELS,
@@ -51,6 +53,7 @@ import {
   MESHCORE_CHANNEL_RF_DEDUP_WINDOW_MS,
   MESHCORE_CROSS_TRANSPORT_DEDUP_WINDOW_MS,
   MESHCORE_DM_RF_DEDUP_WINDOW_MS,
+  MESHCORE_REPEATER_REPLY_CAP_MS,
   MESHCORE_ROOM_POST_DEDUP_WINDOW_MS,
   MESHCORE_TAPBACK_ECHO_DEDUP_WINDOW_MS,
 } from '../../lib/timeConstants';
@@ -319,12 +322,16 @@ export const INITIAL_STATE: DeviceState = {
 
 export const MAX_DEVICE_LOGS = 500;
 
-/** Repeater RPCs (tracePath, getStatus, getTelemetry, sendBinaryRequest neighbours). */
-const MESHCORE_REPEATER_RPC_TIMEOUT_MS = 120_000;
+/**
+ * Hard cap for Status / Telemetry / Neighbors reply waits (receipt-derived arm uses the same cap).
+ * Trace/ping keeps a separate longer budget via MESHCORE_TRACE_TIMEOUT_MS.
+ */
+const MESHCORE_REPEATER_RPC_TIMEOUT_MS = MESHCORE_REPEATER_REPLY_CAP_MS;
 export const MESHCORE_STATUS_TIMEOUT_MS = MESHCORE_REPEATER_RPC_TIMEOUT_MS;
 export const MESHCORE_TELEMETRY_TIMEOUT_MS = MESHCORE_REPEATER_RPC_TIMEOUT_MS;
 export const MESHCORE_NEIGHBORS_TIMEOUT_MS = MESHCORE_REPEATER_RPC_TIMEOUT_MS;
-export const MESHCORE_TRACE_TIMEOUT_MS = MESHCORE_REPEATER_RPC_TIMEOUT_MS;
+/** TracePath / ping UI timeout budget (not the admin receipt-derived reply arm). */
+export const MESHCORE_TRACE_TIMEOUT_MS = 120_000;
 /** Neighbors RPC is unlikely to succeed beyond this hop count on USB serial; UI disables the action. */
 export const MESHCORE_NEIGHBORS_MAX_RECOMMENDED_HOPS = 8;
 /** Request page size for GetNeighbours; firmware reply buffers often return fewer rows (~11 at 6-byte prefixes). */
@@ -498,8 +505,15 @@ export function meshcoreChannelRfMatch(
   if (existing.channel !== incoming.channel) return false;
   if ((existing.to ?? undefined) !== (incoming.to ?? undefined)) return false;
   if ((existing.replyId ?? undefined) !== (incoming.replyId ?? undefined)) return false;
-  const existingBody = existing.meshcoreDedupeKey ?? existing.payload;
-  const incomingBody = incoming.meshcoreDedupeKey ?? incoming.payload;
+  const existingWire = existing.meshcoreDedupeKey;
+  const incomingWire = incoming.meshcoreDedupeKey;
+  // Distinct wire identities (e.g. plain body vs `@[target] body`) must not merge even when
+  // normalized display payloads match.
+  if (existingWire != null && incomingWire != null && existingWire !== incomingWire) {
+    return false;
+  }
+  const existingBody = existingWire ?? existing.payload;
+  const incomingBody = incomingWire ?? incoming.payload;
   if (existingBody !== incomingBody && existing.payload !== incoming.payload) return false;
   if (Math.abs(existing.timestamp - incoming.timestamp) > windowMs) return false;
   return true;
@@ -774,7 +788,7 @@ function meshcoreLoosePersistenceMatchKey(msg: ChatMessage): string {
   ].join('|');
 }
 
-/** RF/MQTT can deliver lines before `getMeshcoreMessages` resolves; replacing state would drop them. */
+/** RF/MQTT can deliver lines before hydration `getMeshcoreMessagesForHydration` resolves; replacing state would drop them. */
 export function mergeMeshcoreDbHydrationWithLive(
   prev: ChatMessage[],
   fromDb: ChatMessage[],
@@ -786,7 +800,7 @@ export function mergeMeshcoreDbHydrationWithLive(
       if (a.timestamp !== b.timestamp) return a.timestamp - b.timestamp;
       return (a.id ?? 0) - (b.id ?? 0);
     });
-    return trimChatMessagesToMax(sorted, MAX_IN_MEMORY_CHAT_MESSAGES);
+    return trimMeshcoreChatMessages(sorted);
   }
   const dbLoose = new Set(fromDb.map(meshcoreLoosePersistenceMatchKey));
   const inFlight = prev.filter((m) => {
@@ -798,7 +812,7 @@ export function mergeMeshcoreDbHydrationWithLive(
     if (a.timestamp !== b.timestamp) return a.timestamp - b.timestamp;
     return (a.id ?? 0) - (b.id ?? 0);
   });
-  return trimChatMessagesToMax(merged, MAX_IN_MEMORY_CHAT_MESSAGES);
+  return trimMeshcoreChatMessages(merged);
 }
 
 /** Hop metadata row from shared `nodes` table. */
@@ -811,11 +825,13 @@ export interface MeshcoreSavedNodeHopRow {
 /**
  * Build a MeshNode map from persisted MeshCore contacts + hop counts (+ optional message stubs).
  * Mirrors mount hydration in `useMeshcoreRuntime.reloadMeshcoreNodesFromDb`.
+ * When App static GPS is set, overlays those coords on the self-node (does not require Share).
  */
 export function buildMeshcoreNodeMapFromDb(
   dbContacts: MeshcoreContactDbRow[],
   savedNodes: MeshcoreSavedNodeHopRow[],
   messages: ChatMessage[] = [],
+  selfNodeId?: number,
 ): Map<number, MeshNode> {
   const initial = new Map<number, MeshNode>();
   for (const row of dbContacts) {
@@ -856,10 +872,13 @@ export function buildMeshcoreNodeMapFromDb(
       mergedInitial.set(n.node_id, { ...existing, hops_away: hopCount });
     }
   }
-  return mergedInitial;
+  if (!hasStoredStaticGps()) return mergedInitial;
+  const resolvedSelf =
+    selfNodeId != null && selfNodeId > 0 ? selfNodeId : loadPersistedMeshcoreSelfNodeId();
+  return overlayStoredStaticGpsOnSelfNode(mergedInitial, resolvedSelf);
 }
 
-/** Row shape from `db:getMeshcoreMessages` — shared by initConn, mount load, refreshMessagesFromDb. */
+/** Row shape from MeshCore message DB IPC — shared by initConn, mount load, refreshMessagesFromDb. */
 export interface MeshcoreMessageDbRow {
   id: number;
   local_order?: number | null;
@@ -881,26 +900,6 @@ export interface MeshcoreMessageDbRow {
   room_server_id?: number | null;
   radio_node_id?: number | null;
   channel_key?: string | null;
-}
-
-/**
- * Legacy DB rows may store the full RF line `DisplayName: body` with no usable sender_name.
- * Only then run wire-style normalize; otherwise persisted payload is already display text
- * (re-applying normalize breaks any body containing `:` e.g. `Re: …`, `12:30 …`).
- */
-function shouldLegacyNormalizeMeshcoreDbPayload(
-  senderName: string | null | undefined,
-  payload: string,
-): boolean {
-  if (senderName && senderName !== 'Unknown') return false;
-  const t = payload.trim();
-  const ci = t.indexOf(':');
-  if (ci <= 0 || t[ci + 1] !== ' ' || ci >= t.length - 1) return false;
-  const left = t.slice(0, ci).trim();
-  const right = t.slice(ci + 1).trim();
-  if (left.length < 6 || right.length < 1) return false;
-  if (left.includes('\n')) return false;
-  return true;
 }
 
 function coerceOptionalDbInt(v: number | string | null | undefined): number | undefined {
@@ -1147,25 +1146,11 @@ export function mapMeshcoreDbRowsToChatMessages(rows: MeshcoreMessageDbRow[]): C
   const mapped: ChatMessage[] = [];
   for (const r of rows) {
     if (isMeshcoreTransportStatusChatLine(r.payload)) continue;
-    let displayPayload = r.payload;
-    const normalized = normalizeMeshcoreIncomingText(r.payload);
-    let displayName = r.sender_name && r.sender_name !== 'Unknown' ? r.sender_name : 'Unknown';
-    if (normalized.senderName) {
-      const storedName = r.sender_name?.trim();
-      if (!storedName || storedName === 'Unknown') {
-        displayPayload = normalized.payload;
-        displayName = normalized.senderName;
-      } else if (normalized.senderName === storedName) {
-        displayPayload = normalized.payload;
-      }
-    } else if (shouldLegacyNormalizeMeshcoreDbPayload(r.sender_name, r.payload)) {
-      displayPayload = normalized.payload;
-      displayName = normalized.senderName ?? displayName;
-    }
-    let senderId = r.sender_id ?? 0;
-    if (senderId === 0 && displayName && displayName !== 'Unknown') {
-      senderId = meshcoreChatStubNodeIdFromDisplayName(displayName);
-    }
+    const {
+      payload: displayPayload,
+      sender_name: displayName,
+      sender_id: senderId,
+    } = meshcoreDbMessageDisplay(r);
     const localOrder = r.local_order ?? r.id;
     observeMeshcoreMessageLocalOrder(localOrder);
     mapped.push({
@@ -1198,6 +1183,7 @@ export function mapMeshcoreDbRowsToChatMessages(rows: MeshcoreMessageDbRow[]): C
   }
   return meshcoreChatMessagesForDisplay(
     meshcoreReconcileRoomSenderIds(meshcoreReconcileChannelSenderIds(mapped)),
+    { selfNodeId: loadPersistedMeshcoreSelfNodeId() },
   );
 }
 

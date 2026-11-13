@@ -15,6 +15,8 @@ import type { ChatMessage, MeshProtocol } from '@/renderer/lib/types';
 import { isHiddenWeatherPost } from '@/renderer/stores/weatherFilterStore';
 import { isMeshtasticBroadcastNodeNum } from '@/shared/nodeNameUtils';
 
+import { getChatNotificationMode, mentionsLocalChatIdentity } from './chatNotificationPolicy';
+
 /** Chat rows used for unread badges (excludes tapbacks and MeshCore room-server traffic). */
 export function filterRegularChatMessages(
   messages: readonly ChatMessage[],
@@ -60,7 +62,21 @@ export function resolveChatDmPeer(
   if (protocol === 'meshcore' && isMeshcoreRoomChatMessage(msg)) return undefined;
   const effectiveTo = msg.to;
   const isOwn = (id: number) => ownNodeIds.has(id);
-  if (effectiveTo == null) return undefined;
+  if (effectiveTo == null) {
+    // Inbound MeshCore DMs can be stored with channel -1 and `to` unset when our
+    // node number was not known yet. The peer is the sender, same as `to: 0`.
+    if (
+      protocol === 'meshcore' &&
+      msg.channel === -1 &&
+      msg.sender_id > 0 &&
+      !isOwn(msg.sender_id)
+    ) {
+      const peerU32 = msg.sender_id >>> 0;
+      if (options?.excludeDmPeer?.(peerU32)) return undefined;
+      return peerU32;
+    }
+    return undefined;
+  }
   let peer: number | undefined;
   if (isOwn(msg.sender_id) && !isOwn(effectiveTo)) peer = effectiveTo;
   else if (isOwn(effectiveTo) && !isOwn(msg.sender_id)) peer = msg.sender_id;
@@ -286,6 +302,7 @@ const NOTIFICATION_TYPE_PRIORITY: Record<ChatNotificationType, number> = {
   // Operational alerts are not message-driven
   connectionLost: -1,
   batteryLow: -1,
+  diagnosticError: -1,
 };
 
 export function resolveChatNotificationType(
@@ -321,6 +338,11 @@ export function resolveChatNotificationType(
 
   if (peer != null) return 'dm';
 
+  if (
+    getChatNotificationMode() === 'mentions' &&
+    !mentionsLocalChatIdentity(msg.payload, protocol, ownNodeIds, msg.replyPreviewSender)
+  )
+    return null;
   return 'channel';
 }
 

@@ -11,6 +11,7 @@ import {
   RETICULUM_RUNTIME_PREFIX,
   roomsSavedPasswordsCrossKeyIssues,
   roomsSidebarMarkerCrossKeyIssues,
+  scheduledBroadcastStatusCrossKeyIssues,
 } from './check-i18n-quality.mjs';
 
 function expectIssue(issues, substring) {
@@ -521,6 +522,76 @@ describe('localeStringQualityIssues', () => {
         'This radio has no Wi-Fi. Enable “Proxy to client” so the app forwards MQTT, or use LoRa “OK to MQTT” instead of device-side MQTT.',
     });
     expectIssue(issues, 'Wi-Fi" without spaces');
+  });
+
+  it('flags spaces inside chat mention syntax from auto-translate', () => {
+    for (const val of [
+      '@ [Your name] 님에 대한 알림.',
+      '@[ Your name]の通知。',
+      'RRC는 @ nickname을 사용',
+    ]) {
+      const issues = localeStringQualityIssues({
+        locale: 'ko',
+        flatKey: 'notificationPolicy.help',
+        val,
+        enVal: 'Mentions mode alerts for @[Your name]. RRC uses @nickname.',
+      });
+      expectIssue(issues, 'mention syntax');
+    }
+  });
+
+  it('flags broken ATAK mention tokens even when English has prose @ and', () => {
+    const enVal =
+      "To reply to someone from ATAK, start with @ and the start of their name: @silver are you on? goes out as MeshCore's reply @[Silver Eagle] are you on?. @@ replies to whoever spoke last.";
+    for (const val of [
+      'mulai dengan @ dan nama: @ silver are you on? @[ Silver Eagle] @@',
+      '开始 @ 和名字： @ silver @ [Silver Eagle] @ @',
+      '@ silver @[ Silver Eagle] @ @',
+      '@[ Elang Perak] are you on?',
+      '@[  Nama] @@',
+    ]) {
+      const issues = localeStringQualityIssues({
+        locale: 'id',
+        flatKey: 'takServerPanel.channelRepliesHint',
+        val,
+        enVal,
+      });
+      expectIssue(issues, 'mention syntax');
+    }
+    const kept = localeStringQualityIssues({
+      locale: 'id',
+      flatKey: 'takServerPanel.channelRepliesHint',
+      val: 'mulai dengan @ dan nama: @silver are you on? @[Silver Eagle] @@',
+      enVal,
+    });
+    expect(kept.filter((issue) => issue.includes('mention syntax'))).toEqual([]);
+    const translated = localeStringQualityIssues({
+      locale: 'id',
+      flatKey: 'takServerPanel.channelRepliesHint',
+      val: 'mulai dengan @ dan nama: @silver are you on? @[Elang Perak] @@',
+      enVal,
+    });
+    expect(translated.filter((issue) => issue.includes('mention syntax'))).toEqual([]);
+  });
+
+  it('accepts contiguous translated mention placeholders', () => {
+    const issues = localeStringQualityIssues({
+      locale: 'de',
+      flatKey: 'notificationPolicy.help',
+      val: 'Der Erwähnungsmodus benachrichtigt bei @[Ihr Name]. RRC verwendet @Nickname.',
+      enVal: 'Mentions mode alerts for @[Your name]. RRC uses @nickname.',
+    });
+    expect(issues.filter((issue) => issue.includes('mention syntax'))).toEqual([]);
+  });
+
+  it('allows a bare @ when English also writes one', () => {
+    const issues = localeStringQualityIssues({
+      locale: 'de',
+      flatKey: 'connectionPanel.channelPsksMqttOnlyIndexHint',
+      val: 'Verwenden Sie LongFast@1=AQ==. LongFast ohne @ wird Slot 0 zugeordnet.',
+      enVal: 'Use LongFast@1=AQ==. LongFast without @ maps to slot 0.',
+    });
+    expect(issues.filter((issue) => issue.includes('mention syntax'))).toEqual([]);
   });
 
   it('flags CJK contamination in Italian', () => {
@@ -2507,5 +2578,154 @@ describe('i18n accuracy sweep (meaning-gated rules)', () => {
       val: 'Non sono ancora disponibili dati sull’utilizzo del canale',
     });
     expect(issues.some((msg) => msg.includes('dash placeholder'))).toBe(false);
+  });
+});
+
+describe('audit locale guards', () => {
+  it('flags glossary junk and unchanged weather conditions', () => {
+    expectIssue(
+      localeStringQualityIssues({
+        locale: 'de',
+        flatKey: 'internetWeather.conditions.mainlyClear',
+        enVal: 'Mainly clear',
+        val: 'Überwiegend klarweather condition',
+      }),
+      'glossary artifact',
+    );
+    expectIssue(
+      localeStringQualityIssues({
+        locale: 'ko',
+        flatKey: 'internetWeather.conditions.clear',
+        enVal: 'Clear',
+        val: '책임',
+      }),
+      'false friend',
+    );
+    expectIssue(
+      localeStringQualityIssues({
+        locale: 'zh',
+        flatKey: 'internetWeather.conditions.snow',
+        enVal: 'Snow',
+        val: 'Snow',
+      }),
+      'identical to English',
+    );
+  });
+
+  it('flags Open-Meteo splitting, PLC, RRC, CAT suffix, and missed-status false friends', () => {
+    expectIssue(
+      localeStringQualityIssues({
+        locale: 'id',
+        flatKey: 'internetWeather.enableHint',
+        enVal: 'Sends the map area you are viewing to Open-Meteo and RainViewer.',
+        val: 'Ke Open - Meteo',
+      }),
+      'Open-Meteo',
+    );
+    expect(
+      localeStringQualityIssues({
+        locale: 'id',
+        flatKey: 'weatherFilter.onlinePlaceLookupHint',
+        enVal: 'Open-Meteo',
+        val: 'Open - Meteo',
+      }),
+    ).toEqual([]);
+    expectIssue(
+      localeStringQualityIssues({
+        locale: 'de',
+        flatKey: 'diagnosticAlerts.title',
+        enVal: 'Diagnostics error',
+        val: 'PLC-Diagnosefehler',
+      }),
+      'PLC-',
+    );
+    expectIssue(
+      localeStringQualityIssues({
+        locale: 'ru',
+        flatKey: 'scheduledBroadcasts.intro',
+        enVal: 'RRC rooms',
+        val: 'комнаты СУКП ОР',
+      }),
+      'RRC',
+    );
+    expectIssue(
+      localeStringQualityIssues({
+        locale: 'uk',
+        flatKey: 'scheduledBroadcasts.dayOfMonth',
+        enVal: 'Day of month',
+        val: 'День місяця-04',
+      }),
+      'CAT suffix',
+    );
+    expectIssue(
+      localeStringQualityIssues({
+        locale: 'de',
+        flatKey: 'scheduledBroadcasts.dayOfMonth',
+        enVal: 'Day of month',
+        val: 'Tag im Monat-04',
+      }),
+      'CAT suffix',
+    );
+    expect(
+      localeStringQualityIssues({
+        locale: 'de',
+        flatKey: 'scheduledBroadcasts.dayOfMonth',
+        enVal: 'Day of month',
+        val: 'ESP32-01',
+      }).some((msg) => msg.includes('CAT suffix')),
+    ).toBe(false);
+    expectIssue(
+      localeStringQualityIssues({
+        locale: 'ja',
+        flatKey: 'scheduledBroadcasts.status.missed',
+        enVal: 'Missed',
+        val: '欠席',
+      }),
+      '欠席',
+    );
+    expectIssue(
+      localeStringQualityIssues({
+        locale: 'zh',
+        flatKey: 'scheduledBroadcasts.status.missed',
+        enVal: 'Missed',
+        val: '未抢到',
+      }),
+      '未抢到',
+    );
+  });
+
+  it('requires the audited English-identical keys to be translated', () => {
+    expectIssue(
+      localeStringQualityIssues({
+        locale: 'de',
+        flatKey: 'scheduledBroadcasts.invalidTime',
+        enVal: 'Enter a valid time.',
+        val: 'Enter a valid time.',
+      }),
+      'identical to English',
+    );
+    expect(
+      localeStringQualityIssues({
+        locale: 'de',
+        flatKey: 'internetWeather.layerRadar',
+        enVal: 'Radar',
+        val: 'Radar',
+      }),
+    ).toEqual([]);
+  });
+
+  it('flags skipped and missed when they collapse', () => {
+    expect(
+      scheduledBroadcastStatusCrossKeyIssues(
+        {
+          'scheduledBroadcasts.status.skipped': 'Пропущено',
+          'scheduledBroadcasts.status.missed': 'Пропущено',
+        },
+        {
+          'scheduledBroadcasts.status.skipped': 'Skipped',
+          'scheduledBroadcasts.status.missed': 'Missed',
+        },
+      ).join('\n'),
+    ).toContain('status.missed');
   });
 });

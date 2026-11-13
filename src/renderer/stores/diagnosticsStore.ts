@@ -8,6 +8,7 @@ import {
   DEFAULT_RF_DIAGNOSTIC_MAX_AGE_MS,
   DEFAULT_ROUTING_DIAGNOSTIC_MAX_AGE_MS,
   diagnosticRowsToRoutingMap,
+  filterRetiredRfDiagnosticRows,
   FOREIGN_LORA_RF_CONDITIONS,
   pruneDiagnosticRowsByAge,
   replaceRfRowsForNode,
@@ -44,6 +45,8 @@ import type {
   RfDiagnosticRow,
 } from '../lib/types';
 import { rfRowId } from '../lib/types';
+import { analysisWorkersAvailable, defaultCanUseWorkers } from '../lib/workers/analysisWorkerPool';
+import { runDiagnosticsAnalyzeBatch } from '../lib/workers/runDiagnosticsAnalyzeBatch';
 
 const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
 const FIFTEEN_MIN = 15 * 60 * 1000;
@@ -252,6 +255,7 @@ export function computeCuStats24h(samples: CuSample[]): {
 
 const DIAGNOSTIC_ROWS_STORAGE_KEY = 'mesh-client:diagnosticRowsSnapshot';
 const FOREIGN_LORA_STORAGE_KEY = 'mesh-client:foreignLoraDetectionsSnapshot';
+const CU_HISTORY_STORAGE_KEY = 'mesh-client:cuHistorySnapshot';
 
 interface ForeignLoraSnapshot {
   v: 1;
@@ -340,6 +344,97 @@ function clearPersistedForeignLoraSnapshot(): void {
     // catch-no-log-ok localStorage unavailable
   }
 }
+
+interface CuHistorySnapshot {
+  v: 1;
+  savedAt: number;
+  entries: [number, CuSample[]][];
+}
+
+function isValidCuSample(o: unknown): o is CuSample {
+  if (!o || typeof o !== 'object') return false;
+  const s = o as CuSample;
+  return (
+    typeof s.t === 'number' &&
+    Number.isFinite(s.t) &&
+    typeof s.cu === 'number' &&
+    Number.isFinite(s.cu)
+  );
+}
+
+function loadCuHistoryPersistEnabled(): boolean {
+  try {
+    const raw = localStorage.getItem('mesh-client:cuHistoryPersistEnabled');
+    if (raw === '0') return false;
+    if (raw === '1') return true;
+  } catch {
+    // catch-no-log-ok
+  }
+  return true;
+}
+
+function loadCuHistorySnapshot(): Map<number, CuSample[]> {
+  if (!loadCuHistoryPersistEnabled()) return new Map();
+  let raw: string | null;
+  try {
+    raw = localStorage.getItem(CU_HISTORY_STORAGE_KEY);
+  } catch {
+    // catch-no-log-ok localStorage unavailable during module init
+    return new Map();
+  }
+  const parsed = parseStoredJson<CuHistorySnapshot>(raw, 'diagnosticsStore loadCuHistorySnapshot');
+  if (parsed?.v !== 1 || !Array.isArray(parsed.entries)) return new Map();
+  const now = Date.now();
+  const cutoff = now - TWENTY_FOUR_HOURS;
+  const out = new Map<number, CuSample[]>();
+  for (const [nodeId, samples] of parsed.entries) {
+    if (typeof nodeId !== 'number' || !Array.isArray(samples)) continue;
+    const pruned = samples.filter(isValidCuSample).filter((s) => s.t > cutoff);
+    if (pruned.length > 0) out.set(nodeId, pruned);
+  }
+  return out;
+}
+
+let cuHistoryPersistTimer: ReturnType<typeof setTimeout> | null = null;
+
+function schedulePersistCuHistory(getMap: () => Map<number, CuSample[]>): void {
+  if (!loadCuHistoryPersistEnabled()) return;
+  if (cuHistoryPersistTimer) clearTimeout(cuHistoryPersistTimer);
+  cuHistoryPersistTimer = setTimeout(() => {
+    cuHistoryPersistTimer = null;
+    const map = getMap();
+    const now = Date.now();
+    const cutoff = now - TWENTY_FOUR_HOURS;
+    const entries: CuHistorySnapshot['entries'] = [];
+    for (const [nodeId, samples] of map) {
+      const pruned = samples.filter((s) => s.t > cutoff);
+      if (pruned.length > 0) entries.push([nodeId, pruned]);
+    }
+    try {
+      if (entries.length === 0) {
+        localStorage.removeItem(CU_HISTORY_STORAGE_KEY);
+        return;
+      }
+      const payload: CuHistorySnapshot = { v: 1, savedAt: now, entries };
+      localStorage.setItem(CU_HISTORY_STORAGE_KEY, JSON.stringify(payload));
+    } catch (e) {
+      console.warn('[diagnosticsStore] persist cuHistory failed ' + errLikeToLogString(e));
+    }
+  }, 500);
+}
+
+function clearPersistedCuHistorySnapshot(): void {
+  if (cuHistoryPersistTimer) {
+    clearTimeout(cuHistoryPersistTimer);
+    cuHistoryPersistTimer = null;
+  }
+  try {
+    localStorage.removeItem(CU_HISTORY_STORAGE_KEY);
+  } catch {
+    // catch-no-log-ok localStorage unavailable
+  }
+}
+
 const PERSIST_DEBOUNCE_MS = 2500;
 const LOCAL_STATS_BASELINE_RESET_MS = 60 * 60 * 1000;
 
@@ -426,6 +521,7 @@ function loadDiagnosticRowsSnapshot(): { rows: DiagnosticRow[]; savedAt: number 
   if (droppedCount > 0) {
     console.warn(`[diagnosticsStore] dropped ${droppedCount} invalid diagnostic rows on load`);
   }
+  rows = filterRetiredRfDiagnosticRows(rows);
   if (rows.length === 0 && parsed.rows.length > 0) return null;
   const now = Date.now();
   rows = pruneDiagnosticRowsByAge(
@@ -736,12 +832,13 @@ function saveMqttIgnoredNodes(nodes: Set<number>): void {
 migrateLegacyAutoTracerouteKeysOnce();
 const initialSnapshot = loadDiagnosticRowsSnapshot();
 const initialForeignLora = loadForeignLoraSnapshot();
+const initialCuHistory = loadCuHistorySnapshot();
 
 export const useDiagnosticsStore = create<DiagnosticsState>((set, get) => ({
   diagnosticRows: initialSnapshot?.rows ?? [],
   diagnosticRowsRestoredAt: initialSnapshot ? initialSnapshot.savedAt : null,
   hopHistory: new Map(),
-  cuHistory: new Map(),
+  cuHistory: initialCuHistory,
   packetStats: new Map(),
   noiseRateStats: new Map(),
   packetCache: new Map(),
@@ -953,6 +1050,9 @@ export const useDiagnosticsStore = create<DiagnosticsState>((set, get) => ({
         [node.node_id],
       );
     });
+    if (node.channel_utilization != null) {
+      schedulePersistCuHistory(() => get().cuHistory);
+    }
 
     // Buffer this node for debounced analysis
     diagnosticsDebounce.pendingAnalyses.set(node.node_id, { node, homeNode });
@@ -1296,13 +1396,12 @@ export const useDiagnosticsStore = create<DiagnosticsState>((set, get) => ({
         }
       }
 
-      // Recompute redundancy for this node from last 20 packets
-      const nodePackets: PacketRecord[] = [];
-      for (const rec of newPacketCache.values()) {
-        if (rec.fromNodeId === fromNodeId) nodePackets.push(rec);
-      }
-      nodePackets.sort((a, b) => b.lastSeen - a.lastSeen);
-      const recentPackets = nodePackets.slice(0, 20);
+      // Incremental last-20 by lastSeen (avoid full packetCache scan+sort on every ingest).
+      // New record first so stable sort keeps it ahead of same-timestamp retained rows.
+      const prevRecent = state.nodeRedundancy.get(fromNodeId)?.recentPackets ?? [];
+      const recentPackets = [record, ...prevRecent.filter((r) => r.packetId !== packetId)]
+        .sort((a, b) => b.lastSeen - a.lastSeen)
+        .slice(0, 20);
       const maxPaths = recentPackets.reduce((m, r) => Math.max(m, r.paths.length), 0);
       const score = Math.max(0, Math.min(Math.round(((maxPaths - 1) / 3) * 100), 100));
 
@@ -1362,126 +1461,179 @@ export const useDiagnosticsStore = create<DiagnosticsState>((set, get) => ({
       for (const [nodeId, node] of nodes) {
         if (nodeId !== myNodeNum) remoteEntries.push([nodeId, node]);
       }
-      runDiagnosticsInChunks(
-        remoteEntries,
-        DIAGNOSTICS_REANALYSIS_CHUNK_SIZE,
-        ([nodeId, node]) => {
-          const history = state.hopHistory.get(nodeId) ?? [];
-          const stats = state.packetStats.get(nodeId);
-          const ignoreMqtt = state.ignoreMqttEnabled || state.mqttIgnoredNodes.has(nodeId);
-          const noiseData = getNoiseStatsForNode(state.noiseRateStats, nodeId);
-          const traceHistory = state.meshcoreTraceHistory.get(nodeId);
-          const tracePathSnrs = traceHistory?.at(-1)?.pathSnrs;
-          const pathUpdatedTs = state.pathUpdatedTimestamps.get(nodeId);
-          const anomaly = analyzeNode(
-            node,
-            stats,
-            homeNode,
-            history,
-            ignoreMqtt,
-            distanceMultiplier,
-            state.distanceOffsetKm,
-            hopsThreshold,
-            capabilities,
-            noiseData,
-            tracePathSnrs,
-            pathUpdatedTs,
-          );
-          if (anomaly) newAnomalies.set(nodeId, anomaly);
-          else newAnomalies.delete(nodeId);
-        },
-        () => {
-          if (generation !== diagnosticsReanalysisGeneration) return;
-          let diagnosticRows = replaceRoutingRowsFromMap(state.diagnosticRows, newAnomalies);
-          const preserveRestoredRf = restoredAt != null;
-          const selfNode = nodes.get(myNodeNum);
-          if (selfNode && (hasLocalStatsData(selfNode) || selfNode.channel_utilization != null)) {
-            const baseline =
-              state.localStatsBaselines.get(myNodeNum) ??
-              (() => {
-                const next = new Map(state.localStatsBaselines);
-                next.set(myNodeNum, {
-                  rxTotal: selfNode.num_packets_rx ?? 0,
-                  rxDupe: selfNode.num_rx_dupe ?? 0,
-                  rxBad: selfNode.num_packets_rx_bad ?? 0,
-                  capturedAt: Date.now(),
-                });
-                set({ localStatsBaselines: next });
-                return next.get(myNodeNum)!;
-              })();
-            let baselineValue = baseline;
-            if (Date.now() - baselineValue.capturedAt > LOCAL_STATS_BASELINE_RESET_MS) {
-              const refreshed = {
+
+      const applyRoutingAnomalies = (routingAnomalies: Map<number, NodeAnomaly>) => {
+        for (const [nodeId, anomaly] of routingAnomalies) {
+          newAnomalies.set(nodeId, anomaly);
+        }
+        for (const [nodeId] of remoteEntries) {
+          if (!routingAnomalies.has(nodeId)) newAnomalies.delete(nodeId);
+        }
+      };
+
+      const finishAfterRouting = () => {
+        if (generation !== diagnosticsReanalysisGeneration) return;
+        let diagnosticRows = replaceRoutingRowsFromMap(state.diagnosticRows, newAnomalies);
+        const preserveRestoredRf = restoredAt != null;
+        const selfNode = nodes.get(myNodeNum);
+        if (selfNode && (hasLocalStatsData(selfNode) || selfNode.channel_utilization != null)) {
+          const baseline =
+            state.localStatsBaselines.get(myNodeNum) ??
+            (() => {
+              const next = new Map(state.localStatsBaselines);
+              next.set(myNodeNum, {
                 rxTotal: selfNode.num_packets_rx ?? 0,
                 rxDupe: selfNode.num_rx_dupe ?? 0,
                 rxBad: selfNode.num_packets_rx_bad ?? 0,
                 capturedAt: Date.now(),
-              };
-              baselineValue = refreshed;
-              const nextBaselines = new Map(state.localStatsBaselines);
-              nextBaselines.set(myNodeNum, refreshed);
-              set({ localStatsBaselines: nextBaselines });
-            }
-            const adjustedSelfNode: MeshNode = {
-              ...selfNode,
-              num_packets_rx: Math.max(0, (selfNode.num_packets_rx ?? 0) - baselineValue.rxTotal),
-              num_rx_dupe: Math.max(0, (selfNode.num_rx_dupe ?? 0) - baselineValue.rxDupe),
-              num_packets_rx_bad: Math.max(
-                0,
-                (selfNode.num_packets_rx_bad ?? 0) - baselineValue.rxBad,
-              ),
+              });
+              set({ localStatsBaselines: next });
+              return next.get(myNodeNum)!;
+            })();
+          let baselineValue = baseline;
+          if (Date.now() - baselineValue.capturedAt > LOCAL_STATS_BASELINE_RESET_MS) {
+            const refreshed = {
+              rxTotal: selfNode.num_packets_rx ?? 0,
+              rxDupe: selfNode.num_rx_dupe ?? 0,
+              rxBad: selfNode.num_packets_rx_bad ?? 0,
+              capturedAt: Date.now(),
             };
-            const cuStats24h = get().getCuStats24h(myNodeNum);
-            const findings = diagnoseConnectedNode(adjustedSelfNode, {
+            baselineValue = refreshed;
+            const nextBaselines = new Map(state.localStatsBaselines);
+            nextBaselines.set(myNodeNum, refreshed);
+            set({ localStatsBaselines: nextBaselines });
+          }
+          const adjustedSelfNode: MeshNode = {
+            ...selfNode,
+            num_packets_rx: Math.max(0, (selfNode.num_packets_rx ?? 0) - baselineValue.rxTotal),
+            num_rx_dupe: Math.max(0, (selfNode.num_rx_dupe ?? 0) - baselineValue.rxDupe),
+            num_packets_rx_bad: Math.max(
+              0,
+              (selfNode.num_packets_rx_bad ?? 0) - baselineValue.rxBad,
+            ),
+          };
+          const cuStats24h = get().getCuStats24h(myNodeNum);
+          const findings = diagnoseConnectedNode(adjustedSelfNode, {
+            cuStats24h: cuStats24h ?? undefined,
+            capabilities,
+          });
+          if (findings.length > 0) {
+            diagnosticRows = replaceRfRowsForNode(diagnosticRows, myNodeNum, findings);
+          } else if (!preserveRestoredRf) {
+            diagnosticRows = diagnosticRows.filter(
+              (r) =>
+                r.kind !== 'rf' ||
+                r.nodeId !== myNodeNum ||
+                FOREIGN_LORA_RF_CONDITIONS.has(r.condition),
+            );
+          }
+        }
+        runDiagnosticsInChunks(
+          remoteEntries,
+          DIAGNOSTICS_REANALYSIS_CHUNK_SIZE,
+          ([nodeId, node]) => {
+            const cuStats24h = get().getCuStats24h(nodeId);
+            const findings = diagnoseOtherNode(node, {
               cuStats24h: cuStats24h ?? undefined,
               capabilities,
             });
-            if (findings.length > 0) {
-              diagnosticRows = replaceRfRowsForNode(diagnosticRows, myNodeNum, findings);
+            if (findings && findings.length > 0) {
+              diagnosticRows = replaceRfRowsForNode(diagnosticRows, nodeId, findings);
             } else if (!preserveRestoredRf) {
               diagnosticRows = diagnosticRows.filter(
                 (r) =>
                   r.kind !== 'rf' ||
-                  r.nodeId !== myNodeNum ||
+                  r.nodeId !== nodeId ||
                   FOREIGN_LORA_RF_CONDITIONS.has(r.condition),
               );
             }
-          }
-          runDiagnosticsInChunks(
-            remoteEntries,
-            DIAGNOSTICS_REANALYSIS_CHUNK_SIZE,
-            ([nodeId, node]) => {
-              const cuStats24h = get().getCuStats24h(nodeId);
-              const findings = diagnoseOtherNode(node, {
-                cuStats24h: cuStats24h ?? undefined,
-                capabilities,
-              });
-              if (findings && findings.length > 0) {
-                diagnosticRows = replaceRfRowsForNode(diagnosticRows, nodeId, findings);
-              } else if (!preserveRestoredRf) {
-                diagnosticRows = diagnosticRows.filter(
-                  (r) =>
-                    r.kind !== 'rf' ||
-                    r.nodeId !== nodeId ||
-                    FOREIGN_LORA_RF_CONDITIONS.has(r.condition),
-                );
-              }
-            },
-            () => {
-              if (generation !== diagnosticsReanalysisGeneration) return;
-              const now = Date.now();
-              diagnosticRows = pruneDiagnosticRowsByAge(
-                diagnosticRows,
-                now,
-                loadRoutingDiagnosticMaxAgeMs(),
-                DEFAULT_RF_DIAGNOSTIC_MAX_AGE_MS,
-              );
-              set({ diagnosticRows, diagnosticRowsRestoredAt: null });
-              schedulePersistDiagnosticRows(() => get().diagnosticRows);
-            },
-          );
-        },
-      );
+          },
+          () => {
+            if (generation !== diagnosticsReanalysisGeneration) return;
+            const now = Date.now();
+            diagnosticRows = pruneDiagnosticRowsByAge(
+              diagnosticRows,
+              now,
+              loadRoutingDiagnosticMaxAgeMs(),
+              DEFAULT_RF_DIAGNOSTIC_MAX_AGE_MS,
+            );
+            set({ diagnosticRows, diagnosticRowsRestoredAt: null });
+            schedulePersistDiagnosticRows(() => get().diagnosticRows);
+          },
+        );
+      };
+
+      const buildAnalyzeInputs = () =>
+        remoteEntries.map(([nodeId, node]) => ({
+          nodeId,
+          node,
+          stats: state.packetStats.get(nodeId),
+          hopHistory: state.hopHistory.get(nodeId) ?? [],
+          ignoreMqtt: state.ignoreMqttEnabled || state.mqttIgnoredNodes.has(nodeId),
+          noiseStats: getNoiseStatsForNode(state.noiseRateStats, nodeId),
+          tracePathSnrs: state.meshcoreTraceHistory.get(nodeId)?.at(-1)?.pathSnrs,
+          pathUpdatedTimestamps: state.pathUpdatedTimestamps.get(nodeId),
+        }));
+
+      const runChunkedRouting = () => {
+        runDiagnosticsInChunks(
+          remoteEntries,
+          DIAGNOSTICS_REANALYSIS_CHUNK_SIZE,
+          ([nodeId, node]) => {
+            const anomaly = analyzeNode(
+              node,
+              state.packetStats.get(nodeId),
+              homeNode,
+              state.hopHistory.get(nodeId) ?? [],
+              state.ignoreMqttEnabled || state.mqttIgnoredNodes.has(nodeId),
+              distanceMultiplier,
+              state.distanceOffsetKm,
+              hopsThreshold,
+              capabilities,
+              getNoiseStatsForNode(state.noiseRateStats, nodeId),
+              state.meshcoreTraceHistory.get(nodeId)?.at(-1)?.pathSnrs,
+              state.pathUpdatedTimestamps.get(nodeId),
+            );
+            if (anomaly) newAnomalies.set(nodeId, anomaly);
+            else newAnomalies.delete(nodeId);
+          },
+          finishAfterRouting,
+        );
+      };
+
+      // Non-COI: keep the chunked main-thread path synchronous. COI+SAB: offload only when a
+      // worker is budgeted and attached after Vite pool settle (else chunked after settle).
+      if (!defaultCanUseWorkers()) {
+        runChunkedRouting();
+        return;
+      }
+      void analysisWorkersAvailable().then((workersReady) => {
+        if (generation !== diagnosticsReanalysisGeneration) return;
+        if (!workersReady) {
+          runChunkedRouting();
+          return;
+        }
+        void runDiagnosticsAnalyzeBatch({
+          homeNode,
+          distanceMultiplier,
+          distanceOffsetKm: state.distanceOffsetKm,
+          hopsThreshold,
+          capabilities,
+          nodes: buildAnalyzeInputs(),
+        })
+          .then(({ anomalies }) => {
+            if (generation !== diagnosticsReanalysisGeneration) return;
+            applyRoutingAnomalies(anomalies);
+            finishAfterRouting();
+          })
+          .catch((err: unknown) => {
+            console.warn(
+              '[diagnosticsStore] worker analyze batch failed; inline ' + errLikeToLogString(err),
+            );
+            if (generation !== diagnosticsReanalysisGeneration) return;
+            runChunkedRouting();
+          });
+      });
     }, reanalysisDelayMs);
   },
 
@@ -1590,6 +1742,8 @@ export const useDiagnosticsStore = create<DiagnosticsState>((set, get) => ({
 
   clearDiagnostics(options) {
     const preserveForeignLora = options?.preserveForeignLora === true;
+    // Invalidate in-flight reanalysis so worker/chunked results cannot restore cleared rows.
+    diagnosticsReanalysisGeneration += 1;
     if (diagnosticsDebounce.incrementalAnalysisTimer)
       clearTimeout(diagnosticsDebounce.incrementalAnalysisTimer);
     diagnosticsDebounce.incrementalAnalysisTimer = null;
@@ -1600,6 +1754,7 @@ export const useDiagnosticsStore = create<DiagnosticsState>((set, get) => ({
     meshcoreRateCounter.reset();
     resetCuSpikeCooldown();
     clearPersistedDiagnosticRowsSnapshot();
+    clearPersistedCuHistorySnapshot();
     if (!preserveForeignLora) {
       clearPersistedForeignLoraSnapshot();
     }

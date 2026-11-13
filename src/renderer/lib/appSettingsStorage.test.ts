@@ -4,11 +4,14 @@ import {
   APP_SETTINGS_STORAGE_KEY,
   getAppSettingsRaw,
   getOperationalAlertSettings,
+  isShareMyLocationEnabled,
   MECP_REPEAT_ALERT_MAX_MINUTES,
   mergeAppSetting,
   mergeAppSettingsPartial,
+  migrateLegacyAppSettingsIfNeeded,
   setAppSettingsRaw,
 } from './appSettingsStorage';
+import { canTransmitLocation } from './locationTransmit';
 
 const LEGACY_KEY = 'mesh-client:adminSettings';
 
@@ -17,12 +20,16 @@ describe('appSettingsStorage', () => {
     localStorage.clear();
   });
 
-  it('migrates legacy adminSettings into appSettings on first read', () => {
-    const payload = JSON.stringify({ foo: 1, congestionHalosEnabled: true });
+  it('reads legacy adminSettings without moving inline sources before secure startup', () => {
+    const payload = JSON.stringify({
+      foo: 1,
+      congestionHalosEnabled: true,
+      'meshcoreRoomCredential:42': 'legacy-source',
+    });
     localStorage.setItem(LEGACY_KEY, payload);
     expect(getAppSettingsRaw()).toBe(payload);
-    expect(localStorage.getItem(APP_SETTINGS_STORAGE_KEY)).toBe(payload);
-    expect(localStorage.getItem(LEGACY_KEY)).toBeNull();
+    expect(localStorage.getItem(APP_SETTINGS_STORAGE_KEY)).toBeNull();
+    expect(localStorage.getItem(LEGACY_KEY)).toBe(payload);
   });
 
   it('does not overwrite existing appSettings when legacy exists', () => {
@@ -94,4 +101,47 @@ describe('appSettingsStorage', () => {
     expect(JSON.parse(getAppSettingsRaw() ?? '{}')).toEqual({ fresh: 2 });
     expect(localStorage.getItem(LEGACY_KEY)).toBeNull();
   });
+});
+
+describe('location sharing opt-in defaults and migration', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+  it.each([undefined, null, 1, 'true', {}, false])(
+    'keeps missing/invalid/nonconsenting value %j off',
+    (value) => {
+      localStorage.setItem(APP_SETTINGS_STORAGE_KEY, JSON.stringify({ shareMyLocation: value }));
+      expect(isShareMyLocationEnabled()).toBe(false);
+    },
+  );
+  it.each([true, false])(
+    'preserves an explicit legacy choice %s through migration and unrelated writes',
+    (value) => {
+      localStorage.setItem(LEGACY_KEY, JSON.stringify({ shareMyLocation: value, other: 42 }));
+      migrateLegacyAppSettingsIfNeeded();
+      mergeAppSetting('locale', 'en', 'test');
+      expect(isShareMyLocationEnabled()).toBe(value);
+      expect(JSON.parse(getAppSettingsRaw() ?? '{}')).toMatchObject({
+        shareMyLocation: value,
+        other: 42,
+      });
+    },
+  );
+});
+
+describe('fresh location transmission consent', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+  it.each(['meshtastic', 'meshcore', 'reticulum'] as const)(
+    'requires explicit opt-in for %s, retaining it across reads',
+    (protocol) => {
+      expect(isShareMyLocationEnabled()).toBe(false);
+      expect(canTransmitLocation({ protocol })).toBe(false);
+      mergeAppSetting('shareMyLocation', true, 'test consent');
+      expect(canTransmitLocation({ protocol })).toBe(true);
+      mergeAppSetting('shareMyLocation', false, 'test revoke');
+      expect(canTransmitLocation({ protocol })).toBe(false);
+    },
+  );
 });

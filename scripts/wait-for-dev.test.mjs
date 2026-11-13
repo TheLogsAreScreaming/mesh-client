@@ -64,3 +64,63 @@ it('requires the translation worker before launching Electron', () => {
     }),
   ).toBe(false);
 });
+
+it('requires the summary prompt chunk before launching Electron', () => {
+  expect(DEV_ELECTRON_BUNDLE_PATHS.summaryPrompt).toContain('ai-summary-prompt.js');
+  expect(
+    areElectronBundlesReady(DEV_ELECTRON_BUNDLE_PATHS, (file) => {
+      if (file.endsWith('ai-summary-prompt.js')) throw new Error('not built');
+      return { isFile: () => true, size: 1 };
+    }),
+  ).toBe(false);
+});
+
+it('requires the follow-up prompt chunk before launching Electron', () => {
+  expect(DEV_ELECTRON_BUNDLE_PATHS.followUpPrompt).toContain('ai-follow-up-prompt.js');
+  expect(
+    areElectronBundlesReady(DEV_ELECTRON_BUNDLE_PATHS, (file) => {
+      if (file.endsWith('ai-follow-up-prompt.js')) throw new Error('not built');
+      return { isFile: () => true, size: 1 };
+    }),
+  ).toBe(false);
+});
+
+it('requires the local models catalog chunk before launching Electron', () => {
+  expect(DEV_ELECTRON_BUNDLE_PATHS.localModels).toContain('ai-local-models.js');
+  expect(
+    areElectronBundlesReady(DEV_ELECTRON_BUNDLE_PATHS, (file) => {
+      if (file.endsWith('ai-local-models.js')) throw new Error('not built');
+      return { isFile: () => true, size: 1 };
+    }),
+  ).toBe(false);
+});
+
+it('requires the native AI runtime chunk before launching Electron', () => {
+  expect(DEV_ELECTRON_BUNDLE_PATHS.nativeAiRuntime).toContain('ai-native-runtime.js');
+  expect(
+    areElectronBundlesReady(DEV_ELECTRON_BUNDLE_PATHS, (file) => {
+      if (file.endsWith('ai-native-runtime.js')) throw new Error('not built');
+      return { isFile: () => true, size: 1 };
+    }),
+  ).toBe(false);
+});
+
+it('requires the identity hydration chunk before launching Electron', () => {
+  expect(DEV_ELECTRON_BUNDLE_PATHS.identityHydration).toContain('identity-hydration.js');
+  expect(
+    areElectronBundlesReady(DEV_ELECTRON_BUNDLE_PATHS, (file) => {
+      if (file.endsWith('identity-hydration.js')) throw new Error('not built');
+      return { isFile: () => true, size: 1 };
+    }),
+  ).toBe(false);
+});
+
+it('requires the team roster chunk before launching Electron', () => {
+  expect(DEV_ELECTRON_BUNDLE_PATHS.teamRoster).toContain('team-roster-handlers.js');
+  expect(
+    areElectronBundlesReady(DEV_ELECTRON_BUNDLE_PATHS, (file) => {
+      if (file.endsWith('team-roster-handlers.js')) throw new Error('not built');
+      return { isFile: () => true, size: 1 };
+    }),
+  ).toBe(false);
+});

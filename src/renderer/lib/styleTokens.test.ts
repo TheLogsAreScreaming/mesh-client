@@ -86,9 +86,9 @@ describe('style guide tokens (styles.css)', () => {
   });
 
   it('the default surface is the ink scale styles.css ships, step for step', () => {
-    const midnight = themeSurface(DEFAULT_THEME_SURFACE_ID);
+    const slate = themeSurface(DEFAULT_THEME_SURFACE_ID);
     for (const step of INK_STEPS) {
-      expect(midnight.scale[step], `ink-${step}`).toBe(token(`--color-ink-${step}`));
+      expect(slate.scale[step], `ink-${step}`).toBe(token(`--color-ink-${step}`));
     }
   });
 

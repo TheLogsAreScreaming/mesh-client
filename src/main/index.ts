@@ -1,27 +1,31 @@
-import { spawn } from 'child_process';
 import {
   app,
   BrowserWindow,
   clipboard,
   crashReporter,
   dialog,
+  type Event as ElectronEvent,
   ipcMain,
   Menu,
   MenuItem,
   type NativeImage,
   nativeImage,
+  net,
   Notification,
   powerMonitor,
   powerSaveBlocker,
   protocol,
   screen,
+  type SerialPort,
   type Session,
   shell,
   systemPreferences,
   Tray,
+  type WebContents,
 } from 'electron';
 import fs from 'fs';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import zlib from 'zlib';
 
 import type { MQTTSettings } from '../renderer/lib/types';
@@ -35,6 +39,11 @@ import {
 import { APP_ABOUT_TAGLINE } from '../shared/appTagline';
 import { isChannelIdentityKey } from '../shared/channelIdentityKey';
 import { clampQueryLimit } from '../shared/clampQueryLimit';
+import {
+  CLOSE_TO_TRAY_SETTING_KEY,
+  closeToTrayEnabledFromStored,
+  resolveWindowCloseAction,
+} from '../shared/closeToTray';
 import { parseConnectHostPort } from '../shared/connectHost';
 import { docsSitePageUrl } from '../shared/docsSite';
 import { NODES_LAST_HEARD_SEC_SQL, normalizeLastHeardToUnixSec } from '../shared/lastHeardUnits';
@@ -50,12 +59,29 @@ import { MESHCORE_CONTACTS_BATCH_MAX } from '../shared/meshcoreContactsBatchLimi
 import { meshcoreMessageChannelIndex } from '../shared/meshcoreMessageChannel';
 import type { MeshProtocol } from '../shared/meshProtocol';
 import { MESH_PROTOCOL_SET } from '../shared/meshProtocol';
-import {
-  formatMeshtasticBluetoothPin,
-  parseMeshtasticBluetoothPin,
-} from '../shared/meshtasticBluetoothPin';
 import { effectiveMessageTimestampMs } from '../shared/messageTimestampSkew';
+import {
+  DEFAULT_POWER_SAVE_MODE,
+  normalizePowerSaveLinkType,
+  type PowerSaveLinkType,
+  type PowerSaveMode,
+  powerSaveModeFromStored,
+  PREVENT_SLEEP_SETTING_KEY,
+  shouldHoldPowerSaveBlocker,
+} from '../shared/powerSavePolicy';
 import { sanitizeUnicodeReactionScalar } from '../shared/reactionEmoji';
+import {
+  DURABLE_RENDERER_SETTING_MAX_LENGTH,
+  DURABLE_RENDERER_STORAGE_MIGRATIONS,
+  isRendererStorageDeletionSetting,
+  RENDERER_INDEX_URL,
+  RENDERER_SCHEME,
+  RENDERER_STORAGE_DELETION_SETTING_PREFIX,
+} from '../shared/rendererOrigin';
+import {
+  parseRendererStorageDeletionState,
+  RENDERER_STORAGE_DELETION_STATE_MAX_LENGTH,
+} from '../shared/rendererStorageIntent';
 import type { TAKServerStatus, TAKSettings } from '../shared/tak-types';
 import { MS_PER_MINUTE } from '../shared/timeConstants';
 import {
@@ -66,7 +92,6 @@ import {
   type BleScanOwner,
 } from './ble-coexistence-coordinator';
 import { BleSidecarManager } from './ble-sidecar-manager';
-import { formatBluetoothctlSpawnError } from './bluetoothctlSpawnError';
 import { ensureCameraAccess, isAllowedCameraPrivacySettingsUrl } from './cameraAccess';
 import {
   backfillChannelKeys,
@@ -78,6 +103,7 @@ import {
   assertChatExportMessageSizes,
   formatChatExportLinesWithTotalCap,
 } from './chatExportFormat';
+import { outboxIdentityIdForInsert } from './chatOutboxIdentity';
 import { showCrashReportDialog } from './crash-report-dialog';
 import {
   addContactToGroup,
@@ -97,6 +123,7 @@ import {
   getContactGroupMembers,
   getContactGroups,
   getDatabase,
+  getDatabaseIfOpen,
   getMeshcoreHopHistory,
   getMeshcorePathHistory,
   getMeshcoreTraceHistory,
@@ -107,6 +134,7 @@ import {
   type MeshcoreContactUpsertParams,
   migrateRfStubNodes,
   pruneMeshcoreContactsByCount,
+  pruneMeshcoreMessagesByCountOn,
   pruneMeshcorePathHistory,
   prunePositionHistory,
   prunePositionHistoryPerNode,
@@ -123,6 +151,7 @@ import {
   upsertNodePath,
 } from './database';
 import { finishDbIpcHandler, finishDbIpcReadHandler, getDbForIpc } from './db-ipc-lifecycle';
+import { resetDurableRendererData, seedDurableRendererSettings } from './durableRendererSettings';
 import { formatDatabaseSchemaTooNewMessage, showFatalStartupError } from './fatal-startup-dialog';
 import { fetchLinkPreview } from './fetchLinkPreview';
 import {
@@ -135,18 +164,26 @@ import { formatGpxTracks, GPX_EXPORT_MAX_POINTS } from './gpxExportFormat';
 import { isHarmlessSocketOptionError } from './harmlessSocketOptionError';
 import { probeHttpRttMs } from './host-link-rtt';
 import { isValidHttpHostname } from './httpHostValidation';
+import { seedIncidentsOn } from './incident-database';
+import { registerAiHandlers } from './ipc/ai-handlers';
 import { registerBeaconIpcHandlers } from './ipc/beacon-handlers';
 import { registerBlockedContactsIpcHandlers } from './ipc/blocked-contacts-handlers';
+import { registerElevationIpcHandlers } from './ipc/elevation-handlers';
 import { registerEnvironmentTelemetryIpcHandlers } from './ipc/environment-telemetry-handlers';
 import { registerGattPairingIpcHandlers } from './ipc/gatt-pairing-handlers';
 import { registerGeoIpcHandlers } from './ipc/geo-handlers';
 import { registerGpsIpcHandlers } from './ipc/gps-handlers';
+import { registerIncidentIpcHandlers } from './ipc/incident-handlers';
+import { registerLinuxBluetoothIpcHandlers } from './ipc/linux-bluetooth-handlers';
+import { registerLiveMapWindows } from './ipc/live-map-handlers';
 import { registerNotificationSoundHandlers } from './ipc/notification-sound-handlers';
 import { registerOfflineMapsIpcHandlers } from './ipc/offline-maps-handlers';
+import { registerScheduledBroadcastIpcHandlers } from './ipc/scheduled-broadcast-handlers';
 import { registerServiceAnnouncementIpcHandlers } from './ipc/service-announcement-handlers';
 import { registerTakIpcHandlers } from './ipc/tak-handlers';
 import { destroyRegisteredTcpBridgeSockets, registerTcpBridgeIpcHandlers } from './ipc/tcp-bridge';
 import { registerTranslationHandlers } from './ipc/translation-handlers';
+import { registerWeatherIpcHandlers } from './ipc/weather-handlers';
 import { createIpcRateLimiter } from './ipcRateLimit';
 import { listMeshcoreDmPeersFromDb, listMeshtasticDmPeersFromDb } from './listDmPeers';
 import { snapshotLiveSessionMeter } from './live-session-meter';
@@ -171,10 +208,12 @@ import {
 } from './mecp-received-log';
 import { MeshcoreMqttAdapter } from './meshcore-mqtt-adapter';
 import { decodePathPayload, isPathPacket } from './meshcore-path-decoder';
+import { meshcoreContactInputToUpsertParams } from './meshcoreContactInput';
 import {
   clearMeshcoreMessagesByChannel,
   MESHCORE_MESSAGE_CHANNEL_SQL,
   persistMeshcoreMessage,
+  selectMeshcoreMessagesForHydration,
   validateMeshcoreMessageLocalOrder,
 } from './meshcoreMessageChannel';
 import {
@@ -183,11 +222,26 @@ import {
 } from './meshtasticNodeRenumber';
 import { resolveMqttBrokerClientId } from './mqtt-broker-client-id';
 import { type CachedNode, MQTTManager, parsePsk } from './mqtt-manager';
+import { CustomMapSourceStore } from './offline-maps/custom-sources';
+import { CustomMapSourcesService } from './offline-maps/custom-sources-service';
 import { createMeshTilesProtocolHandler } from './offline-maps/protocol';
 import { createTileCache, type TileCache } from './offline-maps/tile-cache';
 import { PermissionDecisionLogger } from './permissionDecisionLog';
 import { readFileUpTo } from './readFileUpTo';
+import { createRendererMemoryAutoSampler } from './renderer-memory-auto-sampler';
+import { exportRendererMemorySamples, insertRendererMemorySample } from './renderer-memory-samples';
 import { createRendererHeartbeatWatchdog } from './rendererHeartbeatWatchdog';
+import {
+  isAllowedRendererDeviceOrigin,
+  isAllowedRendererNavigation,
+  isAllowedRendererPermission,
+} from './rendererNavigationPolicy';
+import { createRendererOriginProtocolHandler } from './rendererOriginProtocol';
+import { rendererProcessMemoryBytes } from './rendererProcessMemory';
+import {
+  commitImportedRendererStorageIntents,
+  writeRendererStorageDeletionState,
+} from './rendererStorageIntentMigration';
 import { resolveRendererLoadUrl } from './resolveRendererLoadUrl';
 import { SecureSecretStore } from './secure-secret-store';
 import {
@@ -199,8 +253,22 @@ import { canAutoConnectTakRemote, loadTakRemoteSettings } from './tak/remote-set
 import type { TakServerManager } from './tak-server-manager';
 import { updateUnreadAppBadge } from './unreadAppBadge';
 import { getCheckNowFromMenu, initUpdater } from './updater';
-import { assertIpcSender, validateIpcSender } from './validate-ipc-sender';
+import { assertIpcSender, suspendIpcSender, validateIpcSender } from './validate-ipc-sender';
+import { createWeatherProtocolHandler } from './weather/weather-protocol';
+import {
+  beginRendererStorageReset,
+  checkRendererOriginStorageHealth,
+  resumePendingRendererStorageReset,
+  runWebStorageOriginMigration,
+} from './webStorageOriginMigration';
 import { buildWindowsAboutDocumentHtml } from './windows-about-html';
+import {
+  attachWindowStatePersistence,
+  DEFAULT_WINDOW_STATE,
+  isWindowStateOnScreen,
+  readWindowState,
+  writeWindowState,
+} from './windowState';
 
 // Route main-process console through log file + Log panel (must run before other code logs)
 patchMainConsole();
@@ -219,7 +287,26 @@ try {
 // Custom scheme for offline map tiles (must register before app.whenReady).
 protocol.registerSchemesAsPrivileged([
   {
+    scheme: RENDERER_SCHEME,
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      corsEnabled: true,
+      stream: true,
+      allowServiceWorkers: false,
+    },
+  },
+  {
+    scheme: 'mesh-ai',
+    privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true },
+  },
+  {
     scheme: 'mesh-tiles',
+    privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true },
+  },
+  {
+    scheme: 'mesh-weather',
     privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true },
   },
 ]);
@@ -248,70 +335,13 @@ const HELP_URL_GITHUB = 'https://github.com/TheLogsAreScreaming/mesh-client';
 const HELP_URL_UPSTREAM = 'https://github.com/Colorado-Mesh/mesh-client';
 
 // ─── Window state persistence ───────────────────────────────────────
-interface WindowState {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 const WINDOW_STATE_PATH = path.join(app.getPath('userData'), 'window-state.json');
-const DEFAULT_WINDOW_STATE: WindowState = { x: 0, y: 0, width: 1200, height: 800 };
-
-function loadWindowState(): WindowState {
-  try {
-    if (fs.existsSync(WINDOW_STATE_PATH)) {
-      const raw = JSON.parse(fs.readFileSync(WINDOW_STATE_PATH, 'utf-8')) as unknown;
-      if (
-        raw &&
-        typeof raw === 'object' &&
-        typeof (raw as Record<string, unknown>).x === 'number' &&
-        typeof (raw as Record<string, unknown>).y === 'number' &&
-        typeof (raw as Record<string, unknown>).width === 'number' &&
-        typeof (raw as Record<string, unknown>).height === 'number'
-      ) {
-        return raw as WindowState;
-      }
-    }
-  } catch {
-    // catch-no-log-ok: non-critical; fall through to defaults
-  }
-  return DEFAULT_WINDOW_STATE;
-}
-
-function saveWindowState(state: WindowState): void {
-  try {
-    fs.writeFileSync(WINDOW_STATE_PATH, JSON.stringify(state), 'utf-8');
-  } catch {
-    // catch-no-log-ok: non-critical persistence failure
-  }
-}
-
-function isWindowStateOnScreen(state: WindowState): boolean {
-  const displays = screen.getAllDisplays();
-  return displays.some((d) => {
-    const { x, y, width, height } = d.workArea;
-    return (
-      state.x < x + width &&
-      state.x + state.width > x &&
-      state.y < y + height &&
-      state.y + state.height > y
-    );
-  });
-}
 
 const mqttManager = new MQTTManager();
 const meshcoreMqttAdapter = new MeshcoreMqttAdapter();
 
 /** TAK status before the lazy-loaded `TakServerManager` module is imported. */
 const IDLE_TAK_STATUS: TAKServerStatus = { running: false, port: 8089, clientCount: 0 };
-
-/** MAC address format: XX:XX:XX:XX:XX:XX */
-function isMacAddress(value: string): boolean {
-  const parts = value.split(':');
-  if (parts.length !== 6) return false;
-  return parts.every((part) => /^[0-9A-Fa-f]{2}$/.test(part));
-}
 
 let takServerManager: TakServerManager | null = null;
 let takServerManagerLoadPromise: Promise<TakServerManager> | null = null;
@@ -403,9 +433,36 @@ function isAnyMqttConnected(): boolean {
   return mqttManager.getStatus() === 'connected' || meshcoreMqttAdapter.getStatus() === 'connected';
 }
 
+/** Meshtastic, MeshCore, and MQTT are independent. */
+function hasLiveConnection(): boolean {
+  return meshtasticDeviceConnected || meshcoreDeviceConnected || isAnyMqttConnected();
+}
+
+/** Last computed decision; used only to avoid a debug line per status event. */
+let lastPowerSaveHold: boolean | null = null;
+
+function syncPowerSaveBlocker(): void {
+  const mode = readPowerSaveMode();
+  const hold = shouldHoldPowerSaveBlocker(mode, {
+    meshtastic: { connected: meshtasticDeviceConnected, link: meshtasticConnectionType },
+    meshcore: { connected: meshcoreDeviceConnected, link: meshcoreConnectionType },
+    mqtt: isAnyMqttConnected(),
+  });
+  if (hold !== lastPowerSaveHold) {
+    lastPowerSaveHold = hold;
+    console.debug('[main] power-save policy:', mode, hold ? 'hold' : 'release');
+  }
+  if (hold) startPowerSaveBlocker();
+  else stopPowerSaveBlocker();
+}
+
 let mainWindow: BrowserWindow | null = null;
+let reloadMainRenderer: ((beforeLoad?: () => void) => Promise<void>) | null = null;
+let rendererLoadPromise: Promise<void> | null = null;
+let rendererMemoryAutoSampler: ReturnType<typeof createRendererMemoryAutoSampler> | null = null;
 const rendererHeartbeatWatchdog = createRendererHeartbeatWatchdog();
 let offlineTileCache: TileCache | null = null;
+let customMapSources: CustomMapSourcesService | null = null;
 /** Win32 About: native About panel can hard-crash; use a small HTML BrowserWindow instead (#406). */
 let windowsAboutWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -413,7 +470,10 @@ let tray: Tray | null = null;
 let trayContextMenu: Menu | null = null;
 /** Retain application menu on macOS so the menu bridge has a stable model. */
 let appMenu: Menu | null = null;
-let isConnected = false;
+let meshtasticDeviceConnected = false;
+let meshcoreDeviceConnected = false;
+let meshtasticConnectionType: PowerSaveLinkType | null = null;
+let meshcoreConnectionType: PowerSaveLinkType | null = null;
 let isQuitting = false;
 let shutdownDone = false;
 /** Shared quit/relaunch single-flight (app:quit, app:relaunch). */
@@ -429,7 +489,10 @@ async function quitMainProcess(opts: { relaunch?: boolean } = {}): Promise<void>
   if (quitMainInFlight) return;
   quitMainInFlight = true;
   isQuitting = true;
-  isConnected = false;
+  meshtasticDeviceConnected = false;
+  meshcoreDeviceConnected = false;
+  meshtasticConnectionType = null;
+  meshcoreConnectionType = null;
   gattSidecarProxy.setQuitting();
   try {
     try {
@@ -582,6 +645,19 @@ function clearPendingSerialSelectionTimer(): void {
 // Last serial port discovery set: only allow selection IPC to resolve with ids from this set
 // (empty string always allowed = cancel). Prevents arbitrary id injection from a compromised renderer.
 let lastSerialPortIds = new Set<string>();
+/** Short-lived metadata from the pending select-serial-port list (for support-bundle logs). */
+interface PendingSerialPortMeta {
+  displayName: string;
+  portName: string;
+  vendorId: string | number | undefined;
+  productId: string | number | undefined;
+}
+let lastSerialPortsById = new Map<string, PendingSerialPortMeta>();
+
+function clearLastSerialPortDiscovery(): void {
+  lastSerialPortIds.clear();
+  lastSerialPortsById.clear();
+}
 
 // Bluetooth pairing state (Linux only — setBluetoothPairingHandler)
 // Electron's Response type requires confirmed: boolean, pin is optional
@@ -636,10 +712,6 @@ process.on('unhandledRejection', (reason) => {
   showCrashReportDialog({ source: 'unhandledRejection', error });
 });
 
-// ─── Bluetooth pairing handler (Linux only) ──────────────────────────
-// Note: Bluetooth pairing for Web Bluetooth is handled via session.setBluetoothPairingHandler()
-// which is set up after mainWindow creation. See the setup below near select-bluetooth-device.
-
 // ─── IPC validation helpers (main process boundary) ───────────────────
 const MAX_PAYLOAD_LENGTH = 1024 * 1024; // 1MB cap for message payload
 const MAX_STATUS_STRING = 1024;
@@ -652,6 +724,20 @@ function safeNonNegativeInt(value: unknown): number {
   const n = Number(value);
   if (!Number.isFinite(n) || n < 0) throw new Error('Invalid non-negative integer');
   return n >>> 0;
+}
+
+/** Full-range non-negative safe integer (no 32-bit `>>> 0` coercion; numbers only). */
+function safeNonNegativeSafeInteger(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value < 0) {
+    throw new Error('Invalid non-negative safe integer');
+  }
+  return value;
+}
+
+/** Optional non-negative safe integer; `undefined` / `null` → null. */
+function optionalNonNegativeSafeInteger(value: unknown): number | null {
+  if (value === undefined || value === null) return null;
+  return safeNonNegativeSafeInteger(value);
 }
 
 /** MeshCore chat channel index (-2 Rooms, -1 DMs, 0+ group channels). */
@@ -862,34 +948,6 @@ function validateSaveMeshcoreContact(contact: unknown): asserts contact is Recor
   ) {
     throw new Error('db:saveMeshcoreContact: last_synced_from_radio must be a string <= 128');
   }
-}
-
-function meshcoreContactInputToUpsertParams(
-  c: Record<string, unknown>,
-): MeshcoreContactUpsertParams {
-  const coords = sanitizeMeshcoreAdvLatLonForDb(
-    c.adv_lat != null ? Number(c.adv_lat) : null,
-    c.adv_lon != null ? Number(c.adv_lon) : null,
-  );
-  return {
-    node_id: Number(c.node_id),
-    public_key: c.public_key as string,
-    adv_name: typeof c.adv_name === 'string' ? c.adv_name : null,
-    contact_type: c.contact_type != null ? Number(c.contact_type) : 0,
-    last_advert: sanitizeMeshcoreLastAdvertForDb(
-      c.last_advert != null ? Number(c.last_advert) : null,
-    ),
-    adv_lat: coords.adv_lat,
-    adv_lon: coords.adv_lon,
-    last_snr: c.last_snr != null ? Number(c.last_snr) : null,
-    last_rssi: c.last_rssi != null ? Number(c.last_rssi) : null,
-    nickname: typeof c.nickname === 'string' ? c.nickname : null,
-    contact_flags: c.contact_flags != null ? Number(c.contact_flags) : 0,
-    hops_away: c.hops_away != null ? Number(c.hops_away) : null,
-    on_radio: c.on_radio != null ? Number(c.on_radio) : null,
-    last_synced_from_radio:
-      typeof c.last_synced_from_radio === 'string' ? c.last_synced_from_radio : null,
-  };
 }
 
 function validateTakSettings(settings: unknown): asserts settings is TAKSettings {
@@ -1286,7 +1344,8 @@ function setupTray(window: BrowserWindow) {
           isQuitting = true;
           mqttManager.disconnect();
           meshcoreMqttAdapter.disconnect();
-          isConnected = false;
+          meshtasticDeviceConnected = false;
+          meshcoreDeviceConnected = false;
           mainWindow?.destroy();
           app.quit();
         },
@@ -1726,10 +1785,52 @@ function openExternalHttpOrHttpsIfExternal(currentUrl: string, targetUrl: string
   return true;
 }
 
+/**
+ * Whether the App → Window "close to tray" setting is on. Main reads only SQLite
+ * (the renderer persists via appSettings:set), so no extra IPC channel is needed.
+ * A read error is not a stored "off" value; fall back to the first-run default (on).
+ */
+function readCloseToTrayEnabled(): boolean {
+  try {
+    const row = getDatabase()
+      .prepareOnce('SELECT value FROM app_settings WHERE key = ?')
+      .get(CLOSE_TO_TRAY_SETTING_KEY) as { value: string } | undefined;
+    return closeToTrayEnabledFromStored(row?.value);
+  } catch (e) {
+    console.debug(
+      '[main] close-to-tray flag read failed:',
+      sanitizeLogMessage(e instanceof Error ? e.message : String(e)),
+    );
+    return true;
+  }
+}
+
+/**
+ * App → Window keep-awake mode. Main reads only SQLite (the renderer persists via
+ * appSettings:set), so no extra IPC channel is needed. A read error is not a stored
+ * "off"; fall back to the default (radio hardware only).
+ */
+function readPowerSaveMode(): PowerSaveMode {
+  try {
+    const row = getDatabase()
+      .prepareOnce('SELECT value FROM app_settings WHERE key = ?')
+      .get(PREVENT_SLEEP_SETTING_KEY) as { value: string } | undefined;
+    return powerSaveModeFromStored(row?.value);
+  } catch (e) {
+    console.debug(
+      '[main] power-save mode read failed:',
+      sanitizeLogMessage(e instanceof Error ? e.message : String(e)),
+    );
+    return DEFAULT_POWER_SAVE_MODE;
+  }
+}
+
 function createWindow() {
   rendererHeartbeatWatchdog.expectVisibleHeartbeat();
-  const savedState = loadWindowState();
-  const bounds = isWindowStateOnScreen(savedState) ? savedState : DEFAULT_WINDOW_STATE;
+  const savedState = readWindowState(WINDOW_STATE_PATH);
+  const bounds = isWindowStateOnScreen(savedState, screen.getAllDisplays())
+    ? savedState
+    : DEFAULT_WINDOW_STATE;
   const center = bounds === DEFAULT_WINDOW_STATE;
 
   const win = new BrowserWindow({
@@ -1751,44 +1852,55 @@ function createWindow() {
       // Inline misspelling marks and context-menu suggestions (all platforms). macOS app menu
       // stays minimal (no role-based Edit menu) to reduce WeakPtr menu-bridge noise.
       spellcheck: true,
-      // Security note: experimentalFeatures enables the Web Bluetooth and Web Serial APIs
-      // required for direct device communication. These APIs are permission-gated via
-      // setPermissionCheckHandler/setPermissionRequestHandler (serial, geolocation, media, notifications).
+      // Security note: experimentalFeatures enables Web Serial for direct serial communication.
+      // Its origin-scoped grants use setPermissionCheckHandler and the guarded serial picker.
+      // LoRa BLE uses the native sidecar, not Chromium Web Bluetooth permissions.
       experimentalFeatures: true,
     },
   });
   mainWindow = win;
+  rendererMemoryAutoSampler?.stop();
+  rendererMemoryAutoSampler = createRendererMemoryAutoSampler({
+    getWindow: () => mainWindow,
+    getDb: () => getDatabaseIfOpen(),
+    getAppMetrics: () => app.getAppMetrics(),
+    getAppVersion: () => app.getVersion(),
+  });
+  let trustedRendererUrl = '';
 
-  let windowStateSaveTimer: ReturnType<typeof setTimeout> | null = null;
-  const scheduleSaveWindowState = () => {
-    if (windowStateSaveTimer) clearTimeout(windowStateSaveTimer);
-    windowStateSaveTimer = setTimeout(() => {
-      if (!win.isMinimized() && !win.isMaximized()) {
-        saveWindowState(win.getBounds());
-      }
-    }, 300);
-  };
-  win.on('move', scheduleSaveWindowState);
-  win.on('resize', scheduleSaveWindowState);
+  // Save listeners first, then restore, so a maximized/full-screen relaunch is persisted.
+  attachWindowStatePersistence(win, {
+    initialState: bounds,
+    writeState: (state) => {
+      writeWindowState(WINDOW_STATE_PATH, state);
+    },
+  });
 
   // External link handling: route http/https websites to the system browser.
   // Failure point: malicious URL schemes attempting protocol-handler abuse.
   // Guardrail: only pass validated http:/https: URLs to `shell.openExternal()`.
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (typeof url !== 'string') return { action: 'deny' };
-    const currentUrl = win.webContents.getURL();
-    const openedExternal = openExternalHttpOrHttpsIfExternal(currentUrl, url);
-    return openedExternal ? { action: 'deny' } : { action: 'allow' };
+    if (typeof url === 'string') openExternalHttpOrHttpsIfExternal(trustedRendererUrl, url);
+    return { action: 'deny' };
   });
 
   win.webContents.on('will-navigate', (event, url) => {
-    const currentUrl = win.webContents.getURL();
-    const openedExternal = openExternalHttpOrHttpsIfExternal(currentUrl, url);
-    if (openedExternal) event.preventDefault();
+    if (!isAllowedRendererNavigation(trustedRendererUrl, url)) {
+      event.preventDefault();
+      openExternalHttpOrHttpsIfExternal(trustedRendererUrl, url);
+    }
+  });
+  win.webContents.on('will-frame-navigate', (event) => {
+    if (!event.isMainFrame && !isAllowedRendererNavigation(trustedRendererUrl, event.url)) {
+      event.preventDefault();
+    }
+  });
+  win.webContents.on('will-redirect', (event, url) => {
+    if (!isAllowedRendererNavigation(trustedRendererUrl, url)) event.preventDefault();
   });
 
   configureRendererSpellcheck(win.webContents.session);
-  win.webContents.once('did-finish-load', () => {
+  win.webContents.on('did-finish-load', () => {
     retryRendererSpellcheck(win.webContents.session);
     flushPendingOpenUrl();
   });
@@ -1856,51 +1968,74 @@ function createWindow() {
   // ─── Web Serial: Port Selection ────────────────────────────────────
   // Electron requires this handler for navigator.serial.requestPort()
   // to work. Without it, the Web Serial API throws.
-  mainWindow.webContents.session.on(
-    'select-serial-port',
-    (event, portList, _webContents, callback) => {
-      event.preventDefault();
+  const serialSession = win.webContents.session;
+  const handleSelectSerialPort = (
+    event: ElectronEvent,
+    portList: SerialPort[],
+    requestingContents: WebContents,
+    callback: (portId: string) => void,
+  ): void => {
+    event.preventDefault();
+    if (
+      requestingContents !== win.webContents ||
+      !isAllowedRendererNavigation(trustedRendererUrl, requestingContents.mainFrame.url)
+    ) {
+      callback('');
+      return;
+    }
 
-      // Warn if a previous callback is being replaced (renderer re-triggered before resolving)
-      if (pendingSerialCallback) {
-        console.warn('[IPC] select-serial-port: replacing stale pendingSerialCallback');
+    // Warn if a previous callback is being replaced (renderer re-triggered before resolving)
+    if (pendingSerialCallback) {
+      console.warn('[IPC] select-serial-port: replacing stale pendingSerialCallback');
+    }
+
+    // Store callback so we can resolve it when the user picks a port
+    pendingSerialCallback = callback;
+    clearPendingSerialSelectionTimer();
+
+    console.debug(`[IPC] select-serial-port: discovered ${portList.length} port(s)`);
+
+    // Auto-cancel if the picker is left open too long (flashing can take longer than 60s)
+    pendingSerialSelectionTimer = setTimeout(() => {
+      if (pendingSerialCallback === callback) {
+        console.warn('[IPC] Serial port selection callback stale after timeout — auto-cancelling');
+        pendingSerialCallback('');
+        pendingSerialCallback = null;
+        clearLastSerialPortDiscovery();
       }
+      pendingSerialSelectionTimer = null;
+    }, SERIAL_PORT_SELECTION_TIMEOUT_MS);
 
-      // Store callback so we can resolve it when the user picks a port
-      pendingSerialCallback = callback;
-      clearPendingSerialSelectionTimer();
-
-      console.debug(`[IPC] select-serial-port: discovered ${portList.length} port(s)`);
-
-      // Auto-cancel if the picker is left open too long (flashing can take longer than 60s)
-      pendingSerialSelectionTimer = setTimeout(() => {
-        if (pendingSerialCallback === callback) {
-          console.warn(
-            '[IPC] Serial port selection callback stale after timeout — auto-cancelling',
-          );
-          pendingSerialCallback('');
-          pendingSerialCallback = null;
-          lastSerialPortIds.clear();
-        }
-        pendingSerialSelectionTimer = null;
-      }, SERIAL_PORT_SELECTION_TIMEOUT_MS);
-
-      lastSerialPortIds = new Set(portList.map((p) => p.portId));
-      // Send port list to renderer for selection
-      mainWindow?.webContents.send(
-        'serial-ports-discovered',
-        portList.map((p) => ({
-          portId: p.portId,
+    lastSerialPortIds = new Set(portList.map((p) => p.portId));
+    lastSerialPortsById = new Map(
+      portList.map((p) => [
+        p.portId,
+        {
           displayName: p.displayName || p.portName || `Port ${p.portId}`,
           portName: p.portName || '',
           vendorId: p.vendorId,
           productId: p.productId,
-        })),
-      );
-    },
-  );
+        },
+      ]),
+    );
+    // Send port list to renderer for selection
+    mainWindow?.webContents.send(
+      'serial-ports-discovered',
+      portList.map((p) => ({
+        portId: p.portId,
+        displayName: p.displayName || p.portName || `Port ${p.portId}`,
+        portName: p.portName || '',
+        vendorId: p.vendorId,
+        productId: p.productId,
+      })),
+    );
+  };
+  serialSession.on('select-serial-port', handleSelectSerialPort);
+  win.once('closed', () => {
+    serialSession.removeListener('select-serial-port', handleSelectSerialPort);
+  });
 
-  // ─── Web Bluetooth: Device Selection (Linux) ───────────────────────
+  // ─── Legacy Chromium Bluetooth chooser cancellation ───────────────────
   // LoRa BLE uses sidecar GATT on all platforms. Cancel Chromium's chooser so a
   // stray requestDevice() cannot hang the session.
   mainWindow.webContents.on('select-bluetooth-device', (event, deviceList, callback) => {
@@ -1911,9 +2046,8 @@ function createWindow() {
     callback('');
   });
 
-  // ─── Web Bluetooth: Pairing Handler (Linux) ───────────────────────────
-  // Required for devices that require PIN/confirmation during pairing.
-  // This is called by Chromium when a device requires pairing during GATT connect.
+  // ─── Legacy Chromium pairing callback ─────────────────────────────────
+  // Retained for compatibility; active LoRa GATT pairing uses the native sidecar.
   mainWindow.webContents.session.setBluetoothPairingHandler((details, callback) => {
     console.debug('[main] bluetooth-pairing-request:', details.pairingKind, details.deviceId);
 
@@ -1975,23 +2109,40 @@ function createWindow() {
   });
 
   const permissionLog = new PermissionDecisionLogger();
-  // Allow serial, geolocation, and media (camera for QR scanning). Deny web-app-installation etc.
-  mainWindow.webContents.session.setPermissionCheckHandler((_webContents, permission) => {
-    const granted =
-      permission === 'serial' ||
-      permission === 'geolocation' ||
-      permission === 'media' ||
-      permission === 'notifications';
-    permissionLog.log('checkHandler', permission, granted);
-    return granted;
-  });
+  // Allow serial, geolocation, and media (camera / future live audio). Deny web-app-installation etc.
+  mainWindow.webContents.session.setPermissionCheckHandler(
+    (requestingContents, permission, requestingOrigin, details) => {
+      const trusted = isAllowedRendererPermission({
+        rendererUrl: trustedRendererUrl,
+        sameWebContents: requestingContents === win.webContents,
+        isMainFrame: details.isMainFrame,
+        requestingUrl: details.requestingUrl ?? requestingContents?.mainFrame.url,
+        requestingOrigin,
+      });
+      const granted =
+        trusted &&
+        (permission === 'serial' ||
+          permission === 'geolocation' ||
+          permission === 'media' ||
+          permission === 'notifications');
+      permissionLog.log('checkHandler', permission, granted);
+      return granted;
+    },
+  );
 
   // Grant geolocation (browser GPS fallback), media (camera for QR scanning)
   // and notifications (renderer `new Notification` for chat / node / ops / MECP alerts).
   mainWindow.webContents.session.setPermissionRequestHandler(
-    (_webContents, permission, callback) => {
+    (requestingContents, permission, callback, details) => {
+      const trusted = isAllowedRendererPermission({
+        rendererUrl: trustedRendererUrl,
+        sameWebContents: requestingContents === win.webContents,
+        isMainFrame: details.isMainFrame,
+        requestingUrl: details.requestingUrl,
+      });
       const grant =
-        permission === 'geolocation' || permission === 'media' || permission === 'notifications';
+        trusted &&
+        (permission === 'geolocation' || permission === 'media' || permission === 'notifications');
       permissionLog.log('requestHandler', permission, grant);
       callback(grant);
     },
@@ -2002,7 +2153,10 @@ function createWindow() {
   // Bluetooth uses select-bluetooth-device above. Without a handler, Chromium can
   // show a blank overlay for device permission prompts.
   mainWindow.webContents.session.setDevicePermissionHandler((details) => {
-    return details.deviceType === 'serial';
+    return (
+      details.deviceType === 'serial' &&
+      isAllowedRendererDeviceOrigin(trustedRendererUrl, details.origin)
+    );
   });
 
   if (!hasInstalledOsmReferrerHook) {
@@ -2070,28 +2224,129 @@ function createWindow() {
   });
 
   // Load the app
-  void (async () => {
+  const loadRenderer = async (beforeLoad?: () => void) => {
     const distIndexPath = path.join(__dirname, '../../dist/renderer/index.html');
-    const resolved = await resolveRendererLoadUrl({
-      packaged: app.isPackaged,
-      devServerUrl: process.env.VITE_DEV_SERVER_URL,
-      distIndexPath,
+    const devServerUrl = process.env.VITE_DEV_SERVER_URL;
+    const migrationOptions = {
+      devServerUrl,
+      userDataPath: app.getPath('userData'),
+      legacyMigrationUrl: pathToFileURL(path.join(__dirname, '../../dist/renderer/migration.html'))
+        .href,
+      appVersion: app.getVersion(),
+      unloadRendererBeforeRepair: async () => {
+        await win.loadURL('about:blank');
+        if (win.isDestroyed()) throw new Error('Renderer window closed before storage repair');
+      },
+      readStorageDeletionStates: () => {
+        const rows = getDatabase()
+          .prepareOnce('SELECT key, value FROM app_settings WHERE key LIKE ?')
+          .all(`${RENDERER_STORAGE_DELETION_SETTING_PREFIX}%`) as { key: string; value: string }[];
+        return Object.fromEntries(
+          rows
+            .filter((row) => isRendererStorageDeletionSetting(row.key))
+            .map((row) => [
+              row.key.slice(RENDERER_STORAGE_DELETION_SETTING_PREFIX.length),
+              parseRendererStorageDeletionState(row.value),
+            ]),
+        );
+      },
+      commitImportedStorageIntents: (
+        intents: Parameters<typeof commitImportedRendererStorageIntents>[1],
+      ) => {
+        commitImportedRendererStorageIntents(getDatabase(), intents);
+      },
+      seedDurableStorage: (entries: Record<string, string>) => {
+        seedDurableRendererSettings(getDatabase(), entries);
+        seedIncidentsOn(getDatabase(), entries['mesh-client:incidents'] ?? null);
+      },
+    };
+    // Explicit resets take priority over origin recovery flags and must finish before any UI loads.
+    await resumePendingRendererStorageReset({
+      ...migrationOptions,
+      clearSessionStorage: async () => {
+        await win.webContents.session.clearStorageData({
+          storages: ['cookies', 'localstorage', 'cachestorage', 'shadercache', 'serviceworkers'],
+        });
+        win.webContents.session.flushStorageData();
+        await win.webContents.session.clearCache();
+      },
+      resetDurableStorage: () => {
+        resetDurableRendererData(getDatabase());
+      },
     });
-    console.debug('[Startup] renderer load source:', resolved.source);
+    const migrationResult = await runWebStorageOriginMigration(migrationOptions);
+    const resolved = resolveRendererLoadUrl({
+      devServerUrl,
+      distIndexPath,
+      customProtocolUrl: RENDERER_INDEX_URL,
+      migrationCompleted: migrationResult === 'completed',
+    });
+    if (win.isDestroyed()) return;
+    beforeLoad?.();
+    trustedRendererUrl = resolved.url;
     console.debug('[Startup] renderer URL:', sanitizeLogMessage(resolved.url));
     console.debug('[Startup] app.isPackaged:', app.isPackaged);
     console.debug('[Startup] userData:', sanitizeLogMessage(app.getPath('userData')));
     if (resolved.openDevTools) {
-      mainWindow.webContents.openDevTools();
+      win.webContents.openDevTools();
     }
-    if (resolved.source === 'dist') {
-      await mainWindow.loadURL(resolved.url, {
+    let source = resolved.source;
+    let phase: string = migrationResult;
+    if (resolved.source === 'dist' || resolved.source === 'custom-protocol') {
+      await win.loadURL(resolved.url, {
         httpReferrer: OSM_HTTP_REFERRER,
       });
-      return;
+      if (resolved.source === 'custom-protocol') {
+        let health = await checkRendererOriginStorageHealth(migrationOptions, win.webContents);
+        if (win.isDestroyed()) return;
+        if (health === 'repaired') {
+          phase = 'repaired';
+          await win.loadURL(resolved.url, { httpReferrer: OSM_HTTP_REFERRER });
+          if (win.isDestroyed()) return;
+          health = await checkRendererOriginStorageHealth(migrationOptions, win.webContents, false);
+          if (win.isDestroyed()) return;
+        }
+        if (health === 'failed') {
+          phase = 'health-failed';
+          source = 'dist';
+          trustedRendererUrl = pathToFileURL(distIndexPath).href;
+          await win.loadURL(trustedRendererUrl, { httpReferrer: OSM_HTTP_REFERRER });
+        }
+      }
+    } else {
+      await win.loadURL(resolved.url);
     }
-    await mainWindow.loadURL(resolved.url);
-  })().catch((e: unknown) => {
+    if (win.isDestroyed()) return;
+    // One start baseline + 2h cadence after the trusted app URL (not about:blank repair loads).
+    const loadedUrl = win.webContents.getURL();
+    if (loadedUrl && loadedUrl !== 'about:blank' && !loadedUrl.startsWith('data:')) {
+      rendererMemoryAutoSampler?.stop();
+      rendererMemoryAutoSampler?.start();
+    }
+    // Diagnostics must not delay startup or poison the promise awaited by data reset.
+    void (async () => {
+      let isolated: boolean | 'unknown' = 'unknown';
+      try {
+        isolated =
+          (await win.webContents.executeJavaScript('globalThis.crossOriginIsolated === true')) ===
+          true;
+      } catch {
+        // catch-no-log-ok the startup line below reports unavailable isolation explicitly.
+      }
+      console.debug(
+        '[Startup] renderer load source:',
+        source,
+        'phase:',
+        phase,
+        'crossOriginIsolated:',
+        isolated,
+      );
+    })();
+    console.debug('[Startup] renderer loaded:', sanitizeLogMessage(win.webContents.getURL()));
+  };
+  reloadMainRenderer = loadRenderer;
+  rendererLoadPromise = loadRenderer();
+  void rendererLoadPromise.catch((e: unknown) => {
     console.error(
       '[main] Failed to load renderer:',
       sanitizeLogMessage(e instanceof Error ? e.message : String(e)),
@@ -2099,27 +2354,33 @@ function createWindow() {
   });
 
   mainWindow.on('closed', () => {
+    rendererMemoryAutoSampler?.stop();
+    rendererMemoryAutoSampler = null;
     setMainWindow(null);
     mainWindow = null;
+    reloadMainRenderer = null;
+    rendererLoadPromise = null;
   });
-  win.on('close', () => {
-    if (windowStateSaveTimer) clearTimeout(windowStateSaveTimer);
-    if (!win.isMinimized() && !win.isMaximized()) {
-      saveWindowState(win.getBounds());
-    }
-  });
-
-  // Handle window close event (prevent-close when device connected)
+  // Handle window close event (prevent-close when device connected).
+  // Close-to-tray (default on) hides the window when a tray exists; if tray
+  // setup failed, the helper falls back to the legacy hide/minimize behaviour
+  // so the window is not stranded hidden with nothing to restore it from.
   win.on('close', (event) => {
-    if (!isQuitting && (isConnected || isAnyMqttConnected())) {
-      event.preventDefault();
-      if (process.platform === 'darwin') {
-        console.debug('[main] window close event: hiding (macOS, device connected)');
-        win.hide();
-      } else {
-        console.debug('[main] window close event: minimizing (device connected)');
-        win.minimize();
-      }
+    const action = resolveWindowCloseAction({
+      platform: process.platform,
+      isQuitting,
+      hasConnection: hasLiveConnection(),
+      closeToTrayEnabled: readCloseToTrayEnabled(),
+      trayAvailable: tray !== null,
+    });
+    if (action === 'allow') return;
+    event.preventDefault();
+    if (action === 'hide') {
+      console.debug('[main] window close event: hiding to tray (device connected)');
+      win.hide();
+    } else {
+      console.debug('[main] window close event: minimizing (device connected)');
+      win.minimize();
     }
   });
 
@@ -2134,17 +2395,47 @@ function createWindow() {
 
   if (!offlineTileCache) {
     offlineTileCache = createTileCache(app.getPath('userData'));
+    // Custom XYZ / MBTiles live outside tile-cache/ so "Clear tile cache" never drops the allowlist.
+    customMapSources = new CustomMapSourcesService(
+      new CustomMapSourceStore(path.join(app.getPath('userData'), 'offline-maps')),
+      () => offlineTileCache,
+      async () => {
+        const opts: Electron.OpenDialogOptions = {
+          properties: ['openFile'],
+          filters: [{ name: 'MBTiles', extensions: ['mbtiles'] }],
+        };
+        const result = mainWindow
+          ? await dialog.showOpenDialog(mainWindow, opts)
+          : await dialog.showOpenDialog(opts);
+        return result.canceled ? null : (result.filePaths[0] ?? null);
+      },
+    );
     protocol.handle(
       'mesh-tiles',
       createMeshTilesProtocolHandler({
         cache: offlineTileCache,
         getAppVersion: () => app.getVersion(),
+        customSources: customMapSources,
       }),
     );
     registerOfflineMapsIpcHandlers(
       () => mainWindow,
       () => offlineTileCache,
+      () => customMapSources,
     );
+    protocol.handle(
+      'mesh-weather',
+      createWeatherProtocolHandler({
+        getAppVersion: () => app.getVersion(),
+      }),
+    );
+    registerWeatherIpcHandlers({ getAppVersion: () => app.getVersion() });
+    registerElevationIpcHandlers({
+      getAppVersion: () => app.getVersion(),
+      userDataPath: app.getPath('userData'),
+      getMainWindow: () => mainWindow,
+      isOnline: () => net.isOnline(),
+    });
   }
 }
 
@@ -2262,11 +2553,23 @@ ipcMain.on('serial-port-selected', (event, portId: unknown) => {
     console.warn('[IPC] serial-port-selected: ignoring unknown portId');
     return;
   }
-  console.debug('[IPC] serial-port-selected:', sanitizeLogMessage(id || '(cancelled)'));
+  if (id === '') {
+    console.debug('[IPC] serial-port-selected:', '(cancelled)');
+  } else {
+    const meta = lastSerialPortsById.get(id);
+    console.debug(
+      '[IPC] serial-port-selected:',
+      sanitizeLogMessage(id),
+      sanitizeLogMessage(meta?.displayName || ''),
+      sanitizeLogMessage(meta?.portName || ''),
+      `vid=${sanitizeLogMessage(meta?.vendorId != null ? String(meta.vendorId) : '')}`,
+      `pid=${sanitizeLogMessage(meta?.productId != null ? String(meta.productId) : '')}`,
+    );
+  }
   clearPendingSerialSelectionTimer();
   pendingSerialCallback(id);
   pendingSerialCallback = null;
-  lastSerialPortIds.clear();
+  clearLastSerialPortDiscovery();
 });
 
 // ─── IPC: Cancel Serial selection ───────────────────────────────────
@@ -2280,464 +2583,11 @@ ipcMain.on('serial-port-cancelled', (event) => {
     pendingSerialCallback(''); // Empty string cancels the request
     pendingSerialCallback = null;
   }
-  lastSerialPortIds.clear();
+  clearLastSerialPortDiscovery();
 });
 
-// ─── IPC: Unpair Bluetooth device (Linux only — bluetoothctl remove) ──
-// Not used on routine disconnect; only ConnectionPanel manual re-pair flow.
-ipcMain.handle('bluetooth-unpair', async (event, macAddress: unknown) => {
-  assertIpcSender(event, 'bluetooth-unpair');
-  if (typeof macAddress !== 'string') {
-    throw new Error('bluetooth-unpair: macAddress must be a string');
-  }
-  // Validate MAC format (XX:XX:XX:XX:XX:XX)
-  if (!isMacAddress(macAddress)) {
-    throw new Error('bluetooth-unpair: invalid MAC address format');
-  }
-
-  console.debug('[IPC] bluetooth-unpair:', macAddress);
-
-  return new Promise<void>((resolve, reject) => {
-    const proc = spawn('bluetoothctl', ['remove', macAddress]);
-    let settled = false;
-    let stderr = '';
-    let stdout = '';
-
-    const timer = setTimeout(() => {
-      if (!settled) {
-        settled = true;
-        proc.kill();
-        reject(new Error('bluetooth-unpair: timed out after 5 s'));
-      }
-    }, 5_000);
-
-    proc.stdout.on('data', (data: Buffer) => {
-      stdout += data.toString();
-    });
-    proc.stderr.on('data', (data: Buffer) => {
-      stderr += data.toString();
-    });
-    proc.on('close', (code) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      if (code !== 0) {
-        console.error('[IPC] bluetooth-unpair failed:', sanitizeLogMessage(stderr));
-        reject(new Error(sanitizeLogMessage(stderr) || 'Failed to unpair device'));
-        return;
-      }
-      console.debug('[IPC] bluetooth-unpair success:', sanitizeLogMessage(stdout.trim()));
-      resolve();
-    });
-    proc.on('error', (err) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      const msg = formatBluetoothctlSpawnError(err);
-      console.error('[IPC] bluetooth-unpair error:', sanitizeLogMessage(msg));
-      reject(new Error(msg));
-    });
-  });
-});
-
-// ─── IPC: Start BLE scan (Linux) ─────────────────────────────────────
-const BLUETOOTH_START_SCAN_TIMEOUT_MS = 15_000;
-const BLUETOOTH_STOP_SCAN_TIMEOUT_MS = 5_000;
-const BLUETOOTH_GET_INFO_TIMEOUT_MS = 5_000;
-
-ipcMain.handle('bluetooth-start-scan', async (event) => {
-  assertIpcSender(event, 'bluetooth-start-scan');
-  console.debug('[IPC] bluetooth-start-scan');
-  return new Promise<void>((resolve, reject) => {
-    const proc = spawn('bluetoothctl', ['scan', 'on']);
-    let settled = false;
-
-    const timer = setTimeout(() => {
-      if (!settled) {
-        settled = true;
-        proc.kill();
-        reject(new Error('bluetooth-start-scan: timed out after 15 s'));
-      }
-    }, BLUETOOTH_START_SCAN_TIMEOUT_MS);
-
-    proc.on('close', (code) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      if (code === 0) {
-        console.debug('[IPC] bluetooth-start-scan success');
-        resolve();
-      } else {
-        console.warn('[IPC] bluetooth-start-scan failed with code', code);
-        reject(new Error(`scan on failed with code ${code}`));
-      }
-    });
-    proc.on('error', (err) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      const msg = formatBluetoothctlSpawnError(err);
-      console.warn('[IPC] bluetooth-start-scan error:', sanitizeLogMessage(msg));
-      reject(new Error(msg));
-    });
-  });
-});
-
-// ─── IPC: Stop BLE scan (Linux) ──────────────────────────────────────
-ipcMain.handle('bluetooth-stop-scan', async (event) => {
-  assertIpcSender(event, 'bluetooth-stop-scan');
-  console.debug('[IPC] bluetooth-stop-scan');
-  return new Promise<void>((resolve) => {
-    let settled = false;
-    const finish = (): void => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      resolve();
-    };
-    const timer = setTimeout(() => {
-      console.warn('[IPC] bluetooth-stop-scan: timed out after 5 s, killing process');
-      proc.kill();
-      finish(); // Don't reject - stop scan failure is not critical
-    }, BLUETOOTH_STOP_SCAN_TIMEOUT_MS);
-    const proc = spawn('bluetoothctl', ['scan', 'off']);
-    proc.on('close', () => {
-      console.debug('[IPC] bluetooth-stop-scan done');
-      finish();
-    });
-    proc.on('error', (err) => {
-      console.warn(
-        '[IPC] bluetooth-stop-scan error:',
-        sanitizeLogMessage(err?.message ?? String(err)),
-      );
-      finish(); // Don't reject - stop scan failure is not critical
-    });
-  });
-});
-
-// ─── IPC: Pair Bluetooth device (Linux) ───────────────────────────────
-ipcMain.handle('bluetooth-pair', async (event, macAddress: unknown, pin: unknown) => {
-  assertIpcSender(event, 'bluetooth-pair');
-  if (typeof macAddress !== 'string') {
-    throw new Error('bluetooth-pair: macAddress must be a string');
-  }
-  if (!isMacAddress(macAddress)) {
-    throw new Error('bluetooth-pair: invalid MAC address format');
-  }
-  let normalizedPin: string | undefined;
-  if (typeof pin === 'number' && Number.isInteger(pin) && pin >= 0 && pin <= 999999) {
-    normalizedPin = formatMeshtasticBluetoothPin(pin);
-  } else if (typeof pin === 'string' && pin.trim().length > 0) {
-    const parsed = parseMeshtasticBluetoothPin(pin.trim());
-    if (parsed === null) throw new Error('bluetooth-pair: pin must be exactly 6 digits');
-    normalizedPin = formatMeshtasticBluetoothPin(parsed);
-  } else if (typeof pin !== 'undefined' && pin !== null) {
-    throw new Error('bluetooth-pair: pin must be a 6-digit number');
-  }
-  console.debug('[IPC] bluetooth-pair:', macAddress);
-  return new Promise<void>((resolve, reject) => {
-    const pairTimeoutMs = 45000;
-    let settled = false;
-    const trustDeviceBestEffort = (): Promise<void> =>
-      new Promise((resolveTrust) => {
-        const trustProc = spawn('bluetoothctl', ['trust', macAddress]);
-        trustProc.stdout.on('data', () => {
-          // drain
-        });
-        trustProc.stderr.on('data', () => {
-          // drain
-        });
-        trustProc.on('close', () => {
-          resolveTrust();
-        });
-        trustProc.on('error', () => {
-          resolveTrust();
-        });
-      });
-
-    const proc = spawn('bluetoothctl', [], { stdio: ['pipe', 'pipe', 'pipe'] });
-    let stderr = '';
-    let stdout = '';
-    let pinSubmitted = false;
-    let confirmSubmitted = false;
-    let pairRequested = false;
-    let agentReady = false;
-    let targetDiscovered = false;
-    const finishReject = (err: Error): void => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(pairTimeout);
-      reject(err);
-    };
-    const finishResolve = (): void => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(pairTimeout);
-      resolve();
-    };
-    const pairTimeout = setTimeout(() => {
-      try {
-        proc.stdin.write('scan off\n');
-      } catch {
-        // catch-no-log-ok -- best-effort cleanup during timeout
-      }
-      try {
-        proc.stdin.write('quit\n');
-      } catch {
-        // catch-no-log-ok -- best-effort cleanup during timeout
-      }
-      try {
-        proc.kill('SIGTERM');
-      } catch {
-        // catch-no-log-ok -- best-effort cleanup during timeout
-      }
-      finishReject(new Error('Bluetooth pairing timed out; please retry'));
-    }, pairTimeoutMs);
-    const requestPair = (): void => {
-      if (pairRequested) return;
-      if (!agentReady || !targetDiscovered) return;
-      pairRequested = true;
-      proc.stdin.write(`pair ${macAddress}\n`);
-    };
-    const processPairingChunk = (chunk: string): void => {
-      const chunkLower = chunk.toLowerCase();
-      if (
-        normalizedPin &&
-        !pinSubmitted &&
-        (chunkLower.includes('pin code') ||
-          chunkLower.includes('request pin') ||
-          chunkLower.includes('enter passkey') ||
-          chunkLower.includes('passkey (number in 0-999999)') ||
-          chunkLower.includes('enter pass key'))
-      ) {
-        pinSubmitted = true;
-        proc.stdin.write(`${normalizedPin}\n`);
-      }
-      if (
-        !confirmSubmitted &&
-        (chunkLower.includes('confirm passkey') ||
-          chunkLower.includes('[agent] confirm') ||
-          chunkLower.includes('authorize service'))
-      ) {
-        confirmSubmitted = true;
-        proc.stdin.write('yes\n');
-      }
-      if (chunkLower.includes('pairing successful') || chunkLower.includes('failed to pair')) {
-        proc.stdin.write('scan off\n');
-        proc.stdin.write('quit\n');
-      }
-    };
-    proc.stdin.write('agent KeyboardOnly\n');
-    proc.stdin.write('default-agent\n');
-    proc.stdin.write('scan on\n');
-    proc.stdout.on('data', (data: Buffer) => {
-      const chunk = data.toString();
-      stdout += chunk;
-      const chunkLower = chunk.toLowerCase();
-      if (
-        !agentReady &&
-        (chunkLower.includes('default agent request successful') ||
-          chunkLower.includes('agent is already registered'))
-      ) {
-        agentReady = true;
-        requestPair();
-      }
-      if (!pairRequested) {
-        const discoveredTarget =
-          chunk.includes(macAddress) &&
-          (chunk.includes('Device') || chunk.includes('[NEW]') || chunk.includes('[CHG]'));
-        if (discoveredTarget) {
-          targetDiscovered = true;
-          requestPair();
-        }
-      }
-      if (chunk.includes('not available')) {
-        if (!pairRequested) {
-          requestPair();
-          return;
-        }
-        finishReject(new Error('Pairing failed: device not available. Re-scan and retry.'));
-        return;
-      }
-      processPairingChunk(chunk);
-    });
-    proc.stderr.on('data', (data: Buffer) => {
-      const chunk = data.toString();
-      stderr += chunk;
-      processPairingChunk(chunk);
-    });
-    proc.on('close', (code) => {
-      if (settled) return;
-      const pairingFailedByOutput =
-        stdout.includes('Failed to pair') ||
-        stdout.includes('AuthenticationCanceled') ||
-        stderr.includes('Failed to pair') ||
-        stderr.includes('AuthenticationCanceled');
-      const pairingSucceededByOutput = stdout.includes('Pairing successful');
-      if (!pairingFailedByOutput && (pairingSucceededByOutput || code === 0)) {
-        void trustDeviceBestEffort()
-          .then(() => {
-            if (settled) return;
-            console.debug('[IPC] bluetooth-pair success');
-            finishResolve();
-          })
-          .catch((e: unknown) => {
-            // trustDeviceBestEffort is best-effort and should not reject; finish pairing anyway.
-            console.debug(
-              '[IPC] bluetooth-pair trust settle:',
-              sanitizeLogMessage(e instanceof Error ? e.message : String(e)),
-            );
-            if (settled) return;
-            finishResolve();
-          });
-      } else {
-        console.warn(
-          '[IPC] bluetooth-pair failed:',
-          sanitizeLogMessage(stderr.trim() || `code ${code}`),
-        );
-        finishReject(
-          new Error(
-            sanitizeLogMessage(
-              stderr.trim() ||
-                (pairingFailedByOutput ? 'pair failed (bluetoothctl reported failure)' : '') ||
-                `pair failed with code ${code}`,
-            ),
-          ),
-        );
-      }
-    });
-    proc.on('error', (err) => {
-      if (settled) return;
-      console.warn(
-        '[IPC] bluetooth-pair error:',
-        sanitizeLogMessage(formatBluetoothctlSpawnError(err)),
-      );
-      finishReject(new Error(formatBluetoothctlSpawnError(err)));
-    });
-  });
-});
-
-// ─── IPC: Connect Bluetooth device (Linux) ────────────────────────────
-ipcMain.handle('bluetooth-connect', async (event, macAddress: unknown) => {
-  assertIpcSender(event, 'bluetooth-connect');
-  if (typeof macAddress !== 'string') {
-    throw new Error('bluetooth-connect: macAddress must be a string');
-  }
-  if (!isMacAddress(macAddress)) {
-    throw new Error('bluetooth-connect: invalid MAC address format');
-  }
-  console.debug('[IPC] bluetooth-connect:', macAddress);
-  return new Promise<void>((resolve, reject) => {
-    const proc = spawn('bluetoothctl', ['connect', macAddress]);
-    let stderr = '';
-    proc.stdout.on('data', () => {
-      // drain
-    });
-    proc.stderr.on('data', (data: Buffer) => {
-      stderr += data.toString();
-    });
-    proc.on('close', (code) => {
-      if (code === 0) {
-        console.debug('[IPC] bluetooth-connect success');
-        resolve();
-      } else {
-        console.warn(
-          '[IPC] bluetooth-connect failed:',
-          sanitizeLogMessage(stderr.trim() || `code ${code}`),
-        );
-        reject(new Error(sanitizeLogMessage(stderr.trim() || `connect failed with code ${code}`)));
-      }
-    });
-    proc.on('error', (err) => {
-      const msg = formatBluetoothctlSpawnError(err);
-      console.warn('[IPC] bluetooth-connect error:', sanitizeLogMessage(msg));
-      reject(new Error(msg));
-    });
-  });
-});
-
-// ─── IPC: Untrust Bluetooth device (Linux) ────────────────────────────
-// This is best-effort - failures are ignored
-ipcMain.handle('bluetooth-untrust', async (event, macAddress: unknown) => {
-  assertIpcSender(event, 'bluetooth-untrust');
-  if (typeof macAddress !== 'string') {
-    throw new Error('bluetooth-untrust: macAddress must be a string');
-  }
-  if (!isMacAddress(macAddress)) {
-    throw new Error('bluetooth-untrust: invalid MAC address format');
-  }
-  console.debug('[IPC] bluetooth-untrust:', macAddress);
-  return new Promise<void>((resolve) => {
-    const proc = spawn('bluetoothctl', ['untrust', macAddress]);
-    let stderr = '';
-    proc.stderr.on('data', (data: Buffer) => {
-      stderr += data.toString();
-    });
-    proc.on('close', (code) => {
-      // Ignore failure - untrust is best-effort, but log for debugging
-      if (code !== 0) {
-        console.debug(
-          '[IPC] bluetooth-untrust exited with code',
-          code,
-          'stderr:',
-          stderr.trim() || '(none)',
-        );
-      } else {
-        console.debug('[IPC] bluetooth-untrust done');
-      }
-      resolve();
-    });
-    proc.on('error', (err) => {
-      // Ignore error - untrust is best-effort, but log for debugging
-      console.debug(
-        '[IPC] bluetooth-untrust error:',
-        sanitizeLogMessage(err?.message ?? String(err)),
-      );
-      resolve();
-    });
-  });
-});
-
-ipcMain.handle('bluetooth-get-info', async (event, macAddress: unknown) => {
-  assertIpcSender(event, 'bluetooth-get-info');
-  if (typeof macAddress !== 'string') {
-    throw new Error('bluetooth-get-info: macAddress must be a string');
-  }
-  if (!isMacAddress(macAddress)) {
-    throw new Error('bluetooth-get-info: invalid MAC address format');
-  }
-  return new Promise<string>((resolve) => {
-    let settled = false;
-    const finish = (value: string): void => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      resolve(value);
-    };
-    const timer = setTimeout(() => {
-      console.warn('[IPC] bluetooth-get-info: timed out after 5 s, killing process');
-      proc.kill();
-      finish('bluetooth-get-info: timed out after 5 s');
-    }, BLUETOOTH_GET_INFO_TIMEOUT_MS);
-    const proc = spawn('bluetoothctl', ['info', macAddress]);
-    let stdout = '';
-    let stderr = '';
-    proc.stdout.on('data', (data: Buffer) => {
-      stdout += data.toString();
-    });
-    proc.stderr.on('data', (data: Buffer) => {
-      stderr += data.toString();
-    });
-    proc.on('close', (code) => {
-      const output = (stdout.trim() || stderr.trim() || `code ${code}`).slice(-2000);
-      finish(output);
-    });
-    proc.on('error', (err) => {
-      const msg = formatBluetoothctlSpawnError(err);
-      finish(msg);
-    });
-  });
-});
+// ─── IPC: Linux BlueZ pairing (D-Bus; see ipc/linux-bluetooth-handlers.ts) ──
+registerLinuxBluetoothIpcHandlers();
 
 // ─── IPC: Provide Bluetooth PIN (Linux) ───────────────────────────────
 ipcMain.on('bluetooth-provide-pin', (event, pin: unknown) => {
@@ -2784,23 +2634,36 @@ ipcMain.on('ble-reset-pairing-retry-count', (event, sessionKind?: unknown) => {
 });
 
 // ─── IPC: Connection status tracking (module-scope, not per-window) ─
-ipcMain.on('device-connected', (event) => {
+ipcMain.on('device-connected', (event, source: unknown, connectionType: unknown) => {
   if (!validateIpcSender(event)) {
     console.warn('[IPC] device-connected: unauthorized sender');
     return;
   }
-  console.debug('[main] device-connected: isConnected = true');
-  isConnected = true;
-  startPowerSaveBlocker();
+  const link = normalizePowerSaveLinkType(connectionType);
+  if (source === 'meshcore') {
+    meshcoreDeviceConnected = true;
+    meshcoreConnectionType = link;
+  } else {
+    meshtasticDeviceConnected = true;
+    meshtasticConnectionType = link;
+  }
+  console.debug('[main] device-connected');
+  syncPowerSaveBlocker();
 });
-ipcMain.on('device-disconnected', (event) => {
+ipcMain.on('device-disconnected', (event, source: unknown) => {
   if (!validateIpcSender(event)) {
     console.warn('[IPC] device-disconnected: unauthorized sender');
     return;
   }
-  console.debug('[main] device-disconnected: isConnected = false');
-  isConnected = false;
-  stopPowerSaveBlocker();
+  if (source === 'meshcore') {
+    meshcoreDeviceConnected = false;
+    meshcoreConnectionType = null;
+  } else {
+    meshtasticDeviceConnected = false;
+    meshtasticConnectionType = null;
+  }
+  console.debug('[main] device-disconnected');
+  syncPowerSaveBlocker();
 });
 
 // ─── GATT BLE: Forward proxy events to renderer ─────────────────────
@@ -3027,6 +2890,7 @@ registerGattPairingIpcHandlers({
 
 // ─── MQTT: Forward manager events to renderer ───────────────────────
 mqttManager.on('status', (s: string) => {
+  syncPowerSaveBlocker();
   if (mainWindow) mainWindow.webContents.send('mqtt:status', { status: s, protocol: 'meshtastic' });
   else console.debug('[main] mqtt:status dropped (mainWindow not ready)', sanitizeLogMessage(s));
 });
@@ -3078,6 +2942,7 @@ mqttManager.on('brokerRaw', (payload: { topic: string; payload: Buffer; retained
 });
 
 meshcoreMqttAdapter.on('status', (s: string) => {
+  syncPowerSaveBlocker();
   if (mainWindow) mainWindow.webContents.send('mqtt:status', { status: s, protocol: 'meshcore' });
   else
     console.debug(
@@ -3578,8 +3443,33 @@ ipcMain.handle('mqtt:publishWaypoint', (event, args) => {
 
 registerGeoIpcHandlers();
 registerBeaconIpcHandlers();
+registerLiveMapWindows({
+  getMainWindow: () => mainWindow,
+  preloadPath: path.join(__dirname, '../preload/index.js'),
+  iconPath: getAppIconPath(),
+  statePath: path.join(app.getPath('userData'), 'live-map-window-state.json'),
+  allowDevServer: !app.isPackaged,
+  openExternal: openExternalHttpOrHttpsIfExternal,
+});
 registerGpsIpcHandlers();
 registerNotificationSoundHandlers();
+const disposeAi = registerAiHandlers({
+  getSetting: (key) =>
+    (
+      getDatabase().prepareOnce('SELECT value FROM app_settings WHERE key = ?').get(key) as
+        { value: string } | undefined
+    )?.value,
+  setSetting: (key, value) => {
+    getDatabase()
+      .prepareOnce('INSERT OR REPLACE INTO app_settings(key, value) VALUES (?, ?)')
+      .run(key, value);
+  },
+  getWebContents: () => mainWindow?.webContents,
+});
+app.on('before-quit', () => {
+  customMapSources?.dispose();
+});
+app.on('before-quit', disposeAi);
 const disposeTranslation = registerTranslationHandlers({
   getSetting: (key) =>
     (
@@ -3699,7 +3589,17 @@ ipcMain.handle('app:getRendererLiveness', (event) => {
   }
   const mem = process.memoryUsage();
   const hb = rendererHeartbeatWatchdog.getLivenessSnapshot();
+  let rendererMemory: number | undefined;
+  try {
+    rendererMemory = rendererProcessMemoryBytes(app.getAppMetrics(), event.sender.getOSProcessId());
+  } catch (error) {
+    console.warn(
+      '[IPC] Renderer process memory unavailable:',
+      sanitizeLogMessage(error instanceof Error ? error.message : String(error)),
+    );
+  }
   return {
+    ...(rendererMemory === undefined ? {} : { rendererProcessMemoryBytes: rendererMemory }),
     mainUptimeSec: Math.floor(process.uptime()),
     lastRendererHeartbeatAgeMs: hb.lastRendererHeartbeatAgeMs,
     rendererUnresponsiveSeen: hb.rendererUnresponsiveSeen,
@@ -3740,6 +3640,7 @@ ipcMain.handle('app:setLoginItem', (event, openAtLogin: unknown) => {
 // ─── IPC: Persistent app settings (SQLite-backed key/value) ────────
 // Allow-list keys to prevent arbitrary writes from a compromised renderer.
 const APP_SETTINGS_ALLOWED_KEYS: ReadonlySet<string> = new Set([
+  ...DURABLE_RENDERER_STORAGE_MIGRATIONS.map(([, databaseKey]) => databaseKey),
   'meshtasticMessageRetentionEnabled',
   'meshtasticMessageRetentionCount',
   'meshcoreMessageRetentionEnabled',
@@ -3759,14 +3660,18 @@ const APP_SETTINGS_ALLOWED_KEYS: ReadonlySet<string> = new Set([
   'notificationSounds',
   'alwaysShowMessageActions',
   'autoUpdateDownloadEnabled',
+  'closeToTray',
+  'preventSleepWhileConnected',
   /** Legacy blob; prefer meshtasticRemoteAdminKey:<nodeNum> per-node keys. */
   'meshtasticRemoteAdminKeyByNode',
+  'scheduledBroadcastsEnabled',
 ]);
 const APP_SETTINGS_MAX_VALUE_LENGTH = 256;
 
 function isAppSettingsKeyAllowed(key: string): boolean {
   return (
     APP_SETTINGS_ALLOWED_KEYS.has(key) ||
+    isRendererStorageDeletionSetting(key) ||
     key.startsWith(MESHTASTIC_REMOTE_ADMIN_KEY_SETTING_PREFIX) ||
     key.startsWith(MESHCORE_ROOM_SYNC_SETTING_PREFIX) ||
     key.startsWith(MESHCORE_ROOM_LAST_POST_SETTING_PREFIX) ||
@@ -3783,6 +3688,10 @@ function isLegacyPlaintextCredentialKey(key: string): boolean {
 }
 
 function appSettingsMaxValueLengthForKey(key: string): number {
+  if (isRendererStorageDeletionSetting(key)) return RENDERER_STORAGE_DELETION_STATE_MAX_LENGTH;
+  if (DURABLE_RENDERER_STORAGE_MIGRATIONS.some(([, databaseKey]) => databaseKey === key)) {
+    return DURABLE_RENDERER_SETTING_MAX_LENGTH;
+  }
   if (key === 'notificationSounds') return 4096;
   if (key === 'meshtasticOwnNodeNumsByPublicKey') return 4096;
   if (
@@ -3811,7 +3720,11 @@ ipcMain.handle('appSettings:get', (event) => {
     }[];
     const out: Record<string, string> = {};
     for (const row of rows) {
-      if (typeof row.key === 'string' && typeof row.value === 'string') {
+      if (
+        row.key !== 'aiProviderConfig' &&
+        typeof row.key === 'string' &&
+        typeof row.value === 'string'
+      ) {
         out[row.key] = row.value;
       }
     }
@@ -3840,10 +3753,14 @@ ipcMain.handle('appSettings:set', (event, key: unknown, value: unknown) => {
     throw new Error(`appSettings:set: value must be a string under ${maxValueLength} chars`);
   }
   try {
-    const result = getDatabase()
-      .prepareOnce('INSERT OR REPLACE INTO app_settings(key, value) VALUES (?, ?)')
-      .run(key, value);
+    const db = getDatabase();
+    const result = isRendererStorageDeletionSetting(key)
+      ? writeRendererStorageDeletionState(db, key, value)
+      : db
+          .prepareOnce('INSERT OR REPLACE INTO app_settings(key, value) VALUES (?, ?)')
+          .run(key, value);
     console.debug(`[IPC] appSettings:set: ${sanitizeLogMessage(key)} (${result.changes} rows)`);
+    if (key === PREVENT_SLEEP_SETTING_KEY) syncPowerSaveBlocker();
     return { changes: Number(result.changes) };
   } catch (err) {
     console.error(
@@ -3858,10 +3775,15 @@ ipcMain.handle('appSettings:remove', (event, key: unknown) => {
   if (!validateIpcSender(event)) {
     throw new Error('IPC sender validation failed');
   }
-  if (typeof key !== 'string' || !isAppSettingsKeyAllowed(key)) {
+  if (
+    typeof key !== 'string' ||
+    !isAppSettingsKeyAllowed(key) ||
+    isRendererStorageDeletionSetting(key)
+  ) {
     throw new Error('appSettings:remove: key not allowed');
   }
   const result = getDatabase().prepareOnce('DELETE FROM app_settings WHERE key = ?').run(key);
+  if (key === PREVENT_SLEEP_SETTING_KEY) syncPowerSaveBlocker();
   return { changes: Number(result.changes) };
 });
 
@@ -4239,6 +4161,75 @@ ipcMain.handle('db:setNodeNote', (event, nodeId: number, note: string) => {
   }
 });
 
+ipcMain.handle(
+  'db:recordRendererMemorySample',
+  (
+    event,
+    sample: {
+      capturedAt?: unknown;
+      bytes?: unknown;
+      source?: unknown;
+      sessionId?: unknown;
+      jsHeapBytes?: unknown;
+      totalJsHeapBytes?: unknown;
+      domNodes?: unknown;
+    },
+  ) => {
+    if (!validateIpcSender(event)) {
+      throw new Error('db:recordRendererMemorySample: unauthorized sender');
+    }
+    try {
+      const capturedAt = safeNonNegativeSafeInteger(sample?.capturedAt);
+      const bytes = safeNonNegativeSafeInteger(sample?.bytes);
+      const source = sample?.source;
+      if (source !== 'user-agent' && source !== 'renderer-process') {
+        throw new Error('db:recordRendererMemorySample: invalid source');
+      }
+      const sessionId =
+        typeof sample?.sessionId === 'string' && sample.sessionId.length <= 64
+          ? sample.sessionId
+          : null;
+      const db = getDbForIpc('db:recordRendererMemorySample');
+      if (!db) return;
+      insertRendererMemorySample(db, {
+        captured_at: capturedAt,
+        bytes,
+        source,
+        app_version: app.getVersion(),
+        session_id: sessionId,
+        js_heap_bytes: optionalNonNegativeSafeInteger(sample?.jsHeapBytes),
+        total_js_heap_bytes: optionalNonNegativeSafeInteger(sample?.totalJsHeapBytes),
+        dom_nodes: optionalNonNegativeSafeInteger(sample?.domNodes),
+      });
+    } catch (err) {
+      finishDbIpcHandler('db:recordRendererMemorySample', err);
+    }
+  },
+);
+
+ipcMain.handle('db:getRendererMemorySampleSummary', (event) => {
+  if (!validateIpcSender(event)) {
+    throw new Error('db:getRendererMemorySampleSummary: unauthorized sender');
+  }
+  try {
+    const db = getDbForIpc('db:getRendererMemorySampleSummary');
+    if (!db) {
+      return {
+        count: 0,
+        firstAt: null,
+        lastAt: null,
+        minBytes: null,
+        maxBytes: null,
+        spanMs: null,
+        samples: [],
+      };
+    }
+    return exportRendererMemorySamples(db);
+  } catch (err) {
+    finishDbIpcHandler('db:getRendererMemorySampleSummary', err);
+  }
+});
+
 ipcMain.handle('db:getNodes', (event) => {
   try {
     assertIpcSender(event, 'db:getNodes');
@@ -4431,17 +4422,15 @@ ipcMain.handle('db:pruneMeshcoreMessagesByCount', (event, maxCount: number) => {
     if (typeof maxCount !== 'number' || maxCount < 100 || !isFinite(maxCount))
       return { changes: 0 };
     const cap = Math.floor(maxCount);
-    const result = db
-      .prepareOnce(
-        'DELETE FROM meshcore_messages WHERE id NOT IN (SELECT id FROM meshcore_messages ORDER BY timestamp DESC, id DESC LIMIT ?)',
-      )
-      .run(cap);
-    if (result.changes > 0) {
+    // Room posts keep their own newest `cap` rows (see pruneMeshcoreMessagesByCountOn).
+    const { chat, room } = pruneMeshcoreMessagesByCountOn(db, cap);
+    const changes = chat + room;
+    if (changes > 0) {
       console.debug(
-        `[IPC] db:pruneMeshcoreMessagesByCount: pruned ${result.changes} messages, keeping newest ${cap}`,
+        `[IPC] db:pruneMeshcoreMessagesByCount: pruned ${changes} messages (${room} room posts), keeping newest ${cap} messages and ${cap} room posts`,
       );
     }
-    return { changes: Number(result.changes) };
+    return { changes };
   } catch (err) {
     finishDbIpcHandler('db:pruneMeshcoreMessagesByCount', err);
   }
@@ -4831,17 +4820,35 @@ ipcMain.handle('session:clearData', async (event) => {
   if (!validateIpcSender(event)) {
     throw new Error('IPC sender validation failed');
   }
+  let resumeIpc: (() => void) | undefined;
+  let resetStarted = false;
   try {
-    const win = BrowserWindow.getAllWindows()[0];
-    if (!win) return;
-    await win.webContents.session.clearStorageData({
-      storages: ['cookies', 'localstorage', 'cachestorage', 'shadercache', 'serviceworkers'],
-    });
-    await win.webContents.session.clearCache();
+    const win = mainWindow;
+    const reload = reloadMainRenderer;
+    if (!reload || event.sender !== win?.webContents) {
+      throw new Error('Data reset requires the main renderer');
+    }
+    // Suspend synchronously: a second clear or queued store write cannot pass its IPC guard.
+    resumeIpc = suspendIpcSender(win.webContents);
+    // Finish any startup health probe before it can race the explicit reset baseline.
+    await rendererLoadPromise;
+    // A rename may persist the intent even if its final directory fsync throws: stay fenced.
+    resetStarted = true;
+    beginRendererStorageReset({ userDataPath: app.getPath('userData') });
+    // Destroy React stores and their retry journals before clearing persistent data. Queued IPC
+    // is fenced until reset and migration finish; branch-owned durable writes are synchronous.
+    await win.loadURL('about:blank');
+    rendererLoadPromise = reload(resumeIpc);
+    await rendererLoadPromise;
   } catch (err) {
+    if (!resetStarted) resumeIpc?.();
     console.error(
       '[IPC] session:clearData failed:',
       sanitizeLogMessage(err instanceof Error ? err.message : String(err)),
+    );
+    dialog.showErrorBox(
+      'Mesh-Client — Data Reset Failed',
+      'The data reset could not finish. Restart Mesh Client to retry before opening your data.',
     );
     throw err;
   }
@@ -5119,6 +5126,11 @@ ipcMain.handle('meshtastic:xmodemSaveDownload', async (event, filename: unknown,
   if (!(data instanceof Uint8Array) || data.length === 0) {
     throw new Error('meshtastic:xmodemSaveDownload: data must be non-empty Uint8Array');
   }
+  if (data.byteLength > MESHTASTIC_XMODEM_UPLOAD_MAX_BYTES) {
+    throw new Error(
+      `File too large (max ${MESHTASTIC_XMODEM_UPLOAD_MAX_BYTES / (1024 * 1024)} MB)`,
+    );
+  }
   if (!mainWindow) return { success: false };
   try {
     const result = await dialog.showSaveDialog(mainWindow, {
@@ -5184,8 +5196,8 @@ ipcMain.handle('chat:outbox:add', (event, entry: unknown) => {
         `INSERT INTO chat_outbox
         (protocol, view_key, channel, to_node, payload, reply_id, status, error,
          attempt_count, next_retry_at, created_at, updated_at, group_id, group_index, group_total,
-         priority)
-       VALUES (?,?,?,?,?,?,?,?,0,?,?,?,?,?,?,?)`,
+         priority, identity_id)
+       VALUES (?,?,?,?,?,?,?,?,0,?,?,?,?,?,?,?,?)`,
       )
       .run(
         e.protocol,
@@ -5203,6 +5215,7 @@ ipcMain.handle('chat:outbox:add', (event, entry: unknown) => {
         e.groupIndex ?? null,
         e.groupTotal ?? null,
         e.priority === 'emergency' ? 'emergency' : 'normal',
+        outboxIdentityIdForInsert(e.identityId),
       );
     const row = db
       .prepareOnce('SELECT * FROM chat_outbox WHERE id = ?')
@@ -5291,6 +5304,8 @@ function rowToOutboxEntry(row: Record<string, unknown>) {
     groupIndex: (row.group_index as number | null) ?? null,
     groupTotal: (row.group_total as number | null) ?? null,
     priority: (row.priority as string) === 'emergency' ? 'emergency' : 'normal',
+    identityId:
+      typeof row.identity_id === 'string' && row.identity_id.length > 0 ? row.identity_id : null,
   };
 }
 
@@ -5329,6 +5344,63 @@ ipcMain.handle('db:getMeshcoreMessages', (event, channelIdx?: number, limit = 20
   } catch (err) {
     finishDbIpcHandler('db:getMeshcoreMessages', err);
   }
+});
+
+ipcMain.handle(
+  'db:getMeshcoreMessagesForHydration',
+  (
+    event,
+    limits?: {
+      globalLimit?: number;
+      perChannelLimit?: number;
+      roomLimit?: number;
+    },
+  ) => {
+    try {
+      assertIpcSender(event, 'db:getMeshcoreMessagesForHydration');
+      const db = getDbForIpc('db:getMeshcoreMessagesForHydration');
+      if (!db) return [];
+      // Defaults match src/shared/meshcoreMessageHydration.ts (500 / 100 / 200).
+      const rows = selectMeshcoreMessagesForHydration(db, {
+        globalLimit: clampQueryLimit(limits?.globalLimit, { default: 500, max: 10000 }),
+        perChannelLimit: clampQueryLimit(limits?.perChannelLimit, { default: 100, max: 10000 }),
+        roomLimit: clampQueryLimit(limits?.roomLimit, { default: 200, max: 10000 }),
+      });
+      return rows.map((row) => ({
+        ...row,
+        timestamp: effectiveMessageTimestampMs(Number(row.timestamp)),
+      }));
+    } catch (err) {
+      finishDbIpcHandler('db:getMeshcoreMessagesForHydration', err);
+    }
+  },
+);
+
+/** Production ships `identity-hydration.js` beside index.js (out of measured budget). */
+void (async () => {
+  const mod = (
+    process.env.VITEST
+      ? await import('./identityHydrationSnapshot')
+      : await import(pathToFileURL(path.join(__dirname, 'identity-hydration.js')).href)
+  ) as {
+    registerIdentityHydrationIpcHandlers: (deps: {
+      ipcMain: typeof ipcMain;
+      assertIpcSender: typeof assertIpcSender;
+      getDbForIpc: typeof getDbForIpc;
+      finishDbIpcHandler: typeof finishDbIpcHandler;
+    }) => void;
+  };
+  mod.registerIdentityHydrationIpcHandlers({
+    ipcMain,
+    assertIpcSender,
+    getDbForIpc,
+    finishDbIpcHandler,
+  });
+})().catch((err: unknown) => {
+  console.error(
+    '[main] identity hydration IPC register failed:',
+    sanitizeLogMessage(err instanceof Error ? err.message : String(err)),
+  );
 });
 
 ipcMain.handle('db:searchMessages', (event, query: string, limit?: number) => {
@@ -5441,27 +5513,37 @@ ipcMain.handle('db:saveMeshcoreContact', (event, contact) => {
   }
 });
 
-ipcMain.handle('db:saveMeshcoreContactsBatch', (event, contacts: unknown) => {
-  if (!validateIpcSender(event))
-    throw new Error('db:saveMeshcoreContactsBatch: unauthorized sender');
-  try {
-    if (!getDbForIpc('db:saveMeshcoreContactsBatch')) return { changes: 0 };
-    if (!Array.isArray(contacts)) {
-      throw new Error('db:saveMeshcoreContactsBatch: contacts must be an array');
-    }
-    const rows: MeshcoreContactUpsertParams[] = [];
-    for (let i = 0; i < contacts.length; i += MESHCORE_CONTACTS_BATCH_MAX) {
-      const slice = contacts.slice(i, i + MESHCORE_CONTACTS_BATCH_MAX);
-      for (const contact of slice) {
-        validateSaveMeshcoreContact(contact);
-        rows.push(meshcoreContactInputToUpsertParams(contact));
+ipcMain.handle(
+  'db:saveMeshcoreContactsBatch',
+  (event, contacts: unknown, radioSnapshotBefore: unknown) => {
+    if (!validateIpcSender(event))
+      throw new Error('db:saveMeshcoreContactsBatch: unauthorized sender');
+    try {
+      if (!getDbForIpc('db:saveMeshcoreContactsBatch')) return { changes: 0 };
+      if (!Array.isArray(contacts)) {
+        throw new Error('db:saveMeshcoreContactsBatch: contacts must be an array');
       }
+      if (
+        radioSnapshotBefore !== undefined &&
+        (typeof radioSnapshotBefore !== 'string' ||
+          new Date(radioSnapshotBefore).toJSON() !== radioSnapshotBefore)
+      ) {
+        throw new Error('Invalid snapshot');
+      }
+      const rows: MeshcoreContactUpsertParams[] = [];
+      for (let i = 0; i < contacts.length; i += MESHCORE_CONTACTS_BATCH_MAX) {
+        const slice = contacts.slice(i, i + MESHCORE_CONTACTS_BATCH_MAX);
+        for (const contact of slice) {
+          validateSaveMeshcoreContact(contact);
+          rows.push(meshcoreContactInputToUpsertParams(contact));
+        }
+      }
+      return saveMeshcoreContactsBatch(rows, radioSnapshotBefore);
+    } catch (err) {
+      finishDbIpcHandler('db:saveMeshcoreContactsBatch', err);
     }
-    return saveMeshcoreContactsBatch(rows);
-  } catch (err) {
-    finishDbIpcHandler('db:saveMeshcoreContactsBatch', err);
-  }
-});
+  },
+);
 
 ipcMain.handle(
   'db:updateMeshcoreContactRfTransport',
@@ -5768,7 +5850,7 @@ ipcMain.handle('db:clearMeshcoreContacts', (event) => {
   }
 });
 
-// Deletes only Repeater-type contacts (contact_type = 2), leaving Chat and Room contacts intact.
+// Deletes only non-favorited Repeater-type contacts (contact_type = 2), leaving Chat and Room contacts intact.
 ipcMain.handle('db:clearMeshcoreRepeaters', (event) => {
   if (!validateIpcSender(event)) {
     throw new Error('IPC sender validation failed');
@@ -5776,7 +5858,11 @@ ipcMain.handle('db:clearMeshcoreRepeaters', (event) => {
   try {
     const db = getDbForIpc('db:clearMeshcoreRepeaters');
     if (!db) return { changes: 0 };
-    return db.prepareOnce('DELETE FROM meshcore_contacts WHERE contact_type = 2').run();
+    return db
+      .prepareOnce(
+        'DELETE FROM meshcore_contacts WHERE contact_type = 2 AND COALESCE(favorited, 0) = 0',
+      )
+      .run();
   } catch (err) {
     finishDbIpcHandler('db:clearMeshcoreRepeaters', err);
   }
@@ -6618,7 +6704,7 @@ app.on('child-process-gone', (_event, details) => {
 
 void app
   .whenReady()
-  .then(() => {
+  .then(async () => {
     try {
       initLogFile();
       console.debug(`[Startup] runtime ${formatRuntimeLogTag()}`);
@@ -6635,63 +6721,34 @@ void app
       if (coldStartUrl) pendingOpenUrl = coldStartUrl;
 
       initDatabase();
-
-      // Auto-restore TAK server if auto-start is enabled
-      const takSettingsPath = path.join(app.getPath('userData'), 'tak-settings.json');
+      registerIncidentIpcHandlers();
+      registerScheduledBroadcastIpcHandlers();
+      // Production ships `team-roster-handlers.js` beside index.js (out of measured budget).
       try {
-        if (fs.existsSync(takSettingsPath)) {
-          const raw: unknown = JSON.parse(fs.readFileSync(takSettingsPath, 'utf-8'));
-          // Backfill autoStart for settings files saved before the field was added.
-          if (
-            raw != null &&
-            typeof raw === 'object' &&
-            typeof (raw as Record<string, unknown>).autoStart !== 'boolean'
-          ) {
-            (raw as Record<string, unknown>).autoStart = false;
-          }
-          const saved = raw;
-          validateTakSettings(saved);
-          if (saved.autoStart) {
-            void ensureTakServerManager()
-              .then((m) => m.start(saved))
-              .catch((e: unknown) => {
-                console.error(
-                  '[TAK] Auto-start failed:',
-                  sanitizeLogMessage(e instanceof Error ? e.message : String(e)),
-                );
-              });
-          }
-        }
-      } catch (e: unknown) {
-        console.warn(
-          '[TAK] Settings restore failed:',
-          sanitizeLogMessage(e instanceof Error ? e.message : String(e)),
+        const mod = (
+          process.env.VITEST
+            ? await import('./ipc/team-roster-handlers')
+            : await import(pathToFileURL(path.join(__dirname, 'team-roster-handlers.js')).href)
+        ) as {
+          registerTeamRosterIpcHandlers: (deps: {
+            ipcMain: typeof ipcMain;
+            assertIpcSender: typeof assertIpcSender;
+            getDatabase: typeof getDatabase;
+          }) => void;
+        };
+        mod.registerTeamRosterIpcHandlers({ ipcMain, assertIpcSender, getDatabase });
+      } catch (err: unknown) {
+        console.error(
+          '[main] team-roster IPC registration failed:',
+          sanitizeLogMessage(err instanceof Error ? err.message : String(err)),
         );
       }
-
-      // Reconnect the remote TAK relay when it was saved with autoConnect. An unverified or
-      // unencrypted relay is only started by hand, so a hand-edited settings file cannot make it
-      // connect at launch.
-      try {
-        const remoteSettings = loadTakRemoteSettings();
-        if (remoteSettings?.autoConnect && canAutoConnectTakRemote(remoteSettings)) {
-          void ensureTakServerManager()
-            .then((m) => {
-              m.startRemote(remoteSettings);
-            })
-            .catch((e: unknown) => {
-              console.error(
-                '[TAK] Remote relay auto-connect failed:',
-                sanitizeLogMessage(e instanceof Error ? e.message : String(e)),
-              );
-            });
-        }
-      } catch (e: unknown) {
-        console.warn(
-          '[TAK] Remote relay settings restore failed:',
-          sanitizeLogMessage(e instanceof Error ? e.message : String(e)),
-        );
-      }
+      protocol.handle(
+        RENDERER_SCHEME,
+        createRendererOriginProtocolHandler({
+          distRoot: path.join(__dirname, '../../dist/renderer'),
+        }),
+      );
 
       // Force the dock icon in development on macOS
       if (!app.isPackaged && process.platform === 'darwin') {
@@ -6701,7 +6758,65 @@ void app
         );
         app.dock?.setIcon(iconPath);
       }
+      // Window first — TAK restore is not required for first paint.
       createWindow();
+
+      // Auto-restore TAK after window so sync FS/JSON does not delay createWindow.
+      setImmediate(() => {
+        const takSettingsPath = path.join(app.getPath('userData'), 'tak-settings.json');
+        try {
+          if (fs.existsSync(takSettingsPath)) {
+            const raw: unknown = JSON.parse(fs.readFileSync(takSettingsPath, 'utf-8'));
+            // Backfill autoStart for settings files saved before the field was added.
+            if (
+              raw != null &&
+              typeof raw === 'object' &&
+              typeof (raw as Record<string, unknown>).autoStart !== 'boolean'
+            ) {
+              (raw as Record<string, unknown>).autoStart = false;
+            }
+            const saved = raw;
+            validateTakSettings(saved);
+            if (saved.autoStart) {
+              void ensureTakServerManager()
+                .then((m) => m.start(saved))
+                .catch((e: unknown) => {
+                  console.error(
+                    '[TAK] Auto-start failed:',
+                    sanitizeLogMessage(e instanceof Error ? e.message : String(e)),
+                  );
+                });
+            }
+          }
+        } catch (e: unknown) {
+          console.warn(
+            '[TAK] Settings restore failed:',
+            sanitizeLogMessage(e instanceof Error ? e.message : String(e)),
+          );
+        }
+
+        // Reconnect the remote TAK relay when it was saved with autoConnect. An unverified or
+        // unencrypted relay is only started by hand, so a hand-edited settings file cannot make it
+        // connect at launch.
+        try {
+          const remoteSettings = loadTakRemoteSettings();
+          if (remoteSettings?.autoConnect && canAutoConnectTakRemote(remoteSettings)) {
+            void ensureTakServerManager()
+              .then((m) => m.startRemote(remoteSettings))
+              .catch((e: unknown) => {
+                console.error(
+                  '[TAK] Remote relay auto-connect failed:',
+                  sanitizeLogMessage(e instanceof Error ? e.message : String(e)),
+                );
+              });
+          }
+        } catch (e: unknown) {
+          console.warn(
+            '[TAK] Remote relay settings restore failed:',
+            sanitizeLogMessage(e instanceof Error ? e.message : String(e)),
+          );
+        }
+      });
 
       rendererHeartbeatWatchdog.startStallWatchdog(() => {
         const win = mainWindow;
@@ -6874,7 +6989,7 @@ app.on('will-quit', (event) => {
 });
 
 app.on('window-all-closed', () => {
-  const hasConnection = isConnected || isAnyMqttConnected();
+  const hasConnection = hasLiveConnection();
   // On macOS: quit when user chose Quit, or when there's no connection (window closed with nothing to keep running for)
   if (process.platform !== 'darwin' || isQuitting || !hasConnection) {
     app.quit();

@@ -2,6 +2,8 @@ import { create } from 'zustand';
 
 import { preferNonEmptyTrimmedString } from '@/shared/nodeNameUtils';
 
+import { readStoredStaticGps, shouldPreserveStaticGpsForSelfNode } from '../lib/gpsSource';
+import { loadPersistedMeshcoreSelfNodeId } from '../lib/meshcoreLastSelfNodeId';
 import {
   getMeshtasticConfigurePhase,
   touchMeshtasticConfigureProgress,
@@ -343,6 +345,25 @@ export function patchNodeFavorited(
   });
 }
 
+/** Mirror `NodeInfo.is_key_manually_verified` after a successful Meshtastic key verification. */
+export function patchNodeKeyManuallyVerified(
+  identityId: IdentityId,
+  nodeId: number,
+  keyManuallyVerified: boolean,
+): void {
+  useNodeStore.setState((s) => {
+    const byId = s.nodes[identityId] ?? {};
+    const existing = byId[nodeId];
+    if (!existing) return s;
+    return {
+      nodes: {
+        ...s.nodes,
+        [identityId]: { ...byId, [nodeId]: mergeNode(existing, nodeId, { keyManuallyVerified }) },
+      },
+    };
+  });
+}
+
 /** Bump MeshCore `lastHeardAt` in the identity store (path-updated / RPC reachability). */
 export function patchMeshcoreNodeLastHeardAt(
   identityId: IdentityId,
@@ -401,6 +422,15 @@ export function bumpMeshtasticNodesLastHeardAt(
   });
 }
 
+function selfNodeIdForStaticGpsPreserve(identityId: IdentityId): number {
+  const fromConn = getConnection(identityId)?.myNodeNum ?? 0;
+  if (fromConn > 0) return fromConn;
+  if (getIdentity(identityId)?.protocol.type === 'meshcore') {
+    return loadPersistedMeshcoreSelfNodeId();
+  }
+  return 0;
+}
+
 export function updatePosition(identityId: IdentityId, event: PositionEvent): void {
   useNodeStore.setState((s) => {
     const byId = s.nodes[identityId] ?? {};
@@ -408,14 +438,25 @@ export function updatePosition(identityId: IdentityId, event: PositionEvent): vo
     const existing = byId[nodeId];
     const lastHeardAt = meshtasticLastHeardPatch(identityId, timestamp, existing?.lastHeardAt);
     maybeTouchMeshtasticNodeDbConfigureProgress(identityId);
+    const preserveStatic = shouldPreserveStaticGpsForSelfNode(
+      nodeId,
+      selfNodeIdForStaticGpsPreserve(identityId),
+    );
+    let positionPatch: { latitude?: number; longitude?: number } = {
+      latitude,
+      longitude,
+    };
+    if (preserveStatic) {
+      const stored = readStoredStaticGps();
+      positionPatch = stored ? { latitude: stored.lat, longitude: stored.lon } : {};
+    }
     return {
       nodes: {
         ...s.nodes,
         [identityId]: {
           ...byId,
           [nodeId]: mergeNode(existing, nodeId, {
-            latitude,
-            longitude,
+            ...positionPatch,
             altitude,
             positionTimestamp: timestamp,
             groundSpeed,

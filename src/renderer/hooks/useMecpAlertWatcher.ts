@@ -282,7 +282,9 @@ async function processNewMessages(
     inFlight.delete(key);
     seen.add(key);
 
-    if (!blocked && (slice.protocol === 'meshtastic' || slice.protocol === 'meshcore')) {
+    // Meshtastic, MeshCore and Reticulum LXMF can be rebroadcast sources here.
+    // RRC room MECP is handled separately via handleRrcMecpInbound.
+    if (!blocked) {
       void executeMecpRebroadcast(
         {
           protocol: slice.protocol,

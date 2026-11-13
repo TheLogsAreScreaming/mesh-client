@@ -7,6 +7,296 @@ const INDEX_SOURCE = readFileSync(join(__dirname, 'index.ts'), 'utf-8');
 const PRELOAD_SOURCE = readFileSync(join(__dirname, '../preload/index.ts'), 'utf-8');
 const TCP_BRIDGE_SOURCE = readFileSync(join(__dirname, 'ipc/tcp-bridge.ts'), 'utf-8');
 
+describe('renderer origin cutover (source contract)', () => {
+  it('registers the secure renderer protocol before creating a window', () => {
+    const privileges = INDEX_SOURCE.slice(
+      INDEX_SOURCE.indexOf('protocol.registerSchemesAsPrivileged'),
+      INDEX_SOURCE.indexOf('// Linux: SIGSEGV'),
+    );
+    expect(privileges).toContain('scheme: RENDERER_SCHEME');
+    expect(privileges).toContain('secure: true');
+    expect(privileges).toContain('allowServiceWorkers: false');
+    expect(privileges).not.toContain('bypassCSP');
+    const ready = INDEX_SOURCE.slice(INDEX_SOURCE.indexOf('void app\n  .whenReady()'));
+    expect(ready.indexOf('initDatabase()')).toBeLessThan(ready.indexOf('protocol.handle('));
+    expect(ready.indexOf('createRendererOriginProtocolHandler')).toBeLessThan(
+      ready.indexOf('createWindow()'),
+    );
+  });
+
+  it('uses verified migration completion and preserves a file-origin recovery path', () => {
+    expect(INDEX_SOURCE).toContain("migrationCompleted: migrationResult === 'completed'");
+    expect(INDEX_SOURCE).toContain('seedDurableRendererSettings(getDatabase(), entries)');
+    expect(INDEX_SOURCE).toContain(
+      "seedIncidentsOn(getDatabase(), entries['mesh-client:incidents'] ?? null)",
+    );
+    expect(INDEX_SOURCE).toContain("'../../dist/renderer/migration.html'");
+    expect(INDEX_SOURCE).toContain(
+      'checkRendererOriginStorageHealth(migrationOptions, win.webContents)',
+    );
+    expect(INDEX_SOURCE).toContain('trustedRendererUrl = pathToFileURL(distIndexPath).href');
+  });
+
+  it('unloads the application before post-load storage repair and reloads afterward', () => {
+    const loadRenderer = INDEX_SOURCE.slice(
+      INDEX_SOURCE.indexOf('const loadRenderer = async'),
+      INDEX_SOURCE.indexOf('reloadMainRenderer = loadRenderer;'),
+    );
+    expect(loadRenderer).toMatch(
+      /unloadRendererBeforeRepair: async \(\) => \{\s*await win\.loadURL\('about:blank'\);\s*if \(win\.isDestroyed\(\)\) throw/,
+    );
+    expect(loadRenderer).toMatch(
+      /if \(health === 'repaired'\) \{\s*phase = 'repaired';\s*await win\.loadURL\(resolved\.url,/,
+    );
+    expect(loadRenderer).toContain(
+      'checkRendererOriginStorageHealth(migrationOptions, win.webContents, false)',
+    );
+  });
+
+  it('hydrates operational state before mounting any protocol effects', () => {
+    const renderer = readFileSync(join(__dirname, '../renderer/main.tsx'), 'utf8');
+    expect(renderer).toContain('hydrateScheduledBroadcastsStore()');
+    expect(renderer).toContain('hydrateTeamRosterStore()');
+    const hydration = renderer.indexOf('hydrateDurableRendererSettings()');
+    expect(renderer).toContain('hydrateIncidentStore()');
+    expect(hydration).toBeGreaterThan(renderer.indexOf('async function prepareRendererStorage()'));
+    expect(hydration).toBeLessThan(renderer.indexOf('installRendererPreferencePersistence();'));
+    expect(renderer.indexOf('installDevElectronApiStubIfNeeded();')).toBeLessThan(
+      renderer.indexOf('createRoot(document'),
+    );
+    expect(renderer).toContain(
+      '<SecureSecretsStartup prepare={prepareRendererStorage} finish={finishRendererStorage}>',
+    );
+    const finalization = renderer.indexOf('await finalizeRendererPreferences();');
+    expect(finalization).toBeGreaterThan(
+      renderer.indexOf('async function finishRendererStorage()'),
+    );
+    expect(finalization).toBeLessThan(renderer.indexOf('installRendererPreferencePersistence();'));
+    expect(renderer.indexOf('<SecureSecretsStartup prepare=')).toBeLessThan(
+      renderer.indexOf('<App />'),
+    );
+  });
+
+  it('uses the same explicit renderer override for migration and loading in every launch mode', () => {
+    const loadRenderer = INDEX_SOURCE.slice(
+      INDEX_SOURCE.indexOf('const loadRenderer = async'),
+      INDEX_SOURCE.indexOf('reloadMainRenderer = loadRenderer;'),
+    );
+    expect(loadRenderer).toContain('const devServerUrl = process.env.VITE_DEV_SERVER_URL;');
+    expect(loadRenderer).toMatch(/const migrationOptions = \{\s*devServerUrl,/);
+    expect(loadRenderer).toMatch(/resolveRendererLoadUrl\(\{\s*devServerUrl,/);
+    expect(loadRenderer).not.toContain('packaged:');
+    expect(loadRenderer).toMatch(
+      /if \(resolved\.source === 'custom-protocol'\) \{\s*let health = await checkRendererOriginStorageHealth/,
+    );
+  });
+});
+
+describe('notification audio metadata CSP', () => {
+  it('permits local blob metadata probes without allowing remote media', () => {
+    const html = readFileSync(join(__dirname, '../renderer/index.html'), 'utf-8');
+    expect(/media-src\s+([^;]+)/.exec(html)?.[1]).toBe("'self' blob:");
+  });
+});
+
+describe('live map pop-out page (source contract)', () => {
+  const csp = (file: string) =>
+    /http-equiv="Content-Security-Policy"\s+content="([^"]+)"/.exec(
+      readFileSync(join(__dirname, '../renderer', file), 'utf-8'),
+    )?.[1];
+
+  it('ships with the main renderer CSP and as a build entry', () => {
+    expect(csp('live-map.html')).toBeDefined();
+    expect(csp('live-map.html')).toBe(csp('index.html'));
+    const viteConfig = readFileSync(join(__dirname, '../../vite.config.mts'), 'utf-8');
+    expect(viteConfig).toContain("'src/renderer/live-map.html'");
+  });
+
+  it('registers the pop-out windows with the main window and the shared preload', () => {
+    const registration = INDEX_SOURCE.slice(INDEX_SOURCE.indexOf('registerLiveMapWindows({'));
+    expect(registration).toContain('getMainWindow: () => mainWindow');
+    expect(registration).toContain("preloadPath: path.join(__dirname, '../preload/index.js')");
+    expect(registration).toContain('allowDevServer: !app.isPackaged');
+  });
+});
+
+describe('IPC payload size limits (source contract)', () => {
+  it('defines meshcore tcp-write, http:write, and gatt to-radio limits and uses them in handlers', () => {
+    expect(TCP_BRIDGE_SOURCE).toContain('export const TCP_BRIDGE_WRITE_MAX_BYTES = 256 * 1024');
+    expect(TCP_BRIDGE_SOURCE).toContain('TCP_BRIDGE_DATA_MAX_BYTES');
+    expect(INDEX_SOURCE).toContain('const HTTP_WRITE_TO_RADIO_MAX_BYTES = 256 * 1024');
+    expect(INDEX_SOURCE).toContain('const GATT_TO_RADIO_MAX_BYTES = 512');
+    expect(INDEX_SOURCE).toMatch(/GATT_TO_RADIO_MAX_BYTES/);
+    expect(TCP_BRIDGE_SOURCE).toMatch(/bytes\.length > TCP_BRIDGE_WRITE_MAX_BYTES/);
+    expect(INDEX_SOURCE).toMatch(/data\.length > HTTP_WRITE_TO_RADIO_MAX_BYTES/);
+    expect(INDEX_SOURCE).toMatch(/http:write: byte values must be integers 0-255/);
+  });
+});
+
+describe('GATT BLE disconnect handling (source contract)', () => {
+  it('routes gatt:to-radio through the tested disconnect-race handler', () => {
+    expect(INDEX_SOURCE).toContain("ipcMain.handle('gatt:to-radio'");
+    expect(INDEX_SOURCE).toContain('await writeGattToRadio(gattSidecarProxy, sessionId, buf)');
+  });
+
+  it('registers Windows in-app pairing IPC serialized with GATT scans', () => {
+    expect(INDEX_SOURCE).toMatch(
+      /registerGattPairingIpcHandlers\(\{[\s\S]{0,200}bleCoexistenceCoordinator\.withScan\('gatt', operation\)/,
+    );
+  });
+
+  it('latches isQuitting before async GATT teardown on before-quit', () => {
+    expect(INDEX_SOURCE).toMatch(
+      /app\.on\('before-quit'[\s\S]{0,800}isQuitting = true;[\s\S]{0,200}event\.preventDefault\(\)/,
+    );
+  });
+
+  it('resolves meshtastic:tcp-write with no-socket instead of rejecting when the socket is gone', () => {
+    expect(TCP_BRIDGE_SOURCE).toContain("writeMissing: 'no-socket'");
+    expect(TCP_BRIDGE_SOURCE).toContain("writeMissing: 'reject'");
+    expect(TCP_BRIDGE_SOURCE).toMatch(
+      /writeMissing === 'no-socket'[\s\S]{0,200}console\.debug\(`\[IPC\] \$\{writeChannel\}: no active socket`\)[\s\S]{0,80}return 'no-socket'/,
+    );
+    expect(TCP_BRIDGE_SOURCE).toContain('meshtasticTcpWriteErrorIsNoSocket');
+    expect(TCP_BRIDGE_SOURCE).toMatch(/sock\.destroyed \|\| sock\.writableEnded/);
+    expect(PRELOAD_SOURCE).toMatch(/result === 'no-socket'/);
+    expect(PRELOAD_SOURCE).toMatch(/throw new Error\('meshtastic:tcp-write: no active socket'\)/);
+  });
+
+  it('returns scan_busy from gattSidecarProxy.startScan without throwing', () => {
+    expect(INDEX_SOURCE).toContain('gattSidecarProxy.startScan');
+    const start = INDEX_SOURCE.indexOf("ipcMain.handle('gatt:start-scan'");
+    const end = INDEX_SOURCE.indexOf("ipcMain.handle('gatt:stop-scan'");
+    const handler = INDEX_SOURCE.slice(start, end);
+    expect(handler).toContain("bleCoexistenceCoordinator.withScan('gatt'");
+    expect(handler).toContain('gattSidecarProxy.startScan(sessionId)');
+    expect(handler).toContain("code: 'scan_busy'");
+  });
+
+  it('returns scan_busy from bleCoexistence:acquireScan without throwing', () => {
+    const start = INDEX_SOURCE.indexOf("ipcMain.handle('bleCoexistence:acquireScan'");
+    const end = INDEX_SOURCE.indexOf("ipcMain.handle('bleCoexistence:releaseScan'");
+    const handler = INDEX_SOURCE.slice(start, end);
+    expect(handler).toContain('BleScanBusyError');
+    expect(handler).toContain("code: 'scan_busy'");
+    expect(handler).toContain('ok: false as const');
+    expect(handler).toMatch(/console\.debug\([\s\S]*bleCoexistence:acquireScan busy/);
+  });
+
+  it('invalidates GATT proxy port when shared sidecar process exits', () => {
+    expect(INDEX_SOURCE).toContain('gattSidecarProxy.invalidateAfterSidecarExit()');
+    expect(INDEX_SOURCE).toMatch(
+      /mgr\.on\('status'[\s\S]{0,200}!\(status\.processRunning \?\? status\.running\)[\s\S]{0,120}invalidateAfterSidecarExit/,
+    );
+  });
+});
+
+describe('MeshCore packet log IPC (source contract)', () => {
+  it('validates publishMeshcorePacketLog args and wires handler', () => {
+    expect(INDEX_SOURCE).toContain('const MAX_MESHCORE_PACKET_LOG_ORIGIN = 200');
+    expect(INDEX_SOURCE).toContain('const MAX_MESHCORE_PACKET_LOG_RAW_HEX = 2048');
+    expect(INDEX_SOURCE).toContain(
+      'function validateMqttPublishMeshcorePacketLogArgs(args: unknown)',
+    );
+    expect(INDEX_SOURCE).toMatch(/validateMqttPublishMeshcorePacketLogArgs\(args\)/);
+    expect(INDEX_SOURCE).toContain('mqtt:publishMeshcorePacketLog');
+    expect(INDEX_SOURCE).toMatch(/rawHex must be hex/);
+  });
+});
+
+describe('Meshtastic MQTT waypoint IPC (source contract)', () => {
+  it('registers publishWaypoint handler with validation', () => {
+    expect(INDEX_SOURCE).toContain("ipcMain.handle('mqtt:publishWaypoint'");
+    expect(INDEX_SOURCE).toContain('validateMqttPublishWaypointArgs');
+  });
+});
+
+describe('MQTT forwarder dropped-event logs (source contract)', () => {
+  it('sanitizes dynamic MQTT fields when mainWindow is not ready', () => {
+    // Path-specific (not aggregate counts): each dropped-event branch sanitizes its payload.
+    expect(INDEX_SOURCE).toMatch(
+      /mqtt:status dropped \(mainWindow not ready\)',\s*sanitizeLogMessage\(s\)/,
+    );
+    expect(INDEX_SOURCE).toMatch(
+      /mqtt:error dropped \(mainWindow not ready\)',\s*sanitizeLogMessage\(msg\)/,
+    );
+    expect(INDEX_SOURCE).toMatch(
+      /mqtt:clientId dropped \(mainWindow not ready\)',\s*sanitizeLogMessage\(id\)/,
+    );
+    expect(INDEX_SOURCE).toMatch(
+      /mqtt:status \(meshcore\) dropped \(mainWindow not ready\)',[\s\S]{0,40}sanitizeLogMessage\(s\)/,
+    );
+    expect(INDEX_SOURCE).toMatch(
+      /mqtt:error \(meshcore\) dropped \(mainWindow not ready\)',[\s\S]{0,40}sanitizeLogMessage\(msg\)/,
+    );
+    expect(INDEX_SOURCE).toMatch(
+      /mqtt:clientId \(meshcore\) dropped \(mainWindow not ready\)',[\s\S]{0,40}sanitizeLogMessage\(id\)/,
+    );
+  });
+
+  it('sanitizes Linux BlueZ bluetooth IPC error log paths', () => {
+    const linuxBt = readFileSync(join(__dirname, 'ipc/linux-bluetooth-handlers.ts'), 'utf-8');
+    expect(linuxBt).toMatch(/bluetooth-unpair error:',\s*sanitizeLogMessage\(msg\)/);
+    expect(linuxBt).toMatch(/bluetooth-start-scan error:',\s*sanitizeLogMessage\(msg\)/);
+    expect(linuxBt).toMatch(/bluetooth-connect error:',\s*sanitizeLogMessage\(msg\)/);
+  });
+});
+
+describe('Meshtastic message DB IPC (source contract)', () => {
+  it('registers db:updateMessagePacketId for optimistic packet_id → RF id (tapback reply_id)', () => {
+    expect(INDEX_SOURCE).toContain("'db:updateMessagePacketId'");
+    expect(INDEX_SOURCE).toMatch(/UPDATE messages SET packet_id = \? WHERE packet_id = \?/);
+  });
+
+  it('updateMessageReceivedVia merges rx_hops with COALESCE when upgrading to both', () => {
+    expect(INDEX_SOURCE).toContain("'db:updateMessageReceivedVia'");
+    expect(INDEX_SOURCE).toMatch(/rx_hops = COALESCE\(\?, rx_hops\)/);
+  });
+});
+
+describe('MeshCore DB IPC (source contract)', () => {
+  it('registers updateMeshcoreMessageSender with validated sender id and name', () => {
+    expect(INDEX_SOURCE).toContain("'db:updateMeshcoreMessageSender'");
+    expect(INDEX_SOURCE).toContain('db:updateMeshcoreMessageSender: invalid senderId');
+    expect(INDEX_SOURCE).toMatch(/sender_name = @sender_name WHERE id = @id/);
+    expect(INDEX_SOURCE).toMatch(/sid < 1/);
+  });
+
+  it('registers updateMeshcoreContactLastRf for repeater Status persistence', () => {
+    expect(INDEX_SOURCE).toContain("'db:updateMeshcoreContactLastRf'");
+    expect(INDEX_SOURCE).toContain('last_snr = ?,');
+    expect(INDEX_SOURCE).toContain('last_rssi = ?,');
+    expect(INDEX_SOURCE).toContain(
+      'hops_away = CASE WHEN ? IS NOT NULL AND (hops_away IS NULL OR ? < hops_away) THEN ? ELSE hops_away END,',
+    );
+    expect(INDEX_SOURCE).toContain('last_advert = CASE WHEN ? IS NOT NULL');
+  });
+
+  it('saveMeshcoreContact uses UPSERT that preserves favorited on conflict', () => {
+    const DATABASE_SOURCE = readFileSync(join(__dirname, '../main/database.ts'), 'utf-8');
+    expect(INDEX_SOURCE).toContain("'db:saveMeshcoreContact'");
+    expect(INDEX_SOURCE).toContain("'db:saveMeshcoreContactsBatch'");
+    expect(INDEX_SOURCE).toContain('saveMeshcoreContactsBatch');
+    expect(DATABASE_SOURCE).toContain('ON CONFLICT(node_id) DO UPDATE SET');
+    expect(DATABASE_SOURCE).toContain('favorited = meshcore_contacts.favorited');
+    expect(DATABASE_SOURCE).toContain(
+      'hops_away = CASE WHEN excluded.hops_away IS NOT NULL AND (meshcore_contacts.hops_away IS NULL OR excluded.hops_away < meshcore_contacts.hops_away) THEN excluded.hops_away ELSE meshcore_contacts.hops_away END,',
+    );
+    expect(DATABASE_SOURCE).not.toContain('INSERT OR REPLACE INTO meshcore_contacts');
+  });
+
+  it('saveMeshcoreContactsBatch IPC slices large radio syncs at MESHCORE_CONTACTS_BATCH_MAX', () => {
+    expect(INDEX_SOURCE).toContain('MESHCORE_CONTACTS_BATCH_MAX');
+    expect(INDEX_SOURCE).toMatch(
+      /for \(let i = 0; i < contacts\.length; i \+= MESHCORE_CONTACTS_BATCH_MAX\)/,
+    );
+    expect(INDEX_SOURCE).toContain('contacts.slice(i, i + MESHCORE_CONTACTS_BATCH_MAX)');
+    expect(INDEX_SOURCE).toContain('return saveMeshcoreContactsBatch(rows, radioSnapshotBefore)');
+    expect(INDEX_SOURCE).not.toContain('max 500 contacts per batch');
+    expect(INDEX_SOURCE).not.toMatch(/saved \+= saveMeshcoreContactsBatch/);
+  });
+});
+
 const RENDERER_ROOT = join(__dirname, '../renderer');
 const SRC_ROOT = join(__dirname, '..');
 
@@ -433,12 +723,6 @@ describe('MQTT forwarder dropped-event logs (source contract)', () => {
       /mqtt:clientId \(meshcore\) dropped \(mainWindow not ready\)',[\s\S]{0,40}sanitizeLogMessage\(id\)/,
     );
   });
-
-  it('sanitizes Linux bluetoothctl spawn-error log paths', () => {
-    expect(INDEX_SOURCE).toMatch(/bluetooth-unpair error:',\s*sanitizeLogMessage\(msg\)/);
-    expect(INDEX_SOURCE).toMatch(/bluetooth-start-scan error:',\s*sanitizeLogMessage\(msg\)/);
-    expect(INDEX_SOURCE).toMatch(/bluetooth-connect error:',\s*sanitizeLogMessage\(msg\)/);
-  });
 });
 
 describe('Meshtastic message DB IPC (source contract)', () => {
@@ -482,17 +766,6 @@ describe('MeshCore DB IPC (source contract)', () => {
       'hops_away = CASE WHEN excluded.hops_away IS NOT NULL AND (meshcore_contacts.hops_away IS NULL OR excluded.hops_away < meshcore_contacts.hops_away) THEN excluded.hops_away ELSE meshcore_contacts.hops_away END,',
     );
     expect(DATABASE_SOURCE).not.toContain('INSERT OR REPLACE INTO meshcore_contacts');
-  });
-
-  it('saveMeshcoreContactsBatch IPC slices large radio syncs at MESHCORE_CONTACTS_BATCH_MAX', () => {
-    expect(INDEX_SOURCE).toContain('MESHCORE_CONTACTS_BATCH_MAX');
-    expect(INDEX_SOURCE).toMatch(
-      /for \(let i = 0; i < contacts\.length; i \+= MESHCORE_CONTACTS_BATCH_MAX\)/,
-    );
-    expect(INDEX_SOURCE).toContain('contacts.slice(i, i + MESHCORE_CONTACTS_BATCH_MAX)');
-    expect(INDEX_SOURCE).toContain('return saveMeshcoreContactsBatch(rows)');
-    expect(INDEX_SOURCE).not.toContain('max 500 contacts per batch');
-    expect(INDEX_SOURCE).not.toMatch(/saved \+= saveMeshcoreContactsBatch/);
   });
 });
 
@@ -779,6 +1052,13 @@ describe('Native crash observability (source contract)', () => {
     expect(INDEX_SOURCE).toContain('createMeshTilesProtocolHandler');
   });
 
+  it('registers mesh-weather as a privileged scheme before ready and handles it', () => {
+    expect(INDEX_SOURCE).toContain("scheme: 'mesh-weather'");
+    expect(INDEX_SOURCE).toContain("protocol.handle(\n      'mesh-weather'");
+    expect(INDEX_SOURCE).toContain('createWeatherProtocolHandler');
+    expect(INDEX_SOURCE).toContain('registerWeatherIpcHandlers');
+  });
+
   it('flushes logs on uncaught errors and records will-quit breadcrumbs', () => {
     expect(INDEX_SOURCE).toContain('void flushLogBeforeQuit()');
     expect(INDEX_SOURCE).toContain('flushLogBeforeQuit()');
@@ -786,9 +1066,10 @@ describe('Native crash observability (source contract)', () => {
   });
 
   it('uses shared Meshtastic Bluetooth PIN helpers in bluetooth-pair IPC', () => {
-    expect(INDEX_SOURCE).toContain("from '../shared/meshtasticBluetoothPin'");
-    expect(INDEX_SOURCE).toContain('formatMeshtasticBluetoothPin');
-    expect(INDEX_SOURCE).toContain('parseMeshtasticBluetoothPin');
+    const linuxBt = readFileSync(join(__dirname, 'ipc/linux-bluetooth-handlers.ts'), 'utf-8');
+    expect(linuxBt).toContain("from '../../shared/meshtasticBluetoothPin'");
+    expect(linuxBt).toContain('formatMeshtasticBluetoothPin');
+    expect(linuxBt).toContain('parseMeshtasticBluetoothPin');
   });
 });
 
@@ -837,6 +1118,14 @@ describe('Native Electron call guards (source contract)', () => {
     expect(INDEX_SOURCE).toContain('function stopPowerSaveBlocker(): void');
     expect(INDEX_SOURCE).toContain("'[main] powerSaveBlocker start failed:'");
     expect(INDEX_SOURCE).toContain("'[main] powerSaveBlocker stop failed:'");
+    expect(INDEX_SOURCE).toContain('shouldHoldPowerSaveBlocker(');
+    expect(INDEX_SOURCE).toContain('meshtasticConnectionType');
+    expect(INDEX_SOURCE).toContain('meshcoreConnectionType');
+    expect(INDEX_SOURCE).toContain('isAnyMqttConnected()');
+    expect(INDEX_SOURCE).toContain(
+      'if (key === PREVENT_SLEEP_SETTING_KEY) syncPowerSaveBlocker();',
+    );
+    expect(INDEX_SOURCE).toContain("'preventSleepWhileConnected'");
   });
 
   it('logs native IPC helper failures locally before fallback or rejection', () => {
@@ -903,10 +1192,13 @@ describe('Native Electron call guards (source contract)', () => {
     expect(INDEX_SOURCE).toContain('await clipboard.writeText(text)');
   });
 
-  it('bounds bluetooth-start-scan with a 15 s timeout', () => {
-    expect(INDEX_SOURCE).toContain('BLUETOOTH_START_SCAN_TIMEOUT_MS = 15_000');
-    expect(INDEX_SOURCE).toContain("ipcMain.handle('bluetooth-start-scan'");
-    expect(INDEX_SOURCE).toContain('bluetooth-start-scan: timed out after 15 s');
+  it('bounds bluetooth-start-scan with a 15 s timeout via BlueZ D-Bus', () => {
+    const linuxBt = readFileSync(join(__dirname, 'ipc/linux-bluetooth-handlers.ts'), 'utf-8');
+    const bluezClient = readFileSync(join(__dirname, 'linux-bluez/client.ts'), 'utf-8');
+    expect(INDEX_SOURCE).toContain('registerLinuxBluetoothIpcHandlers()');
+    expect(linuxBt).toContain("ipcMain.handle('bluetooth-start-scan'");
+    expect(bluezClient).toContain("'bluetooth-start-scan'");
+    expect(bluezClient).toContain('15_000');
   });
 
   it('reads meshcore import JSON via fs.promises.readFile', () => {
@@ -921,6 +1213,9 @@ describe('Native Electron call guards (source contract)', () => {
     );
     expect(INDEX_SOURCE).toMatch(
       /ipcMain\.on\('device-connected'[\s\S]*?validateIpcSender\(event\)/,
+    );
+    expect(INDEX_SOURCE).toMatch(
+      /ipcMain\.on\('device-connected'[\s\S]*?normalizePowerSaveLinkType\(connectionType\)/,
     );
     expect(INDEX_SOURCE).toMatch(
       /ipcMain\.on\('device-disconnected'[\s\S]*?validateIpcSender\(event\)/,

@@ -195,6 +195,54 @@ export function normalizeMeshcoreIncomingText(rawText: string): MeshcoreNormaliz
   return { senderName: senderCandidate, payload };
 }
 
+/** Use the same stored-message display fields in chat and history-backed summaries. */
+export function meshcoreDbMessageDisplay(r: {
+  sender_id?: number | null;
+  sender_name?: string | null;
+  payload: string;
+}): Pick<ChatMessage, 'sender_id' | 'sender_name' | 'payload'> {
+  let displayPayload = r.payload;
+  const normalized = normalizeMeshcoreIncomingText(r.payload);
+  let displayName = r.sender_name && r.sender_name !== 'Unknown' ? r.sender_name : 'Unknown';
+  if (normalized.senderName) {
+    const storedName = r.sender_name?.trim();
+    if (!storedName || storedName === 'Unknown') {
+      displayPayload = normalized.payload;
+      displayName = normalized.senderName;
+    } else if (normalized.senderName === storedName) {
+      displayPayload = normalized.payload;
+    }
+  } else if (shouldLegacyNormalizeMeshcoreDbPayload(r.sender_name, r.payload)) {
+    displayPayload = normalized.payload;
+    displayName = normalized.senderName ?? displayName;
+  }
+  let senderId = r.sender_id ?? 0;
+  if (senderId === 0 && displayName && displayName !== 'Unknown') {
+    senderId = meshcoreChatStubNodeIdFromDisplayName(displayName);
+  }
+  return { sender_id: senderId, sender_name: displayName, payload: displayPayload };
+}
+
+/**
+ * Legacy DB rows may store the full RF line `DisplayName: body` with no usable sender_name.
+ * Only then run wire-style normalize; otherwise persisted payload is already display text
+ * (re-applying normalize breaks any body containing `:` e.g. `Re: …`, `12:30 …`).
+ */
+function shouldLegacyNormalizeMeshcoreDbPayload(
+  senderName: string | null | undefined,
+  payload: string,
+): boolean {
+  if (senderName && senderName !== 'Unknown') return false;
+  const t = payload.trim();
+  const ci = t.indexOf(':');
+  if (ci <= 0 || t[ci + 1] !== ' ' || ci >= t.length - 1) return false;
+  const left = t.slice(0, ci).trim();
+  const right = t.slice(ci + 1).trim();
+  if (left.length < 6 || right.length < 1) return false;
+  if (left.includes('\n')) return false;
+  return true;
+}
+
 /** True when `payload` is a single grapheme cluster and normalizes as a reaction emoji. */
 export function meshcorePayloadIsTapbackEmojiOnly(payload: string): boolean {
   const t = payload.trim();
@@ -268,15 +316,23 @@ export function meshcoreChannelRepairRawText(msg: ChatMessage): string {
   return `${msg.sender_name}: ${p}`;
 }
 
+export interface MeshcoreDisplayRepairOpts {
+  /** This radio's node number. Its own replies keep the parent picked in the composer. */
+  selfNodeId?: number | null;
+}
+
 /** Sort + repair MeshCore chat rows for UI hydration / historical backfill (not live ingest). */
-export function meshcoreChatMessagesForDisplay(messages: readonly ChatMessage[]): ChatMessage[] {
+export function meshcoreChatMessagesForDisplay(
+  messages: readonly ChatMessage[],
+  opts: MeshcoreDisplayRepairOpts = {},
+): ChatMessage[] {
   const sorted = [...messages].sort(
     (a, b) =>
       a.timestamp - b.timestamp ||
       (a.packetId ?? 0) - (b.packetId ?? 0) ||
       a.sender_id - b.sender_id,
   );
-  return repairMeshcoreDisplayMessages(orderMeshcoreDmsWithinSecond(sorted));
+  return repairMeshcoreDisplayMessages(orderMeshcoreDmsWithinSecond(sorted), opts);
 }
 
 /**
@@ -933,10 +989,23 @@ function meshcoreWireHadExplicitReplyKey(msg: ChatMessage): boolean {
   return /#\d{4,}\]/u.test(raw);
 }
 
-/** True when this row is a reply to someone else's message (not self-tapback / own outbound). */
+/** True when the reply target is a different name than the sender (not a reply to oneself). */
 function meshcoreIsIncomingBracketReply(msg: ChatMessage, targetName: string | undefined): boolean {
   if (!targetName?.trim()) return false;
   return !meshcoreBracketDisplayNamesMatch(targetName, msg.sender_name);
+}
+
+/**
+ * True for a row this radio sent. `radioNodeId` covers rows loaded before the radio reports its
+ * node number.
+ */
+function meshcoreIsOwnSentMessage(
+  msg: ChatMessage,
+  selfNodeId: number | null | undefined,
+): boolean {
+  if (msg.sender_id <= 0) return false;
+  if (selfNodeId != null && selfNodeId > 0 && msg.sender_id === selfNodeId) return true;
+  return msg.radioNodeId != null && msg.sender_id === msg.radioNodeId;
 }
 
 /**
@@ -945,7 +1014,11 @@ function meshcoreIsIncomingBracketReply(msg: ChatMessage, targetName: string | u
  * - Incoming `@[Name]` without `#key`: re-resolve latest target message once the full thread is loaded.
  * - Incoming keyed rows: keep a corroborated parent, but refresh stale seconds/ms keys for generic replies.
  */
-function refreshMeshcoreReplyParent(msg: ChatMessage, prior: readonly ChatMessage[]): ChatMessage {
+function refreshMeshcoreReplyParent(
+  msg: ChatMessage,
+  prior: readonly ChatMessage[],
+  selfNodeId?: number | null,
+): ChatMessage {
   if (msg.emoji != null && msg.replyId != null) return msg;
   if (msg.replyId == null && !msg.replyPreviewSender) return msg;
 
@@ -962,7 +1035,10 @@ function refreshMeshcoreReplyParent(msg: ChatMessage, prior: readonly ChatMessag
     replyId != null ? findMeshcoreParentMessageForReply(prior, replyId, lookupOpts) : undefined;
 
   const targetName = meshcoreReplyTargetName(msg);
-  const incomingBracket = meshcoreIsIncomingBracketReply(msg, targetName);
+  // The composer recorded which message an own reply answers. An own row with only a name (an
+  // echo heard before its parent) has nothing better than the name, so it resolves like any other.
+  const keepPickedParent = msg.replyId != null && meshcoreIsOwnSentMessage(msg, selfNodeId);
+  const incomingBracket = !keepPickedParent && meshcoreIsIncomingBracketReply(msg, targetName);
   const explicitWireKey = meshcoreWireHadExplicitReplyKey(msg);
 
   if (incomingBracket && targetName) {
@@ -983,7 +1059,7 @@ function refreshMeshcoreReplyParent(msg: ChatMessage, prior: readonly ChatMessag
         parent = upgraded.parent;
       }
     }
-  } else if (!parent && targetName && !explicitWireKey) {
+  } else if (!keepPickedParent && !parent && targetName && !explicitWireKey) {
     const upgraded = tryUpgradeMeshcoreReplyToLatestSameSender(
       msg,
       prior,
@@ -1023,7 +1099,10 @@ function refreshMeshcoreReplyParent(msg: ChatMessage, prior: readonly ChatMessag
   };
 }
 
-export function repairMeshcoreDisplayMessages(messages: readonly ChatMessage[]): ChatMessage[] {
+export function repairMeshcoreDisplayMessages(
+  messages: readonly ChatMessage[],
+  opts: MeshcoreDisplayRepairOpts = {},
+): ChatMessage[] {
   const prior: ChatMessage[] = [];
   const out: ChatMessage[] = [];
   for (const msg of messages) {
@@ -1098,7 +1177,7 @@ export function repairMeshcoreDisplayMessages(messages: readonly ChatMessage[]):
         );
       }
     }
-    next = refreshMeshcoreReplyParent(next, prior);
+    next = refreshMeshcoreReplyParent(next, prior, opts.selfNodeId);
     next = meshcorePromoteEmojiOnlyReplyToTapback(next);
     prior.push(next);
     out.push(next);
@@ -1234,6 +1313,13 @@ export const MESHCORE_TXT_TYPE_CLI_DATA = 1;
 
 /** meshcore.js `TxtTypes.SignedPlain` — room server pushed posts to logged-in clients. */
 export const MESHCORE_TXT_TYPE_SIGNED_PLAIN = 2;
+
+/**
+ * Companion v1.18 `TXT_TYPE_CLI_COMMAND`: remote CLI command sent to another companion. The target
+ * runs it only when its contact entry for the sender has flag 0x10; otherwise it forwards the text
+ * to its app as an inbound type-3 message. Replies come back as {@link MESHCORE_TXT_TYPE_CLI_DATA}.
+ */
+export const MESHCORE_TXT_TYPE_CLI_COMMAND = 3;
 
 export function parseMeshcoreRoomPostPayload(
   text: string,

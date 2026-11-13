@@ -31,10 +31,12 @@ import {
 } from '@/renderer/lib/meshtastic/meshtasticLockdown';
 import {
   buildStoreForwardHistoryToRadioBytes,
+  clearSfHistoryFetch,
   getLastSfHistoryFetchMs,
   MQTT_RECONNECT_BACKLOG_MS,
   mqttMessageTreatAsHistory,
   recordSfHistoryFetch,
+  registerSfHistoryWirePacket,
   releaseStoreForwardHistoryRequest,
   reserveStoreForwardHistoryRequest,
   resolveAutoStoreForwardHistoryWindowMinutes,
@@ -60,6 +62,10 @@ import {
   type ResolveMeshtasticMqttPublishOptions,
 } from '@/renderer/lib/meshtasticMqttPublish';
 import { readMeshtasticMqttSettingsFromStorage } from '@/renderer/lib/meshtasticMqttSettingsStorage';
+import {
+  buildLocalAddContactToRadioBytes,
+  canBuildMeshtasticSharedContact,
+} from '@/renderer/lib/meshtasticSharedContact';
 import {
   environmentReadingFromNodePatch,
   takeEnvironmentNodeUpdateMarker,
@@ -149,6 +155,7 @@ import {
   MESHTASTIC_PRIMARY_CHANNEL,
   toMeshtasticChannelNumber,
 } from '../lib/meshtastic/meshtasticChannelNumber';
+import { resolveMeshtasticModuleConfigs } from '../lib/meshtastic/meshtasticConfigApply';
 import { setMeshtasticRemoteConfigTarget } from '../lib/meshtastic/meshtasticConfigIngressGuard';
 import { setMeshtasticConfigurePhase } from '../lib/meshtastic/meshtasticConfigurePhase';
 import { configureMeshtasticDeviceWithRetry } from '../lib/meshtastic/meshtasticConfigureRetry';
@@ -159,7 +166,12 @@ import {
 } from '../lib/meshtastic/meshtasticHeardRepeat';
 import { formatMeshtasticLinkStats } from '../lib/meshtastic/meshtasticLinkStats';
 import { meshtasticLoraConfigToProtobuf } from '../lib/meshtastic/meshtasticLocalLoraConfig';
-import type { ModulePortEvent, PaxCounterPoint } from '../lib/meshtastic/meshtasticModuleEvents';
+import type {
+  HeardMeshBeacon,
+  ModulePortEvent,
+  NodeStatusEntry,
+  PaxCounterPoint,
+} from '../lib/meshtastic/meshtasticModuleEvents';
 import { createDebouncedMqttChannelKeysPush } from '../lib/meshtastic/meshtasticMqttChannelKeysDebounce';
 import { normalizeMeshtasticMqttChatMessage } from '../lib/meshtastic/meshtasticMqttChatNormalize';
 import { MeshtasticMqttClientProxyBridge } from '../lib/meshtastic/meshtasticMqttClientProxy';
@@ -405,7 +417,8 @@ export type RequestStoreForwardHistoryResult =
         | 'send_failed'
         | 'cooldown'
         | 'offline_gate'
-        | 'already_requested';
+        | 'already_requested'
+        | 'missing_router_key';
     };
 
 const MQTT_ONLY_VIRTUAL_LONG_NAME = 'MQTT-only Virtual Address';
@@ -514,9 +527,11 @@ export function useMeshtasticRuntime() {
   // ─── GPS tracking ─────────────────────────────────────────────
   const deviceGpsModeRef = useRef<number>(0); // 0=DISABLED,1=ENABLED,2=NOT_PRESENT
   const gpsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const refreshOurPositionRef = useRef<() => Promise<OurPosition | null>>(() =>
-    Promise.resolve(null),
-  );
+  /** Bumped on each refreshOurPosition entry so superseded awaits skip commits. */
+  const refreshOurPositionGenerationRef = useRef(0);
+  const refreshOurPositionRef = useRef<
+    (opts?: { allowTransmit?: boolean }) => Promise<OurPosition | null>
+  >(() => Promise.resolve(null));
   // ─── MQTT session tracking ────────────────────────────────────
   // Tracks current MQTT connection status in a ref for use in callbacks
   const mqttStatusRef = useRef<MQTTStatus>('disconnected');
@@ -602,6 +617,9 @@ export function useMeshtasticRuntime() {
   const [waypoints, setWaypoints] = useState<Map<number, MeshWaypoint>>(new Map());
   const [moduleConfigs, setModuleConfigs] = useState<Record<string, unknown>>({});
   const moduleConfigsRef = useRef(moduleConfigs);
+  /** Survives transient deviceStore clears / partial configure so Modules UI keeps hydrated keys. */
+  const lastKnownModuleConfigsRef = useRef<Record<string, unknown>>({});
+  const lastKnownModuleConfigsIdentityRef = useRef<string | null>(null);
   const mqttClientProxyBridgeRef = useRef<MeshtasticMqttClientProxyBridge | null>(null);
   const sfHistoryRequestedServersRef = useRef<Set<number>>(new Set());
   const lastRfDisconnectAtRef = useRef<number | null>(null);
@@ -659,6 +677,8 @@ export function useMeshtasticRuntime() {
     Map<number, { from: number; data: Uint8Array; timestamp: number }[]>
   >(new Map());
   const [paxCounterData, setPaxCounterData] = useState<Map<number, PaxCounterPoint[]>>(new Map());
+  const [meshBeacons, setMeshBeacons] = useState<Map<number, HeardMeshBeacon>>(new Map());
+  const [nodeStatuses, setNodeStatuses] = useState<Map<number, NodeStatusEntry>>(new Map());
   const [serialMessages, setSerialMessages] = useState<
     Map<number, { from: number; data: Uint8Array; timestamp: number }[]>
   >(new Map());
@@ -1190,6 +1210,13 @@ export function useMeshtasticRuntime() {
     setMeshtasticRemoteConfigTarget(meshtasticIdentityId, configureTargetNodeNum);
     return () => setMeshtasticRemoteConfigTarget(meshtasticIdentityId, null);
   }, [configureTargetNodeNum, meshtasticIdentityId]);
+
+  // Heard Mesh Beacons / node status are keyed by node number only; clear on identity change so a
+  // prior radio's entries cannot surface for reused node numbers on the next session.
+  useEffect(() => {
+    setMeshBeacons(new Map());
+    setNodeStatuses(new Map());
+  }, [meshtasticIdentityId]);
 
   useEffect(() => {
     remoteAdminStatusRef.current = remoteAdminStatus;
@@ -1925,10 +1952,91 @@ export function useMeshtasticRuntime() {
           }
           return { ok: false, code: 'no_server' };
         }
+      }
+
+      const serverNode = getIdentityNode(meshtasticIdentityIdRef.current, serverNodeId);
+      const destPublicKey = resolveMeshtasticDestPublicKeyBytes({
+        publicKeyHex: serverNode?.public_key_hex,
+      });
+      if (!destPublicKey) {
+        // Router key is missing. Ask for NODEINFO and stop. Do not reserve this
+        // session or record a fetch cooldown — history was not requested.
+        const selfNode = getIdentityNode(meshtasticIdentityIdRef.current, myNode);
+        const selfLong = selfNode?.long_name?.trim() ?? '';
+        const selfShort = selfNode?.short_name?.trim() ?? '';
+        const lastNi = lastNodeInfoRequestAtRef.current.get(serverNodeId) ?? 0;
+        if (selfLong && selfShort && now - lastNi >= 120_000) {
+          lastNodeInfoRequestAtRef.current.set(serverNodeId, now);
+          const selfPublicKey = resolveMeshtasticDestPublicKeyBytes({
+            publicKeyHex: selfNode?.public_key_hex,
+          });
+          const ownerUser = createMeshtasticMessage(meshtasticMeshProtobuf.UserSchema, {
+            id: formatMeshtasticNodeId(myNode),
+            longName: selfLong,
+            shortName: selfShort,
+            ...(selfPublicKey ? { publicKey: selfPublicKey } : {}),
+          });
+          const ownerUserBytes = toBinary(
+            meshtasticMeshProtobuf.UserSchema,
+            ownerUser as Parameters<typeof toBinary>[1],
+          );
+          void activeDevice
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- External SDK value is validated by surrounding boundary logic.
+            .sendPacket(ownerUserBytes, Portnums.PortNum.NODEINFO_APP, serverNodeId)
+            .then(() => {
+              console.debug(
+                `[useMeshtasticRuntime] NODEINFO request sent for S&F router 0x${serverNodeId.toString(16)}`,
+              );
+            })
+            .catch((e: unknown) => {
+              console.debug(
+                '[useMeshtasticRuntime] NODEINFO request failed ' + errLikeToLogString(e),
+              );
+            });
+        }
+        return { ok: false, code: 'missing_router_key' };
+      }
+
+      if (!manual) {
         if (
           !reserveStoreForwardHistoryRequest(sfHistoryRequestedServersRef.current, serverNodeId)
         ) {
           return { ok: false, code: 'already_requested' };
+        }
+      }
+
+      const canJitContact = canBuildMeshtasticSharedContact({
+        publicKeyHex: serverNode?.public_key_hex,
+        longName: serverNode?.long_name,
+        shortName: serverNode?.short_name,
+      });
+
+      // Attach publicKey on CLIENT_HISTORY only after a successful SharedContact push.
+      // If that push fails, omit the wire key so firmware can auto-PKI from NodeDB.
+      let radioHasMatchingDestKey = false;
+      if (canJitContact && serverNode) {
+        const contactPacketId = (Math.floor(Math.random() * 0xfffffffe) + 1) >>> 0; // NOSONAR non-crypto Meshtastic packet id
+        registerMeshtasticNonChatWirePacketId(contactPacketId);
+        try {
+          const contactBytes = buildLocalAddContactToRadioBytes({
+            myNodeNum: myNode,
+            packetId: contactPacketId,
+            nodeNum: serverNodeId,
+            longName: serverNode.long_name,
+            shortName: serverNode.short_name,
+            publicKey: destPublicKey,
+          });
+          await writeToRadioWithoutQueue(activeDevice, contactBytes);
+          radioHasMatchingDestKey = true;
+          console.debug(
+            `[useMeshtasticRuntime] Store & Forward SharedContact pushed for 0x${serverNodeId.toString(16)}`,
+          );
+        } catch (e: unknown) {
+          // catch-no-log-ok continue with history; radio may already hold the key
+          console.debug(
+            '[useMeshtasticRuntime] Store & Forward SharedContact push failed ' +
+              errLikeToLogString(e),
+          );
         }
       }
 
@@ -1940,18 +2048,27 @@ export function useMeshtasticRuntime() {
         packetId,
         windowMinutes: resolveAutoStoreForwardHistoryWindowMinutes(heartbeatPeriod),
         messageCap: manual ? SF_MANUAL_HISTORY_MESSAGE_CAP : historyTuning.messageCap,
+        ...(radioHasMatchingDestKey && destPublicKey ? { publicKey: destPublicKey } : {}),
       });
       // Routing NAKs for this id (e.g. PKI_SEND_FAIL_PUBLIC_KEY) must not fail a pending chat row.
       registerMeshtasticNonChatWirePacketId(packetId);
+      registerSfHistoryWirePacket(
+        packetId,
+        serverNodeId,
+        manual ? null : sfHistoryRequestedServersRef.current,
+      );
+      // Record before write: a local PKI NAK can arrive before the write promise resolves;
+      // clearSfHistoryFetchForWirePacket must see an existing cooldown entry to clear.
+      recordSfHistoryFetch(serverNodeId, now);
 
       try {
         await writeToRadioWithoutQueue(activeDevice, toRadioBytes);
-        recordSfHistoryFetch(serverNodeId, now);
         console.debug(
           `[useMeshtasticRuntime] Store & Forward CLIENT_HISTORY sent to 0x${serverNodeId.toString(16)} ch=${channel} manual=${manual}`,
         );
         return { ok: true };
       } catch (e: unknown) {
+        clearSfHistoryFetch(serverNodeId);
         if (!manual) {
           releaseStoreForwardHistoryRequest(sfHistoryRequestedServersRef.current, serverNodeId);
         }
@@ -2095,6 +2212,8 @@ export function useMeshtasticRuntime() {
       setPingResponses,
       setIpTunnelMessages,
       setPaxCounterData,
+      setMeshBeacons,
+      setNodeStatuses,
       setSerialMessages,
       setStoreForwardMessages,
       setRangeTestPackets,
@@ -2721,9 +2840,9 @@ export function useMeshtasticRuntime() {
           activeDevice.transport,
         );
       }
-      // Gesture-based Linux connects (e.g. ConnectionPanel's Reconnect button) may call
+      // Manual BLE connects (e.g. ConnectionPanel's Reconnect button) may call
       // prepareRfConnect without a peripheralId; backfill it here so a later automatic
-      // reconnect does not fall back to a gesture-requiring requestDevice() call.
+      // reconnect can target the same native peripheral without another scan.
       // Generation-gated: a superseded attempt (newer prepareRfConnect already bumped
       // reconnectGenerationRef and replaced connectionParamsRef.current) must not stamp
       // its resolved device id onto a different, newer session's params.
@@ -4224,96 +4343,109 @@ export function useMeshtasticRuntime() {
     });
   }, []);
 
-  const refreshOurPosition = useCallback(async (): Promise<OurPosition | null> => {
-    // Dual-protocol: Meshtastic hook stays mounted when user switches to MeshCore; skip GPS work
-    // so we do not overwrite Meshtastic state or call getGpsFix / IP while MeshCore is active.
-    if (getStoredMeshProtocol() !== 'meshtastic') {
-      return null;
-    }
-    setGpsLoading(true);
-    try {
-      const storedStatic = readStoredStaticGps();
-      const staticLat = storedStatic?.lat;
-      const staticLon = storedStatic?.lon;
-      // Only a fix the radio reported this session counts as device GPS; the self node row may
-      // hold app-resolved or SQLite-restored coords. A static position still wins over it.
-      const radioSelf = storedStatic != null ? null : readRadioSelfPosition('meshtastic');
-      const pos = await resolveOurPosition(
-        radioSelf?.lat,
-        radioSelf?.lon,
-        staticLat,
-        staticLon,
-        radioSelf?.altitudeMeters,
-      );
-      setOurPosition(pos);
-      if (getStoredMeshProtocol() === 'meshtastic') {
-        publishOurPositionReference(pos);
+  const refreshOurPosition = useCallback(
+    async (opts?: { allowTransmit?: boolean }): Promise<OurPosition | null> => {
+      // Dual-protocol: Meshtastic hook stays mounted when user switches to MeshCore; skip GPS work
+      // so we do not overwrite Meshtastic state or call getGpsFix / IP while MeshCore is active.
+      if (getStoredMeshProtocol() !== 'meshtastic') {
+        return null;
       }
-
-      // IP/browser fixes are city-level: never write them into the self node or SQLite.
-      if (pos && !isLowAccuracyPosition(pos.source)) {
-        const hasDevice = !!deviceRef.current;
-        const selfNodeId =
-          hasDevice && myNodeNumRef.current > 0
-            ? myNodeNumRef.current
-            : mqttStatusRef.current === 'connected'
-              ? virtualNodeIdRef.current
-              : 0;
-        if (selfNodeId > 0) {
-          const isVirtualNode = !hasDevice && selfNodeId === virtualNodeIdRef.current;
-          let selfNodeToPersist: MeshNode | undefined;
-          updateNodes((prev) => {
-            const updated = new Map(prev);
-            const existing = updated.get(selfNodeId) ?? emptyNode(selfNodeId);
-            const node: MeshNode = {
-              ...existing,
-              node_id: selfNodeId,
-              latitude: pos.lat,
-              longitude: pos.lon,
-              last_heard: Date.now(),
-              lastPositionWarning: undefined,
-              ...(isVirtualNode
-                ? { long_name: MQTT_ONLY_VIRTUAL_LONG_NAME, role: ROLE_CLIENT, hops_away: 0 }
-                : {}),
-            };
-            updated.set(selfNodeId, node);
-            if (!isVirtualNode) selfNodeToPersist = node;
-            return updated;
-          });
-          if (selfNodeToPersist) persistMeshtasticNode(selfNodeToPersist);
-        }
-
-        const meshtasticRole = readAppliedMeshtasticRole(
-          meshtasticIdentityIdRef.current,
-          myNodeNumRef.current,
+      const generation = ++refreshOurPositionGenerationRef.current;
+      setGpsLoading(true);
+      try {
+        const storedStatic = readStoredStaticGps();
+        const staticLat = storedStatic?.lat;
+        const staticLon = storedStatic?.lon;
+        // Only a fix the radio reported this session counts as device GPS; the self node row may
+        // hold app-resolved or SQLite-restored coords. A static position still wins over it.
+        const radioSelf = storedStatic != null ? null : readRadioSelfPosition('meshtastic');
+        const pos = await resolveOurPosition(
+          radioSelf?.lat,
+          radioSelf?.lon,
+          staticLat,
+          staticLon,
+          radioSelf?.altitudeMeters,
         );
-        const wouldSendWithoutMute =
-          deviceRef.current &&
-          (pos.source === 'static' || (pos.source === 'browser' && deviceGpsModeRef.current === 2));
-        const shouldSendToDevice =
-          canTransmitLocation({ protocol: 'meshtastic', meshtasticRole }) && wouldSendWithoutMute;
+        if (generation !== refreshOurPositionGenerationRef.current) {
+          return null;
+        }
+        setOurPosition(pos);
+        if (getStoredMeshProtocol() === 'meshtastic') {
+          publishOurPositionReference(pos);
+        }
 
-        if (shouldSendToDevice && deviceRef.current) {
-          deviceRef.current
-            .setPosition(
-              create(meshtasticMeshProtobuf.PositionSchema, {
-                latitudeI: Math.round(pos.lat * 1e7),
-                longitudeI: Math.round(pos.lon * 1e7),
-                time: Math.floor(Date.now() / 1000),
-              }) as unknown as PositionType,
-            )
-            .catch((e: unknown) => {
-              console.debug(
-                '[useMeshtasticRuntime] setPosition non-fatal ' + errLikeToLogString(e),
-              );
+        // IP/browser fixes are city-level: never write them into the self node or SQLite.
+        if (pos && !isLowAccuracyPosition(pos.source)) {
+          const hasDevice = !!deviceRef.current;
+          const selfNodeId =
+            hasDevice && myNodeNumRef.current > 0
+              ? myNodeNumRef.current
+              : mqttStatusRef.current === 'connected'
+                ? virtualNodeIdRef.current
+                : 0;
+          if (selfNodeId > 0) {
+            const isVirtualNode = !hasDevice && selfNodeId === virtualNodeIdRef.current;
+            let selfNodeToPersist: MeshNode | undefined;
+            updateNodes((prev) => {
+              const updated = new Map(prev);
+              const existing = updated.get(selfNodeId) ?? emptyNode(selfNodeId);
+              const node: MeshNode = {
+                ...existing,
+                node_id: selfNodeId,
+                latitude: pos.lat,
+                longitude: pos.lon,
+                last_heard: Date.now(),
+                lastPositionWarning: undefined,
+                ...(isVirtualNode
+                  ? { long_name: MQTT_ONLY_VIRTUAL_LONG_NAME, role: ROLE_CLIENT, hops_away: 0 }
+                  : {}),
+              };
+              updated.set(selfNodeId, node);
+              if (!isVirtualNode) selfNodeToPersist = node;
+              return updated;
             });
+            if (selfNodeToPersist) persistMeshtasticNode(selfNodeToPersist);
+          }
+
+          const meshtasticRole = readAppliedMeshtasticRole(
+            meshtasticIdentityIdRef.current,
+            myNodeNumRef.current,
+          );
+          const wouldSendWithoutMute =
+            deviceRef.current &&
+            (pos.source === 'static' ||
+              (pos.source === 'browser' && deviceGpsModeRef.current === 2));
+          // Radio-driven local re-resolve (onSelfRadioPosition) must not push setPosition.
+          const shouldSendToDevice =
+            opts?.allowTransmit !== false &&
+            canTransmitLocation({ protocol: 'meshtastic', meshtasticRole }) &&
+            wouldSendWithoutMute;
+
+          if (shouldSendToDevice && deviceRef.current) {
+            deviceRef.current
+              .setPosition(
+                create(meshtasticMeshProtobuf.PositionSchema, {
+                  latitudeI: Math.round(pos.lat * 1e7),
+                  longitudeI: Math.round(pos.lon * 1e7),
+                  time: Math.floor(Date.now() / 1000),
+                }) as unknown as PositionType,
+              )
+              .catch((e: unknown) => {
+                console.debug(
+                  '[useMeshtasticRuntime] setPosition non-fatal ' + errLikeToLogString(e),
+                );
+              });
+          }
+        }
+        return pos;
+      } finally {
+        if (generation === refreshOurPositionGenerationRef.current) {
+          setGpsLoading(false);
         }
       }
-      return pos;
-    } finally {
-      setGpsLoading(false);
-    }
-  }, [updateNodes]);
+    },
+    [updateNodes],
+  );
 
   // Keep ref in sync so intervals/callbacks always call the latest version
   refreshOurPositionRef.current = refreshOurPosition;
@@ -4509,15 +4641,23 @@ export function useMeshtasticRuntime() {
   const sendStatusEvents = useCallback(() => {
     const activeStatuses = ['connected', 'configured', 'stale', 'reconnecting'];
     if (activeStatuses.includes(state.status)) {
-      window.electronAPI.notifyDeviceConnected();
+      window.electronAPI.notifyDeviceConnected(undefined, state.connectionType);
     } else if (state.status === 'disconnected') {
       window.electronAPI.notifyDeviceDisconnected();
     }
-  }, [state.status]);
+  }, [state.status, state.connectionType]);
 
   useEffect(() => {
     sendStatusEvents();
   }, [sendStatusEvents]);
+
+  // Clear main's connection flag if this runtime unmounts while still "live"
+  // (e.g. protocol disabled); status-driven notifyDeviceDisconnected alone would not run.
+  useEffect(() => {
+    return () => {
+      window.electronAPI.notifyDeviceDisconnected();
+    };
+  }, []);
 
   useEffect(() => {
     if (state.status === 'disconnected') {
@@ -4646,13 +4786,44 @@ export function useMeshtasticRuntime() {
     schedulePushMqttChannelKeys();
   }, [resolvedChannelConfigs, schedulePushMqttChannelKeys]);
 
-  const resolvedModuleConfigs = useMemo(() => {
-    if (!meshtasticIdentityId) return moduleConfigs;
-    if (meshtasticDeviceRecord && Object.keys(meshtasticDeviceRecord.moduleConfigs).length > 0) {
-      return meshtasticDeviceRecord.moduleConfigs;
+  const resolvedModuleConfigMaps = useMemo(() => {
+    const fromStore = meshtasticDeviceRecord?.moduleConfigs ?? {};
+    const fromLocal = moduleConfigs;
+    const cacheMatchesIdentity =
+      meshtasticIdentityId != null &&
+      lastKnownModuleConfigsIdentityRef.current === meshtasticIdentityId;
+    const lastKnown = cacheMatchesIdentity ? lastKnownModuleConfigsRef.current : {};
+    if (!meshtasticIdentityId) {
+      return resolveMeshtasticModuleConfigs({
+        fromStore: {},
+        fromLocal,
+        lastKnown: {},
+      });
     }
-    return moduleConfigs;
+    return resolveMeshtasticModuleConfigs({
+      fromStore,
+      fromLocal,
+      lastKnown,
+    });
   }, [meshtasticIdentityId, moduleConfigs, meshtasticDeviceRecord]);
+
+  // Cache display map post-commit — never mutate the refs inside the useMemo above.
+  useEffect(() => {
+    if (!meshtasticIdentityId) return;
+    if (
+      lastKnownModuleConfigsIdentityRef.current != null &&
+      lastKnownModuleConfigsIdentityRef.current !== meshtasticIdentityId
+    ) {
+      lastKnownModuleConfigsRef.current = {};
+    }
+    lastKnownModuleConfigsIdentityRef.current = meshtasticIdentityId;
+    if (Object.keys(resolvedModuleConfigMaps.display).length > 0) {
+      lastKnownModuleConfigsRef.current = resolvedModuleConfigMaps.display;
+    }
+  }, [meshtasticIdentityId, resolvedModuleConfigMaps]);
+
+  const resolvedModuleConfigs = resolvedModuleConfigMaps.display;
+  const resolvedLiveModuleConfigs = resolvedModuleConfigMaps.live;
 
   const resolvedMeshtasticConfigSlices = useMemo(() => {
     if (!meshtasticIdentityId) return {};
@@ -4803,6 +4974,7 @@ export function useMeshtasticRuntime() {
       sendWaypoint,
       deleteWaypoint,
       moduleConfigs: resolvedModuleConfigs,
+      liveModuleConfigs: resolvedLiveModuleConfigs,
       meshtasticConfigSlices: resolvedMeshtasticConfigSlices,
       setModuleConfig,
       setCannedMessages,
@@ -4828,6 +5000,8 @@ export function useMeshtasticRuntime() {
       pingResponses,
       ipTunnelMessages,
       paxCounterData,
+      meshBeacons,
+      nodeStatuses,
       serialMessages,
       storeForwardMessages,
       requestStoreForwardHistory,
@@ -4911,6 +5085,7 @@ export function useMeshtasticRuntime() {
       sendWaypoint,
       deleteWaypoint,
       resolvedModuleConfigs,
+      resolvedLiveModuleConfigs,
       resolvedMeshtasticConfigSlices,
       setModuleConfig,
       setCannedMessages,
@@ -4935,6 +5110,8 @@ export function useMeshtasticRuntime() {
       pingResponses,
       ipTunnelMessages,
       paxCounterData,
+      meshBeacons,
+      nodeStatuses,
       serialMessages,
       storeForwardMessages,
       requestStoreForwardHistory,

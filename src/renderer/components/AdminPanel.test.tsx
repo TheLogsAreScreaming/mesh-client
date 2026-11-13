@@ -2,6 +2,11 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
+import {
+  MESHCORE_CAPABILITIES,
+  MESHTASTIC_CAPABILITIES,
+} from '@/renderer/lib/radio/BaseRadioProvider';
+
 import AdminPanel from './AdminPanel';
 import { ToastProvider } from './Toast';
 
@@ -125,5 +130,32 @@ describe('AdminPanel', () => {
     await waitFor(() => {
       expect(screen.getByText('Failed: reboot failed')).toBeInTheDocument();
     });
+  });
+
+  it('explains unavailable MeshCore admin actions', () => {
+    renderAdmin({ capabilities: MESHCORE_CAPABILITIES });
+
+    const notes = screen
+      .getAllByRole('note')
+      .map((n) => n.getAttribute('data-capability-unavailable'));
+    expect(notes).toEqual(
+      expect.arrayContaining(['nodeDbReset', 'shutdown', 'enterDfu', 'rebootOta', 'factoryReset']),
+    );
+    expect(screen.queryByRole('button', { name: /shutdown/i })).toBeNull();
+    expect(screen.getByRole('button', { name: /reboot to ota/i })).toHaveAttribute(
+      'aria-describedby',
+      'admin-unavailable-rebootOta',
+    );
+  });
+
+  it('shows no unavailable notes for fully-capable Meshtastic with handlers wired', () => {
+    renderAdmin({
+      capabilities: MESHTASTIC_CAPABILITIES,
+      onRebootOta: vi.fn().mockResolvedValue(undefined),
+      onEnterDfu: vi.fn().mockResolvedValue(undefined),
+      onFactoryResetConfig: vi.fn().mockResolvedValue(undefined),
+    });
+
+    expect(screen.queryAllByRole('note')).toHaveLength(0);
   });
 });

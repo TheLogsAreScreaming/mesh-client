@@ -1,3 +1,4 @@
+import type { MeshcoreTraceEntrySize } from '../../../shared/meshcorePathHash';
 import type { MeshCoreSelfInfoEnriched, MeshCoreSelfInfoWire } from '../meshcoreTelemetryPrivacy';
 
 /** Self info from the radio (normalized after `enrichMeshCoreSelfInfo`). */
@@ -20,6 +21,8 @@ export interface MeshCoreRepeaterStatus {
   nDirectDups: number;
   nFloodDups: number;
   currTxQueueLen: number;
+  /** Wall-clock ms when this snapshot was received; counters do not advance after this. */
+  fetchedAt?: number;
 }
 
 export interface CayenneLppEntry {
@@ -327,8 +330,8 @@ export interface MeshcoreMessageDbRow {
 export interface MeshcoreTraceResultEntry {
   pathLen: number;
   pathHashes: number[];
-  /** Hash size from TraceData flags; needed to split {@link pathHashes} into hop segments. */
-  hashSizeBytes: 1 | 2 | 3;
+  /** Entry size from TraceData flags; needed to split {@link pathHashes} into hop segments. */
+  hashSizeBytes: MeshcoreTraceEntrySize;
   pathSnrs: number[];
   lastSnr: number;
   tag: number;
@@ -338,4 +341,9 @@ export interface MeshcoreTraceResultEntry {
 export interface MeshcoreRepeaterCliOptions {
   confirmedDanger?: boolean;
   isCurrent?: () => boolean;
+  /**
+   * `companion`: remote CLI on another v1.18+ companion (txt_type 3, no server login; the target
+   * must allow us with contact flag 0x10). Defaults to `repeater` (txt_type 1 after admin login).
+   */
+  target?: 'repeater' | 'companion';
 }

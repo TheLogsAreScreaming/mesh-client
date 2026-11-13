@@ -50,31 +50,31 @@ From real-time diagnostics to permanent message archives, Mesh Hub delivers the 
 
 **Protocol scope:** Mesh Hub focuses on **RF mesh** networking—LoRa and related radio meshes. Additional protocols are in scope when they support that kind of RF mesh path. Internet-only messaging stacks are out of scope. Amateur-radio (ham) protocols are welcome when they meet the same RF-mesh bar; Mesh Hub is for everyone, everywhere, and is not gated or targeted specifically at people with a ham radio license. Protocols that already ship may still use internet transports _alongside_ RF.
 
-**Known Bugs:**
+**Platform notes:**
 
 - **Linux BLE**: uses the same Bluetooth helper (**btleplug**) GATT path as macOS/Windows (no Web Bluetooth). Ensure BlueZ is running (`systemctl status bluetooth`); see [docs/development-environment.md](docs/development-environment.md#linux-bluetooth-ble).
 
 ---
 
-## Visuals
+## Screenshots
 
-<details>
-<summary>Screenshots</summary>
+Captured from the running desktop app with synthetic demo data and a simulated radio.
+Names, messages, node IDs, and positions are fictional; these views do not show live network activity.
+Select any image to view it at full size.
 
 <table>
   <tr>
-    <td><img src="docs/images/nodes.png" height="200" alt="Nodes"/></td>
-    <td><img src="docs/images/map.png" height="200" alt="Map"/></td>
-    <td><img src="docs/images/diagnostics.png" height="200" alt="Diagnostics"/></td>
-    <td><img src="docs/images/stats.png" height="200" alt="Stats"/></td>
-  </tr>
-  <tr>
-    <td colspan="4" align="center">
-      <img src="docs/images/chat.png" height="200" alt="Chat"/>
-      <img src="docs/images/connection.png" height="200" alt="Connection"/>
-      <img src="docs/images/repeaters.png" height="200" alt="Repeaters"/>
-      <img src="docs/images/node-detail.png" height="200" alt="Node Detail"/>
-      <img src="docs/images/MECP.png" height="200" alt="MECP emergency compose"/>
+    <td align="center" width="33%">
+      <a href="docs/images/chat.png"><img src="docs/images/chat.png" height="200" loading="lazy" alt="Chat with channels, direct messages, hop counts, and delivery status" /></a><br />
+      <b>Chat</b> — channels, DMs, hop counts, and delivery status
+    </td>
+    <td align="center" width="33%">
+      <a href="docs/images/map.png"><img src="docs/images/map.png" height="200" loading="lazy" alt="Map with node positions, live traffic, and offline basemaps" /></a><br />
+      <b>Map</b> — node positions, live traffic, and offline basemaps
+    </td>
+    <td align="center" width="33%">
+      <a href="docs/images/node-detail.png"><img src="docs/images/node-detail.png" height="200" loading="lazy" alt="Node detail with signal, battery, telemetry, and routing" /></a><br />
+      <b>Node detail</b> — signal, battery, telemetry, and routing for one node
     </td>
   </tr>
   <tr>
@@ -87,8 +87,6 @@ From real-time diagnostics to permanent message archives, Mesh Hub delivers the 
     </td>
   </tr>
 </table>
-
-</details>
 
 ---
 
@@ -104,6 +102,8 @@ Mesh Hub supports **two mesh stacks** in one desktop app. Use the **protocol swi
 | MeshCore   | BLE, USB serial, TCP, MQTT (JSON v1)               | Below + [parity doc](docs/meshcore-meshtastic-parity.md) |
 
 ### Meshtastic Features
+
+Operator guide: [Meshtastic guide](docs/meshtastic.md).
 
 **Radio & Channel Configuration**
 
@@ -122,13 +122,13 @@ Mesh Hub supports **two mesh stacks** in one desktop app. Use the **protocol swi
 - **MQTT-only chat identity**: when sending without a connected radio, outbound `from` uses your last known RF node id when available, otherwise a stable per-install virtual id (persisted in app settings)
 - **Enable TLS (mqtts / wss)** toggle for private brokers (not only port 8883/443); optional **Allow insecure TLS** for self-signed or non–public CA chains
 - **Per-channel MQTT uplink** (RF → MQTT) uses each channel’s real name and PSK when publishing
-- Transport indicator (RF / MQTT / both) on received messages; MQTT messages are shown in chat but not rebroadcast over RF
+- Transport indicator (RF / MQTT / both) on received messages; MQTT chat is not automatically rebroadcast by the client; optional firmware MQTT downlink follows the radio’s proxy and channel settings
 - Enter your broker URL, topic, and optional credentials in the MQTT section of the Connection tab; settings persist across sessions
 - **Saved MQTT profiles**: save the current broker settings as a named profile (for example "Chicago"), then switch, rename, or delete profiles from the MQTT card; switching to a profile with a different broker waits until you disconnect and reconnect MQTT
 
 **Module Configuration**
 
-- Telemetry module (device, environment, air quality intervals), MQTT relay, Serial, External Notification, Store & Forward, Range Test, Canned Messages, Neighbor Info, Ambient Lighting, Detection Sensor, Pax Counter, Remote Hardware, Traffic Management, TAK (when firmware exposes the module key), and **RTTTL** (ringtone); editable from the **Modules** tab in firmware-dependent order (not strictly alphabetical)
+- Telemetry module (device, environment, air quality intervals), MQTT relay, Serial, External Notification, Store & Forward, Range Test, Canned Messages, Neighbor Info, Ambient Lighting, Detection Sensor, Pax Counter, Remote Hardware, Traffic Management, TAK, Status Message, Mesh Beacon, Audio (when exposed by firmware), and **RTTTL** (ringtone); editable from the **Modules** tab in firmware-dependent order (not strictly alphabetical)
 - **ConfigApplyNotice** at the top of Radio, Modules, and Security reminds you that changes persist to the device and may require reboot; **Apply** stays disabled until each config slice hydrates from the device so defaults cannot overwrite live settings
 - **Remote Hardware (GPIO)**: configure pins and apply module settings; live GPIO status stream when the module is enabled
 - **Module status displays**: Range Test, Serial, Store & Forward, Remote Hardware (GPIO), and IP Tunnel (status-only) show packet counts and last-received timestamps when the corresponding module is enabled on the device
@@ -136,10 +136,19 @@ Mesh Hub supports **two mesh stacks** in one desktop app. Use the **protocol swi
 
 **Security**
 
-- **Meshtastic — Security (PKI)** tab (between Telemetry and **TAK**): admin / PKI key management; backup, restore, regenerate, and apply keys and related toggles from the device.
-- **MeshCore — Security** tab (partial): per-node **key backup / restore** (full public + private pair), sign data, export/import private key. Meshtastic PKI admin sections are hidden (`hasSecurityPanel` is true for both protocols; capabilities differ).
-- **DM / device key backup / restore:** **Backup Keys** encrypts the connected **local** radio’s **public and private keys** into a **per-node** slot (`localStorage`, OS keychain via `safeStorage`). Meshtastic indexes by `nodeNum`; MeshCore by `nodeId`. Backing up a second radio does **not** overwrite the first. **Restore Keys** applies the archive for the connected node; **Restore from backup…** picks any archived entry (factory reset / node id change). Hidden for remote configure targets. See [Key backup and cryptography](docs/key-backup-and-crypto.md) (includes **backing up before moving Meshtastic nodes to MeshCore**).
+- **Meshtastic — Device → Security (PKI)**: admin / PKI key management; backup, restore, regenerate, and apply keys and related toggles from the device.
+- **MeshCore — Device → Security** (partial): per-node **key backup / restore** (full public + private pair), sign data, export/import private key. Meshtastic PKI admin sections are hidden (`hasSecurityPanel` is true for both protocols; capabilities differ).
+- **DM / device key backup / restore:** **Backup Keys** stores the connected **local** radio’s **public and private keys** in a **per-node** SQLite archive encrypted with Electron `safeStorage` (requires OS-backed key storage). Meshtastic indexes by `nodeNum`; MeshCore by `nodeId`. Backing up a second radio does **not** overwrite the first. **Restore Keys** applies the archive for the connected node; **Restore from backup…** picks any archived entry (factory reset / node id change). Hidden for remote configure targets. See [Key backup and cryptography](docs/key-backup-and-crypto.md) (includes **backing up before moving Meshtastic nodes to MeshCore**).
 - **PKC remote node administration** (Meshtastic, firmware 2.5+): **Configure node** selector on Radio, Modules, Security, and Administration tabs to edit another node’s settings through your connected local radio; **Configure node remotely** from node detail when a per-node admin key is saved; **Copy** public key in Security for one-time trust setup. Paste a remote node’s admin public key in node detail (base64, `base64:…`, or 64-char hex). PKI uses the mesh NodeDB key when present, with stored admin-key fallback. Requires a **connected local Meshtastic radio** — MQTT-only sessions cannot administer remote nodes.
+
+**Advanced tools** (Meshtastic only — see [Meshtastic guide](docs/meshtastic.md#advanced-tools))
+
+- **Key verification** (firmware 2.7+): compare a security number; mark trust manually or via XEdDSA when the peer supports it
+- **Remote shell** (`REMOTE_SHELL_APP`): risk acknowledgement required; airtime and lost-output caveats apply
+- **XMODEM** upload/download on the local USB/serial radio only
+- **Firmware lockdown** status and auth when the device reports lockdown support
+- **Mesh Beacon**: configure the module, review heard offers, and join an offered channel
+- **Cayenne LPP charts** on the Telemetry tab when Cayenne packets are decoded (Meshtastic only)
 
 **Network Diagnostics**
 
@@ -161,6 +170,7 @@ Mesh Hub supports **two mesh stacks** in one desktop app. Use the **protocol swi
 - Push-based environment charts (temperature, humidity, pressure, air quality) from Meshtastic telemetry packets, displayed in the Telemetry tab
 - **Sensor history and map layer**: environment readings from RF, MeshCore remote telemetry, and Meshtastic MQTT are saved to SQLite and shown on the Map as a **Sensors** layer (pick temperature, humidity, or pressure; node popups include sparklines). History loads are capped (newest 2,000 nodes, 500 points per node)
 - **Weather forecasts layer**: channel forecast posts from senders marked as weather senders are placed on the Map (**Layers → Weather forecasts**) at the named place, or near the sender when the place can't be found. Each place shows its newest forecast, and wx broadcasts drop off the map **12 hours** after they were sent — including posts loaded from chat history at startup
+- **Internet weather** (opt-in, **Layers → Internet weather**): click-anywhere Open-Meteo forecast, temperature/wind overlays, and radar (RainViewer global; NEXRAD in CONUS). Online only; session memory cache — see [Maps: Internet weather](docs/maps.md#internet-weather)
 
 **Packet Redundancy**
 
@@ -191,7 +201,8 @@ Mesh Hub supports **two mesh stacks** in one desktop app. Use the **protocol swi
 - **Log panel**: live stream, **Analyze** heuristics, export/delete
 - **SQLite persistence**: protocol-scoped history and settings; DB export/import/clear in the App tab; **Export for GitHub** (zip: debug snapshot + logs) and **Export for Developer** (includes full SQLite — share privately only)
 - **Updates & tray**: update status in the status bar; system tray unread badge when the window is backgrounded
-- **Launcher settings search**: Ctrl/Cmd+K finds panels and individual settings; choosing a setting opens its panel, expands the section, scrolls to the row, and focuses it
+- **Launcher settings search**: Ctrl/Cmd+K finds panels and individual settings; choosing a setting opens its panel, expands the section, scrolls to the row, and focuses it — see [Settings and shortcuts](docs/settings.md)
+- **Stats** (packet distribution) and **Sniffer** (raw packet log) in the Monitor section on both protocols — see [Diagnostics: Stats](docs/diagnostics.md) and [Diagnostics: Sniffer](docs/diagnostics.md)
 - **Enable / disable protocols** (App → Protocols): turn off protocols you don't use. A disabled protocol is hidden from the switcher, disconnected, and skipped by auto-connect, autostart, and sleep/wake recovery; with one protocol left, the switcher is hidden
 - **Firmware update toast**: **Don't remind me** silences the toast for that release (per protocol); it returns when a newer release ships
 - **Developer announcements**: a dismissible strip at the top of the window shows short notices from the maintainers (outages, "please update", news), fetched from a JSON file in this repo; plain text only, and nothing shows when offline. See [`docs/service-announcements.md`](docs/service-announcements.md)
@@ -206,7 +217,7 @@ These sections apply to both LoRa companion-radio stacks.
 - **USB Serial**: plug in via USB; auto-reconnects silently on startup (saved port signature matches the same physical device across re-enumeration)
 - **WiFi / HTTP / TCP**: Meshtastic offers **WiFi/HTTP** (REST, one packet per request) and **WiFi/TCP (fast)** (native binary streaming on port **4403**, same framing as USB serial — much faster NodeDB sync on large networks); MeshCore uses TCP on port **5000** by default; remembered addresses **auto-connect on launch** (same coordinator as serial/BLE) and support quick reconnect after drops
 - **Dual LoRa mode**: Meshtastic and MeshCore stay connected while you switch views; per-protocol unread badges; passive toasts on background traffic
-- **Connection status in header**: device, MQTT, and TAK indicators pulse **red** after an unexpected disconnect; manual stop/disconnect stays gray; in-progress connect keeps yellow
+- **Connection status in the status bar**: device, MQTT, and TAK indicators pulse **red** after an unexpected disconnect; manual stop/disconnect stays gray; in-progress connect keeps yellow
 
 **Chat**
 
@@ -227,13 +238,19 @@ These sections apply to both LoRa companion-radio stacks.
 - **Copy message**: hover action copies message text to the clipboard
 - **Sender filter**: click any message sender to filter the view to that sender; Escape clears
 - **Jump to date**: scroll the chat to a specific calendar date
-- **Link previews**: `http`/`https` URLs fetch metadata via main-process IPC — Open Graph for pages, **YouTube oEmbed** for watch/shorts/youtu.be links, and **inline image embeds** for direct raster URLs (`.jpg`, `.png`, etc.). Localhost and private IPs are blocked.
+- **Link previews**: **HTTPS** links automatically fetch metadata via main-process IPC — Open Graph for pages, **YouTube oEmbed** for watch/shorts/youtu.be links, and **inline image embeds** for direct raster URLs (`.jpg`, `.png`, etc.). These requests can disclose your IP address and viewing time to remote servers; there is no click-to-load approval. Localhost, private IPs, and cleartext HTTP preview requests are blocked.
 - **Sound notifications**: audio ping for new messages in non-active channels/DMs; global mute in the toolbar; **per-conversation mute** (bell on channel/DM tabs) stored per protocol. **App → Notifications → Notification tones** configures presets or short imported audio for channel, DM, reply/mention, each MECP severity, and ops alerts (link lost / battery low); MAYDAY/URGENT bypass mute (with a volume floor). See [notification-sounds.md](docs/notification-sounds.md)
 - **Message starring**: star messages from the hover row; **Starred** view lists bookmarks across conversations (newest first, cap 200). Opening Starred does not mark the previous channel read, and the composer is hidden there
 - **Weather view**: a toolbar toggle shows only weather posts (bot forecasts, °F/°C readings, JSON telemetry) in the selected channel; optionally **hide weather posts in channels** (hidden posts don't badge or beep), add an extra regex pattern, or **Mark as weather sender** from a sender's header. DMs are never filtered
 - **Timestamp tooltip**: hover the short time label for full date and time
 - **@mention autocomplete**: type `@` to open a node-name picker; Tab or Enter to insert; arrow keys to navigate
 - **Export chat**: save the current channel or DM history as a `.txt` file via Save dialog
+- **Global message search**: `Ctrl/Cmd+Shift+F` searches stored messages across enabled protocols and opens the conversation at the hit — see [Chat: Finding messages](docs/chat.md#finding-messages)
+- **Unified inbox**: `Ctrl/Cmd+Shift+U` lists recent received messages across enabled protocols with protocol/text filters; copy, export, star, or delete locally — see [Chat: Unified inbox](docs/chat.md#unified-inbox)
+- **Scheduled send**: presets (15 minutes, 1 hour, tomorrow 09:00) or a custom time; stored on this device and sent only while the app is running and the radio can send (MeshCore MQTT-only waits for RF) — see [Chat: Scheduled send](docs/chat.md#scheduled-send)
+- **Scheduled Broadcasts**: up to twelve recurring one-packet messages to channels or MeshCore rooms (Chat → Broadcasts); timers run only while the app is open — see [Scheduled Broadcasts](docs/scheduled-broadcasts.md)
+- **Conversation pin / archive**: pin conversations to the front of the chip list; archive to hide them — separate from message starring — see [Chat: Channels and conversations](docs/chat.md#channels-and-conversations)
+- **Conversation search**: toolbar search filters the open conversation (Escape clears); use with jump-to-date for local navigation — see [Chat guide](docs/chat.md)
 
 **Node Management**
 
@@ -255,10 +272,11 @@ These sections apply to both LoRa companion-radio stacks.
 
 **Map & Position**
 
-- Interactive map with node positions and your current location (device GPS → saved location → browser geolocation → IP-based city-level fallback); default **OpenStreetMap** basemap with optional **Carto Dark** and **USGS Topo** (US only; offline-cacheable like the other basemaps)
-- **Offline maps**: basemap tiles are served through the privileged **`mesh-tiles:`** protocol and cached under app **userData** `tile-cache/` (~1 GiB LRU; viewed tiles cache automatically while online). Use **Layers → Offline maps → Download current view** to pre-fetch a region (estimate + confirm; single-job size capped so downloads are not immediately evicted). Optional **Auto-cache** and **Clear tile cache**. Uncached areas are blank offline; markers and trails still render from local/SQLite state — see [Troubleshooting — Map offline](docs/troubleshooting.md#map-tab-without-internet-offline--no-wan)
+- Interactive map with node positions and your current location (device GPS → saved location → browser geolocation → IP-based city-level fallback); default **OpenStreetMap** basemap with optional **Dark (OpenStreetMap)** (styled locally) and **USGS Topo** (US only)
+- **Offline maps**: basemap tiles are served through the privileged **`mesh-tiles:`** protocol and cached under app **userData** `tile-cache/` (~1 GiB LRU; viewed tiles cache automatically while online). With **USGS Topo** selected, use **Layers → Offline maps → Download current view** to pre-fetch a region (estimate + confirm; single-job size capped so downloads are not immediately evicted), or enable **Auto-cache**. OpenStreetMap permits ordinary viewed-tile caching, but not region downloads or prefetching. **Clear tile cache** is available for all basemaps. Uncached areas are blank offline; markers and trails still render from local/SQLite state — see [Maps guide](docs/maps.md) and [Troubleshooting — Map offline](docs/troubleshooting.md#map-tab-without-internet-offline--no-wan)
+- **Custom map sources**: add a validated, user-confirmed XYZ tile URL (HTTPS public hosts only; caches tiles you view, up to 16 sources / 256 MiB per XYZ source) or import an MBTiles package for offline use; custom sources do not support USGS-style region download — see [Maps: Custom map sources](docs/maps.md#custom-map-sources)
 - **Saved locations** (App tab, Diagnostics, or a startup strip): when the radio has no GPS, save named places this computer is used from (Home, EOC). Each launch asks "Still at …?" unless the location is marked "doesn't move". Coordinates can be pasted as decimal, degrees/minutes/seconds with N/S/E/W, MGRS, or a Google / Apple / OpenStreetMap share link. Only this session's radio GPS fix counts as device GPS; MeshCore advert coordinates do not
-- **Layers** control (Map tab, top right): switch basemap, toggle overlays (markers, movement trails, waypoints, diagnostic halos, open **incidents**, **MGRS grid**, **Sensors**, **Weather forecasts**, and **TAK units** from ATAK clients and the remote TAK server); basemap preference persists in SQLite and localStorage
+- **Layers** control (Map tab, top right): switch basemap, toggle overlays (markers, movement trails, waypoints, diagnostic halos, open **incidents**, **MGRS grid**, **Sensors**, **Weather forecasts**, optional **Internet weather**, and **TAK units** from ATAK clients and the remote TAK server); basemap preference persists in SQLite and localStorage
 - **Show on map** from the node list pin or node detail; switches to the Map tab and flies to that node
 - **Position trail**: persisted path overlay (configurable 1 h – 7 days); survives restarts via SQLite; senders of open incidents keep their track through retention pruning until the incident is resolved; toggle and window size in App tab; wipe via Danger Zone
 - **SAR tools**: MGRS grid overlay and a distance **measure** tool on the Map tab
@@ -274,18 +292,18 @@ These sections apply to both LoRa companion-radio stacks.
 
 MeshCore runs simultaneously alongside Meshtastic. Use the protocol switcher at the top of the rail to bring MeshCore into view; the other sessions stay connected in the background. Panels are grouped into rail sections (Chat, Network, Map, Monitor, Device, then Incident and App) and every panel is also in the Ctrl/Cmd+K launcher. **Meshtastic** shows **17** panels (including **Administration**, **Security**, **TAK**, **Incident** next to **App**, **Stats**, and **Sniffer**; no **Rooms** tab). **MeshCore** shows **18** panels (**TAK**, and **Incident** next to **App**; **Contacts** replaces **Nodes**, **Repeaters** replaces **Modules**, and **Rooms** is MeshCore-only; **Security** shows backup/restore and crypto tools only). **Stats**, **Sniffer**, **RF** and **Graph** are available in both protocols.
 
-- **Transmit queue**: header badge (with tooltip) when the connected radio reports outbound queue depth (STATS).
+- **Transmit queue**: status-bar badge (with tooltip) when the connected radio reports outbound queue depth (STATS).
 
 **Contacts & Discovery**
 
-- Contact list with advert-based positions, contact types (Chat, Repeater, Room), and GPS coordinates persisted to SQLite; contacts seed from DB on reconnect as a fallback cache
+- Contact list with advert-based positions, contact types (Chat, Repeater, Room, Sensor), and GPS coordinates persisted to SQLite; contacts seed from DB on reconnect as a fallback cache
 - **Favorite / pin**: persisted per contact in SQLite (`meshcore_contacts.favorited`)
-- **Contact groups**: protocol-neutral; create and manage groups from the **Contacts** tab toolbar (Meshtastic: **Nodes** tab); Meshtastic has built-in groups (**GPS**, **RF+MQTT**); filter the list by group; **Room** contacts excluded from user groups by default
-- **Import Contacts**: **Nodes** tab: bulk **JSON nickname import** to pre-fill contact names (not on the Repeaters panel)
+- **Contact groups**: protocol-neutral; create and manage groups from the **Contacts** tab toolbar (Meshtastic: **Nodes** tab); Meshtastic has built-in filters (**GPS**, **RF+MQTT**, **Router**); filter the list by group; **Room** contacts excluded from user groups by default
+- **Import Contacts**: **Network → Contacts**: bulk **JSON nickname import** to pre-fill contact names (not on the Repeaters panel)
 - **Refresh Contacts**: pull the full contact list from the device on demand
 - **Show Public Keys**: toggle to display full public keys under contact names
 - **Contact Auto-Add**: configure auto-add mode (on/off), overwrite existing, max hops; apply settings to device
-- **Clear All Contacts**: destructive action with confirmation (Radio tab Danger Zone)
+- **Clear All Contacts**: destructive action with confirmation (**Radio → Contact management**)
 - **Send Advert**: broadcast your node's presence (flood advert) to the mesh with loading state and toast feedback. The header **Flood Advert** is a split button; its chevron opens **Zero-hop Advert**, which reaches only radios in direct range
 - **Auto-offload when full** (Radio tab, contact settings): moves contacts from the radio to the app database when the contact table is nearly full (based on the radio-reported table size), when the radio reports it is full, rejects a contact as full, or evicts one under overwrite-oldest
 - **Manual Contact Approval**: toggle between auto-add (contacts appear automatically when heard) and manual-add (new contacts require approval before appearing); preference is persisted and re-applied on reconnect
@@ -294,9 +312,9 @@ MeshCore runs simultaneously alongside Meshtastic. Use the protocol switcher at 
 
 - Channel messaging and **direct messages (DMs)** with delivery ACK tracking (`expectedAckCrc`) and failure timeout; a DM shows delivered only after the hop ACK arrives (channel sends are marked sent when the companion accepts them); **DM threads can be closed** from the chat UI
 - **Remove or clear a channel from Chat**: right-click a channel chip (or use the menu key / Shift+F10) for **Remove channel** and **Clear messages**; the + channel dialog also has a remove button per channel. Public (slot 0) can be cleared but not removed. Both confirm first and do nothing if a different radio is connected by then
-- **Transport badges** on received messages; **RF**, **MQTT**, or **both** (persisted as `received_via` in `meshcore_messages`); MQTT JSON chat can be used when RF is down
+- **Transport badges** on received messages; **RF**, **MQTT**, or **both** (persisted as `received_via` in `meshcore_messages`); MQTT JSON chat can receive broker traffic when RF is down; outgoing messages queue until an RF radio connects
 - **Inbound dedup** (`meshcoreStoreDedup.ts`): merges duplicate RF/MQTT echoes, companion TX echoes, and tapback self-echoes so chat and Rooms stay readable
-- **MeshCore Open GIFs**: inbound `g:GIFID` (and Giphy URLs) show a destination-labeled click-to-load control before rendering inline; outbound send via Radio **MeshCore Open compatibility** toggle (paste URL/ID or **GIF** composer button) — see [parity doc](docs/meshcore-meshtastic-parity.md#meshcore-open-gif-wire-ggifid)
+- **MeshCore Open GIFs**: inbound `g:GIFID` (and Giphy URLs) load and render inline automatically, making requests to Giphy that can disclose your IP address and viewing time; outbound send via Radio **MeshCore Open compatibility** toggle (paste URL/ID or **GIF** composer button) — see [parity doc](docs/meshcore-meshtastic-parity.md#meshcore-open-gif-wire-ggifid)
 - Incoming push events: periodic advert (0x80), path update (0x81), send confirmed (0x82), message waiting (0x83), new contact (0x8A), incoming DM (7), incoming channel message (8)
 - All messages and contacts persisted to SQLite (`meshcore_messages`, `meshcore_contacts` tables)
 
@@ -312,22 +330,22 @@ MeshCore runs simultaneously alongside Meshtastic. Use the protocol switcher at 
 - **Trace route** (`tracePath`): per-hop SNR display; each intermediate hop's SNR is reported individually, unlike Meshtastic's hop-count-only trace
 - **Repeater Status**: on-demand query of noise floor, last RSSI/SNR, packet counts, air time, uptime, TX queue, error events, and duplicate counts; available for any contact
 - **Remote Telemetry**: pull CayenneLPP-encoded environment data (temperature, humidity, barometric pressure, voltage, GPS) from any contact via `getTelemetry`; results shown inline in the node detail modal with fetch timestamp
-- **Neighbor Info**: query a Repeater node's neighbor list via paged binary `GetNeighbours` (request page size 50; firmware may return fewer rows); shows each neighbor's name (resolved from contacts or hex prefix), how recently it was heard, and color-coded SNR; **Load more** continues from the listed count when the total is higher
+- **Neighbor Info**: query a Repeater or Room node's neighbor list via paged binary `GetNeighbours` (request page size 50; firmware may return fewer rows); shows each neighbor's name (resolved from contacts or hex prefix), how recently it was heard, and color-coded SNR; **Load more** continues from the listed count when the total is higher
 
 **Repeaters**
 
 - **Repeaters panel** (MeshCore-only tab): list **repeaters and room servers** (All / Repeaters / Rooms filter) with on-demand status (noise floor, RSSI/SNR, packet counts, air time, uptime, TX queue); **Path** column shows a per-hop SNR sparkline from the last trace (last trace/path hop data is also stored in local SQLite so sparklines can survive app restarts); per-row **Neighbors** expands an inline neighbor list (same query as node detail, including **Load more**); room rows add **Open room** (jump to Rooms) plus room CLI pills (`get acl`, `allow.read.only`, ACL setperm)
-- **Per-node admin passwords**: optional **Remember** saves credentials per repeater/room in SQLite `app_settings` (`meshcoreRepeaterCredential:<nodeId>` / room admin password); collapsible **Saved passwords** sidebar section with per-node Forget
-- **Waiting-message drain**: header status indicator (queued backlog and active sync on any protocol tab; **paused/deferred** state only on the MeshCore tab) during serial companion backlog drain; **Sync now** for manual catch-up
+- **Per-node admin passwords**: optional **Remember** saves credentials per repeater/room using OS-protected storage when available, with a local compatibility copy when OS key storage is unavailable; collapsible **Saved passwords** sidebar section with per-node Forget
+- **Waiting-message drain**: status-bar indicator (queued backlog and active sync on any protocol tab; **paused/deferred** state only on the MeshCore tab) during serial companion backlog drain; **Sync now** for manual catch-up
 - **Repeater CLI**: per-repeater expandable **CLI** interface; command input with Enter to send, scrollable command/response history, Up/Down arrow history navigation, quick-command bar (get name, get radio, neighbors, version, clock, clock sync, clear stats, advert, board, …) plus a **Radio** row of MeshCore v1.17+ settings (RX gain, FEM RX/TX gain, CAD, …), flood vs. auto (saved path) routing toggle; responses are correlated to commands via 2-character hex prefix tokens; configurable retries with dynamic timeout; **auto Ping** before the first multi-hop CLI command when no trace exists this session (info toast while establishing route); **destructive-command confirm** modal for reboot/erase/factory-reset patterns
 - **Remote session authentication (optional)**: Password may be required for **CLI** and some **telemetry** paths when firmware ACL demands it. **Status** and **Neighbors** use pubkey-framed companion commands and typically work without login on direct (0-hop) repeaters; the auth modal offers “Continue without password.” Saved passwords persist when **Remember** is checked. Admin RPCs share a serialized companion queue — expect up to ~2 minutes blocked while a ping or multi-hop request runs. Status/Telemetry/Neighbors toast when the radio is disconnected.
-- **Panel toolbar**: **Reboot Device** (shown when the device supports the command); **Send Advert** and **Sync Clock** moved to Radio panel Device Actions section (distinct from the Repeater CLI **`clock sync`** quick pill)
+- **Device actions**: **Reboot** lives in **Device → Administration**; **Send Advert** and **Sync Clock** live in the Radio panel Device Actions section (distinct from the Repeater CLI **`clock sync`** quick pill)
 - **Per-repeater removal**: two-click confirm button on each row; removes from in-memory state and deletes from the SQLite contacts DB
 - **Clear All Repeaters**: Danger Zone entry in the App tab that deletes all Repeater-type contacts (contact_type = 2) from the DB while leaving Chat and Room contacts intact
 
 **Radio Parameters**
 
-- Frequency (Hz), bandwidth, spreading factor, coding rate, and TX power; synced from device `selfInfo` and applied live via the Radio tab
+- Frequency (MHz), bandwidth, spreading factor, coding rate, and TX power; synced from device `selfInfo` and applied live via the Radio tab
 - **Channel display and edit**: view and edit channel list from the device in the Radio tab; **Import Config JSON** (MeshCore) applies name and radio settings to the device and reports what was applied vs. not supported
 
 **Battery & Signal Telemetry**
@@ -339,7 +357,7 @@ MeshCore runs simultaneously alongside Meshtastic. Use the protocol switcher at 
 **Device Control**
 
 - **Administration** tab: **Reboot** when connected (Meshtastic also gets shutdown, factory reset, NodeDB reset, reboot-to-OTA, and enter DFU on the same tab)
-- _Not available for MeshCore_ (not implemented in the meshcore.js library): shutdown, factory reset, reset NodeDB, reboot-to-OTA, enter DFU mode
+- **MeshCore power off** is available in **Radio → Companion device settings → Power** on companion protocol 14+ (firmware 1.18+). Meshtastic-style factory reset, NodeDB reset, reboot-to-OTA, and DFU actions are not exposed for MeshCore
 
 **Transport Notes**
 
@@ -364,9 +382,9 @@ MeshCore runs simultaneously alongside Meshtastic. Use the protocol switcher at 
 - **MeshCore - partial routing diagnostics**: MeshCore supports `route_flapping` / `path_instability` (PathUpdated events) and `weak_link` (when `hasPerHopSnr` and a trace is completed). Distance-based `hop_goblin` / close-in `bad_route` are Meshtastic-only (`hasDistanceBasedHopAnomalies`). Full hop-anomaly detection and Meshtastic-style LocalStats RF findings require Meshtastic packets; MeshCore provides its own RF findings (Elevated Noise Floor, Excessive Flooding) from Repeater Status packet stats. **Foreign LoRa** tables render on the Meshtastic tab only (MeshCore may record overhear internally).
 - **MeshCore - channel editing**: Can add/edit/delete channels (name + PSK) via the Radio tab, but does not expose Meshtastic-style full protobuf config. Radio parameters (frequency, bandwidth, spreading factor, coding rate, TX power) can be set via the Radio tab.
 - **MeshCore - remote telemetry availability**: `getTelemetry` requires the remote node to have environment sensors. A timeout is returned if the node has no sensor data.
-- **MeshCore - neighbor info availability**: `getNeighbours` is supported only by Repeater-type nodes running firmware v1.9.0+. The button is hidden for Chat and Room contacts.
+- **MeshCore - neighbor info availability**: `getNeighbours` is offered for Repeater and Room contacts with compatible firmware (v1.9.0+). The button is hidden for Chat contacts.
 - **MeshCore - Trace Route / Ping trace**: Remote nodes typically respond only if they have **your** node as a contact. One-way or foreign heard nodes may lead to a client-side timeout; multi-hop paths without synced outPath bytes trigger **passive** PathUpdated wait + contact refresh (**15s + 5s × hops**, capped at **45s**), then for **2+ hops** up to **two** flood-advert priming rounds before `SendTracePath`. **1-hop** targets may use a synthesized `[relayPrefix, destPrefix]` path when a direct 0-hop repeater is known. If priming and synthesis still fail, ping may fast-fail with **No route from radio yet** instead of waiting the full trace timeout. See [Troubleshooting; MeshCore: Trace Route or Ping trace times out](docs/troubleshooting-meshcore.md#meshcore-trace-route-or-ping-trace-times-out).
-- **MeshCore - contact type labels**: MeshCore reports a numeric `type` field (0 = None, 1 = Chat, 2 = Repeater, 3 = Room); displayed in the hw_model field in the node list.
+- **MeshCore - contact type labels**: MeshCore reports a numeric `type` field (0 = None, 1 = Chat, 2 = Repeater, 3 = Room, 4 = Sensor); displayed in the hw_model field in the node list.
 - **MeshCore - Security tab (partial)**: Meshtastic-style PKI admin is not on MeshCore firmware; the **Security** tab shows per-node key backup/restore, sign, and export/import only. LetsMesh MQTT uses a separate **active identity cache** (`mesh-client:meshcoreIdentity`); per-node archives do not overwrite each other — see [Key backup and cryptography](docs/key-backup-and-crypto.md).
 - **Map tiles; OpenStreetMap Referer requirement**: Packaged desktop builds load the UI from the local filesystem. The main process now loads the renderer with an explicit HTTP referrer so OpenStreetMap tile requests include a valid `Referer` header and comply with the [tile usage policy](https://operations.osmfoundation.org/policies/tiles/). If you point the app at a different tile server, ensure its usage policy permits this client.
 
@@ -382,9 +400,9 @@ MeshCore runs simultaneously alongside Meshtastic. Use the protocol switcher at 
 
 | Platform    | Minimum                                                               |
 | ----------- | --------------------------------------------------------------------- |
-| **macOS**   | **13 Ventura** or later (Electron 44; Monterey is not supported)      |
+| **macOS**   | **13 Ventura** or later (Monterey is not supported)                   |
 | **Windows** | Windows 10 version **1809+** or Windows 11 (x64 and arm64 installers) |
-| **Linux**   | x86_64 or aarch64; AppImage, `.deb`, `.rpm`, or Flatpak               |
+| **Linux**   | x86_64 or aarch64; AppImage, `.deb`, `.rpm`, Flatpak, or Nix flake    |
 
 **Pre-built binaries** for **macOS**, **Linux**, and **Windows** are available in the [GitHub Releases](https://github.com/TheLogsAreScreaming/mesh-client-releases/releases) area. Download the installer or archive for your platform; no Node.js or build tools required.
 
@@ -430,12 +448,14 @@ See [Troubleshooting; macOS: File is damaged…](docs/troubleshooting.md#macos-f
 
 ## Run Locally
 
-**Prerequisites:** [Node.js 22.15.0+](https://nodejs.org/) and [pnpm 12+](https://pnpm.io/installation) (repo pins an exact `packageManager` — Corepack, or `npm i -g pnpm` / `npm i -g corepack` on Node 25+). After a pnpm major bump, `pnpm install` / `pnpm run dev` print upgrade instructions if your local pnpm is too old.
+**Prerequisites:** [Node.js 22.19.0+](https://nodejs.org/) (to satisfy the locked dependencies) and the [pnpm version pinned in `package.json`](package.json) (currently **12.14.0**). Use Corepack, or `npm i -g pnpm@12.14.0`; Node 25+ needs Corepack installed separately if you choose that route. After a pnpm major bump, `pnpm install` / `pnpm run dev` print upgrade instructions if your local pnpm is too old.
 
 ```bash
 git clone https://github.com/TheLogsAreScreaming/mesh-client
 cd mesh-client
-pnpm install
+node scripts/check-environment.mjs # follow the setup hints before installing
+pnpm install --frozen-lockfile
+pnpm run check:environment
 pnpm run dev
 ```
 
@@ -481,7 +501,7 @@ When both Meshtastic and MeshCore have different saved BLE peripherals, dual-rad
 
 ### MQTT
 
-Enter your broker URL, topic, and optional credentials in the MQTT section of the Connection tab. When connected, the section collapses to a compact info card showing the server, client ID, and topic. You can send messages via MQTT without a radio when using **Meshtastic**, or **MeshCore** with brokers other than the public **LetsMesh** presets (Ripple / Custom still use the JSON v1 chat envelope for MQTT-only sends). **LetsMesh** public MQTT targets the **Analyzer** packet-logger model: optional RX summaries to `{topicPrefix}/meshcore/packets` when your radio is connected ([docs/letsmesh-mqtt-auth.md](docs/letsmesh-mqtt-auth.md)); MQTT-only channel chat to LetsMesh without a radio is not supported. **Meshtastic** uses the protobuf MQTT stack; **MeshCore** broker details are in [docs/meshcore-meshtastic-parity.md](docs/meshcore-meshtastic-parity.md). In **MeshCore** mode, the **LetsMesh** / **MeshMapper** / **Colorado Mesh** / **Waev** / **Meshat.se** / **MeshCore.CA** / **EastMesh** / **Ripple Networks** presets fill those fields for the corresponding public networks. The device-signing presets (everything except Ripple / Custom) use the same contract as [meshcore-mqtt-broker](https://github.com/michaelhart/meshcore-mqtt-broker) with JWT `aud` matching the **broker hostname** you connect to (e.g. `mqtt-us-v1.letsmesh.net`, `mqtt.waev.app`, `mqtt1.meshcore.ca`); mesh-client generates tokens from your imported MeshCore identity (`public_key` + `private_key` in config JSON). **Custom** settings also use device signing when the configured server matches a known device-signing broker hostname (e.g. `mqtt.waev.app`); Custom is only non-device-signing for unmatched hosts. Use **Custom** and paste credentials manually if your operator issued different rules.
+Enter your broker URL, topic, and optional credentials in the MQTT section of the Connection tab. When connected, the section collapses to a compact info card showing the server, client ID, and topic. **Meshtastic** can send messages via MQTT without a radio. **MeshCore** MQTT-only sessions receive broker traffic, but outgoing chat is queued until an RF radio is connected, regardless of broker preset. **LetsMesh** public MQTT targets the **Analyzer** packet-logger model: optional RX summaries to `{topicPrefix}/meshcore/packets` when your radio is connected ([docs/letsmesh-mqtt-auth.md](docs/letsmesh-mqtt-auth.md)); MQTT-only channel chat to LetsMesh without a radio is not supported. **Meshtastic** uses the protobuf MQTT stack; **MeshCore** broker details are in [docs/meshcore-meshtastic-parity.md](docs/meshcore-meshtastic-parity.md). In **MeshCore** mode, the **LetsMesh** / **MeshMapper** / **Colorado Mesh** / **Waev** / **Meshat.se** / **MeshCore.CA** / **EastMesh** / **Ripple Networks** presets fill those fields for the corresponding public networks. The device-signing presets (everything except Ripple / Custom) use the same contract as [meshcore-mqtt-broker](https://github.com/michaelhart/meshcore-mqtt-broker) with JWT `aud` matching the **broker hostname** you connect to (e.g. `mqtt-us-v1.letsmesh.net`, `mqtt.waev.app`, `mqtt1.meshcore.ca`); mesh-client generates tokens from your imported MeshCore identity (`public_key` + `private_key` in config JSON). **Custom** settings also use device signing when the configured server matches a known device-signing broker hostname (e.g. `mqtt.waev.app`); Custom is only non-device-signing for unmatched hosts. Use **Custom** and paste credentials manually if your operator issued different rules.
 
 ---
 

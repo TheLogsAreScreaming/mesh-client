@@ -45,8 +45,8 @@ export const NAV_SECTION_RAIL_LABEL_KEYS: Partial<Record<NavSectionId, string>> 
  * Repeaters) and Device (Meshtastic module config); `navSectionForSlot` picks one by capability.
  */
 const SECTION_SLOT_ORDER: Record<NavSectionId, readonly TabSlotId[]> = {
-  chat: ['Chat', 'Rooms'],
-  network: ['Nodes', 'Modules', 'Graph', 'TAK'],
+  chat: ['Chat', 'Rooms', 'ScheduledBroadcasts'],
+  network: ['Nodes', 'TeamContacts', 'TeamRoster', 'Modules', 'Graph', 'TAK'],
   map: ['Map'],
   monitor: ['Diagnostics', 'Stats', 'Sniffer', 'RF'],
   device: ['Connection', 'Radio', 'Modules', 'Telemetry', 'Admin', 'Security'],

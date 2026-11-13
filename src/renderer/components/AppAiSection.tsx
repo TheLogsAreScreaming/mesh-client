@@ -1,0 +1,708 @@
+import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+import {
+  bundledWllamaThreadCount,
+  isBundledWllamaThreadBudgetLow,
+} from '@/renderer/lib/aiWorkerHost';
+import {
+  refreshAiStatus,
+  subscribeAiEvents,
+  useAiSummaryStore,
+} from '@/renderer/stores/aiSummaryStore';
+import type {
+  AiEndpointConfig,
+  AiEngine,
+  AiModelInfo,
+  AiModelProgress,
+  AiWireFormat,
+} from '@/shared/ai-types';
+import {
+  AI_DEFAULT_MAX_COLLECTED_MESSAGES,
+  AI_MAX_MAX_COLLECTED_MESSAGES,
+  AI_MAX_TIMEOUT_SECONDS,
+  AI_MIN_MAX_COLLECTED_MESSAGES,
+  AI_MIN_TIMEOUT_SECONDS,
+  aiSummaryTimeoutMs,
+  estimateAiSummaryMessageCapacity,
+} from '@/shared/ai-types';
+import { AI_CATCH_UP_DOCS_URL } from '@/shared/docsSite';
+import { MS_PER_SECOND } from '@/shared/timeConstants';
+
+import { Button } from './ui/Button';
+import { DocsSiteLink } from './ui/DocsSiteLink';
+import { CHECKBOX_CLASS, INPUT_BOX_CLASS, SELECT_BOX_CLASS } from './ui/formClasses';
+import { SettingsCollapsible } from './ui/SettingsSection';
+
+export function AppAiSection() {
+  const { t } = useTranslation();
+  const status = useAiSummaryStore((s) => s.status);
+  const [open, setOpen] = useState(false);
+  const [engine, setEngine] = useState<AiEngine | ''>(status?.engine ?? '');
+  const [format, setFormat] = useState<AiWireFormat>(status?.wireFormat ?? 'openai');
+  const [baseUrl, setBaseUrl] = useState(status?.baseUrl ?? '');
+  const [model, setModel] = useState(status?.model ?? '');
+  const [apiKey, setApiKey] = useState<string | undefined>();
+  const [timeoutSeconds, setTimeoutSeconds] = useState(
+    String(status?.timeoutSeconds ?? aiSummaryTimeoutMs(status?.engine ?? null) / MS_PER_SECOND),
+  );
+  const [maxCollectedMessages, setMaxCollectedMessages] = useState(
+    String(status?.maxCollectedMessages ?? AI_DEFAULT_MAX_COLLECTED_MESSAGES),
+  );
+  const [ack, setAck] = useState(status?.allowRemote ?? false);
+  const [models, setModels] = useState<AiModelInfo[]>([]);
+  const [remoteModels, setRemoteModels] = useState<string[]>([]);
+  const [progress, setProgress] = useState<AiModelProgress[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
+  const enabled = status?.enabled === true;
+  const probed = useRef(false);
+  useEffect(() => {
+    if (open)
+      void refreshAiStatus().catch(() => {
+        setNotice(t('aiSummary.settingsError'));
+      });
+  }, [open, t]);
+  useEffect(
+    () =>
+      useAiSummaryStore.subscribe((state, previous) => {
+        const next = state.status;
+        if (!next || next === previous.status) return;
+        const configuration = (value: typeof next | null) =>
+          JSON.stringify([
+            value?.engine ?? null,
+            value?.wireFormat ?? null,
+            value?.baseUrl ?? '',
+            value?.model ?? '',
+            value?.allowRemote ?? false,
+            value?.timeoutSeconds,
+            value?.maxCollectedMessages,
+          ]);
+        if (configuration(next) === configuration(previous.status)) return;
+        setEngine(next.engine ?? '');
+        setFormat(next.wireFormat ?? 'openai');
+        setBaseUrl(next.baseUrl);
+        setModel(next.model);
+        setAck(next.allowRemote);
+        setTimeoutSeconds(String(next.timeoutSeconds));
+        setMaxCollectedMessages(String(next.maxCollectedMessages));
+      }),
+    [],
+  );
+  useEffect(() => {
+    if (!open || !enabled) return;
+    subscribeAiEvents();
+    let cancelled = false;
+    const load = async () => {
+      const list = await window.electronAPI.ai.listLocalModels();
+      if (!cancelled) setModels(list);
+      if (!probed.current) {
+        probed.current = true;
+        await window.electronAPI.ai.probeOsAi();
+        if (!cancelled) await refreshAiStatus();
+      }
+    };
+    void load().catch(() => {
+      if (!cancelled) setNotice(t('aiSummary.settingsError'));
+    });
+    const unsub = window.electronAPI.ai.onModelProgress((value) => {
+      if (cancelled) return;
+      setProgress((old) => [...old.filter((p) => p.modelId !== value.modelId), value]);
+      if (value.state === 'installed' || value.state === 'cancelled' || value.state === 'error')
+        void window.electronAPI.ai.listLocalModels().then(setModels, () => {
+          setNotice(t('aiSummary.settingsError'));
+        });
+    });
+    return () => {
+      cancelled = true;
+      unsub();
+    };
+  }, [enabled, open, t]);
+  const action = async (work: () => Promise<void>) => {
+    if (busy) return;
+    setBusy(true);
+    setNotice('');
+    try {
+      await work();
+    } catch {
+      // catch-no-log-ok IPC errors may include provider details; display fixed guidance
+      setNotice(t('aiSummary.settingsError'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const insecureKey = (() => {
+    try {
+      const url = new URL(baseUrl);
+      const savedKey =
+        apiKey === undefined &&
+        status?.hasApiKey &&
+        engine === status.engine &&
+        url.href.replace(/\/+$/, '') === new URL(status.baseUrl).href.replace(/\/+$/, '');
+      if (!apiKey && !savedKey) return false;
+      const host = url.hostname.replace(/^\[|\]$/g, '').toLowerCase();
+      return (
+        url.protocol === 'http:' &&
+        host !== 'localhost' &&
+        host !== '::1' &&
+        !/^127\.\d+\.\d+\.\d+$/.test(host) &&
+        !/^::ffff:7f[0-9a-f]{2}:/i.test(host)
+      );
+    } catch {
+      // catch-no-log-ok invalid endpoint is rejected on save
+      return false;
+    }
+  })();
+  const configurationDirty =
+    engine !== status?.engine ||
+    Number(timeoutSeconds) !== status?.timeoutSeconds ||
+    Number(maxCollectedMessages) !== status?.maxCollectedMessages ||
+    ((engine === 'local' || engine === 'remote') &&
+      (format !== status?.wireFormat ||
+        baseUrl !== status?.baseUrl ||
+        model !== status?.model ||
+        apiKey !== undefined ||
+        (engine === 'remote' && ack !== status?.allowRemote)));
+  const save = async () => {
+    if (!engine) return;
+    const input: AiEndpointConfig = {
+      engine,
+      timeoutSeconds: Number(timeoutSeconds),
+      maxCollectedMessages: Number(maxCollectedMessages),
+      wireFormat: format,
+      baseUrl,
+      model,
+      allowRemote: ack,
+      ...(apiKey !== undefined ? { apiKey } : {}),
+      localModelId: status?.localEngine.modelId,
+    };
+    const next = await window.electronAPI.ai.setConfig(input);
+    useAiSummaryStore.getState().setStatus(next);
+    setBaseUrl(next.baseUrl);
+    setApiKey(undefined);
+    setNotice(t('aiSummary.saved'));
+  };
+  return (
+    <SettingsCollapsible
+      title={t('aiSummary.settingsTitle')}
+      anchorId="app.aiProvider"
+      onToggle={setOpen}
+    >
+      <label
+        data-setting-anchor="app.aiProvider.enabled"
+        className="text-body-lg flex items-center gap-2"
+      >
+        <input
+          type="checkbox"
+          className={CHECKBOX_CLASS}
+          aria-label={t('aiSummary.enabled')}
+          checked={enabled}
+          disabled={busy}
+          onChange={(event) => {
+            const checked = event.target.checked;
+            void action(async () => {
+              const next = await window.electronAPI.ai.setEnabled(checked);
+              useAiSummaryStore.getState().setStatus(next);
+              if (checked) subscribeAiEvents();
+            });
+          }}
+        />
+        {t('aiSummary.enabled')}
+      </label>
+      <p className="text-muted text-label mt-2">{t('aiSummary.optIn')}</p>
+      {enabled && (
+        <div className="mt-3 space-y-3">
+          <label data-setting-anchor="app.aiProvider.engine" className="text-body-lg block">
+            {t('aiSummary.engine')}
+            <select
+              aria-label={t('aiSummary.engine')}
+              className={`${SELECT_BOX_CLASS} mt-1 w-full`}
+              value={engine}
+              onChange={(event) => {
+                const nextEngine = event.target.value as AiEngine | '';
+                setEngine(nextEngine);
+                setTimeoutSeconds(String(aiSummaryTimeoutMs(nextEngine || null) / MS_PER_SECOND));
+                setAck(false);
+                setApiKey(undefined);
+              }}
+            >
+              <option value="">{t('aiSummary.chooseEngine')}</option>
+              {status.osAi.available && (
+                <option value="os">
+                  {t('aiSummary.osEngine')} ({status.osAi.modelLabel})
+                </option>
+              )}
+              <option value="bundled">{t('aiSummary.bundledEngine')}</option>
+              <option value="local">{t('aiSummary.localEngine')}</option>
+              <option value="remote">{t('aiSummary.remoteEngine')}</option>
+            </select>
+          </label>
+          <p data-setting-anchor="app.aiProvider.capacity" className="text-muted text-label">
+            {engine
+              ? t('aiSummary.capacityHint', {
+                  count: estimateAiSummaryMessageCapacity(engine),
+                  ceiling: Number(maxCollectedMessages) || AI_DEFAULT_MAX_COLLECTED_MESSAGES,
+                })
+              : t('aiSummary.capacityHintChooseEngine', {
+                  onDevice: estimateAiSummaryMessageCapacity('os'),
+                  endpoint: estimateAiSummaryMessageCapacity('local'),
+                  ceiling: Number(maxCollectedMessages) || AI_DEFAULT_MAX_COLLECTED_MESSAGES,
+                })}
+          </p>
+          <div data-setting-anchor="app.aiProvider.osAi" className="text-muted text-label">
+            {t('aiSummary.osAvailability', {
+              model: status.osAi.available ? status.osAi.modelLabel : t('aiSummary.osUnavailable'),
+            })}
+          </div>
+          {(engine === 'bundled' || models.some((item) => item.orphan)) && (
+            <div data-setting-anchor="app.aiProvider.catalog" className="space-y-3">
+              {engine === 'bundled' && (
+                <>
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <h4 className="text-body-lg font-medium">{t('aiSummary.catalog')}</h4>
+                    <DocsSiteLink href={AI_CATCH_UP_DOCS_URL} />
+                  </div>
+                  <p className="text-muted text-label">{t('aiSummary.offlineSummaryHint')}</p>
+                  {status.mlxHelperStatus === 'ready' &&
+                    models.some((item) => item.runtime === 'mlx') && (
+                      <p className="text-bright-green text-label">
+                        {t('aiSummary.mlxRecommendedOnMacos')}
+                      </p>
+                    )}
+                  {status.mlxHelperStatus === 'preparing' && (
+                    <p role="status" className="text-muted text-label">
+                      {t('aiSummary.mlxHelperPreparing')}
+                    </p>
+                  )}
+                  {status.mlxHelperStatus === 'unavailable' && status.mlxHelperReason && (
+                    <div className="space-y-2">
+                      <p role="status" className="text-muted text-label">
+                        {t(`aiSummary.mlxHelperReason.${status.mlxHelperReason}`)}
+                      </p>
+                      <Button
+                        size="sm"
+                        disabled={busy}
+                        aria-label={t('aiSummary.mlxHelperRetry')}
+                        onClick={() => {
+                          void action(async () => {
+                            const next = await window.electronAPI.ai.ensureMlxHelper();
+                            useAiSummaryStore.getState().setStatus(next);
+                            if (next.mlxHelperStatus === 'ready') {
+                              setNotice(t('aiSummary.mlxHelperRetryReady'));
+                            } else if (
+                              next.mlxHelperStatus === 'unavailable' &&
+                              next.mlxHelperReason
+                            ) {
+                              setNotice(t(`aiSummary.mlxHelperReason.${next.mlxHelperReason}`));
+                            } else {
+                              setNotice(t('aiSummary.settingsError'));
+                            }
+                          });
+                        }}
+                      >
+                        {t('aiSummary.mlxHelperRetry')}
+                      </Button>
+                    </div>
+                  )}
+                  {status.localEngine.modelId &&
+                    !status.localEngine.ready &&
+                    status.mlxHelperStatus === 'unavailable' &&
+                    models.some(
+                      (item) => item.id === status.localEngine.modelId && item.runtime === 'mlx',
+                    ) && (
+                      <p role="alert" className="text-label text-warning-400">
+                        {t('aiSummary.mlxHelperMissingSelected')}
+                      </p>
+                    )}
+                  {isBundledWllamaThreadBudgetLow() && (
+                    <p role="alert" className="text-label text-warning-400">
+                      {t('aiSummary.lowThreadBudgetWarning', {
+                        count: bundledWllamaThreadCount(),
+                      })}
+                    </p>
+                  )}
+                </>
+              )}
+              {engine === 'bundled' &&
+                models
+                  .filter((item) => !item.orphan)
+                  .map((item) => {
+                    const p = progress.find((entry) => entry.modelId === item.id);
+                    const downloading =
+                      p && ['queued', 'downloading', 'verifying'].includes(p.state);
+                    const mlxBlocked = item.runtime === 'mlx' && !status.mlxHelperAvailable;
+                    return (
+                      <div
+                        key={item.id}
+                        className="border-ink-700 rounded-modal text-body-lg border p-2"
+                      >
+                        <p>{item.name}</p>
+                        <p className="text-muted text-label">
+                          {item.paramsLabel} · {(item.downloadBytes / 1024 / 1024).toFixed(0)} MB ·{' '}
+                          {item.license}
+                        </p>
+                        {item.recommendation === 'quality' && (
+                          <p className="text-bright-green text-label">
+                            {t('aiSummary.modelRecommendQuality')}
+                          </p>
+                        )}
+                        {item.recommendation === 'fasterMachines' && (
+                          <p className="text-muted text-label">
+                            {t('aiSummary.modelRecommendFasterMachines')}
+                          </p>
+                        )}
+                        {item.runtime === 'mlx' && (
+                          <p className="text-bright-green text-label">
+                            {t('aiSummary.modelRuntimeMlx')}
+                          </p>
+                        )}
+                        {item.runtime === 'wllama' && (
+                          <p className="text-muted text-label">{t('aiSummary.modelRuntimeCpu')}</p>
+                        )}
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {downloading ? (
+                            <>
+                              <progress
+                                aria-label={t('aiSummary.download')}
+                                value={p.receivedBytes}
+                                max={p.totalBytes}
+                              />
+                              <Button
+                                size="sm"
+                                aria-label={t('aiSummary.cancel')}
+                                onClick={() => {
+                                  void action(async () => {
+                                    await window.electronAPI.ai.cancelLocalModel(item.id);
+                                  });
+                                }}
+                              >
+                                {t('aiSummary.cancel')}
+                              </Button>
+                            </>
+                          ) : item.installed ? (
+                            <>
+                              <Button
+                                size="sm"
+                                disabled={busy || mlxBlocked}
+                                aria-label={t('aiSummary.useModel', { model: item.name })}
+                                onClick={() => {
+                                  void action(async () => {
+                                    useAiSummaryStore
+                                      .getState()
+                                      .setStatus(
+                                        await window.electronAPI.ai.selectLocalModel(item.id),
+                                      );
+                                  });
+                                }}
+                              >
+                                {status.localEngine.modelId === item.id
+                                  ? t('aiSummary.selected')
+                                  : t('aiSummary.select')}
+                              </Button>
+                              <Button
+                                size="sm"
+                                disabled={busy}
+                                aria-label={t('aiSummary.removeModel', { model: item.name })}
+                                onClick={() => {
+                                  void action(async () => {
+                                    setModels(
+                                      await window.electronAPI.ai.removeLocalModel(item.id),
+                                    );
+                                    await refreshAiStatus();
+                                  });
+                                }}
+                              >
+                                {t('aiSummary.remove')}
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              size="sm"
+                              disabled={busy}
+                              aria-label={t('aiSummary.downloadModel', { model: item.name })}
+                              onClick={() => {
+                                void window.electronAPI.ai.installLocalModel(item.id).then(
+                                  (result) => {
+                                    if (!result.ok) setNotice(t('aiSummary.settingsError'));
+                                  },
+                                  () => {
+                                    setNotice(t('aiSummary.settingsError'));
+                                  },
+                                );
+                              }}
+                            >
+                              {t('aiSummary.download')}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+              {models.some((item) => item.orphan) && (
+                <div className="space-y-2">
+                  <h4 className="text-body-lg font-medium">{t('aiSummary.unusedDownloads')}</h4>
+                  <p className="text-muted text-label">{t('aiSummary.unusedDownloadsHint')}</p>
+                  {models
+                    .filter((item) => item.orphan)
+                    .map((item) => (
+                      <div
+                        key={item.id}
+                        className="border-ink-700 rounded-modal text-body-lg border p-2"
+                      >
+                        <p>{item.id}</p>
+                        <p className="text-muted text-label">
+                          {(item.diskBytes / 1024 / 1024).toFixed(0)} MB ·{' '}
+                          {t('aiSummary.unusedDownloadRetired')}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <Button
+                            size="sm"
+                            disabled={busy}
+                            aria-label={t('aiSummary.removeModel', { model: item.id })}
+                            onClick={() => {
+                              void action(async () => {
+                                setModels(await window.electronAPI.ai.removeLocalModel(item.id));
+                                await refreshAiStatus();
+                              });
+                            }}
+                          >
+                            {t('aiSummary.remove')}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
+          {(engine === 'local' || engine === 'remote') && (
+            <>
+              <label data-setting-anchor="app.aiProvider.format" className="text-body-lg block">
+                {t('aiSummary.format')}
+                <select
+                  className={`${SELECT_BOX_CLASS} mt-1 w-full`}
+                  aria-label={t('aiSummary.format')}
+                  value={format}
+                  onChange={(event) => {
+                    setFormat(event.target.value as AiWireFormat);
+                  }}
+                >
+                  <option value="openai">OpenAI-compatible</option>
+                  <option value="anthropic">Anthropic</option>
+                  <option value="gemini">Gemini</option>
+                  <option value="ollama">Ollama</option>
+                </select>
+              </label>
+              <label data-setting-anchor="app.aiProvider.baseUrl" className="text-body-lg block">
+                {t('aiSummary.baseUrl')}
+                <input
+                  className={`${INPUT_BOX_CLASS} mt-1 w-full`}
+                  aria-label={t('aiSummary.baseUrl')}
+                  type="url"
+                  value={baseUrl}
+                  placeholder={
+                    engine === 'local' ? 'http://127.0.0.1:11434' : 'https://api.openai.com/v1'
+                  }
+                  onChange={(event) => {
+                    setBaseUrl(event.target.value);
+                    setAck(false);
+                    setRemoteModels([]);
+                  }}
+                />
+              </label>
+              {engine === 'local' && (
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { name: 'Ollama', url: 'http://127.0.0.1:11434', format: 'ollama' as const },
+                    {
+                      name: 'LM Studio',
+                      url: 'http://127.0.0.1:1234/v1',
+                      format: 'openai' as const,
+                    },
+                    {
+                      name: 'llama.cpp / vLLM / LocalAI',
+                      url: 'http://127.0.0.1:8080/v1',
+                      format: 'openai' as const,
+                    },
+                  ].map((preset) => (
+                    <Button
+                      key={preset.name}
+                      size="sm"
+                      aria-label={preset.name}
+                      onClick={() => {
+                        setBaseUrl(preset.url);
+                        setFormat(preset.format);
+                        setAck(false);
+                      }}
+                    >
+                      {preset.name}
+                    </Button>
+                  ))}
+                </div>
+              )}
+              <label data-setting-anchor="app.aiProvider.model" className="text-body-lg block">
+                {t('aiSummary.model')}
+                <input
+                  className={`${INPUT_BOX_CLASS} mt-1 w-full`}
+                  aria-label={t('aiSummary.model')}
+                  value={model}
+                  list="ai-endpoint-models"
+                  onChange={(event) => {
+                    setModel(event.target.value);
+                  }}
+                />
+                <datalist id="ai-endpoint-models">
+                  {remoteModels.map((id) => (
+                    <option key={id} value={id} />
+                  ))}
+                </datalist>
+              </label>
+              <label data-setting-anchor="app.aiProvider.apiKey" className="text-body-lg block">
+                {t('aiSummary.apiKey')}
+                <input
+                  className={`${INPUT_BOX_CLASS} mt-1 w-full`}
+                  aria-label={t('aiSummary.apiKey')}
+                  type="password"
+                  autoComplete="off"
+                  value={apiKey ?? ''}
+                  placeholder={status.hasApiKey ? t('aiSummary.keySaved') : ''}
+                  onChange={(event) => {
+                    setApiKey(event.target.value);
+                  }}
+                />
+              </label>
+              {insecureKey && (
+                <p role="alert" className="text-label text-warning-400">
+                  {t('aiSummary.insecureKeyWarning')}
+                </p>
+              )}
+              {status.hasApiKey && (
+                <Button
+                  size="sm"
+                  aria-label={t('aiSummary.clearKey')}
+                  onClick={() => {
+                    setApiKey('');
+                  }}
+                >
+                  {t('aiSummary.clearKey')}
+                </Button>
+              )}
+              {engine === 'remote' && (
+                <label
+                  data-setting-anchor="app.aiProvider.allowRemote"
+                  className="text-body-lg flex items-start gap-2"
+                >
+                  <input
+                    type="checkbox"
+                    className={CHECKBOX_CLASS}
+                    aria-label={t('aiSummary.allowRemote')}
+                    checked={ack}
+                    onChange={(event) => {
+                      setAck(event.target.checked);
+                    }}
+                  />
+                  {t('aiSummary.allowRemote')}
+                </label>
+              )}
+              <p className="text-muted text-label">{t('aiSummary.urlHint')}</p>
+            </>
+          )}
+          <label data-setting-anchor="app.aiProvider.timeout" className="text-body-lg block">
+            {t('aiSummary.timeoutSeconds')}
+            <input
+              className={`${INPUT_BOX_CLASS} mt-1 w-full`}
+              aria-label={t('aiSummary.timeoutSeconds')}
+              type="number"
+              min={AI_MIN_TIMEOUT_SECONDS}
+              max={AI_MAX_TIMEOUT_SECONDS}
+              step={1}
+              value={timeoutSeconds}
+              onChange={(event) => {
+                setTimeoutSeconds(event.target.value);
+              }}
+            />
+            <span className="text-muted text-label mt-1 block">{t('aiSummary.timeoutHint')}</span>
+          </label>
+          <label
+            data-setting-anchor="app.aiProvider.maxCollectedMessages"
+            className="text-body-lg block"
+          >
+            {t('aiSummary.maxCollectedMessages')}
+            <input
+              className={`${INPUT_BOX_CLASS} mt-1 w-full`}
+              aria-label={t('aiSummary.maxCollectedMessages')}
+              type="number"
+              min={AI_MIN_MAX_COLLECTED_MESSAGES}
+              max={AI_MAX_MAX_COLLECTED_MESSAGES}
+              step={1}
+              value={maxCollectedMessages}
+              onChange={(event) => {
+                setMaxCollectedMessages(event.target.value);
+              }}
+            />
+            <span className="text-muted text-label mt-1 block">
+              {t('aiSummary.maxCollectedMessagesHint')}
+            </span>
+          </label>
+          <div data-setting-anchor="app.aiProvider.test" className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              disabled={
+                busy ||
+                !engine ||
+                (engine === 'remote' && !ack) ||
+                !Number.isInteger(Number(timeoutSeconds)) ||
+                Number(timeoutSeconds) < AI_MIN_TIMEOUT_SECONDS ||
+                Number(timeoutSeconds) > AI_MAX_TIMEOUT_SECONDS ||
+                !Number.isInteger(Number(maxCollectedMessages)) ||
+                Number(maxCollectedMessages) < AI_MIN_MAX_COLLECTED_MESSAGES ||
+                Number(maxCollectedMessages) > AI_MAX_MAX_COLLECTED_MESSAGES
+              }
+              aria-label={t('aiSummary.save')}
+              onClick={() => {
+                void action(save);
+              }}
+            >
+              {t('aiSummary.save')}
+            </Button>
+            <Button
+              size="sm"
+              disabled={busy || !status.engine || configurationDirty}
+              aria-label={t('aiSummary.test')}
+              onClick={() => {
+                void action(async () => {
+                  const result = await window.electronAPI.ai.testConfig();
+                  setNotice(t(result.ok ? 'aiSummary.testOk' : 'aiSummary.settingsError'));
+                });
+              }}
+            >
+              {t('aiSummary.test')}
+            </Button>
+            {(engine === 'local' || engine === 'remote') && (
+              <Button
+                size="sm"
+                disabled={busy}
+                aria-label={t('aiSummary.refreshModels')}
+                onClick={() => {
+                  void action(async () => {
+                    await save();
+                    setRemoteModels(await window.electronAPI.ai.listEndpointModels());
+                  });
+                }}
+              >
+                {t('aiSummary.refreshModels')}
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+      <p
+        data-setting-anchor="app.aiProvider.status"
+        role="status"
+        className="text-muted text-label mt-2"
+      >
+        {notice}
+      </p>
+    </SettingsCollapsible>
+  );
+}

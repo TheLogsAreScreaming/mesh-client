@@ -1,8 +1,17 @@
+import { create, toBinary } from '@bufbuild/protobuf';
+import { Mesh } from '@meshtastic/protobufs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  resetKeyVerificationStore,
+  useKeyVerificationStore,
+} from '../../stores/keyVerificationStore';
 import { packetRouter } from '../drivers/PacketRouter';
+import { encodeMeshBeacon } from './meshBeaconCodec';
+import type { HeardMeshBeacon, NodeStatusEntry } from './meshtasticModuleEvents';
 import {
   attachMeshtasticModulePortSideEffects,
+  decodeNodeStatus,
   type MeshtasticModulePortSideEffectsDeps,
 } from './meshtasticModulePortSideEffects';
 
@@ -22,12 +31,51 @@ function makeDeps(): MeshtasticModulePortSideEffectsDeps {
     setAtakMessages: vi.fn(),
     setMapReports: vi.fn(),
     setPrivateMessages: vi.fn(),
+    setMeshBeacons: vi.fn(),
+    setNodeStatuses: vi.fn(),
   };
 }
 
 describe('attachMeshtasticModulePortSideEffects', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    resetKeyVerificationStore();
+  });
+
+  it('binds KEY_VERIFICATION_APP nonces to the sending node', () => {
+    const detach = attachMeshtasticModulePortSideEffects('id-1', makeDeps());
+    const KeyVerificationSchema = (
+      Mesh as unknown as { KeyVerificationSchema: Parameters<typeof create>[0] }
+    ).KeyVerificationSchema;
+    const data = toBinary(KeyVerificationSchema, create(KeyVerificationSchema, { nonce: 321n }));
+    packetRouter.dispatch(
+      {
+        type: 'meshtastic_module_port',
+        payload: { portLabel: 'keyVerification', from: 0x77, data, timestamp: 1 },
+      },
+      'id-1',
+    );
+    expect(useKeyVerificationStore.getState().nonceToNode.get(321n)).toBe(0x77);
+    detach();
+  });
+
+  it('ignores malformed KEY_VERIFICATION_APP payloads', () => {
+    vi.spyOn(console, 'debug').mockImplementation(() => {});
+    const detach = attachMeshtasticModulePortSideEffects('id-1', makeDeps());
+    packetRouter.dispatch(
+      {
+        type: 'meshtastic_module_port',
+        payload: {
+          portLabel: 'keyVerification',
+          from: 0x77,
+          data: new Uint8Array([0xff, 0xff, 0xff]),
+          timestamp: 1,
+        },
+      },
+      'id-1',
+    );
+    expect(useKeyVerificationStore.getState().nonceToNode.size).toBe(0);
+    detach();
   });
 
   it('appends audio module payloads into the per-node map', () => {
@@ -190,4 +238,83 @@ describe('attachMeshtasticModulePortSideEffects', () => {
     expect(deps.setAudioMessages).not.toHaveBeenCalled();
     detach();
   });
+
+  function dispatchPort(portLabel: string, from: number, data: Uint8Array, timestamp = 1000) {
+    packetRouter.dispatch(
+      { type: 'meshtastic_module_port', payload: { portLabel, from, data, timestamp } },
+      'id-1',
+    );
+  }
+
+  it('decodes MeshBeacon payloads into the latest-per-node map', () => {
+    const deps = makeDeps();
+    let beacons = new Map<number, HeardMeshBeacon>();
+    deps.setMeshBeacons = vi.fn((updater) => {
+      beacons = typeof updater === 'function' ? updater(beacons) : updater;
+    });
+    const detach = attachMeshtasticModulePortSideEffects('id-1', deps);
+
+    dispatchPort('meshBeacon', 5, encodeMeshBeacon({ message: 'first' }), 1);
+    dispatchPort(
+      'meshBeacon',
+      5,
+      encodeMeshBeacon({ message: 'second', offerPreset: 3, offerRegion: 1 }),
+      2,
+    );
+
+    expect(beacons.size).toBe(1);
+    expect(beacons.get(5)).toMatchObject({
+      from: 5,
+      message: 'second',
+      offerPreset: 3,
+      offerRegion: 1,
+      timestamp: 2,
+    });
+    detach();
+  });
+
+  it('drops malformed MeshBeacon payloads', () => {
+    vi.spyOn(console, 'debug').mockImplementation(() => {});
+    const deps = makeDeps();
+    const detach = attachMeshtasticModulePortSideEffects('id-1', deps);
+    dispatchPort('meshBeacon', 5, new Uint8Array([0x0a, 0xff, 0xff]));
+    expect(deps.setMeshBeacons).not.toHaveBeenCalled();
+    detach();
+  });
+
+  it('stores node status strings and clears them when emptied', () => {
+    const deps = makeDeps();
+    let statuses = new Map<number, NodeStatusEntry>();
+    deps.setNodeStatuses = vi.fn((updater) => {
+      statuses = typeof updater === 'function' ? updater(statuses) : updater;
+    });
+    const detach = attachMeshtasticModulePortSideEffects('id-1', deps);
+    const encode = (status: string) =>
+      toBinary(Mesh.StatusMessageSchema, create(Mesh.StatusMessageSchema, { status }));
+
+    dispatchPort('nodeStatus', 8, encode('On patrol'), 10);
+    expect(statuses.get(8)).toEqual({ from: 8, status: 'On patrol', timestamp: 10 });
+
+    dispatchPort('nodeStatus', 8, encode(''), 11);
+    expect(statuses.has(8)).toBe(false);
+    detach();
+  });
+
+  it('decodeNodeStatus returns null for malformed bytes', () => {
+    vi.spyOn(console, 'debug').mockImplementation(() => {});
+    expect(decodeNodeStatus(new Uint8Array([0x0a, 0xff]))).toBeNull();
+  });
+
+  it.each(['paging', 'storeForwardPlusPlus', 'loraOta', 'groupAlarm'])(
+    'accepts label-only port %s without side effects',
+    (portLabel) => {
+      const deps = makeDeps();
+      const detach = attachMeshtasticModulePortSideEffects('id-1', deps);
+      dispatchPort(portLabel, 1, new Uint8Array([1]));
+      expect(deps.touchLastData).toHaveBeenCalledOnce();
+      expect(deps.setMeshBeacons).not.toHaveBeenCalled();
+      expect(deps.setNodeStatuses).not.toHaveBeenCalled();
+      detach();
+    },
+  );
 });

@@ -9,19 +9,31 @@
  * Failure point: none — these maps are display-only session memory; an unknown
  * `portLabel` is ignored.
  */
+import { fromBinary, type Message } from '@bufbuild/protobuf';
+import type { GenMessage } from '@bufbuild/protobuf/codegenv1';
+import { Mesh } from '@meshtastic/protobufs';
 import type { Dispatch, SetStateAction } from 'react';
 
+import { clearCayenneTelemetry, recordCayennePacket } from '../../stores/cayenneTelemetryStore';
+import { recordKeyVerificationPacket } from '../../stores/keyVerificationStore';
 import { attachTypedPacketListener } from '../drivers/attachTypedPacketListener';
 import { toPacketPayloadBytes } from '../packetPayload';
 import type { MeshtasticModulePortEvent } from '../protocols/Protocol';
 import { appendToRingMap } from '../sessionMemoryCaps';
 import type { IdentityId } from '../types';
+import { decodeCayenneLpp } from './cayenneLpp';
+import { decodeMeshBeacon } from './meshBeaconCodec';
+import { decodeKeyVerificationPacket } from './meshtasticKeyVerification';
 import {
   appendModulePortEvent,
   appendPaxHistory,
+  type HeardMeshBeacon,
   type ModulePortEvent,
+  type NodeStatusEntry,
   type PaxCounterPoint,
 } from './meshtasticModuleEvents';
+import { decodeRemoteShellFrame } from './remoteShell';
+import { abandonRemoteShellForIdentity, handleRemoteShellFrame } from './remoteShellSession';
 
 interface RawModuleMessage {
   from: number;
@@ -61,6 +73,25 @@ export interface MeshtasticModulePortSideEffectsDeps {
     SetStateAction<Map<number, { from: number; data: unknown; timestamp: number }>>
   >;
   setPrivateMessages: RawMessageMapSetter;
+  setMeshBeacons: Dispatch<SetStateAction<Map<number, HeardMeshBeacon>>>;
+  setNodeStatuses: Dispatch<SetStateAction<Map<number, NodeStatusEntry>>>;
+}
+
+const StatusMessageSchema = (
+  Mesh as unknown as {
+    StatusMessageSchema: GenMessage<Message<'meshtastic.StatusMessage'> & { status?: unknown }>;
+  }
+).StatusMessageSchema;
+
+/** Decode a `NODE_STATUS_APP` payload (`meshtastic.StatusMessage`); null on malformed bytes. */
+export function decodeNodeStatus(bytes: Uint8Array): string | null {
+  try {
+    const msg: { status?: unknown } = fromBinary(StatusMessageSchema, bytes);
+    return typeof msg.status === 'string' ? msg.status : '';
+  } catch (err) {
+    console.debug('[meshtasticModulePortSideEffects] malformed NODE_STATUS_APP payload', err);
+    return null;
+  }
 }
 
 /** Append to a per-node ring of raw module payloads (`keep` is the retained tail length). */
@@ -87,6 +118,7 @@ function paxCount(data: unknown): number {
 }
 
 function handleModulePort(
+  identityId: IdentityId,
   payload: MeshtasticModulePortEvent,
   deps: MeshtasticModulePortSideEffectsDeps,
 ): void {
@@ -147,14 +179,60 @@ function handleModulePort(
     case 'private':
       appendRawMessage(deps.setPrivateMessages, entry, 50);
       break;
+    case 'meshBeacon': {
+      const beacon = decodeMeshBeacon(entry.data);
+      if (beacon) {
+        deps.setMeshBeacons((prev) =>
+          setBoundedMapEntry(prev, from, { ...beacon, from, timestamp }),
+        );
+      }
+      break;
+    }
+    case 'nodeStatus': {
+      const status = decodeNodeStatus(entry.data);
+      if (status != null) {
+        deps.setNodeStatuses((prev) => {
+          const next = new Map(prev);
+          if (status.trim() === '') {
+            next.delete(from);
+            return next;
+          }
+          return setBoundedMapEntry(prev, from, { from, status, timestamp });
+        });
+      }
+      break;
+    }
+    // KEY_VERIFICATION_APP: bind the handshake nonce to the sending node so the radio's
+    // clientNotification (which only carries a long name) can be tied to a node.
+    case 'keyVerification': {
+      const packet = decodeKeyVerificationPacket(entry.data);
+      if (packet) recordKeyVerificationPacket(identityId, { from, nonce: packet.nonce });
+      break;
+    }
+    // CAYENNE_APP: Cayenne LPP sensor payloads → Telemetry panel charts (Meshtastic-only port).
+    case 'cayenne': {
+      const decoded = decodeCayenneLpp(entry.data);
+      if (decoded.readings.length > 0)
+        recordCayennePacket(identityId, { from, timestamp, decoded });
+      break;
+    }
+    // REMOTE_SHELL_APP: PTY frames for the Admin-tab remote shell session (Meshtastic-only port).
+    case 'remoteShell': {
+      const frame = decodeRemoteShellFrame(entry.data);
+      if (frame) handleRemoteShellFrame(identityId, from, frame);
+      break;
+    }
     // Portnums added in protobufs 2.8.0 with no dedicated panel yet. They are labeled
     // here and reach the Sniffer through the raw packet stream; listing them keeps the
     // switch an accurate record of what the app knows about.
     // ALERT_APP is decoded as text_message in MeshtasticProtocol (MECP / critical alerts).
-    case 'keyVerification':
-    case 'remoteShell':
-    case 'nodeStatus':
-    case 'meshBeacon':
+    // PAGING_APP has no published PagingPacket schema yet.
+    case 'storeForwardPlusPlus':
+    case 'paging':
+    case 'loraWanBridge':
+    case 'reticulumTunnel':
+    case 'loraOta':
+    case 'groupAlarm':
       break;
     default:
       break;
@@ -166,7 +244,14 @@ export function attachMeshtasticModulePortSideEffects(
   identityId: IdentityId,
   deps: MeshtasticModulePortSideEffectsDeps,
 ): () => void {
-  return attachTypedPacketListener(identityId, 'meshtastic_module_port', (payload) => {
-    handleModulePort(payload, deps);
+  const detach = attachTypedPacketListener(identityId, 'meshtastic_module_port', (payload) => {
+    handleModulePort(identityId, payload, deps);
   });
+  return () => {
+    detach();
+    // Radio gone: a remote shell can no longer send/receive, and Cayenne history is keyed by node
+    // number only, so neither may leak into the next session.
+    abandonRemoteShellForIdentity(identityId);
+    clearCayenneTelemetry(identityId);
+  };
 }

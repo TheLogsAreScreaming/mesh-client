@@ -1,5 +1,15 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
+import type { AiHistoryQuery } from '../shared/ai-history';
+import type {
+  AiEndpointConfig,
+  AiModelProgress,
+  AiProviderStatus,
+  AiSummaryChunk,
+  AiSummaryDone,
+  AiSummaryError,
+  AiSummaryRequest,
+} from '../shared/ai-types';
 import type { BeaconConnectRequest, BeaconConnectResult, BeaconFeedUpdate } from '../shared/beacon';
 import type {
   BlePeripheralOwner,
@@ -24,24 +34,59 @@ import type {
   UpdateCheckingPayload,
 } from '../shared/electron-api.types';
 import type {
+  ElevationCacheStats,
+  ElevationHgtEstimate,
+  ElevationHgtEstimateRequest,
+  ElevationHgtProgress,
+  ElevationProfileRequest,
+  ElevationProfileResult,
+  ElevationResult,
+} from '../shared/elevation/types';
+import type {
   EnvironmentReading,
   EnvironmentTelemetrySource,
 } from '../shared/environmentTelemetry';
 import type { GeoResolvedPlace, GeoResolvePlaceRequest } from '../shared/geoPlace';
+import type { IncidentSnapshot } from '../shared/incidentTypes';
+import type {
+  LiveMapNodeSelection,
+  LiveMapProtocol,
+  LiveMapView,
+  LiveMapWindowInit,
+  LiveMapWindowState,
+} from '../shared/liveMapWindow';
 import type {
   NotificationSoundEvent,
   NotificationSoundImport,
   NotificationSoundRecord,
 } from '../shared/notificationSounds';
-import type { OfflineMapBasemapId } from '../shared/offlineMaps/basemapRegistry';
+import type { MapSourceId, OfflineMapBasemapId } from '../shared/offlineMaps/basemapRegistry';
+import type {
+  AddXyzSourceRequest,
+  ImportMbtilesRequest,
+} from '../shared/offlineMaps/customMapSources';
+import {
+  RENDERER_MEMORY_AUTO_SAMPLE_CHANNEL,
+  type RendererMemoryAutoSamplePayload,
+} from '../shared/rendererMemoryAutoSample';
+import type {
+  ScheduledBroadcastInput,
+  ScheduledBroadcastLastResult,
+} from '../shared/scheduledBroadcastTypes';
 import type { ServiceAnnouncementFetchResult } from '../shared/serviceAnnouncementFeed';
 import type {
+  TAKChannelChatMessage,
+  TakChatChannel,
   TAKClientInfo,
   TAKContact,
   TAKContactsUpdate,
+  TAKDirectMessage,
+  TakDirectPeer,
+  TakDmProtocol,
+  TakDmStatusUpdate,
   TAKEnrollmentRequest,
-  TAKGeochatMessage,
   TAKInboundChat,
+  TakIncidentMarker,
   TAKNodeUpdate,
   TAKRemoteCredentialSummary,
   TAKRemoteSettings,
@@ -51,10 +96,24 @@ import type {
   TakStyleSettings,
 } from '../shared/tak-types';
 import type {
+  TeamMemberInput,
+  TeamMemberLinkInput,
+  TeamMemberLinkRosterInput,
+} from '../shared/teamRosterTypes';
+import type {
   LibreTranslationConfig,
   TranslationProgress,
   TranslationRequest,
 } from '../shared/translation-types';
+import type {
+  RadarFrames,
+  WeatherGrid,
+  WeatherGridRequest,
+  WeatherPointForecast,
+  WeatherPointRequest,
+  WeatherRadarFramesRequest,
+  WeatherResult,
+} from '../shared/weather/types';
 
 export type { GattBleDevice, GattBleSessionId, SerialPort };
 
@@ -69,6 +128,110 @@ contextBridge.exposeInMainWorld('electronAPI', {
       };
       ipcRenderer.on('beacon:update', handler);
       return () => ipcRenderer.removeListener('beacon:update', handler);
+    },
+  },
+  liveMap: {
+    available: true,
+    open: (protocol: LiveMapProtocol, view: LiveMapView | null) =>
+      ipcRenderer.invoke('liveMap:open', protocol, view) as Promise<void>,
+    close: (protocol: LiveMapProtocol) =>
+      ipcRenderer.invoke('liveMap:close', protocol) as Promise<void>,
+    getOpen: () => ipcRenderer.invoke('liveMap:getOpen') as Promise<LiveMapProtocol[]>,
+    publish: (protocol: LiveMapProtocol, snapshot: unknown) => {
+      ipcRenderer.send('liveMap:publish', protocol, snapshot);
+    },
+    onState: (callback: (state: LiveMapWindowState) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, state: LiveMapWindowState): void => {
+        callback(state);
+      };
+      ipcRenderer.on('liveMap:state', handler);
+      return () => ipcRenderer.removeListener('liveMap:state', handler);
+    },
+    onNodeSelected: (callback: (selection: LiveMapNodeSelection) => void) => {
+      const handler = (
+        _event: Electron.IpcRendererEvent,
+        selection: LiveMapNodeSelection,
+      ): void => {
+        callback(selection);
+      };
+      ipcRenderer.on('liveMap:nodeSelected', handler);
+      return () => ipcRenderer.removeListener('liveMap:nodeSelected', handler);
+    },
+    init: () => ipcRenderer.invoke('liveMap:init') as Promise<LiveMapWindowInit | null>,
+    onSnapshot: (callback: (snapshot: unknown) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, snapshot: unknown): void => {
+        callback(snapshot);
+      };
+      ipcRenderer.on('liveMap:snapshot', handler);
+      return () => ipcRenderer.removeListener('liveMap:snapshot', handler);
+    },
+    onApplyView: (callback: (view: LiveMapView) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, view: LiveMapView): void => {
+        callback(view);
+      };
+      ipcRenderer.on('liveMap:applyView', handler);
+      return () => ipcRenderer.removeListener('liveMap:applyView', handler);
+    },
+    reportView: (view: LiveMapView) => {
+      ipcRenderer.send('liveMap:reportView', view);
+    },
+    selectNode: (nodeId: number) => {
+      ipcRenderer.send('liveMap:selectNode', nodeId);
+    },
+    setAlwaysOnTop: (value: boolean) =>
+      ipcRenderer.invoke('liveMap:setAlwaysOnTop', value) as Promise<boolean>,
+    dock: () => ipcRenderer.invoke('liveMap:dock') as Promise<void>,
+  },
+  ai: {
+    getHistory: (query: AiHistoryQuery) => ipcRenderer.invoke('ai:getHistory', query),
+    getStatus: () => ipcRenderer.invoke('ai:getStatus'),
+    setEnabled: (enabled: boolean) => ipcRenderer.invoke('ai:setEnabled', enabled),
+    probeOsAi: () => ipcRenderer.invoke('ai:probeOsAi'),
+    setConfig: (config: AiEndpointConfig) => ipcRenderer.invoke('ai:setConfig', config),
+    testConfig: () => ipcRenderer.invoke('ai:testConfig'),
+    listEndpointModels: () => ipcRenderer.invoke('ai:listEndpointModels'),
+    listLocalModels: () => ipcRenderer.invoke('ai:listLocalModels'),
+    installLocalModel: (id: string) => ipcRenderer.invoke('ai:installLocalModel', id),
+    cancelLocalModel: (id: string) => ipcRenderer.invoke('ai:cancelLocalModel', id),
+    removeLocalModel: (id: string) => ipcRenderer.invoke('ai:removeLocalModel', id),
+    selectLocalModel: (id: string | null) => ipcRenderer.invoke('ai:selectLocalModel', id),
+    ensureMlxHelper: () => ipcRenderer.invoke('ai:ensureMlxHelper'),
+    summarize: (request: AiSummaryRequest) => ipcRenderer.invoke('ai:summarize', request),
+    cancel: (requestId: string) => ipcRenderer.invoke('ai:cancel', requestId),
+    onSummaryChunk: (cb: (value: AiSummaryChunk) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, value: AiSummaryChunk) => {
+        cb(value);
+      };
+      ipcRenderer.on('ai:summaryChunk', handler);
+      return () => ipcRenderer.removeListener('ai:summaryChunk', handler);
+    },
+    onSummaryDone: (cb: (value: AiSummaryDone) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, value: AiSummaryDone) => {
+        cb(value);
+      };
+      ipcRenderer.on('ai:summaryDone', handler);
+      return () => ipcRenderer.removeListener('ai:summaryDone', handler);
+    },
+    onSummaryError: (cb: (value: AiSummaryError) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, value: AiSummaryError) => {
+        cb(value);
+      };
+      ipcRenderer.on('ai:summaryError', handler);
+      return () => ipcRenderer.removeListener('ai:summaryError', handler);
+    },
+    onModelProgress: (cb: (value: AiModelProgress) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, value: AiModelProgress) => {
+        cb(value);
+      };
+      ipcRenderer.on('ai:modelProgress', handler);
+      return () => ipcRenderer.removeListener('ai:modelProgress', handler);
+    },
+    onStatusChanged: (cb: (value: AiProviderStatus) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, value: AiProviderStatus) => {
+        cb(value);
+      };
+      ipcRenderer.on('ai:statusChanged', handler);
+      return () => ipcRenderer.removeListener('ai:statusChanged', handler);
     },
   },
   translation: {
@@ -95,6 +258,45 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   // ─── Database operations ────────────────────────────────────────
   db: {
+    getIncidents: () => ipcRenderer.invoke('db:getIncidents'),
+    saveIncidents: (snapshot: IncidentSnapshot) => ipcRenderer.invoke('db:saveIncidents', snapshot),
+    seedIncidents: (legacyJson: string | null) =>
+      ipcRenderer.invoke('db:seedIncidents', legacyJson),
+    listScheduledBroadcasts: () => ipcRenderer.invoke('db:listScheduledBroadcasts'),
+    saveScheduledBroadcast: (input: ScheduledBroadcastInput) =>
+      ipcRenderer.invoke('db:saveScheduledBroadcast', input),
+    deleteScheduledBroadcast: (slot: number) =>
+      ipcRenderer.invoke('db:deleteScheduledBroadcast', slot),
+    clearScheduledBroadcasts: () => ipcRenderer.invoke('db:clearScheduledBroadcasts'),
+    claimScheduledBroadcastDue: (
+      slot: number,
+      expectedNextDueAt: number,
+      nextDueAt: number,
+      claimedAt: number,
+    ) =>
+      ipcRenderer.invoke(
+        'db:claimScheduledBroadcastDue',
+        slot,
+        expectedNextDueAt,
+        nextDueAt,
+        claimedAt,
+      ),
+    setScheduledBroadcastResult: (
+      slot: number,
+      lastAttemptAt: number,
+      lastResult: ScheduledBroadcastLastResult,
+    ) => ipcRenderer.invoke('db:setScheduledBroadcastResult', slot, lastAttemptAt, lastResult),
+    listTeamMembers: () => ipcRenderer.invoke('db:listTeamMembers'),
+    allocateTeamUnitId: () => ipcRenderer.invoke('db:allocateTeamUnitId'),
+    upsertTeamMember: (input: TeamMemberInput) => ipcRenderer.invoke('db:upsertTeamMember', input),
+    deleteTeamMember: (unitId: number) => ipcRenderer.invoke('db:deleteTeamMember', unitId),
+    setTeamMemberLink: (input: TeamMemberLinkInput) =>
+      ipcRenderer.invoke('db:setTeamMemberLink', input),
+    setTeamMemberLinkRoster: (input: TeamMemberLinkRosterInput) =>
+      ipcRenderer.invoke('db:setTeamMemberLinkRoster', input),
+    removeTeamMemberLink: (unitId: number, protocol: MeshProtocol, durableKey: string) =>
+      ipcRenderer.invoke('db:removeTeamMemberLink', unitId, protocol, durableKey),
+    clearTeamMembers: () => ipcRenderer.invoke('db:clearTeamMembers'),
     saveMessage: (message: {
       sender_id: number;
       sender_name: string;
@@ -106,6 +308,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     getMessages: (channel?: number, limit?: number) =>
       ipcRenderer.invoke('db:getMessages', channel, limit),
+    getMeshtasticIdentityHydration: (messageLimit?: number) =>
+      ipcRenderer.invoke('db:getMeshtasticIdentityHydration', messageLimit),
     listMeshtasticDmPeers: (ownNodeId: number, limit?: number) =>
       ipcRenderer.invoke('db:listMeshtasticDmPeers', ownNodeId, limit),
 
@@ -148,6 +352,26 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getNodeNote: (nodeId: number) => ipcRenderer.invoke('db:getNodeNote', nodeId),
     setNodeNote: (nodeId: number, note: string) =>
       ipcRenderer.invoke('db:setNodeNote', nodeId, note),
+    recordRendererMemorySample: (sample: {
+      capturedAt: number;
+      bytes: number;
+      source: 'user-agent' | 'renderer-process';
+      sessionId?: string;
+      jsHeapBytes?: number;
+      totalJsHeapBytes?: number;
+      domNodes?: number;
+    }) => ipcRenderer.invoke('db:recordRendererMemorySample', sample),
+    getRendererMemorySampleSummary: () => ipcRenderer.invoke('db:getRendererMemorySampleSummary'),
+    onRendererMemoryAutoSample: (callback: (sample: RendererMemoryAutoSamplePayload) => void) => {
+      const handler = (
+        _event: Electron.IpcRendererEvent,
+        sample: RendererMemoryAutoSamplePayload,
+      ): void => {
+        callback(sample);
+      };
+      ipcRenderer.on(RENDERER_MEMORY_AUTO_SAMPLE_CHANNEL, handler);
+      return () => ipcRenderer.removeListener(RENDERER_MEMORY_AUTO_SAMPLE_CHANNEL, handler);
+    },
     deleteNodesBySource: (source: string) => ipcRenderer.invoke('db:deleteNodesBySource', source),
     migrateRfStubNodes: () => ipcRenderer.invoke('db:migrateRfStubNodes'),
     deleteNodesWithoutLongname: () => ipcRenderer.invoke('db:deleteNodesWithoutLongname'),
@@ -161,6 +385,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     getMeshcoreMessages: (channelIdx?: number, limit?: number) =>
       ipcRenderer.invoke('db:getMeshcoreMessages', channelIdx, limit),
+    getMeshcoreMessagesForHydration: (limits?: {
+      globalLimit?: number;
+      perChannelLimit?: number;
+      roomLimit?: number;
+    }) => ipcRenderer.invoke('db:getMeshcoreMessagesForHydration', limits),
+    getMeshcoreIdentityHydration: (limits?: {
+      globalLimit?: number;
+      perChannelLimit?: number;
+      roomLimit?: number;
+    }) => ipcRenderer.invoke('db:getMeshcoreIdentityHydration', limits),
     listMeshcoreDmPeers: (ownNodeId: number, limit?: number) =>
       ipcRenderer.invoke('db:listMeshcoreDmPeers', ownNodeId, limit),
     searchMessages: (query: string, limit?: number) =>
@@ -231,7 +465,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
         on_radio?: number | null;
         last_synced_from_radio?: string | null;
       }[],
-    ) => ipcRenderer.invoke('db:saveMeshcoreContactsBatch', contacts),
+      radioSnapshotBefore?: string,
+    ) => ipcRenderer.invoke('db:saveMeshcoreContactsBatch', contacts, radioSnapshotBefore),
     updateMeshcoreContactRfTransport: (
       nodeId: number,
       transportScope: number | null,
@@ -722,8 +957,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.send('serial-port-cancelled');
   },
 
-  // ─── Bluetooth pairing (Linux) ──────────────────────────────────────
-  // Unpair a device via bluetoothctl remove
+  // ─── Bluetooth pairing (Linux BlueZ D-Bus) ──────────────────────────
+  // Unpair a device via BlueZ RemoveDevice
   bluetoothUnpair: (macAddress: string): Promise<void> =>
     ipcRenderer.invoke('bluetooth-unpair', macAddress),
 
@@ -874,8 +1109,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     }) => ipcRenderer.invoke('offline-maps:download', req),
     cancel: (jobId: string) => ipcRenderer.invoke('offline-maps:cancel', jobId),
     status: () => ipcRenderer.invoke('offline-maps:status'),
-    clear: (source?: OfflineMapBasemapId | 'all') =>
-      ipcRenderer.invoke('offline-maps:clear', source),
+    clear: (source?: MapSourceId | 'all') => ipcRenderer.invoke('offline-maps:clear', source),
+    custom: {
+      list: () => ipcRenderer.invoke('offline-maps:custom-list'),
+      addXyz: (req: AddXyzSourceRequest) => ipcRenderer.invoke('offline-maps:custom-add-xyz', req),
+      remove: (id: string) => ipcRenderer.invoke('offline-maps:custom-remove', id),
+      pickMbtiles: () => ipcRenderer.invoke('offline-maps:custom-pick-mbtiles'),
+      importMbtiles: (req: ImportMbtilesRequest) =>
+        ipcRenderer.invoke('offline-maps:custom-import-mbtiles', req),
+    },
     onProgress: (
       cb: (info: {
         jobId: string;
@@ -938,11 +1180,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   // ─── Connection status ─────────────────────────────────────────
-  notifyDeviceConnected: () => {
-    ipcRenderer.send('device-connected');
+  notifyDeviceConnected: (source?: 'meshtastic' | 'meshcore', connectionType?: string | null) => {
+    ipcRenderer.send(
+      'device-connected',
+      source === 'meshcore' ? 'meshcore' : 'meshtastic',
+      connectionType ?? null,
+    );
   },
-  notifyDeviceDisconnected: () => {
-    ipcRenderer.send('device-disconnected');
+  notifyDeviceDisconnected: (source?: 'meshtastic' | 'meshcore') => {
+    ipcRenderer.send('device-disconnected', source === 'meshcore' ? 'meshcore' : 'meshtastic');
   },
   setTrayUnread: (count: number) => {
     ipcRenderer.send('set-tray-unread', count);
@@ -1221,8 +1467,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.on('tak:remoteStatus', handler);
       return () => ipcRenderer.off('tak:remoteStatus', handler);
     },
-    pushChatMessage: (message: TAKGeochatMessage): Promise<void> =>
+    pushChatMessage: (message: TAKChannelChatMessage): Promise<void> =>
       ipcRenderer.invoke('tak:pushChatMessage', message),
+    setChatChannels: (channels: TakChatChannel[]): Promise<void> =>
+      ipcRenderer.invoke('tak:setChatChannels', channels),
+    retireChatRooms: (rooms: string[]): Promise<void> =>
+      ipcRenderer.invoke('tak:retireChatRooms', rooms),
+    pushDirectMessage: (message: TAKDirectMessage): Promise<void> =>
+      ipcRenderer.invoke('tak:pushDirectMessage', message),
+    setDirectMessaging: (protocols: TakDmProtocol[]): Promise<void> =>
+      ipcRenderer.invoke('tak:setDirectMessaging', protocols),
+    dmStatus: (update: TakDmStatusUpdate): Promise<void> =>
+      ipcRenderer.invoke('tak:dmStatus', update),
+    setDirectPeers: (peers: TakDirectPeer[]): Promise<void> =>
+      ipcRenderer.invoke('tak:setDirectPeers', peers),
+    setIncidentMarkers: (markers: TakIncidentMarker[]): Promise<void> =>
+      ipcRenderer.invoke('tak:setIncidentMarkers', markers),
     getStyleSettings: (): Promise<TakStyleSettings> => ipcRenderer.invoke('tak:getStyleSettings'),
     setStyleSettings: (settings: TakStyleSettings): Promise<TakStyleSettings> =>
       ipcRenderer.invoke('tak:setStyleSettings', settings),
@@ -1231,6 +1491,46 @@ contextBridge.exposeInMainWorld('electronAPI', {
   geo: {
     resolvePlace: (request: GeoResolvePlaceRequest) =>
       ipcRenderer.invoke('geo:resolvePlace', request) as Promise<GeoResolvedPlace | null>,
+  },
+
+  weather: {
+    pointForecast: (request: WeatherPointRequest) =>
+      ipcRenderer.invoke('weather:pointForecast', request) as Promise<
+        WeatherResult<WeatherPointForecast>
+      >,
+    grid: (request: WeatherGridRequest) =>
+      ipcRenderer.invoke('weather:grid', request) as Promise<WeatherResult<WeatherGrid>>,
+    radarFrames: (request: WeatherRadarFramesRequest) =>
+      ipcRenderer.invoke('weather:radarFrames', request) as Promise<WeatherResult<RadarFrames>>,
+    clearMemoryCache: () => ipcRenderer.invoke('weather:clearMemoryCache') as Promise<{ ok: true }>,
+  },
+
+  elevation: {
+    sampleProfile: (request: ElevationProfileRequest) =>
+      ipcRenderer.invoke('elevation:sampleProfile', request) as Promise<
+        ElevationResult<ElevationProfileResult>
+      >,
+    estimateHgt: (request: ElevationHgtEstimateRequest) =>
+      ipcRenderer.invoke('elevation:estimateHgt', request) as Promise<
+        ElevationResult<ElevationHgtEstimate>
+      >,
+    downloadHgt: (request: ElevationHgtEstimateRequest & { jobId?: string }) =>
+      ipcRenderer.invoke('elevation:downloadHgt', request) as Promise<
+        ElevationResult<{ completed: number; failed: number }>
+      >,
+    cancelHgtDownload: (jobId: string) =>
+      ipcRenderer.invoke('elevation:cancelHgtDownload', jobId) as Promise<{ ok: boolean }>,
+    cacheStats: () => ipcRenderer.invoke('elevation:cacheStats') as Promise<ElevationCacheStats>,
+    clearCache: () => ipcRenderer.invoke('elevation:clearCache') as Promise<{ ok: true }>,
+    onHgtProgress: (cb: (progress: ElevationHgtProgress) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, progress: ElevationHgtProgress) => {
+        cb(progress);
+      };
+      ipcRenderer.on('elevation:hgtProgress', handler);
+      return () => {
+        ipcRenderer.removeListener('elevation:hgtProgress', handler);
+      };
+    },
   },
 
   // ─── Chat export ─────────────────────────────────────────────────

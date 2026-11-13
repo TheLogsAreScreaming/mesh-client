@@ -15,9 +15,15 @@ import { markMqttUserDisconnect } from '@/renderer/lib/mqttDisconnectIntent';
 import { parseTcpAddress } from '@/renderer/lib/parseTcpAddress';
 import { cancelProtocolRfAutoConnect } from '@/renderer/lib/protocolRfAutoConnectGate';
 import { useRadioProvider } from '@/renderer/lib/radio/providerFactory';
+import { removeRendererStorageItem, setRendererStorageItem } from '@/renderer/lib/rendererStorage';
 import type { RfConnectAutomaticFn, RfConnectFn } from '@/renderer/lib/rfConnectionTypes';
 import { isPairingRelatedError } from '@/shared/blePairingError';
-import { troubleshootingDocsUrl } from '@/shared/docsSite';
+import {
+  LETSMESH_MQTT_AUTH_DOCS_URL,
+  MESHCORE_DOCS_URL,
+  MESHTASTIC_DOCS_URL,
+  troubleshootingDocsUrl,
+} from '@/shared/docsSite';
 import {
   clampMqttMaxRetries,
   MQTT_DEFAULT_RECONNECT_ATTEMPTS,
@@ -85,6 +91,7 @@ import {
   readMeshcoreIdentity,
   readMeshcoreIdentityAsync,
 } from '../lib/letsMeshJwt';
+import { parseBluetoothctlPairedState } from '../lib/linuxBlePairingInfo';
 import { translateMeshcoreUserMessage } from '../lib/meshcore/meshcoreMessageI18n';
 import {
   applyMeshcoreMqttPreset,
@@ -181,6 +188,7 @@ import { PickerSortControls } from './PickerSortControls';
 import SignalBars from './SignalBars';
 import { Button } from './ui/Button';
 import { CopyField } from './ui/CopyField';
+import { DocsSiteLink } from './ui/DocsSiteLink';
 import {
   CHECKBOX_CLASS,
   chipClass,
@@ -219,36 +227,15 @@ function shouldShowLinuxRePairFromBleError(err: unknown, bleErrMsg: string): boo
   const pairingFlag = isPairingRelatedError(err);
   const domPairingSignal =
     err instanceof DOMException && (err.name === 'SecurityError' || err.name === 'NetworkError');
-  // MeshCore Linux Web Bluetooth: handshake timeout often means PIN not paired at OS level (Electron may never fire providePin).
-  const meshcoreWebBtHandshakeOrTimeout =
-    /MeshCore handshake timed out \(Web Bluetooth\)|opening MeshCore over Web Bluetooth|Bluetooth connected but MeshCore protocol handshake did not complete/i.test(
-      bleErrMsg,
-    );
   // High-confidence pairing indicators only; avoid broad "connection failed" matching.
   return (
     pairingFlag ||
     domPairingSignal ||
-    meshcoreWebBtHandshakeOrTimeout ||
     /GATT Error:\s*Not supported/i.test(rawMessage) ||
     /authentication failed/i.test(rawMessage) ||
     /not be properly paired/i.test(bleErrMsg) ||
     /pairing issue/i.test(rawMessage)
   );
-}
-
-/** When Electron never shows a PIN sheet, offer manual PIN + bluetoothctl pairing after a MeshCore timeout. */
-function shouldOfferMeshcoreLinuxManualPinAfterError(bleErrMsg: string): boolean {
-  return /MeshCore handshake timed out \(Web Bluetooth\)|opening MeshCore over Web Bluetooth/i.test(
-    bleErrMsg,
-  );
-}
-
-/** Parse `bluetoothctl info <mac>` output for bond state (Linux / BlueZ). */
-function parseBluetoothctlPairedState(info: string): 'yes' | 'no' | 'unknown' {
-  const s = info.toLowerCase();
-  if (/paired:\s*yes\b/.test(s)) return 'yes';
-  if (/paired:\s*no\b/.test(s)) return 'no';
-  return 'unknown';
 }
 
 const STAGE_LINUX_UNPAIRED = 'connectionPanel.stageLinuxUnpaired';
@@ -293,7 +280,7 @@ function meshcorePresetDeviationText(
   }
 }
 
-/** BLE pairing PIN: 1–6 digits (bluetoothctl; MeshCore may show shorter codes). */
+/** BLE pairing PIN: 1–6 digits (BlueZ / WinRT; MeshCore may show shorter codes). */
 function normalizePairingPin(raw: string): string | null {
   const digits = raw.replace(/\D/g, '');
   return /^\d{1,6}$/.test(digits) ? digits : null;
@@ -308,7 +295,7 @@ function loadLastConnection(p: MeshProtocol): LastConnection | null {
 
 function saveLastConnection(p: MeshProtocol, c: LastConnection) {
   try {
-    localStorage.setItem(lastConnectionKey(p), JSON.stringify(c));
+    setRendererStorageItem(lastConnectionKey(p), JSON.stringify(c));
   } catch (e) {
     console.debug('[ConnectionPanel] saveLastConnection ' + errLikeToLogString(e));
   }
@@ -316,7 +303,7 @@ function saveLastConnection(p: MeshProtocol, c: LastConnection) {
 
 function clearLastConnection(p: MeshProtocol) {
   try {
-    localStorage.removeItem(lastConnectionKey(p));
+    removeRendererStorageItem(lastConnectionKey(p));
   } catch (e) {
     console.debug('[ConnectionPanel] clearLastConnection ' + errLikeToLogString(e));
   }
@@ -333,7 +320,7 @@ function loadLastBleDevice(protocol: MeshProtocol): string | null {
 
 function saveLastBleDevice(protocol: MeshProtocol, id: string) {
   try {
-    localStorage.setItem(lastBleDeviceKey(protocol), id);
+    setRendererStorageItem(lastBleDeviceKey(protocol), id);
   } catch (e) {
     console.debug('[ConnectionPanel] saveLastBleDevice ' + errLikeToLogString(e));
   }
@@ -350,7 +337,7 @@ function loadLastSerialPort(): string | null {
 
 function saveLastSerialPort(id: string) {
   try {
-    localStorage.setItem(LAST_SERIAL_PORT_KEY, id);
+    setRendererStorageItem(LAST_SERIAL_PORT_KEY, id);
   } catch (e) {
     console.debug('[ConnectionPanel] saveLastSerialPort ' + errLikeToLogString(e));
   }
@@ -639,7 +626,7 @@ export default function ConnectionPanel({
 
   // Persist MeshCore preset selection
   useEffect(() => {
-    localStorage.setItem('mesh-client:mqttPreset:meshcore', meshcorePreset);
+    setRendererStorageItem('mesh-client:mqttPreset:meshcore', meshcorePreset);
   }, [meshcorePreset]);
 
   // One-time Colorado region gate for existing Colorado MQTT users (blocks auto-launch until ack)
@@ -908,7 +895,7 @@ export default function ConnectionPanel({
   // Tracks BLE device MAC for potential re-pairing on Linux
   const lastSelectedBleMacRef = useRef<string | null>(null);
   /**
-   * Linux (bluetoothctl) / Windows (WinRT in-app) pairing completes before opening the
+   * Linux (BlueZ D-Bus) / Windows (WinRT in-app) pairing completes before opening the
    * sidecar GATT session.
    */
   const pendingPairBleDeviceRef = useRef<{ deviceId: string } | null>(null);
@@ -939,9 +926,38 @@ export default function ConnectionPanel({
   const onAutoConnectRef = useRef(onAutoConnect);
   onAutoConnectRef.current = onAutoConnect;
 
-  // Reload last connection when protocol switches (each protocol has its own key)
+  // Reload last connection + host fields when protocol switches (one panel instance for all protocols).
+  // Without rehydrating tcpHost/httpAddress/tcpAddress, a Meshtastic-first mount leaves MeshCore
+  // TCP at default localhost and a later configured-save overwrites the real stored IP.
   useEffect(() => {
-    setLastConnection(loadLastConnection(protocol));
+    const loaded = loadLastConnection(protocol);
+    setLastConnection(loaded);
+    if (protocol === 'meshcore') {
+      if (loaded?.type === 'http' && loaded.httpAddress) {
+        const { host, port } = parseTcpAddress(loaded.httpAddress);
+        setTcpHost(host);
+        setTcpPortStr(String(port));
+        setConnectionType('http');
+      } else if (loaded?.type === 'ble' || loaded?.type === 'serial') {
+        setConnectionType(loaded.type);
+      } else {
+        setConnectionType('ble');
+      }
+    } else if (protocol === 'meshtastic') {
+      if (loaded?.type === 'http' && loaded.httpAddress) {
+        setHttpAddress(loaded.httpAddress);
+        setConnectionType('http');
+      } else if (loaded?.type === 'tcp' && loaded.httpAddress) {
+        setTcpAddress(loaded.httpAddress);
+        setConnectionType('tcp');
+      } else if (loaded?.type === 'ble' || loaded?.type === 'serial') {
+        setConnectionType(loaded.type);
+      } else {
+        setConnectionType('ble');
+        setHttpAddress('meshtastic.local');
+        setTcpAddress('meshtastic.local:4403');
+      }
+    }
   }, [protocol]);
 
   useEffect(() => {
@@ -974,8 +990,12 @@ export default function ConnectionPanel({
   }, [protocol]);
 
   // Update connection stage based on state transitions, and save last connection on success
+  const prevProtocolForSaveRef = useRef(protocol);
 
   useEffect(() => {
+    const protocolChanged = prevProtocolForSaveRef.current !== protocol;
+    prevProtocolForSaveRef.current = protocol;
+
     if (state.status === 'connecting') {
       if (showPinPrompt) return;
       if (showBlePicker) setConnectionStage('connectionPanel.stageSelectDevice');
@@ -995,11 +1015,20 @@ export default function ConnectionPanel({
         clearTimeout(autoConnectTimeoutRef.current);
         autoConnectTimeoutRef.current = null;
       }
-      // Persist connection details for next startup
-      if (state.connectionType) {
+      // Persist only on a real configure transition for the visible protocol. Switching the shared
+      // panel onto an already-configured radio (or rehydrate updating connectionType afterward)
+      // must not rewrite lastConnection with a stale tcpHost/httpAddress.
+      const becameConfigured = prevStoreStatusRef.current !== 'configured';
+      if (state.connectionType && becameConfigured && !protocolChanged) {
         const conn: LastConnection = { type: state.connectionType };
         if (state.connectionType === 'http' || state.connectionType === 'tcp') {
-          conn.httpAddress = activeHostAddress;
+          // Prefer the address field for the configured transport (not UI radio selection).
+          conn.httpAddress =
+            protocol === 'meshcore'
+              ? `${tcpHost}:${tcpPort}`
+              : state.connectionType === 'tcp'
+                ? tcpAddress
+                : httpAddress;
         } else if (state.connectionType === 'ble') {
           const prev = lastConnectionRef.current;
           const bleId = loadLastBleDevice(protocol) ?? prev?.bleDeviceId;
@@ -1054,7 +1083,9 @@ export default function ConnectionPanel({
     showPinPrompt,
     showSerialPicker,
     httpAddress,
-    activeHostAddress,
+    tcpAddress,
+    tcpHost,
+    tcpPort,
     connectionType,
     connecting,
     protocol,
@@ -1554,7 +1585,7 @@ export default function ConnectionPanel({
         });
       }
       if (isLinux) {
-        // OS-specific: BlueZ pairing uses bluetoothctl with the PIN entered in this panel.
+        // OS-specific: BlueZ D-Bus pairing uses the PIN entered in this panel.
         const pendingDevice = { deviceId };
         pendingPairBleDeviceRef.current = pendingDevice;
         setConnectionStage('connectionPanel.stageCheckingPairing');
@@ -1731,11 +1762,6 @@ export default function ConnectionPanel({
           } else {
             setConnecting(false);
             setConnectionStage('');
-          }
-          if (protocol === 'meshcore' && shouldOfferMeshcoreLinuxManualPinAfterError(bleErrMsg)) {
-            setShowPinPrompt(true);
-            setManualPairingFallback(true);
-            setPinInputValue('');
           }
         }
       })();
@@ -2133,22 +2159,34 @@ export default function ConnectionPanel({
       });
   };
 
+  const mqttAuthDocsLink =
+    protocol === 'meshcore' ? (
+      <DocsSiteLink
+        href={LETSMESH_MQTT_AUTH_DOCS_URL}
+        labelKey="connectionPanel.mqttAuthDocsLink"
+        className="hover:text-bright-green text-muted text-label transition-colors"
+      />
+    ) : null;
+
   const mqttSection =
     mqttStatus === 'connected' ? (
       <Panel
         title={t('connectionPanel.mqttConnection')}
         actions={
-          <Button
-            data-setting-anchor="connection.mqtt.disconnect"
-            variant="danger"
-            size="sm"
-            icon={<Unplug aria-hidden className={ICON_MD} size={16} />}
-            onClick={() => {
-              disconnectMqtt('panel');
-            }}
-          >
-            {t('connectionPanel.disconnectMqtt')}
-          </Button>
+          <>
+            {mqttAuthDocsLink}
+            <Button
+              data-setting-anchor="connection.mqtt.disconnect"
+              variant="danger"
+              size="sm"
+              icon={<Unplug aria-hidden className={ICON_MD} size={16} />}
+              onClick={() => {
+                disconnectMqtt('panel');
+              }}
+            >
+              {t('connectionPanel.disconnectMqtt')}
+            </Button>
+          </>
         }
       >
         <div className="space-y-5">
@@ -2233,7 +2271,7 @@ export default function ConnectionPanel({
         </div>
       </Panel>
     ) : (
-      <Panel title={t('connectionPanel.mqttConnection')}>
+      <Panel title={t('connectionPanel.mqttConnection')} actions={mqttAuthDocsLink}>
         <div className="max-w-3xl space-y-4">
           {mqttError && (
             <div role="alert" className={NOTICE_CLASS.error}>
@@ -2349,7 +2387,7 @@ export default function ConnectionPanel({
                       setMeshcorePresetSelectNonce((n) => n + 1);
                       return;
                     }
-                    localStorage.setItem(COLORADO_MQTT_REGION_ACK_KEY, '1');
+                    setRendererStorageItem(COLORADO_MQTT_REGION_ACK_KEY, '1');
                   }
                   setMeshcorePreset(id);
                   const fromIdentity = letsMeshMqttUsernameFromIdentity(readMeshcoreIdentity());
@@ -2893,7 +2931,7 @@ export default function ConnectionPanel({
             confirmLabel={t('connectionPanel.coloradoRegionGateStay')}
             cancelLabel={t('connectionPanel.coloradoRegionGateSwitch')}
             onConfirm={() => {
-              localStorage.setItem(COLORADO_MQTT_REGION_ACK_KEY, '1');
+              setRendererStorageItem(COLORADO_MQTT_REGION_ACK_KEY, '1');
               setColoradoRegionGateOpen(false);
               if (meshcoreMqttSettingsRef.current.autoLaunch) {
                 void tryAutoLaunchMqtt('meshcore').catch((err: unknown) => {
@@ -2913,9 +2951,9 @@ export default function ConnectionPanel({
                 };
                 setMeshcorePreset('letsmesh');
                 setMeshcoreMqttSettings(next);
-                localStorage.setItem('mesh-client:mqttPreset:meshcore', 'letsmesh');
+                setRendererStorageItem('mesh-client:mqttPreset:meshcore', 'letsmesh');
                 persistMqttSettingsIfChanged(getMqttSettingsStorageKey('meshcore'), next);
-                localStorage.setItem(COLORADO_MQTT_REGION_ACK_KEY, '1');
+                setRendererStorageItem(COLORADO_MQTT_REGION_ACK_KEY, '1');
                 setColoradoRegionGateOpen(false);
                 if (mqttStatus === 'connected' || mqttStatus === 'connecting') {
                   markMqttUserDisconnect();
@@ -2985,15 +3023,21 @@ export default function ConnectionPanel({
     />
   );
 
+  const docsLinkClass = 'hover:text-bright-green text-muted text-label transition-colors';
+  const protocolGuideUrl = protocol === 'meshcore' ? MESHCORE_DOCS_URL : MESHTASTIC_DOCS_URL;
   const docsLink = (
-    <a
-      href={troubleshootingDocsUrl(protocol)}
-      target="_blank"
-      rel="noreferrer"
-      className="hover:text-bright-green text-muted text-label transition-colors"
-    >
-      {t('diagnosticsPanel.docsLink')}
-    </a>
+    <>
+      <DocsSiteLink
+        href={troubleshootingDocsUrl(protocol)}
+        labelKey="diagnosticsPanel.docsLink"
+        className={docsLinkClass}
+      />
+      <DocsSiteLink
+        href={protocolGuideUrl}
+        labelKey="connectionPanel.protocolGuideLink"
+        className={docsLinkClass}
+      />
+    </>
   );
 
   if (connectingProgressView) {

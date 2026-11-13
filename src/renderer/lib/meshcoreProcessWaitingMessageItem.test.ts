@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { packetRouter } from './drivers/PacketRouter';
-import { MESHCORE_TXT_TYPE_CLI_DATA, MESHCORE_TXT_TYPE_SIGNED_PLAIN } from './meshcoreChannelText';
+import {
+  MESHCORE_TXT_TYPE_CLI_COMMAND,
+  MESHCORE_TXT_TYPE_CLI_DATA,
+  MESHCORE_TXT_TYPE_SIGNED_PLAIN,
+} from './meshcoreChannelText';
 import { processMeshcoreWaitingMessageItem } from './meshcoreProcessWaitingMessageItem';
 import * as meshcoreRoomSyncStorage from './meshcoreRoomSyncStorage';
 import { pubkeyToNodeId } from './meshcoreUtils';
@@ -75,6 +79,42 @@ describe('processMeshcoreWaitingMessageItem', () => {
     expect(logTransportLineAsDevice).toHaveBeenCalledWith('ack @peer');
   });
 
+  it.each([
+    ['known', true],
+    ['unknown', false],
+  ])('logs a refused remote CLI command from a %s sender without adding chat', (_label, known) => {
+    const pubKey = makePubKey(11);
+    const prefixBytes = pubKey.slice(0, 6);
+    const prefixHex = prefixHexFromBytes(prefixBytes);
+    const logTransportLineAsDevice = vi.fn();
+    const dispatchSpy = vi.spyOn(packetRouter, 'dispatch');
+    const deps = baseDeps({
+      pubKeyPrefixMap: known
+        ? new Map([[prefixHex, pubkeyToNodeId(pubKey)]])
+        : new Map<string, number>(),
+      logTransportLineAsDevice,
+    });
+
+    const result = processMeshcoreWaitingMessageItem(
+      {
+        contactMessage: {
+          pubKeyPrefix: prefixBytes,
+          text: 'ab|set pin 123456',
+          senderTimestamp: 1_700_000_000,
+          txtType: MESHCORE_TXT_TYPE_CLI_COMMAND,
+        },
+      },
+      deps,
+    );
+
+    expect(result.pendingMessages).toHaveLength(0);
+    expect(dispatchSpy).not.toHaveBeenCalled();
+    expect(logTransportLineAsDevice).toHaveBeenCalledTimes(1);
+    const line = String(logTransportLineAsDevice.mock.calls[0]?.[0]);
+    expect(line).toContain(prefixHex);
+    expect(line).not.toContain('123456');
+  });
+
   it('queues DM history with isHistory when sender is known', () => {
     const pubKey = makePubKey(8);
     const prefixBytes = pubKey.slice(0, 6);
@@ -114,7 +154,7 @@ describe('processMeshcoreWaitingMessageItem', () => {
     expect(deps.workingNodes.get(senderId)?.last_heard).toBe(1_700_000_100);
   });
 
-  it('dispatches repeater CLI_DATA through PacketRouter instead of chat history', () => {
+  it('updates last_heard for CLI_DATA without PacketRouter or chat history', () => {
     const dispatchSpy = vi.spyOn(packetRouter, 'dispatch').mockImplementation(() => {});
     const pubKey = makePubKey(12);
     const prefixBytes = pubKey.slice(0, 6);
@@ -149,16 +189,7 @@ describe('processMeshcoreWaitingMessageItem', () => {
 
     expect(result.pendingMessages).toHaveLength(0);
     expect(result.roomDispatched).toBe(false);
-    expect(dispatchSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        type: 'meshcore_cli_response',
-        payload: expect.objectContaining({
-          text: 'A1|uptime 42',
-          senderNodeId: senderId,
-        }),
-      }),
-      'meshcore-test-id',
-    );
+    expect(dispatchSpy).not.toHaveBeenCalled();
     expect(deps.workingNodes.get(senderId)?.last_heard).toBe(1_700_000_200);
     dispatchSpy.mockRestore();
   });

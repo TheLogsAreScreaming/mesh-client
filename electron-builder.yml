@@ -17,14 +17,22 @@ publish:
   repo: mesh-client-releases
   # Keep GitHub Releases as drafts until a maintainer publishes manually.
   releaseType: draft
+# Strip Unix-only usocket before @electron/rebuild (allowBuilds only covers pnpm install).
+beforeBuild: scripts/electron-builder-before-build.mjs
 beforePack: scripts/electron-builder-before-pack.mjs
 extraResources:
+  - from: resources/ai-helper/active
+    to: ai-helper
+    filter:
+      - '**/*'
   - from: resources/icons/win/mesh-hub.ico
     to: mesh-hub.ico
   - from: resources/ble-sidecar
     to: ble-sidecar
     filter:
       - '**/*'
+      # beforePack selects the active binary; staging contains both architectures.
+      - '!staged{,/**/*}'
   - from: resources/icons/linux/256x256.png
     to: 256x256.png
   - from: resources/geo

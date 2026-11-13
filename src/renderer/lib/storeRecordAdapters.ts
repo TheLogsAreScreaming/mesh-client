@@ -103,10 +103,14 @@ export function messageRecordToChatMessage(record: MessageRecord): ChatMessage {
     replyPreviewText: record.replyPreviewText,
     replyPreviewSender: record.replyPreviewSender,
     ...(rxHops != null ? { rxHops } : {}),
+    ...(record.rxSnr != null ? { rxSnr: record.rxSnr } : {}),
+    ...(record.rxRssi != null ? { rxRssi: record.rxRssi } : {}),
+    ...(record.rxRadioTransport ? { rxRadioTransport: record.rxRadioTransport } : {}),
     ...(record.viaStoreForward ? { viaStoreForward: true } : {}),
     ...(record.roomServerId != null ? { roomServerId: record.roomServerId } : {}),
     ...(record.channelKey ? { channelKey: record.channelKey } : {}),
     ...(record.radioNodeId != null ? { radioNodeId: record.radioNodeId } : {}),
+    ...(record.meshcoreDedupeKey ? { meshcoreDedupeKey: record.meshcoreDedupeKey } : {}),
   };
 }
 
@@ -389,9 +393,13 @@ export function chatMessageToMessageRecord(msg: ChatMessage): MessageRecord {
     replyPreviewText: msg.replyPreviewText,
     replyPreviewSender: msg.replyPreviewSender,
     ...(msg.rxHops != null ? { rxHops: msg.rxHops } : {}),
+    ...(msg.rxSnr != null ? { rxSnr: msg.rxSnr } : {}),
+    ...(msg.rxRssi != null ? { rxRssi: msg.rxRssi } : {}),
+    ...(msg.rxRadioTransport ? { rxRadioTransport: msg.rxRadioTransport } : {}),
     ...(msg.viaStoreForward ? { viaStoreForward: true } : {}),
     ...(msg.roomServerId != null ? { roomServerId: msg.roomServerId } : {}),
     ...(msg.channelKey ? { channelKey: msg.channelKey } : {}),
     ...(msg.radioNodeId != null ? { radioNodeId: msg.radioNodeId } : {}),
+    ...(msg.meshcoreDedupeKey ? { meshcoreDedupeKey: msg.meshcoreDedupeKey } : {}),
   };
 }

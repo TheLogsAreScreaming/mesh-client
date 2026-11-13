@@ -95,7 +95,14 @@ const mockMapInstance = {
   invalidateSize: vi.fn(),
   getContainer: vi.fn(() => document.createElement('div')),
   createPane: vi.fn().mockReturnValue({ style: {} }),
-  getBounds: vi.fn().mockReturnValue({ isValid: () => false }),
+  getBounds: vi.fn().mockReturnValue({
+    isValid: () => false,
+    getNorth: () => 1,
+    getSouth: () => 0,
+    getEast: () => 1,
+    getWest: () => 0,
+  }),
+  attributionControl: { addAttribution: vi.fn(), removeAttribution: vi.fn() },
 };
 
 vi.mock('react-leaflet', () => ({
@@ -125,6 +132,11 @@ vi.mock('leaflet', () => ({
   divIcon: vi.fn().mockReturnValue({}),
   icon: leafletIconMock,
   latLngBounds: vi.fn().mockReturnValue({ isValid: () => false }),
+  DomEvent: {
+    disableClickPropagation: vi.fn(),
+    disableScrollPropagation: vi.fn(),
+    off: vi.fn(),
+  },
 }));
 
 const defaultFilter = {
@@ -169,6 +181,22 @@ describe('MapPanel accessibility', () => {
       expect(screen.getByTestId('map-container')).toBeInTheDocument();
     },
   );
+
+  it('links Docs to the maps guide when live traffic modes are available', () => {
+    render(
+      <MapPanel
+        nodes={new Map()}
+        myNodeNum={1}
+        locationFilter={defaultFilter}
+        protocol="meshtastic"
+        meshtasticPackets={[]}
+      />,
+    );
+    expect(screen.getByRole('link', { name: /docs/i })).toHaveAttribute(
+      'href',
+      'https://thelogsarescreaming.github.io/mesh-client/maps/',
+    );
+  });
 
   it.each(['meshcore', 'meshtastic'] as const)(
     'restores %s traffic mode after leaving the map without keeping its map DOM alive',

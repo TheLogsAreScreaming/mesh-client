@@ -262,6 +262,27 @@ describe('diagnosticsStore analysis timers', () => {
     expect(samples!.length).toBe(1);
     expect(samples![0].cu).toBe(18.5);
   });
+
+  it('persists cuHistory to localStorage and clears it with clearDiagnostics', () => {
+    vi.useFakeTimers();
+    const CU_KEY = 'mesh-client:cuHistorySnapshot';
+    localStorage.removeItem(CU_KEY);
+    const store = useDiagnosticsStore.getState();
+    store.processNodeUpdate({ ...sampleNode(9), channel_utilization: 22 }, null);
+    vi.advanceTimersByTime(600);
+    const raw = localStorage.getItem(CU_KEY);
+    expect(raw).toBeTruthy();
+    const parsed = JSON.parse(raw!) as {
+      v: number;
+      entries: [number, { t: number; cu: number }[]][];
+    };
+    expect(parsed.v).toBe(1);
+    expect(parsed.entries.some(([id]) => id === 9)).toBe(true);
+    store.clearDiagnostics();
+    expect(localStorage.getItem(CU_KEY)).toBeNull();
+    expect(useDiagnosticsStore.getState().cuHistory.size).toBe(0);
+    vi.useRealTimers();
+  });
 });
 
 describe('diagnosticsStore reference position gates distance checks', () => {
@@ -362,6 +383,37 @@ describe('diagnosticsStore distanceOffsetKm', () => {
     expect(src).toMatch(/analyzeNode\([\s\S]*?s\.distanceOffsetKm/);
     expect(src).toMatch(/analyzeNode\([\s\S]*?state\.distanceOffsetKm/);
     expect(src).not.toMatch(/analyzeNode\([\s\S]*?distanceMultiplier,\s*0,/);
+  });
+});
+
+describe('recordPacketPath redundancy', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-15T12:00:00.000Z'));
+    useDiagnosticsStore.getState().clearDiagnostics();
+  });
+
+  afterEach(() => {
+    useDiagnosticsStore.getState().clearDiagnostics();
+    vi.useRealTimers();
+  });
+
+  it('tracks last-20 packets incrementally without requiring a full cache scan', () => {
+    const store = useDiagnosticsStore.getState();
+    const path = { transport: 'rf' as const, timestamp: Date.now(), snr: 5 };
+    for (let i = 1; i <= 25; i += 1) {
+      store.recordPacketPath(1000 + i, 42, path);
+    }
+    // Second sighting of an older packet updates paths and re-enters the recent window.
+    store.recordPacketPath(1001, 42, { ...path, snr: 6 });
+    const redundancy = useDiagnosticsStore.getState().nodeRedundancy.get(42);
+    expect(redundancy).toBeDefined();
+    expect(redundancy!.recentPackets).toHaveLength(20);
+    expect(redundancy!.recentPackets.some((p) => p.packetId === 1001)).toBe(true);
+    // Tied lastSeen: new record precedes retained ones so 1025 stays in the window.
+    expect(redundancy!.recentPackets.some((p) => p.packetId === 1025)).toBe(true);
+    expect(redundancy!.maxPaths).toBeGreaterThanOrEqual(2);
+    expect(redundancy!.score).toBeGreaterThan(0);
   });
 });
 

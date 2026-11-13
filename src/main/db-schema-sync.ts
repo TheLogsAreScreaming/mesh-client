@@ -19,7 +19,7 @@ import { sanitizeLogMessage } from './log-service';
 import { ensureMessageFtsTables } from './messageFts';
 
 /** Bumped when ensureSchema behavior changes in a non-idempotent way (rare). */
-export const CURRENT_SCHEMA_VERSION = 52;
+export const CURRENT_SCHEMA_VERSION = 54;
 
 /** Thrown when on-disk `user_version` exceeds this build's {@link CURRENT_SCHEMA_VERSION}. */
 export class DatabaseSchemaTooNewError extends Error {
@@ -284,6 +284,23 @@ export const CANONICAL_TABLES_DDL = `
         value TEXT NOT NULL
       );
 
+      CREATE TABLE IF NOT EXISTS emergency_incidents (
+        id TEXT PRIMARY KEY,
+        status TEXT NOT NULL CHECK (status IN ('open', 'acked', 'resolved')),
+        last_seen_at INTEGER NOT NULL,
+        payload TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS emergency_incident_tombstones (
+        id TEXT PRIMARY KEY,
+        resolved_at INTEGER NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS emergency_incident_storage (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        initialized INTEGER NOT NULL CHECK (initialized = 1)
+      );
+
       CREATE TABLE IF NOT EXISTS secure_secrets (
         key TEXT PRIMARY KEY,
         ciphertext TEXT NOT NULL,
@@ -335,7 +352,38 @@ export const CANONICAL_TABLES_DDL = `
         group_id TEXT,
         group_index INTEGER,
         group_total INTEGER,
-        priority TEXT NOT NULL DEFAULT 'normal'
+        priority TEXT NOT NULL DEFAULT 'normal',
+        identity_id TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS renderer_memory_samples (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        captured_at INTEGER NOT NULL,
+        bytes INTEGER NOT NULL,
+        source TEXT NOT NULL CHECK(source IN ('user-agent','renderer-process')),
+        app_version TEXT,
+        session_id TEXT,
+        js_heap_bytes INTEGER,
+        total_js_heap_bytes INTEGER,
+        dom_nodes INTEGER
+      );
+
+      CREATE TABLE IF NOT EXISTS scheduled_broadcasts (
+        slot INTEGER PRIMARY KEY CHECK (slot BETWEEN 1 AND 12),
+        label TEXT NOT NULL DEFAULT '',
+        text TEXT NOT NULL DEFAULT '',
+        enabled INTEGER NOT NULL DEFAULT 0,
+        interval TEXT NOT NULL DEFAULT 'weekly'
+          CHECK (interval IN ('hourly','daily','weekly','biweekly','monthly')),
+        time_of_day_min INTEGER NOT NULL DEFAULT 540 CHECK (time_of_day_min BETWEEN 0 AND 1439),
+        weekday INTEGER CHECK (weekday IS NULL OR weekday BETWEEN 0 AND 6),
+        day_of_month INTEGER CHECK (day_of_month IS NULL OR day_of_month BETWEEN 1 AND 31),
+        anchor_ymd TEXT,
+        next_due_at INTEGER,
+        last_attempt_at INTEGER,
+        last_result_json TEXT,
+        targets_json TEXT NOT NULL DEFAULT '[]',
+        updated_at INTEGER NOT NULL
       );
     `;
 
@@ -345,6 +393,8 @@ export const CANONICAL_TABLES_DDL = `
  * @see src/main/db-schema-sync.unique-indexes.test.ts (contract + duplicate-key regressions)
  */
 export const INDEX_DDLS: readonly string[] = [
+  'CREATE INDEX IF NOT EXISTS idx_renderer_memory_samples_captured_at ON renderer_memory_samples(captured_at)',
+  'CREATE INDEX IF NOT EXISTS idx_emergency_incidents_status_time ON emergency_incidents(status, last_seen_at)',
   'CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages(timestamp)',
   'CREATE INDEX IF NOT EXISTS idx_messages_channel_ts ON messages(channel, timestamp DESC)',
   'CREATE INDEX IF NOT EXISTS idx_messages_packet_id ON messages(packet_id)',
@@ -363,6 +413,7 @@ export const INDEX_DDLS: readonly string[] = [
   'CREATE INDEX IF NOT EXISTS idx_reticulum_activity_dest ON reticulum_identity_activity(destination_hash)',
   'CREATE INDEX IF NOT EXISTS idx_reticulum_activity_identity ON reticulum_identity_activity(identity_hash)',
   'CREATE INDEX IF NOT EXISTS idx_reticulum_dest_last_heard ON reticulum_destinations(last_heard)',
+  'CREATE INDEX IF NOT EXISTS idx_mc_msgs_room_ts ON meshcore_messages(room_server_id, timestamp)',
   'CREATE INDEX IF NOT EXISTS idx_mc_msgs_ts ON meshcore_messages(timestamp)',
   'CREATE INDEX IF NOT EXISTS idx_mc_msgs_channel_id ON meshcore_messages(channel_idx, id DESC)',
   'CREATE INDEX IF NOT EXISTS idx_mc_msgs_radio_channel_key ON meshcore_messages(radio_node_id, channel_key)',
@@ -496,6 +547,8 @@ export const DESIRED_COLUMNS: Readonly<Record<string, Readonly<Record<string, st
     delivery_attempts: 'INTEGER DEFAULT 0',
     next_delivery_attempt_at: 'INTEGER',
     attachment_path: 'TEXT',
+    /** JSON array of `{ path, fileName, mimeType }` for multi-file LXMF attachments. */
+    attachments_json: 'TEXT',
     audio_mode: 'INTEGER',
     audio_duration_sec: 'REAL',
   },
@@ -508,6 +561,8 @@ export const DESIRED_COLUMNS: Readonly<Record<string, Readonly<Record<string, st
     kind: 'TEXT NOT NULL',
     body: 'TEXT NOT NULL',
     timestamp: 'INTEGER NOT NULL',
+    react_to: 'TEXT',
+    react_op: 'INTEGER',
   },
   position_history: {
     node_id: 'INTEGER NOT NULL',
@@ -581,6 +636,27 @@ export const DESIRED_COLUMNS: Readonly<Record<string, Readonly<Record<string, st
   },
   chat_outbox: {
     priority: "TEXT NOT NULL DEFAULT 'normal'",
+    identity_id: 'TEXT',
+  },
+  renderer_memory_samples: {
+    js_heap_bytes: 'INTEGER',
+    total_js_heap_bytes: 'INTEGER',
+    dom_nodes: 'INTEGER',
+  },
+  scheduled_broadcasts: {
+    label: "TEXT NOT NULL DEFAULT ''",
+    text: "TEXT NOT NULL DEFAULT ''",
+    enabled: 'INTEGER NOT NULL DEFAULT 0',
+    interval: "TEXT NOT NULL DEFAULT 'weekly'",
+    time_of_day_min: 'INTEGER NOT NULL DEFAULT 540',
+    weekday: 'INTEGER',
+    day_of_month: 'INTEGER',
+    anchor_ymd: 'TEXT',
+    next_due_at: 'INTEGER',
+    last_attempt_at: 'INTEGER',
+    last_result_json: 'TEXT',
+    targets_json: "TEXT NOT NULL DEFAULT '[]'",
+    updated_at: 'INTEGER NOT NULL',
   },
 };
 

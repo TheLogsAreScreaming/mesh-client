@@ -51,11 +51,21 @@ vi.mock('./WeatherForecastLayer', () => ({
   ),
 }));
 
+vi.mock('./WeatherPanes', () => ({ WeatherPanes: () => null }));
+vi.mock('./WeatherPopup', () => ({ WeatherPopup: () => null }));
+vi.mock('./WeatherOverlayBar', () => ({ WeatherOverlayBar: () => null }));
+vi.mock('./WeatherLegend', () => ({ WeatherLegend: () => null }));
+vi.mock('./RadarLayer', () => ({ RadarLayer: () => null }));
+vi.mock('./TemperatureLayer', () => ({ TemperatureLayer: () => null }));
+vi.mock('./WindLayer', () => ({ WindLayer: () => null }));
+
 vi.mock('./emcommMapLayers', () => ({
   IncidentMarkersLayer: () => <div data-testid="incident-layer" />,
   MeasureControl: () => null,
   MgrsGridLayer: () => <div data-testid="mgrs-layer" />,
 }));
+vi.mock('./TerrainProfileControl', () => ({ TerrainProfileControl: () => null }));
+vi.mock('./TerrainProfileOverlay', () => ({ TerrainProfileOverlay: () => null }));
 
 function renderShell(overrides: Partial<MeshMapShellProps> = {}) {
   const props: MeshMapShellProps = {
@@ -107,6 +117,16 @@ describe('MeshMapShell', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: 'mapPanel.layerWeatherForecasts' }));
     expect(useMapLayerStore.getState().showWeatherForecasts).toBe(false);
     expect(screen.queryByTestId('weather-layer')).not.toBeInTheDocument();
+  });
+
+  it('keeps the layers panel scrollable so custom XYZ controls stay reachable', () => {
+    renderShell();
+    fireEvent.click(screen.getByRole('button', { name: 'mapPanel.layerControlsAria' }));
+    const addXyz = screen.getByRole('button', { name: 'mapPanel.customSources.addXyzAria' });
+    expect(addXyz).toBeInTheDocument();
+    const panel = addXyz.closest('.overflow-y-auto');
+    expect(panel).not.toBeNull();
+    expect(panel!.className).toMatch(/max-h-/);
   });
 
   it('renders global overlays according to the layer store', () => {

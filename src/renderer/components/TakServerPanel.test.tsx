@@ -4,7 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
 import { hydrateAxeThemeColors } from '../lib/a11yTestHelpers';
-import { setDeviceChannels, useDeviceStore } from '../stores/deviceStore';
+import { setTakChannels, useTakChannelStore } from '../stores/takChannelStore';
+import { useTakRelayPrefsStore } from '../stores/takRelayPrefsStore';
 import { setTakSinkActive } from '../stores/takSinkStore';
 import TakServerPanel from './TakServerPanel';
 
@@ -25,6 +26,16 @@ describe('TakServerPanel', () => {
     render(<TakServerPanel />);
     await act(async () => {});
     expect(screen.getByText('Stopped')).toBeInTheDocument();
+  });
+
+  it('links the Docs affordance to the TAK gateway guide', async () => {
+    render(<TakServerPanel />);
+    await act(async () => {});
+    const docsLink = screen.getByRole('link', { name: /docs/i });
+    expect(docsLink).toHaveAttribute(
+      'href',
+      'https://thelogsarescreaming.github.io/mesh-client/tak/',
+    );
   });
 
   it('shows Start Server button when stopped', async () => {
@@ -112,6 +123,25 @@ describe('TakServerPanel', () => {
     expect(window.electronAPI.tak.regenerateCertificates).toHaveBeenCalled();
   });
 
+  it("turns ATAK's MAYDAY alarm on and off, off by default, while the server runs", async () => {
+    vi.mocked(window.electronAPI.tak.getStatus).mockResolvedValue({
+      running: true,
+      port: 8089,
+      clientCount: 0,
+    });
+    const user = userEvent.setup();
+    render(<TakServerPanel />);
+    await act(async () => {});
+    const box = screen.getByRole('checkbox', { name: /emergency alarm for an MECP MAYDAY/i });
+    expect(box).not.toBeChecked();
+    expect(box).toBeEnabled();
+    expect(box).toHaveAccessibleDescription(/anyone on a channel can send a MAYDAY/i);
+    await user.click(box);
+    expect(useTakRelayPrefsStore.getState().mecpAlarm).toBe(true);
+    await user.click(box);
+    expect(useTakRelayPrefsStore.getState().mecpAlarm).toBe(false);
+  });
+
   it('shows client count in status bar when running', async () => {
     vi.mocked(window.electronAPI.tak.getStatus).mockResolvedValue({
       running: true,
@@ -138,41 +168,41 @@ describe('TakServerPanel', () => {
     expect(screen.getByText('ALPHA')).toBeInTheDocument();
   });
 
-  describe('Meshtastic channel relay channels', () => {
+  describe('messaging in ATAK', () => {
     const MESHTASTIC_ID = 'tak-panel-meshtastic';
 
     beforeEach(() => {
-      useDeviceStore.setState({ devices: {} });
+      useTakChannelStore.setState({ channelsByIdentity: {} });
       setTakSinkActive(true);
     });
 
     afterEach(() => {
       setTakSinkActive(false);
-      useDeviceStore.setState({ devices: {} });
+      useTakChannelStore.setState({ channelsByIdentity: {} });
     });
 
-    it('falls back to runtime channels when the device store has none (MQTT-only)', async () => {
-      render(
-        <TakServerPanel
-          meshtasticIdentityId={MESHTASTIC_ID}
-          meshtasticRuntimeChannels={[{ index: 1, name: 'LongFast' }]}
-        />,
-      );
+    it("shows the Meshtastic radio's channels from the TAK channel list", async () => {
+      setTakChannels(MESHTASTIC_ID, [
+        {
+          protocol: 'meshtastic',
+          index: 0,
+          key: '0123456789abcdef',
+          name: 'LongFast',
+          atakName: '#MT LongFast',
+        },
+      ]);
+      render(<TakServerPanel meshtasticIdentityId={MESHTASTIC_ID} />);
       await act(async () => {});
-      expect(screen.getByLabelText('GeoChat room for LongFast')).toBeInTheDocument();
+      expect(screen.getByText('Meshtastic messaging in ATAK')).toBeInTheDocument();
+      expect(screen.getByLabelText('Channels in ATAK')).toHaveValue('off');
     });
 
-    it('prefers stored channels over runtime channels', async () => {
-      setDeviceChannels(MESHTASTIC_ID, [{ index: 0, name: 'Radio' }], []);
-      render(
-        <TakServerPanel
-          meshtasticIdentityId={MESHTASTIC_ID}
-          meshtasticRuntimeChannels={[{ index: 1, name: 'LongFast' }]}
-        />,
-      );
+    it('says a radio must connect before it has channels to list', async () => {
+      render(<TakServerPanel meshtasticIdentityId={MESHTASTIC_ID} />);
       await act(async () => {});
-      expect(screen.getByLabelText('GeoChat room for Radio')).toBeInTheDocument();
-      expect(screen.queryByLabelText('GeoChat room for LongFast')).toBeNull();
+      expect(
+        screen.getByText('Connect a Meshtastic radio to list its channels.'),
+      ).toBeInTheDocument();
     });
   });
 

@@ -27,9 +27,19 @@ describe('index.html CSP', () => {
     expect(csp).toMatch(/img-src[^;]*\bmesh-tiles:/);
   });
 
+  it('img-src allows mesh-weather custom scheme', () => {
+    const csp = readCspContent();
+    expect(csp).toMatch(/img-src[^;]*\bmesh-weather:/);
+  });
+
   it('worker-src allows zip.js blob workers for RNode flasher', () => {
     const csp = readCspContent();
     expect(csp).toMatch(/worker-src[^;]*\bblob:/);
+  });
+
+  it('script-src-elem allows blob: for AudioWorklet.addModule', () => {
+    const csp = readCspContent();
+    expect(csp).toMatch(/script-src-elem[^;]*\bblob:/);
   });
 
   it('denies plugin embeds, base hijacking, and form posts', () => {

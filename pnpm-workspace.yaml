@@ -1,8 +1,7 @@
-# Delay updates by 1 day (malware is usually caught within hours; matches pnpm default)
-minimumReleaseAge: 1440
-minimumReleaseAgeExclude:
-  - lodash
-  - lodash-es
+# 12 hours. pnpm 11+ defaults to 1440; 0 disables the gate. #1304 set 0 so a
+# same-day undici/i18next refresh could install. Those versions are in the
+# lockfile now, so the age gate is back.
+minimumReleaseAge: 720
 
 # Reject transitive git/tarball/exotic sources (registry + scoped JSR only)
 blockExoticSubdeps: true
@@ -40,6 +39,10 @@ allowBuilds:
   electron-winstaller: true
   esbuild: true
   usb: true
+  # dbus-next optional native abstract-socket helper. mesh-client only supports
+  # path-based system buses (src/main/linux-bluez/systemBus.ts + tests); Flatpak
+  # and dbus-next default use unix:path=…, so usocket is not required.
+  usocket: false
 
 peerDependencyRules:
   allowedVersions:
@@ -50,6 +53,8 @@ overrides:
   '@meshtastic/core': npm:@jsr/meshtastic__core@^2.6.6
   cacheable-request: ^10.0.0
   form-data: ^4.0.6
+  # dbus-next → xml2js ^0.4.17 (GHSA-776f-qx25-q3cc / CVE-2023-0842). Floor ≥0.5.0.
+  'dbus-next>xml2js': ^0.6.2
   # Security floors (Dependabot GHSA-52cp-r559-cp3m / GHSA-395f-4hp3-45gv /
   # GHSA-w8wr-v893-vjvp / GHSA-3jxr-9vmj-r5cp / GHSA-r28c-9q8g-f849 /
   # GHSA-p2f4-r6v6-j797 / GHSA-7g7r-gx96-252g / GHSA-mh99-v99m-4gvg /
@@ -68,16 +73,18 @@ overrides:
   # fast-uri: GHSA-7p8r-x3mc-p8w7 plus GHSA-5jgf-p345-68v8 / GHSA-f65p-4m7j-42xc /
   # GHSA-fph4-wmhf-6fwf / GHSA-jqff-g426-hqxp — floor >=3.1.6 (electron-builder →
   # app-builder-lib → ajv still pulls older 3.1.x without an override).
-  # undici: GHSA-4cwx-7wf7-3272 (+ sibling undici GHSAs) — floor >=7.29.0, kept as
-  # a scoped `undici@<7.29.0` override so transitive consumers (jsdom ^7.25.0,
-  # node-gyp ^6.25.0) land on 7.29.0. package.json depends on undici ^8.10.0
-  # directly: main-process link previews need nodejs/undici#5547 (setTypeOfService
-  # EINVAL crash fix), which is 8.x-only, and a global ^8 override would force an
-  # unsupported major on those consumers.
+  # undici: GHSA-xjj6-f33q-929c / GHSA-4cwx-7wf7-3272 / GHSA-9fm3-97px-rjf6 /
+  # GHSA-qrxm-fqhp-jwvm / GHSA-2m5v-pch6-74hx / GHSA-4w7w-5xrc-9h26 —
+  # floor >=7.30.1, kept as a scoped `undici@<7.30.1` override so transitive
+  # consumers (jsdom ^7.25.0, node-gyp ^6.25.0) land on 7.30.1+. package.json
+  # depends on undici ^8.12.3 directly: main-process link previews need
+  # nodejs/undici#5547 (setTypeOfService EINVAL crash fix), which is 8.x-only,
+  # and a global ^8 override would force an unsupported major on those consumers.
   # undici-types stays on 7.x to match @types/node.
   # postcss: GHSA-fxqj-rqcc-2cmp — floor >=8.5.23.
-  # ip-address: GHSA-mwp4-54f8-5fhr (mqtt → socks) plus the link-preview
-  # global-address classification API — floor >=10.7.1.
+  # ip-address: GHSA-mwp4-54f8-5fhr (mqtt → socks) plus GHSA-rxp7-6hxx-x8q5
+  # (Address6 zone-id quadratic match) — floor >=10.7.4 for the transitive
+  # socks consumer only; main SSRF/global checks use src/shared/ipLiteral.ts.
   # @xmldom/xmldom: GHSA-6gmq-8vp8-gcm6 (+ GHSA-4w3w-2rp5-g8jm /
   # GHSA-w2rr-34g9-rvrj / GHSA-93r5-fhx6-vmg9 / GHSA-8344-3jmq-59r6 /
   # GHSA-6h8r-xr42-gp59 / GHSA-27p8-2357-5qqv / GHSA-c7q8-3ch8-vqpv) —
@@ -95,36 +102,44 @@ overrides:
   # with hardened @electron-internal/extract-zip (not the vulnerable package).
   # Nov 2026 audit: dompurify GHSA-cg2g-xh64-v4q7 / GHSA-mrv2-3pqr-j5jr (direct ^3.4.17),
   # markdown-it GHSA-r7fv-28h4-cvq7 / GHSA-gfr2-rv44-r23c (markdownlint-cli2) — floor 15.0.3,
-  # zod GHSA-mrhx-c7xc-m3w5 (eslint-plugin-react-hooks) — floor 4.6.6,
-  # undici GHSA-xjj6-f33q-929c — 7.x floor 7.30.1, direct 8.x ^8.12.2,
-  # electron GHSA-jr5w-w6x2-84p9 — floor 44.9.1, pinned to 44.10.2 (same major).
-  # electron: deliberate major pin — bump with Flatpak sync + native rebuild smoke.
+  # zod GHSA-mrhx-c7xc-m3w5 (eslint-plugin-react-hooks) — floor 4.6.6.
+  # undici GHSA-xjj6-f33q-929c — 7.x floor 7.30.1, direct 8.x ^8.12.4.
+  # electron: track latest stable major; Flatpak sync + native rebuild after bumps.
+  # minimatch: GHSA-g3hv-75wg-m249 — floor >=11.0.1 (eslint / electron-builder /
+  # @electron/asar / typescript-eslint still resolve 3.x–10.x without an override).
+  # glob: GHSA-3g3m-2fjr-6pw4 (>=9.0.0 <=14.0.1) — scoped floor >=14.0.2 so glob@7
+  # (rimraf@2 via electron-winstaller) stays on the unpatched major outside the range.
   '@xmldom/xmldom': ^0.8.15
-  app-builder-lib: ^26.15.0
+  app-builder-lib: ^26.18.0
   baseline-browser-mapping: ^2.11.0
   brace-expansion: ^5.0.9
   builder-util-runtime: ^9.7.0
-  electron: ^44.10.2
+  electron: ^45.0.0
   fast-uri: ^3.1.6
-  ip-address: ^10.7.1
+  'glob@>=9.0.0 <14.0.2': ^14.0.3
+  ip-address: ^10.7.4
   js-yaml: ^4.3.2
   katex@<0.18.2: '>=0.18.2 <0.19'
   markdown-it@<=14.1.1: '>=14.2.0 <15'
-  markdown-it@>=15.0.0 <15.0.3: ^15.0.3
+  # markdown-it: GHSA-r7fv-28h4-cvq7 / GHSA-gfr2-rv44-r23c / GHSA-vfgh-jcmw-g37q —
+  # markdownlint-cli2@0.23.3 pins exact markdown-it 15.0.1; floor to patched 15.0.3
+  # until markdownlint-cli2@0.24.0 (pins 15.0.3) is adopted.
+  markdown-it@15: '>=15.0.3 <16'
+  minimatch: ^11.0.3
   postcss: ^8.5.25
   shell-quote: ^1.9.0
   smol-toml: ^1.9.0
   tar: ^7.5.18
   tmp: ^0.2.6
   undici@<7.30.1: ^7.30.1
-  undici-types: ^7.29.0
+  undici-types: ^7.30.0
   ws: ^8.21.0
   zod@<4.6.6: ^4.6.6
 patchedDependencies:
   '@jsr/meshtastic__core@2.6.6': patches/@jsr__meshtastic__core@2.6.6.patch
   '@jsr/meshtastic__transport-web-serial@0.2.5': patches/@jsr__meshtastic__transport-web-serial@0.2.5.patch
   '@liamcottle/meshcore.js@1.15.0': patches/@liamcottle__meshcore.js@1.15.0.patch
-  app-builder-lib@26.15.3: patches/app-builder-lib@26.15.3.patch
   debug@4.4.3: patches/debug@4.4.3.patch
+  eslint-plugin-jsx-a11y@6.10.2: patches/eslint-plugin-jsx-a11y@6.10.2.patch
   mqtt-packet@9.0.2: patches/mqtt-packet@9.0.2.patch
   readable-stream@4.8.0: patches/readable-stream@4.8.0.patch

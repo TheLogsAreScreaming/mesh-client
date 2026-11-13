@@ -7,9 +7,7 @@ import L from 'leaflet';
 import { Download, MapPin } from 'lucide-react-motion';
 import {
   Fragment,
-  lazy,
   memo,
-  Suspense,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -21,7 +19,10 @@ import { useTranslation } from 'react-i18next';
 import { Circle, Marker, Polyline, Popup, useMap } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 
+import { MAPS_DOCS_URL } from '@/shared/docsSite';
+
 import type { LocationFilter } from '../App';
+import { useMapBasemap } from '../hooks/useMapBasemap';
 import {
   formatCoordPair,
   latestPositionHistoryPoint,
@@ -31,7 +32,8 @@ import { getRoutingRowForNode, routingAnomalyNodeIds } from '../lib/diagnostics/
 import { isMapSensorMetric } from '../lib/environmentSensorDisplay';
 import { escapeSvgAttr } from '../lib/escapeSvg';
 import type { OurPosition } from '../lib/gpsSource';
-import { getMapOverlayColors, MAP_BASEMAPS } from '../lib/mapBasemapUtils';
+import { homeCoordsForDistanceFilter } from '../lib/locationTrust';
+import { getMapOverlayColors } from '../lib/mapBasemapUtils';
 import type { RxPacketEntry } from '../lib/meshcore/meshcoreHookTypes';
 import { meshcoreHwModelIsContactTypeLabel } from '../lib/meshcoreUtils';
 import { NODE_BADGE_PATHS } from '../lib/nodeIcons';
@@ -44,17 +46,20 @@ import { routingRowToNodeAnomaly } from '../lib/types';
 import { useCoordFormatStore } from '../stores/coordFormatStore';
 import { useDiagnosticsStore } from '../stores/diagnosticsStore';
 import { useMapLayerStore } from '../stores/mapLayerStore';
+import { useMapToolStore } from '../stores/mapToolStore';
 import { useMapViewportStore } from '../stores/mapViewportStore';
 import { getWeightedPaths, usePathHistoryStore } from '../stores/pathHistoryStore';
 import { usePositionHistoryStore } from '../stores/positionHistoryStore';
 import { EnvironmentSensorLayer } from './map/environmentSensorLayer';
 import { ensureLoRaMapPanelStyles } from './map/leafletMapControls';
+import { LiveTrafficWindowSlot } from './map/LiveTrafficWindowSlot';
 import { MAP_CHIP_CLASS, MAP_CONTROL_CLASS } from './map/mapControlClasses';
 import { MapLayerRow } from './map/MapLayerControl';
 import { MeshMapShell } from './map/MeshMapShell';
 import { TakContactsLayer } from './map/takContactsLayer';
 import { useToast } from './Toast';
 import { buttonClassName } from './ui/Button';
+import { DocsSiteLink } from './ui/DocsSiteLink';
 import { SELECT_BOX_SM_CLASS } from './ui/formClasses';
 
 const WAYPOINT_MARKER_ICON = L.divIcon({
@@ -331,6 +336,20 @@ const MapMarker = memo(
         zIndexOffset={isSelf ? 1000 : 0}
         eventHandlers={{
           click: () => {
+            const tools = useMapToolStore.getState();
+            if (tools.profileActive && node.latitude != null && node.longitude != null) {
+              tools.addProfileEndpoint({
+                lat: node.latitude,
+                lon: node.longitude,
+                nodeId: node.node_id,
+                groundAltitudeM:
+                  typeof node.altitude === 'number' && Number.isFinite(node.altitude)
+                    ? node.altitude
+                    : undefined,
+                antennaHeightM: 2,
+              });
+              return;
+            }
             onNodeClick?.(node.node_id);
           },
         }}
@@ -504,6 +523,8 @@ interface Props {
   ) => Promise<void>;
   onDeleteWaypoint?: (id: number) => Promise<void>;
   onNodeClick?: (nodeId: number) => void;
+  /** Opens a node clicked in the live traffic pop-out window. */
+  onLiveWindowNodeClick?: (nodeId: number) => void;
   /** Opens the node that posted a weather forecast (may be on another protocol). */
   onForecastSenderClick?: (protocol: MeshProtocol, senderId: number) => void;
   protocol?: MeshProtocol;
@@ -512,8 +533,6 @@ interface Props {
   meshtasticPackets?: readonly MeshtasticRawPacketEntry[];
   pubKeyByNodeId?: ReadonlyMap<number, Uint8Array>;
 }
-
-const LiveTrafficPanel = lazy(() => import('./map/LiveTrafficPanel'));
 
 export default function MapPanel(props: Props) {
   const { t } = useTranslation();
@@ -533,42 +552,45 @@ export default function MapPanel(props: Props) {
   );
   const supportsTraffic =
     props.meshcorePackets !== undefined || props.meshtasticPackets !== undefined;
-  if (!supportsTraffic) return active ? <OverviewMapPanel {...props} /> : null;
+  if (!supportsTraffic) return active ? <OverviewMapPanel {...props} showMapsDocs /> : null;
   return (
     <div hidden={!active} className={active ? 'flex h-full min-h-0 flex-col gap-2' : 'hidden'}>
-      <div className="flex shrink-0 gap-1" role="group" aria-label={t('liveTraffic.mapModes')}>
-        {[false, true].map((isTraffic) => (
-          <button
-            key={String(isTraffic)}
-            type="button"
-            aria-label={t(isTraffic ? 'liveTraffic.title' : 'liveTraffic.mapOverview')}
-            aria-pressed={traffic === isTraffic}
-            onClick={() => {
-              setTraffic(isTraffic);
-              if (isTraffic) setTrafficVisited(true);
-            }}
-            className={`rounded-control text-label px-3 py-1.5 font-medium ${traffic === isTraffic ? 'bg-brand-green text-app-bg' : 'bg-deep-black text-ink-300 hover:bg-ink-800'}`}
-          >
-            {t(isTraffic ? 'liveTraffic.title' : 'liveTraffic.mapOverview')}
-          </button>
-        ))}
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2">
+        <div className="flex gap-1" role="group" aria-label={t('liveTraffic.mapModes')}>
+          {[false, true].map((isTraffic) => (
+            <button
+              key={String(isTraffic)}
+              type="button"
+              aria-label={t(isTraffic ? 'liveTraffic.title' : 'liveTraffic.mapOverview')}
+              aria-pressed={traffic === isTraffic}
+              onClick={() => {
+                setTraffic(isTraffic);
+                if (isTraffic) setTrafficVisited(true);
+              }}
+              className={`rounded-control text-label px-3 py-1.5 font-medium ${traffic === isTraffic ? 'bg-brand-green text-app-bg' : 'bg-deep-black text-ink-300 hover:bg-ink-800'}`}
+            >
+              {t(isTraffic ? 'liveTraffic.title' : 'liveTraffic.mapOverview')}
+            </button>
+          ))}
+        </div>
+        <DocsSiteLink href={MAPS_DOCS_URL} />
       </div>
       <div className="min-h-0 flex-1">
         {(traffic || trafficVisited) && (
-          <Suspense fallback={<div className="text-muted p-4">{t('app.loadingApp')}</div>}>
-            <LiveTrafficPanel
-              active={active && traffic}
-              nodes={props.nodes}
-              myNodeNum={props.myNodeNum}
-              ourPosition={props.ourPosition}
-              meshcorePackets={props.meshcorePackets}
-              meshtasticPackets={props.meshtasticPackets}
-              pubKeyByNodeId={props.pubKeyByNodeId}
-              onNodeClick={props.onNodeClick}
-            />
-          </Suspense>
+          <LiveTrafficWindowSlot
+            active={active && traffic}
+            protocol={props.meshcorePackets !== undefined ? 'meshcore' : 'meshtastic'}
+            nodes={props.nodes}
+            myNodeNum={props.myNodeNum}
+            ourPosition={props.ourPosition}
+            meshcorePackets={props.meshcorePackets}
+            meshtasticPackets={props.meshtasticPackets}
+            pubKeyByNodeId={props.pubKeyByNodeId}
+            onNodeClick={props.onNodeClick}
+            onWindowNodeClick={props.onLiveWindowNodeClick}
+          />
         )}
-        {active && !traffic && <OverviewMapPanel {...props} />}
+        {active && !traffic && <OverviewMapPanel {...props} showMapsDocs={false} />}
       </div>
     </div>
   );
@@ -586,7 +608,8 @@ function OverviewMapPanel({
   onForecastSenderClick,
   protocol = 'meshtastic',
   useFahrenheit = false,
-}: Props) {
+  showMapsDocs = true,
+}: Props & { showMapsDocs?: boolean }) {
   const { t } = useTranslation();
   const toNodeRenderSignature = useCallback((node: MeshNode): string => {
     return [
@@ -649,7 +672,7 @@ function OverviewMapPanel({
   const showSensors = useMapLayerStore((s) => s.showSensors);
   const sensorMetric = useMapLayerStore((s) => s.sensorMetric);
   const showTakContacts = useMapLayerStore((s) => s.showTakContacts);
-  const basemap = MAP_BASEMAPS[basemapId];
+  const basemap = useMapBasemap(basemapId);
   const overlayColors = useMemo(() => getMapOverlayColors(basemap.isDark), [basemap.isDark]);
 
   const [showRouteWeights, setShowRouteWeights] = useState(false);
@@ -797,13 +820,11 @@ function OverviewMapPanel({
     });
   }, [routeWeightsSupported, showRouteWeights, nodes, loadPathHistoryForNode, pathRecords.size]);
 
+  const ourPositionReference = useDiagnosticsStore((s) => s.ourPositionReference);
+
   const nodesWithPosition = useMemo(() => {
     const homeNode = myNodeNum ? nodes.get(myNodeNum) : undefined;
-    const homeHasLocation =
-      homeNode?.latitude != null &&
-      homeNode.latitude !== 0 &&
-      homeNode.longitude != null &&
-      homeNode.longitude !== 0;
+    const homeCoords = homeCoordsForDistanceFilter(homeNode, ourPositionReference, ourPosition);
     const maxKm =
       locationFilter.unit === 'miles'
         ? locationFilter.maxDistance * 1.60934
@@ -826,10 +847,10 @@ function OverviewMapPanel({
         if (locationFilter.hideMqttOnly && mapped.heard_via_mqtt_only) {
           return [];
         }
-        if (locationFilter.enabled && homeHasLocation) {
+        if (locationFilter.enabled && homeCoords) {
           const d = haversineDistanceKm(
-            homeNode?.latitude ?? 0,
-            homeNode?.longitude ?? 0,
+            homeCoords.lat,
+            homeCoords.lon,
             mapped.latitude!,
             mapped.longitude!,
           );
@@ -845,6 +866,7 @@ function OverviewMapPanel({
     excludeMeshcoreContactTypesInMeshtastic,
     positionHistory,
     ourPosition,
+    ourPositionReference,
   ]);
   const nodesToRender = useMemo(() => {
     const idSet = new Set(nodesWithPosition.map((n) => n.node_id));
@@ -1070,16 +1092,19 @@ function OverviewMapPanel({
         </div>
       }
       controlsAfter={
-        <button
-          type="button"
-          onClick={() => void handleExportGpx()}
-          disabled={gpxExporting}
-          aria-label={t('gpxExport.buttonAria')}
-          className={MAP_CONTROL_CLASS}
-        >
-          <Download aria-hidden className="h-3.5 w-3.5" />
-          {t('gpxExport.button')}
-        </button>
+        <>
+          {showMapsDocs ? <DocsSiteLink href={MAPS_DOCS_URL} /> : null}
+          <button
+            type="button"
+            onClick={() => void handleExportGpx()}
+            disabled={gpxExporting}
+            aria-label={t('gpxExport.buttonAria')}
+            className={MAP_CONTROL_CLASS}
+          >
+            <Download aria-hidden className="h-3.5 w-3.5" />
+            {t('gpxExport.button')}
+          </button>
+        </>
       }
       layerRows={
         <LoRaMapLayerRows

@@ -7,6 +7,7 @@ import { meshcoreLoginErrorIsAuthFailure } from './meshcoreRepeaterRpcCommon';
 import type { MeshcoreRepeaterRunSerialized } from './meshcoreRepeaterRpcQueuedSend';
 import type { MeshcoreRepeaterLoginConn } from './meshcoreRepeaterSession';
 import { assertMeshcoreRepeaterLoginOk, meshcoreRepeaterTryLogin } from './meshcoreRepeaterSession';
+import { getMeshcoreRoomCredential } from './meshcoreRoomCredentialStorage';
 import {
   clearMeshcoreRoomLoginQueue,
   dequeueMeshcoreRoomLogin,
@@ -508,6 +509,75 @@ export async function meshcoreRoomTryRelogin(
   return roleOk;
 }
 
+/**
+ * Ensure a postable room session before post (e.g. scheduled broadcast).
+ *
+ * Order: existing can-post session → session guest password SendLogin → saved
+ * guest credential SendLogin. Skips the credential attempt when session login
+ * was explicitly rejected and the saved guest password matches (same password
+ * would not help). Still retries the saved credential after transient session
+ * failures, or when the saved guest password differs. Admin-only credentials
+ * are ignored (no guestPassword key).
+ */
+export async function meshcoreRoomTryEnsureCanPost(
+  conn: MeshcoreRoomLoginConn,
+  nodeId: number,
+  pubKey: Uint8Array,
+  opts?: {
+    hopsAway?: number;
+    companionTransport?: MeshcoreCompanionTransport;
+  },
+): Promise<boolean> {
+  if (meshcoreRoomCanPost(nodeId)) return true;
+
+  const session = sessions.get(nodeId);
+  let sessionGuestTried: string | undefined;
+  let sessionAuthRejected = false;
+
+  if (session) {
+    sessionGuestTried = meshcoreRoomEffectiveGuestPassword(session.guestPassword);
+    try {
+      await meshcoreRoomLogin(conn, nodeId, pubKey, sessionGuestTried, {
+        adminPassword: session.adminPassword,
+        guestPassword: session.guestPassword,
+        hopsAway: opts?.hopsAway,
+        companionTransport: opts?.companionTransport,
+        forceRelogin: true,
+      });
+      if (meshcoreRoomCanPost(nodeId)) return true;
+    } catch (e: unknown) {
+      if (meshcoreIsRoomLoginAbortError(e)) throw e;
+      if (meshcoreRoomLoginErrorIsAuthFailure(e)) {
+        sessionAuthRejected = true;
+      }
+      // Transient failure: fall through; saved credential may retry (possibly same password).
+    }
+  }
+
+  const cred = getMeshcoreRoomCredential(nodeId);
+  if (cred == null || !Object.prototype.hasOwnProperty.call(cred, 'guestPassword')) {
+    return false;
+  }
+  const password = meshcoreRoomEffectiveGuestPassword(cred.guestPassword ?? '');
+  if (sessionAuthRejected && sessionGuestTried !== undefined && password === sessionGuestTried) {
+    return false;
+  }
+
+  try {
+    await meshcoreRoomLogin(conn, nodeId, pubKey, password, {
+      guestPassword: password,
+      adminPassword: cred.adminPassword ?? '',
+      hopsAway: opts?.hopsAway,
+      companionTransport: opts?.companionTransport,
+      forceRelogin: true,
+    });
+  } catch (e: unknown) {
+    if (meshcoreIsRoomLoginAbortError(e)) throw e;
+    return false;
+  }
+  return meshcoreRoomCanPost(nodeId);
+}
+
 /** Best-effort admin login before room server status/telemetry/CLI. */
 export async function meshcoreRoomTryAdminLogin(
   conn: MeshcoreRoomLoginConn,
@@ -541,15 +611,26 @@ export async function meshcoreTryRemoteServerLogin(
   pubKey: Uint8Array,
   hwModel: string | undefined,
   runSerialized?: MeshcoreRepeaterRunSerialized,
+  opts?: {
+    /** Re-add an evicted repeater contact on SendLogin ERR_CODE_NOT_FOUND, then retry. */
+    restoreRadioContact?: () => Promise<void>;
+    hopsAway?: number | null;
+  },
 ): Promise<void> {
   if (hwModel === 'Room') {
     // Status/Neighbors do not require login. Telemetry may try a best-effort admin login when
     // there is no BBS session yet. Do not forceRelogin over an existing guest/readwrite session —
     // that often times out on firmwares that omit LoginFail (CLI uses ACL SendLogin separately).
     if (meshcoreIsRoomLoggedIn(nodeId)) return;
-    await meshcoreRoomTryAdminLogin(conn, nodeId, pubKey);
+    await meshcoreRoomTryAdminLogin(conn, nodeId, pubKey, {
+      hopsAway: opts?.hopsAway ?? undefined,
+    });
     return;
   }
-  const login = await meshcoreRepeaterTryLogin(conn, pubKey, nodeId, runSerialized);
+  const login = await meshcoreRepeaterTryLogin(conn, pubKey, nodeId, runSerialized, undefined, {
+    restoreRadioContact: opts?.restoreRadioContact,
+    hopsAway: opts?.hopsAway ?? 0,
+    retryOnTimeout: false,
+  });
   assertMeshcoreRepeaterLoginOk(login);
 }

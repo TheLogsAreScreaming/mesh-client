@@ -40,6 +40,9 @@ describe('RepeaterCommandService', () => {
     it('redacts password-change echoes without a token and retains ordinary replies', () => {
       expect(service.redactResponseForHistory('password now: secret')).toBe('[redacted]');
       expect(service.redactResponseForHistory('EF|> Repeater')).toBe('> Repeater');
+      expect(service.redactResponseForHistory('EF|> wifi.pwd = secret')).toBe(
+        '> wifi.pwd: [redacted]',
+      );
     });
   });
 
@@ -75,6 +78,12 @@ describe('RepeaterCommandService', () => {
   });
 
   describe('parseResponseToken', () => {
+    it('preserves multiline replies and matches only the leading token', () => {
+      const body = '*^ F\r\n us F\r\n  us-tn F\r\n';
+      expect(service.parseResponseToken(`AB|${body}`)).toEqual({ token: 'AB', body });
+      expect(service.parseResponseToken('\nAB|OK').token).toBeNull();
+    });
+
     it('should parse token and body from response', () => {
       const result = service.parseResponseToken('AB|response text');
       expect(result.token).toBe('AB');
@@ -106,27 +115,27 @@ describe('RepeaterCommandService', () => {
       expect(timeout).toBe(30000);
     });
 
-    it('should cap hop-scaled timeout at 120s', () => {
+    it('should cap hop-scaled timeout at 60s', () => {
       const timeoutWithHops = service.calculateTimeout(
         Array.from({ length: 46 }, () => new Uint8Array(32)),
       );
-      expect(timeoutWithHops).toBe(120_000);
+      expect(timeoutWithHops).toBe(60_000);
     });
 
     it('should include message size in dynamic timeout below cap', () => {
       const smallTimeout = service.calculateTimeout([], 100);
       const largeTimeout = service.calculateTimeout([], 100000);
       expect(smallTimeout).toBe(30100);
-      expect(largeTimeout).toBe(120_000);
+      expect(largeTimeout).toBe(60_000);
     });
   });
 
   describe('calculateRepeaterCliTimeout', () => {
-    it('scales with hop count and caps at 120s', async () => {
+    it('scales with hop count and caps at 60s', async () => {
       const { calculateRepeaterCliTimeout } = await import('./repeaterCommandService');
       expect(calculateRepeaterCliTimeout(0)).toBe(30_000);
       expect(calculateRepeaterCliTimeout(3)).toBe(36_000);
-      expect(calculateRepeaterCliTimeout(50)).toBe(120_000);
+      expect(calculateRepeaterCliTimeout(50)).toBe(60_000);
     });
   });
 
@@ -139,7 +148,7 @@ describe('RepeaterCommandService', () => {
     it('pads timeout and caps at max when drain is busy', async () => {
       const { padRepeaterCliTimeoutForWaitingDrain, REPEATER_CLI_MAX_TIMEOUT_MS } =
         await import('./repeaterCommandService');
-      expect(padRepeaterCliTimeoutForWaitingDrain(30_000, true, 45_000)).toBe(75_000);
+      expect(padRepeaterCliTimeoutForWaitingDrain(30_000, true, 45_000)).toBe(60_000);
       expect(padRepeaterCliTimeoutForWaitingDrain(100_000, true, 45_000)).toBe(
         REPEATER_CLI_MAX_TIMEOUT_MS,
       );
@@ -250,6 +259,127 @@ describe('RepeaterCommandService', () => {
     });
   });
 
+  describe('ingestResponse', () => {
+    it('returns resolved with historyText and records a settled tombstone', async () => {
+      const { token, promise } = service.registerPendingCommand('uptime', [], {
+        token: 'A1',
+        senderNodeId: 0x1234,
+      });
+      const first = service.ingestResponse('A1|uptime 42', 0x1234);
+      expect(first).toEqual({
+        kind: 'resolved',
+        nodeId: 0x1234,
+        historyText: 'uptime 42',
+      });
+      await expect(promise).resolves.toBe('uptime 42');
+      expect(service.hasPendingCommand(token)).toBe(false);
+    });
+
+    it('returns duplicate for an identical re-delivery of a settled frame', async () => {
+      const { promise } = service.registerPendingCommand('name', [], {
+        token: 'A1',
+        senderNodeId: 0x1234,
+      });
+      expect(service.ingestResponse('A1|Unknown command', 0x1234).kind).toBe('resolved');
+      await promise;
+      expect(service.ingestResponse('A1|Unknown command', 0x1234)).toEqual({ kind: 'duplicate' });
+    });
+
+    it('returns unmatched when the same token has a different body', async () => {
+      const { promise } = service.registerPendingCommand('cmd', [], {
+        token: 'A1',
+        senderNodeId: 0x1234,
+      });
+      expect(service.ingestResponse('A1|first', 0x1234).kind).toBe('resolved');
+      await promise;
+      expect(service.ingestResponse('A1|second', 0x1234)).toEqual({
+        kind: 'unmatched',
+        historyText: 'second',
+      });
+    });
+
+    it('returns unmatched for a late reply after timeout', async () => {
+      vi.useFakeTimers();
+      try {
+        const { promise } = service.registerPendingCommand('cmd', [], {
+          token: 'A1',
+          senderNodeId: 0x1234,
+          timeoutMs: 10,
+        });
+        const rejected = expect(promise).rejects.toThrow('timed out');
+        await vi.advanceTimersByTimeAsync(10);
+        await rejected;
+        expect(service.ingestResponse('A1|late', 0x1234)).toEqual({
+          kind: 'unmatched',
+          historyText: 'late',
+        });
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('clears the settled tombstone when the token is reused', async () => {
+      const first = service.registerPendingCommand('cmd', [], {
+        token: 'A1',
+        senderNodeId: 0x1234,
+      });
+      expect(service.ingestResponse('A1|one', 0x1234).kind).toBe('resolved');
+      await first.promise;
+      expect(service.ingestResponse('A1|one', 0x1234).kind).toBe('duplicate');
+
+      const second = service.registerPendingCommand('cmd2', [], {
+        token: 'A1',
+        senderNodeId: 0x1234,
+      });
+      expect(service.ingestResponse('A1|one', 0x1234)).toEqual({
+        kind: 'resolved',
+        nodeId: 0x1234,
+        historyText: 'one',
+      });
+      await second.promise;
+    });
+
+    it('drops settled tombstones on clear()', async () => {
+      const { promise } = service.registerPendingCommand('cmd', [], {
+        token: 'A1',
+        senderNodeId: 0x1234,
+      });
+      expect(service.ingestResponse('A1|ok', 0x1234).kind).toBe('resolved');
+      await promise;
+      service.clear();
+      expect(service.ingestResponse('A1|ok', 0x1234)).toEqual({
+        kind: 'unmatched',
+        historyText: 'ok',
+      });
+    });
+
+    it('does not treat a sender mismatch as a duplicate', async () => {
+      const { promise } = service.registerPendingCommand('cmd', [], {
+        token: 'A1',
+        senderNodeId: 0x1234,
+      });
+      expect(service.ingestResponse('A1|ok', 0x1234).kind).toBe('resolved');
+      await promise;
+      expect(service.ingestResponse('A1|ok', 0x5678)).toEqual({
+        kind: 'unmatched',
+        historyText: 'ok',
+      });
+    });
+
+    it('redacts historyText for secret commands', async () => {
+      const { promise } = service.registerPendingCommand('get guest.password', [], {
+        token: 'AB',
+        senderNodeId: 1,
+      });
+      expect(service.ingestResponse('AB|> secret', 1)).toEqual({
+        kind: 'resolved',
+        nodeId: 1,
+        historyText: '[redacted]',
+      });
+      await promise;
+    });
+  });
+
   describe('clear', () => {
     it('should reject all pending commands', () => {
       const { promise: p1 } = service.registerPendingCommand('cmd1', []);
@@ -336,6 +466,21 @@ describe('RepeaterCommandService', () => {
       await expect(promise).rejects.toThrow('CLI command timed out after 3000ms');
     });
 
+    it.each([-3_600_000, 3_600_000])(
+      'keeps the extended CLI reply deadline when the wall clock changes by %s ms',
+      async (clockChange) => {
+        const { token, promise } = service.registerPendingCommand('cmd', [], { timeoutMs: 1000 });
+        const rejected = expect(promise).rejects.toThrow('CLI command timed out after 3000ms');
+        vi.advanceTimersByTime(500);
+        vi.setSystemTime(Date.now() + clockChange);
+        service.extendPendingTimeout(token, 3000);
+        await vi.advanceTimersByTimeAsync(2499);
+        expect(service.hasPendingCommand(token)).toBe(true);
+        await vi.advanceTimersByTimeAsync(1);
+        await rejected;
+      },
+    );
+
     it('restartPendingTimeoutFromNow resets the reply window after a delayed send', async () => {
       const { token, promise } = service.registerPendingCommand('cmd', [], { timeoutMs: 1000 });
       promise.catch(() => {});
@@ -385,5 +530,50 @@ describe('CliHistoryEntry', () => {
 
     expect(sentEntry.type).toBe('sent');
     expect(receivedEntry.type).toBe('received');
+  });
+});
+
+describe('node-scoped tokens and monotonic CLI timestamps', () => {
+  it('does not cross-resolve the same token across nodes', async () => {
+    const service = createRepeaterCommandService();
+    const a = service.registerPendingCommand('cmd-a', [], {
+      token: '07',
+      senderNodeId: 1,
+    });
+    const b = service.registerPendingCommand('cmd-b', [], {
+      token: '07',
+      senderNodeId: 2,
+    });
+    expect(service.ingestResponse('07|from-1', 1)).toEqual({
+      kind: 'resolved',
+      nodeId: 1,
+      historyText: 'from-1',
+    });
+    await expect(a.promise).resolves.toBe('from-1');
+    expect(service.hasPendingCommand('07', 2)).toBe(true);
+    expect(service.ingestResponse('07|from-2', 2)).toEqual({
+      kind: 'resolved',
+      nodeId: 2,
+      historyText: 'from-2',
+    });
+    await expect(b.promise).resolves.toBe('from-2');
+  });
+
+  it('allocates strictly increasing wire timestamps within the same second', () => {
+    let now = 1_700_000_000;
+    const service = createRepeaterCommandService({ nowSec: () => now });
+    const t1 = service.allocateCliTimestamp(9);
+    const t2 = service.allocateCliTimestamp(9);
+    expect(t1).toBe(1_700_000_000);
+    expect(t2).toBe(1_700_000_001);
+    now = 1_700_000_000;
+    const t3 = service.allocateCliTimestamp(9);
+    expect(t3).toBe(1_700_000_002);
+  });
+
+  it('skips in-flight tokens when generating for a node', () => {
+    const service = createRepeaterCommandService();
+    service.registerPendingCommand('hold', [], { token: '00', senderNodeId: 5 });
+    expect(service.generateToken(5)).not.toBe('00');
   });
 });

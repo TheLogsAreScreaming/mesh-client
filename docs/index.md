@@ -30,7 +30,7 @@ hide:
 
 Connect a Meshtastic radio over BLE, USB serial, HTTP, or TCP, or join over MQTT. Channels, DMs, remote admin, telemetry, Store & Forward, and routing diagnostics.
 
-[Meshtastic features](features.md#meshtastic-features) · [Troubleshooting](troubleshooting.md)
+[Meshtastic guide](meshtastic.md) · [Features](features.md#meshtastic-features) · [Troubleshooting](troubleshooting.md)
 
 </div>
 
@@ -40,7 +40,7 @@ Connect a Meshtastic radio over BLE, USB serial, HTTP, or TCP, or join over MQTT
 
 Companion radios over BLE, USB serial, or TCP. Contacts, channels, Rooms (BBS), repeater admin (status, neighbors, trace, CLI), and MQTT chat ingest.
 
-[MeshCore features](features.md#meshcore-features) · [Troubleshooting](troubleshooting-meshcore.md)
+[MeshCore guide](meshcore.md) · [Features](features.md#meshcore-features) · [Troubleshooting](troubleshooting-meshcore.md)
 
 </div>
 
@@ -50,14 +50,13 @@ Companion radios over BLE, USB serial, or TCP. Contacts, channels, Rooms (BBS), 
 
 - **Persistent history:** every message, node, and contact is stored in a local SQLite database, so nothing disappears when you reconnect.
 - **Routing diagnostics:** spot problem relays, hidden terminals, noisy channels, and unstable paths. See [Diagnostics](diagnostics.md).
-- **Maps that work offline:** download map regions ahead of time for field use. See [Troubleshooting: Map tab without internet](troubleshooting.md#map-tab-without-internet-offline--no-wan).
+- **Chat and messaging:** channels, DMs, search, unified inbox, scheduled send, and pin/archive. See the [Chat guide](chat.md).
+- **Maps that work offline:** basemaps, custom XYZ/MBTiles sources, and region download for field use. See the [Maps guide](maps.md) and [Troubleshooting: Map tab without internet](troubleshooting.md#map-tab-without-internet-offline--no-wan).
 - **Live packet traffic:** watch local Meshtastic or MeshCore traffic, or connect to a regional MeshCore feed anywhere in the world. See the [Live traffic map guide](live-traffic-map.md).
-- **Emergency communications:** MECP emergency reports, Incident Command, and TAK (Cursor-on-Target) on both protocols. See the [EMCOMM guide](emcomm.md).
+- **Emergency communications:** MECP emergency reports, Incident Command, and TAK (Cursor-on-Target) on both protocols. See the [EMCOMM guide](emcomm.md) and the [TAK guide](tak.md).
 - **Your language:** the interface is available in 16 languages and works fully offline. See [Localization](localization.md).
 
 <div class="grid" markdown>
-
-![Nodes list](images/nodes.png)
 
 ![Map](images/map.png)
 
@@ -67,7 +66,7 @@ Companion radios over BLE, USB serial, or TCP. Contacts, channels, Rooms (BBS), 
 
 ![Repeaters](images/repeaters.png)
 
-![MECP emergency compose](images/MECP.png)
+![MECP emergency compose](images/mecp.png)
 
 </div>
 

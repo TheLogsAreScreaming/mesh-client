@@ -5,6 +5,10 @@ import {
   normalizeMeshcoreCliCommand,
   redactMeshcoreCliSecrets,
 } from './meshcoreRepeaterCliQueue';
+import {
+  assertMeshcoreRepeaterCliCommand,
+  REPEATER_CLI_MAX_COMMAND_LENGTH,
+} from './repeaterCommandService';
 
 describe('infrastructure CLI command queue', () => {
   it('waits for the full reply before running a different command on the same node', async () => {
@@ -43,9 +47,28 @@ describe('infrastructure CLI command queue', () => {
     'get guest.password',
     'get prv.key',
     'set prv.key secret',
+    'set wifi.pwd secret',
+    'get wifi.pwd',
+    'set pin secret',
   ])('redacts both command and reply for %s', (command) => {
     expect(redactMeshcoreCliSecrets(command)).not.toContain('secret');
     expect(redactMeshcoreCliSecrets(command, '> secret')).toBe('[redacted]');
+  });
+
+  it('rejects an embedded newline, return, or NUL before a command is queued', () => {
+    expect(() => assertMeshcoreRepeaterCliCommand('ver\nreboot')).toThrow(
+      'repeatersPanel.cliCommandMustBeSingleLine',
+    );
+    expect(() => assertMeshcoreRepeaterCliCommand('ver\rreboot')).toThrow(
+      'repeatersPanel.cliCommandMustBeSingleLine',
+    );
+    expect(() => assertMeshcoreRepeaterCliCommand('ver\0reboot')).toThrow(
+      'repeatersPanel.cliCommandMustBeSingleLine',
+    );
+    expect(() =>
+      assertMeshcoreRepeaterCliCommand('x'.repeat(REPEATER_CLI_MAX_COMMAND_LENGTH + 1)),
+    ).toThrow('repeatersPanel.cliCommandTooLong');
+    expect(assertMeshcoreRepeaterCliCommand('  neighbors  ')).toBe('neighbors');
   });
 
   it('preserves empty string setter delimiters while trimming normal commands', () => {
@@ -57,5 +80,11 @@ describe('infrastructure CLI command queue', () => {
 
   it('retains normal CLI history', () => {
     expect(redactMeshcoreCliSecrets('get name', '> Repeater')).toBe('> Repeater');
+  });
+
+  it('scrubs a wifi.pwd value echoed in a reply to an ordinary command', () => {
+    expect(redactMeshcoreCliSecrets('get all', 'wifi.ssid: home\nwifi.pwd: secret')).toBe(
+      'wifi.ssid: home\nwifi.pwd: [redacted]',
+    );
   });
 });

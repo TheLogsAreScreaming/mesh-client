@@ -96,28 +96,28 @@ modules:
         path: .
       - flatpak/generated-sources.json
       - type: archive
-        url: https://github.com/pnpm/pnpm/releases/download/v12.11.2/pnpm-linux-x64.tar.gz
-        sha256: 358f30541b42371360c0d48a8daddc0c0850a90c36fcbea598032a9850e2c9ab
+        url: https://github.com/pnpm/pnpm/releases/download/v12.17.0/pnpm-linux-x64.tar.gz
+        sha256: 2c58959fd5df5cb9f4e72784c08a60ffc7ee558fed9b04b22254e29112203a51
         dest: pnpm-vendor
         # pnpm tarball has root-level `pnpm` + `dist/`; default strip-components:1 drops the binary.
         strip-components: 0
         only-arches: [x86_64]
       - type: archive
-        url: https://github.com/pnpm/pnpm/releases/download/v12.11.2/pnpm-linux-arm64.tar.gz
-        sha256: ad444fa06d7ff344d74ba1e4933f2ed71cc6357cc2d33707a5c60958b7d83085
+        url: https://github.com/pnpm/pnpm/releases/download/v12.17.0/pnpm-linux-arm64.tar.gz
+        sha256: ce5a5b95a9974a0bbd713a5ef74416dbcd0e3fdf11f69ea92c5995b9c18ccb47
         dest: pnpm-vendor
         strip-components: 0
         only-arches: [aarch64]
       - type: archive
-        url: https://github.com/electron/electron/releases/download/v44.10.2/electron-v44.10.2-linux-x64.zip
-        sha256: d2f9319dc81d6786c684a80f63d728421761f55a27a3ae3bd373250f0f40fdca
+        url: https://github.com/electron/electron/releases/download/v45.0.0/electron-v45.0.0-linux-x64.zip
+        sha256: 22f6a10bd3f7fef987ddbb379d3375ce664ad0c98a9a50f80c89f1718a0c3e3a
         dest: electron-prebuilt
         # Electron zip has root-level `electron` + `locales/` + `resources/`; default strip-components:1 flattens them.
         strip-components: 0
         only-arches: [x86_64]
       - type: archive
-        url: https://github.com/electron/electron/releases/download/v44.10.2/electron-v44.10.2-linux-arm64.zip
-        sha256: 17c7e2740c397957255d2eda16f8f9042230f84ffb458400a9cc14f9e0dd6879
+        url: https://github.com/electron/electron/releases/download/v45.0.0/electron-v45.0.0-linux-arm64.zip
+        sha256: a80d92b1ad6c111545a12632b8a75cedce614a41866e500810d4050d947f90e9
         dest: electron-prebuilt
         strip-components: 0
         only-arches: [aarch64]

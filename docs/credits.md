@@ -17,6 +17,7 @@
 - [M0Rf30](https://github.com/M0Rf30) - Flatpak Electron packaging
 - [ashortgrayble](https://github.com/ashortgrayble) - Colorado Mesh style guide (color scales, type, radius and elevation)
 - [W0RMT](https://github.com/RobertMTalbot)
+- [cappuccinocosmico](https://github.com/cappuccinocosmico/) - NixOS and Nix Flake Packaging
 
 ## Colorado Mesh
 
@@ -75,6 +76,23 @@ Wikipedia, Tatoeba and SETimes and is **CC-BY-SA-3.0**; see
 [the license](https://creativecommons.org/licenses/by-sa/3.0/).
 The identification data is used unchanged; translation models are decompressed without
 modifying their data. No model, vocabulary, language-ID file or translation WASM is bundled.
+
+### AI conversation summaries
+
+The optional offline engine bundles [wllama](https://github.com/ngxson/wllama) and
+[llama.cpp](https://github.com/ggml-org/llama.cpp) under MIT. Their notices ship in
+`dist-electron/main/ai-licenses/`. After explicit download, the catalog offers Apache-2.0
+[Qwen2.5](https://huggingface.co/Qwen/Qwen2.5-1.5B-Instruct) weights, plus
+[Llama 3.2](https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct) under the
+[Llama 3.2 Community License](https://github.com/meta-llama/llama-models/blob/main/models/llama3_2/LICENSE).
+Built with Llama. Llama downloads include the full license and Meta attribution notice.
+GGUF quantizations are published by [Qwen](https://huggingface.co/Qwen) and
+[bartowski](https://huggingface.co/bartowski). On Apple
+Silicon, optional MLX 4-bit packs come from [mlx-community](https://huggingface.co/mlx-community)
+and run via [mlx-swift](https://github.com/ml-explore/mlx-swift) /
+[mlx-swift-lm](https://github.com/ml-explore/mlx-swift-lm) in the staged `mesh-ai-mlx` helper.
+Immutable revisions, sizes and checksums are in `src/main/ai/local/modelManifest.ts`.
+No model weights ship in the installer.
 
 ## Third-party licenses
 

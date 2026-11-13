@@ -4,6 +4,10 @@ import JSZip from 'jszip';
 import path from 'path';
 
 import { buildInfoForManifest, getBuildInfo } from '../shared/buildInfo';
+import {
+  redactMeshcoreCliSecretsInJsonText,
+  redactMeshcoreCliSecretsInText,
+} from '../shared/meshcoreCliSecrets';
 import type { SupportBundleMode } from '../shared/support-bundle.types';
 import { exportDatabase } from './database';
 import { flushLogBeforeQuit, getLogPath } from './log-service';
@@ -120,6 +124,62 @@ Contents:
 `;
 }
 
+/**
+ * Scrub MeshCore CLI secrets (`set wifi.pwd`, `set pin`, `get wifi.pwd` replies, …) from a log
+ * buffer. The renderer already redacts before logging; this catches older builds' lines. The
+ * debug snapshot gets the JSON-string variant so it stays valid JSON.
+ */
+export function redactMeshcoreCliSecretsInLog(log: Buffer): Buffer {
+  if (log.length === 0) return log;
+  const text = log.toString('utf8');
+  const redacted = redactMeshcoreCliSecretsInText(text);
+  return redacted === text ? log : Buffer.from(redacted, 'utf8');
+}
+
+/** Truncate long hex ids in exported log lines (keep triage prefix only). */
+function redactLxmfOutboundLogLine(line: string): string {
+  return line.replace(/\b([0-9a-fA-F]{16,})\b/g, (hex) => `${hex.slice(0, 8)}…`);
+}
+
+/** Extract LXMF outbound / PN cascade diagnostic lines for developer triage. */
+export function extractLxmfOutboundLogSlice(...logChunks: Buffer[]): Buffer {
+  const patterns = [
+    /lxmf-outbound/i,
+    /propagation-deposit/i,
+    /propagation-retrieve/i,
+    /propagation-sync/i,
+    /propagation establish/i,
+    /PROPAGATION_PATH_UNKNOWN/i,
+    /LXMF advancing PN cascade/i,
+    /LXMF outbound delivery failed/i,
+    /outbound Direct Completes/i,
+    /LXMF delivery Failed/i,
+    /LXMF delivery Rejected/i,
+    /Direct path failover/i,
+    /PN cascade/i,
+    /DeliverPropagated/i,
+    // PN island diagnosis: actual deposit PN hash vs preferred, and sync target counts.
+    /deposit[_ ]?pn/i,
+    /preferred[_ ]?pn/i,
+    /sync[_ ]?target/i,
+    /pn[_ ]?island/i,
+    /HaveAll|empty[_ ]?offer/i,
+  ];
+  const lines: string[] = [];
+  for (const chunk of logChunks) {
+    if (!chunk.length) continue;
+    const text = chunk.toString('utf8');
+    for (const line of text.split(/\r?\n/)) {
+      if (patterns.some((re) => re.test(line))) {
+        lines.push(redactLxmfOutboundLogLine(line));
+      }
+    }
+  }
+  // Cap slice so huge logs cannot bloat the zip.
+  const capped = lines.length > 4000 ? lines.slice(-4000) : lines;
+  return Buffer.from(capped.join('\n') + (capped.length ? '\n' : ''), 'utf8');
+}
+
 async function readFileOrEmpty(filePath: string): Promise<Buffer> {
   try {
     return await fs.promises.readFile(filePath);
@@ -199,16 +259,18 @@ export async function buildSupportBundleZip(
   await flushLogBeforeQuit();
 
   const zip = new JSZip();
-  zip.file('debug-snapshot.json', debugSnapshotJson);
+  zip.file('debug-snapshot.json', redactMeshcoreCliSecretsInJsonText(debugSnapshotJson));
 
   const logPath = getLogPath();
   const logDir = path.dirname(logPath);
-  const currentLog = await readFileOrEmpty(logPath);
+  const currentLog = redactMeshcoreCliSecretsInLog(await readFileOrEmpty(logPath));
   zip.file('mesh-client.log', currentLog);
 
   const backupPath = path.join(logDir, LOG_BACKUP_FILENAME);
   if (fs.existsSync(backupPath)) {
-    const backupLog = await readFileTailOrEmpty(backupPath, MAX_SUPPORT_BUNDLE_LOG_BACKUP_BYTES);
+    const backupLog = redactMeshcoreCliSecretsInLog(
+      await readFileTailOrEmpty(backupPath, MAX_SUPPORT_BUNDLE_LOG_BACKUP_BYTES),
+    );
     zip.file(LOG_BACKUP_FILENAME, backupLog);
   }
 

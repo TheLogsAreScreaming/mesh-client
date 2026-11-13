@@ -185,7 +185,7 @@ describe('useMeshcoreRuntime DB pubkey backfill for DM send', () => {
       txPower: 22,
       radioFreq: 902_000_000,
     });
-    vi.mocked(window.electronAPI.db.getMeshcoreMessages).mockResolvedValue([]);
+    vi.mocked(window.electronAPI.db.getMeshcoreMessagesForHydration).mockResolvedValue([]);
     vi.mocked(window.electronAPI.db.getMeshcoreContacts).mockResolvedValue([
       {
         node_id: PEER_NODE_ID,
@@ -272,7 +272,11 @@ describe('useMeshcoreRuntime DB pubkey backfill for DM send', () => {
       await result.current.refreshContacts();
     });
 
-    expect(window.electronAPI.db.markAllMeshcoreContactsOffRadio).toHaveBeenCalled();
+    expect(window.electronAPI.db.markAllMeshcoreContactsOffRadio).not.toHaveBeenCalled();
+    expect(window.electronAPI.db.saveMeshcoreContactsBatch).toHaveBeenCalledWith(
+      [],
+      expect.any(String),
+    );
     expect(window.electronAPI.db.getMeshcoreContacts).toHaveBeenCalled();
 
     await act(async () => {
@@ -328,7 +332,13 @@ describe('useMeshcoreRuntime DM reply (wire + persistence)', () => {
       txPower: 22,
       radioFreq: 902_000_000,
     });
-    vi.mocked(window.electronAPI.db.getMeshcoreMessages).mockResolvedValue(messagesFromDb);
+    vi.mocked(window.electronAPI.db.getMeshcoreIdentityHydration).mockResolvedValue({
+      contacts: [contactRow],
+      nodes: [],
+      hopHistory: [],
+      messages: messagesFromDb,
+    });
+    // Connect-time pubkey backfill still reads contacts via the dedicated IPC.
     vi.mocked(window.electronAPI.db.getMeshcoreContacts).mockResolvedValue([contactRow]);
   }
 
@@ -393,7 +403,7 @@ describe('useMeshcoreRuntime DM reply (wire + persistence)', () => {
     const { result } = renderHook(() => useMeshcoreRuntime());
 
     await waitFor(() => {
-      expect(window.electronAPI.db.getMeshcoreMessages).toHaveBeenCalled();
+      expect(window.electronAPI.db.getMeshcoreIdentityHydration).toHaveBeenCalled();
     });
 
     await act(async () => {

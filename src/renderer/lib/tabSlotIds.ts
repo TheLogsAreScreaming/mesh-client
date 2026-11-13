@@ -18,6 +18,9 @@ export const TAB_SLOT_IDS = [
   'Sniffer',
   'RF',
   'Graph',
+  'ScheduledBroadcasts',
+  'TeamContacts',
+  'TeamRoster',
 ] as const;
 
 export type TabSlotId = (typeof TAB_SLOT_IDS)[number];

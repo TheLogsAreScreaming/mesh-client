@@ -1,24 +1,55 @@
 // Single source of truth for the Electron context bridge API surface.
 import type { MeshNode, MQTTSettings, MQTTStatus } from '../renderer/lib/types';
+import type { AiAPI } from './ai-types';
 import type { BeaconFeedApi } from './beacon';
+import type {
+  ElevationCacheStats,
+  ElevationHgtEstimate,
+  ElevationHgtEstimateRequest,
+  ElevationHgtProgress,
+  ElevationProfileRequest,
+  ElevationProfileResult,
+  ElevationResult,
+} from './elevation/types';
 import type {
   EnvironmentReading,
   EnvironmentTelemetryRow,
   EnvironmentTelemetrySource,
 } from './environmentTelemetry';
 import type { GeoResolvedPlace, GeoResolvePlaceRequest } from './geoPlace';
+import type { IncidentSnapshot } from './incidentTypes';
+import type { LiveMapWindowApi } from './liveMapWindow';
 import type { MeshProtocol } from './meshProtocol';
 import type { NotificationSoundsApi } from './notificationSounds';
-import type { OfflineMapBasemapId } from './offlineMaps/basemapRegistry';
+import type { MapSourceId, OfflineMapBasemapId } from './offlineMaps/basemapRegistry';
+import type {
+  AddXyzSourceRequest,
+  CustomMapSourceInfo,
+  CustomMapSourceResult,
+  ImportMbtilesRequest,
+  MbtilesPickResult,
+} from './offlineMaps/customMapSources';
+import type { RendererMemoryAutoSamplePayload } from './rendererMemoryAutoSample';
+import type {
+  ScheduledBroadcastInput,
+  ScheduledBroadcastLastResult,
+  ScheduledBroadcastRow,
+} from './scheduledBroadcastTypes';
 import type { ServiceAnnouncementFetchResult } from './serviceAnnouncementFeed';
 import type { SupportBundleMode } from './support-bundle.types';
 import type {
+  TAKChannelChatMessage,
+  TakChatChannel,
   TAKClientInfo,
   TAKContact,
   TAKContactsUpdate,
+  TAKDirectMessage,
+  TakDirectPeer,
+  TakDmProtocol,
+  TakDmStatusUpdate,
   TAKEnrollmentRequest,
-  TAKGeochatMessage,
   TAKInboundChat,
+  TakIncidentMarker,
   TAKNodeUpdate,
   TAKRemoteCredentialSummary,
   TAKRemoteSettings,
@@ -27,7 +58,22 @@ import type {
   TAKSettings,
   TakStyleSettings,
 } from './tak-types';
+import type {
+  TeamMember,
+  TeamMemberInput,
+  TeamMemberLinkInput,
+  TeamMemberLinkRosterInput,
+} from './teamRosterTypes';
 import type { TranslationAPI } from './translation-types';
+import type {
+  RadarFrames,
+  WeatherGrid,
+  WeatherGridRequest,
+  WeatherPointForecast,
+  WeatherPointRequest,
+  WeatherRadarFramesRequest,
+  WeatherResult,
+} from './weather/types';
 
 export type { MeshProtocol, SupportBundleMode };
 
@@ -126,7 +172,7 @@ export interface UpdateCheckingPayload {
 export interface GattBleDevice {
   deviceId: string;
   deviceName: string;
-  /** Advertised / last-seen BLE RSSI in dBm; null when unknown (e.g. Linux Web Bluetooth). */
+  /** Advertised / last-seen BLE RSSI in dBm; null when unavailable from the native adapter. */
   rssi?: number | null;
   /**
    * Hardware BLE MAC when the OS exposes one.
@@ -205,6 +251,12 @@ export interface OutboxEntry {
   groupTotal: number | null;
   /** `'emergency'` rows skip the 24h drain age cap and retry indefinitely (EMCOMM WS2). */
   priority: OutboxPriority;
+  /**
+   * Identity that queued the row. Null on legacy rows: those still drain with whichever
+   * radio for `protocol` is connected. A set id drains and shows only while that identity
+   * is the connected one.
+   */
+  identityId?: string | null;
 }
 
 export type OutboxPriority = 'normal' | 'emergency';
@@ -228,6 +280,8 @@ export interface RendererLivenessSnapshot {
   rendererUnresponsiveSeen: boolean;
   rss: number;
   heapUsed: number;
+  /** Physical RAM for the requesting renderer process; distinct from main rss/heapUsed. */
+  rendererProcessMemoryBytes?: number;
 }
 
 // ─── ElectronAPI interface ────────────────────────────────────────────────────
@@ -258,9 +312,41 @@ export type BleCoexistenceAcquireScanResult =
 
 export interface ElectronAPI {
   beacon: BeaconFeedApi;
+  liveMap: LiveMapWindowApi;
   translation: TranslationAPI;
+  ai: AiAPI;
   // ─── Database operations ────────────────────────────────────────────────────
   db: {
+    getIncidents: () => Promise<IncidentSnapshot>;
+    saveIncidents: (snapshot: IncidentSnapshot) => Promise<void>;
+    seedIncidents: (legacyJson: string | null) => Promise<IncidentSnapshot>;
+    listScheduledBroadcasts: () => Promise<ScheduledBroadcastRow[]>;
+    saveScheduledBroadcast: (input: ScheduledBroadcastInput) => Promise<ScheduledBroadcastRow>;
+    deleteScheduledBroadcast: (slot: number) => Promise<void>;
+    clearScheduledBroadcasts: () => Promise<void>;
+    claimScheduledBroadcastDue: (
+      slot: number,
+      expectedNextDueAt: number,
+      nextDueAt: number,
+      claimedAt: number,
+    ) => Promise<{ claimed: boolean }>;
+    setScheduledBroadcastResult: (
+      slot: number,
+      lastAttemptAt: number,
+      lastResult: ScheduledBroadcastLastResult,
+    ) => Promise<void>;
+    listTeamMembers: () => Promise<TeamMember[]>;
+    allocateTeamUnitId: () => Promise<number>;
+    upsertTeamMember: (input: TeamMemberInput) => Promise<TeamMember>;
+    deleteTeamMember: (unitId: number) => Promise<void>;
+    setTeamMemberLink: (input: TeamMemberLinkInput) => Promise<TeamMember>;
+    setTeamMemberLinkRoster: (input: TeamMemberLinkRosterInput) => Promise<TeamMember>;
+    removeTeamMemberLink: (
+      unitId: number,
+      protocol: MeshProtocol,
+      durableKey: string,
+    ) => Promise<TeamMember>;
+    clearTeamMembers: () => Promise<void>;
     saveMessage: (message: {
       sender_id: number;
       sender_name: string;
@@ -282,6 +368,15 @@ export interface ElectronAPI {
     }) => Promise<void>;
 
     getMessages: (channel?: number, limit?: number) => Promise<SavedMessage[]>;
+    /**
+     * One-shot Meshtastic cold hydrate: nodes + MeshCore contact hops + messages.
+     * Prefer over separate getNodes / getMeshcoreContacts / getMessages round-trips.
+     */
+    getMeshtasticIdentityHydration: (messageLimit?: number) => Promise<{
+      nodes: SavedNode[];
+      meshcoreContacts: unknown[];
+      messages: SavedMessage[];
+    }>;
     /** Distinct Meshtastic DM peers for History (survives message hydrate cap). */
     listMeshtasticDmPeers: (ownNodeId: number, limit?: number) => Promise<DmPeerRow[]>;
 
@@ -328,6 +423,42 @@ export interface ElectronAPI {
     setNodeFavorited: (nodeId: number, favorited: boolean) => Promise<void>;
     getNodeNote: (nodeId: number) => Promise<string | null>;
     setNodeNote: (nodeId: number, note: string) => Promise<void>;
+    /** Persist a COI / process memory sample (retention-bounded in main). */
+    recordRendererMemorySample: (sample: {
+      capturedAt: number;
+      bytes: number;
+      source: 'user-agent' | 'renderer-process';
+      sessionId?: string;
+      jsHeapBytes?: number;
+      totalJsHeapBytes?: number;
+      domNodes?: number;
+    }) => Promise<void>;
+    /**
+     * Summary plus retention-bounded timestamped rows for Support / debug exports
+     * (GitHub and Developer).
+     */
+    getRendererMemorySampleSummary: () => Promise<{
+      count: number;
+      firstAt: number | null;
+      lastAt: number | null;
+      minBytes: number | null;
+      maxBytes: number | null;
+      spanMs: number | null;
+      samples: {
+        capturedAt: number;
+        bytes: number;
+        source: 'user-agent' | 'renderer-process';
+        appVersion: string | null;
+        sessionId: string | null;
+        jsHeapBytes: number | null;
+        totalJsHeapBytes: number | null;
+        domNodes: number | null;
+      }[];
+    }>;
+    /** Main-owned start + 2h process working-set samples (already persisted in SQLite). */
+    onRendererMemoryAutoSample: (
+      callback: (sample: RendererMemoryAutoSamplePayload) => void,
+    ) => () => void;
     deleteNodesBySource: (source: string) => Promise<number>;
     migrateRfStubNodes: () => Promise<number>;
     deleteNodesWithoutLongname: () => Promise<number>;
@@ -344,6 +475,35 @@ export interface ElectronAPI {
     ) => Promise<void>;
 
     getMeshcoreMessages: (channelIdx?: number, limit?: number) => Promise<unknown[]>;
+    /**
+     * Fair MeshCore hydrate: newest global rows ∪ newest per logical channel
+     * (quiet group slots are not crowded out by Public traffic).
+     */
+    getMeshcoreMessagesForHydration: (limits?: {
+      globalLimit?: number;
+      perChannelLimit?: number;
+      roomLimit?: number;
+    }) => Promise<unknown[]>;
+    /**
+     * One-shot MeshCore cold hydrate: contacts + nodes + hop history + fair message window.
+     * Prefer over separate getMeshcoreContacts / getNodes / hop / messages round-trips.
+     */
+    getMeshcoreIdentityHydration: (limits?: {
+      globalLimit?: number;
+      perChannelLimit?: number;
+      roomLimit?: number;
+    }) => Promise<{
+      contacts: unknown[];
+      nodes: SavedNode[];
+      hopHistory: {
+        node_id: number;
+        timestamp: number;
+        hops: number | null;
+        snr: number | null;
+        rssi: number | null;
+      }[];
+      messages: unknown[];
+    }>;
     /** Distinct MeshCore DM peers (`channel_idx = -1`) for History. */
     listMeshcoreDmPeers: (ownNodeId: number, limit?: number) => Promise<DmPeerRow[]>;
     searchMessages: (query: string, limit?: number) => Promise<SavedMessage[]>;
@@ -430,6 +590,7 @@ export interface ElectronAPI {
         on_radio?: number | null;
         last_synced_from_radio?: string | null;
       }[],
+      radioSnapshotBefore?: string,
     ) => Promise<number>;
     updateMeshcoreContactRfTransport: (
       nodeId: number,
@@ -873,7 +1034,16 @@ export interface ElectronAPI {
       }[];
       sources: Record<string, { tileCount: number; diskBytes: number }>;
     }>;
-    clear: (source?: OfflineMapBasemapId | 'all') => Promise<{ ok: boolean }>;
+    clear: (source?: MapSourceId | 'all') => Promise<{ ok: boolean }>;
+    /** User-confirmed custom XYZ sources and imported MBTiles packages (main-process allowlist). */
+    custom: {
+      list: () => Promise<CustomMapSourceInfo[]>;
+      addXyz: (req: AddXyzSourceRequest) => Promise<CustomMapSourceResult>;
+      remove: (id: string) => Promise<{ ok: boolean }>;
+      /** Opens the OS file dialog in main; the renderer never supplies a path. */
+      pickMbtiles: () => Promise<MbtilesPickResult>;
+      importMbtiles: (req: ImportMbtilesRequest) => Promise<CustomMapSourceResult>;
+    };
     onProgress: (
       cb: (info: {
         jobId: string;
@@ -907,8 +1077,12 @@ export interface ElectronAPI {
   };
 
   // ─── Connection status ───────────────────────────────────────────────────────
-  notifyDeviceConnected: () => void;
-  notifyDeviceDisconnected: () => void;
+  /** `connectionType` is the renderer's ConnectionType (ble/serial/tcp/http) when known. */
+  notifyDeviceConnected: (
+    source?: 'meshtastic' | 'meshcore',
+    connectionType?: string | null,
+  ) => void;
+  notifyDeviceDisconnected: (source?: 'meshtastic' | 'meshcore') => void;
   setTrayUnread: (count: number) => void;
   quitApp: () => Promise<void>;
   /** Full process relaunch. */
@@ -1049,6 +1223,31 @@ export interface ElectronAPI {
     resolvePlace: (request: GeoResolvePlaceRequest) => Promise<GeoResolvedPlace | null>;
   };
 
+  // ─── Internet weather (map overlays; main-side fetches) ─────────────────────
+  weather: {
+    pointForecast: (request: WeatherPointRequest) => Promise<WeatherResult<WeatherPointForecast>>;
+    grid: (request: WeatherGridRequest) => Promise<WeatherResult<WeatherGrid>>;
+    radarFrames: (request: WeatherRadarFramesRequest) => Promise<WeatherResult<RadarFrames>>;
+    clearMemoryCache: () => Promise<{ ok: true }>;
+  };
+
+  // ─── Terrain elevation / LOS profile (map tool; main-side fetches + HGT cache)
+  elevation: {
+    sampleProfile: (
+      request: ElevationProfileRequest,
+    ) => Promise<ElevationResult<ElevationProfileResult>>;
+    estimateHgt: (
+      request: ElevationHgtEstimateRequest,
+    ) => Promise<ElevationResult<ElevationHgtEstimate>>;
+    downloadHgt: (
+      request: ElevationHgtEstimateRequest & { jobId?: string },
+    ) => Promise<ElevationResult<{ completed: number; failed: number }>>;
+    cancelHgtDownload: (jobId: string) => Promise<{ ok: boolean }>;
+    cacheStats: () => Promise<ElevationCacheStats>;
+    clearCache: () => Promise<{ ok: true }>;
+    onHgtProgress: (cb: (progress: ElevationHgtProgress) => void) => () => void;
+  };
+
   // ─── GPS / position export ───────────────────────────────────────────────────
   gps: {
     exportGpx: (opts?: { nodeId?: number; sinceMs?: number }) => Promise<{
@@ -1151,8 +1350,40 @@ export interface ElectronAPI {
     remoteEnroll: (request: TAKEnrollmentRequest) => Promise<TAKRemoteCredentialSummary>;
     remoteClearCredentials: () => Promise<TAKRemoteCredentialSummary>;
     onRemoteStatus: (cb: (status: TAKRemoteStatus) => void) => () => void;
-    /** Mirror one heard mesh channel message into TAK GeoChat; dropped while no sink is active. */
-    pushChatMessage: (message: TAKGeochatMessage) => Promise<void>;
+    /** Deliver one message heard on a served channel to TAK clients; dropped with no sink. */
+    pushChatMessage: (message: TAKChannelChatMessage) => Promise<void>;
+    /**
+     * Replace the mesh channels served to TAK clients. Each is announced to clients as a
+     * contact; ignored while no sink has started.
+     */
+    setChatChannels: (channels: TakChatChannel[]) => Promise<void>;
+    /**
+     * Name the previous version's GeoChat rooms, whose contacts TAK clients should drop;
+     * ignored while no sink has started.
+     */
+    retireChatRooms: (rooms: string[]) => Promise<void>;
+    /** Deliver one direct message heard from a companion to TAK clients; dropped with no sink. */
+    pushDirectMessage: (message: TAKDirectMessage) => Promise<void>;
+    /**
+     * Set the radios whose companions TAK clients may message; ignored while no sink has
+     * started.
+     */
+    setDirectMessaging: (protocols: TakDmProtocol[]) => Promise<void>;
+    /**
+     * Report how a TAK client's direct message ended, so its device gets a receipt or a note;
+     * dropped with no sink.
+     */
+    dmStatus: (update: TakDmStatusUpdate) => Promise<void>;
+    /**
+     * Set the peers this app has a direct conversation with, which TAK clients may message even
+     * with no marker; ignored while no sink has started.
+     */
+    setDirectPeers: (peers: TakDirectPeer[]) => Promise<void>;
+    /**
+     * Replace the open MECP emergencies shown as markers on TAK clients' maps; ignored while no
+     * sink has started.
+     */
+    setIncidentMarkers: (markers: TakIncidentMarker[]) => Promise<void>;
     /** How relayed nodes are styled: user unit filters over each node's advertised role. */
     getStyleSettings: () => Promise<TakStyleSettings>;
     /** Validate, save, and apply style settings; resolves with what was saved. */

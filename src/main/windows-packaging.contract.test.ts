@@ -89,6 +89,24 @@ describe('Windows packaging (contract)', () => {
     }
   });
 
+  it('strips usocket in beforeBuild so Windows pack-time native rebuild skips it', () => {
+    const yml = readFileSync(join(REPO_ROOT, 'electron-builder.yml'), 'utf-8');
+    expect(yml).toMatch(/beforeBuild:\s*scripts\/electron-builder-before-build\.mjs/);
+    expect(yml).toMatch(/beforePack:\s*scripts\/electron-builder-before-pack\.mjs/);
+
+    const workspaceYaml = readFileSync(join(REPO_ROOT, 'pnpm-workspace.yaml'), 'utf-8');
+    expect(workspaceYaml).toMatch(/usocket:\s*false/);
+
+    const beforeBuild = readFileSync(
+      join(REPO_ROOT, 'scripts', 'electron-builder-before-build.mjs'),
+      'utf-8',
+    );
+    expect(beforeBuild).toContain('stripUsocketPackages');
+    expect(beforeBuild).toContain('usocket');
+    // void/undefined is treated as false and skips pack-time native rebuild.
+    expect(beforeBuild).toMatch(/return true\s*;/);
+  });
+
   it('disables universal NSIS, includes post-install guard, and verifies split Windows installers', () => {
     const yml = readFileSync(join(REPO_ROOT, 'electron-builder.yml'), 'utf-8');
     expect(yml).toMatch(/beforePack:\s*scripts\/electron-builder-before-pack\.mjs/);
@@ -459,16 +477,21 @@ describe('Windows packaging (contract)', () => {
     expect(releaseWorkflow).toContain('Validate macOS signing secrets');
   });
 
-  it('patches app-builder-lib so CSC_LINK signing uses the keychain password', () => {
+  it('uses upstream app-builder-lib CSC_LINK keychain-password fix (no local patch)', () => {
     const workspaceYaml = readFileSync(join(REPO_ROOT, 'pnpm-workspace.yaml'), 'utf-8');
     const lockfile = readFileSync(join(REPO_ROOT, 'pnpm-lock.yaml'), 'utf-8');
     const appBuilderLibLockRe = /^ {2}app-builder-lib@(26\.\d+\.\d+):$/m;
     const resolvedMatch = appBuilderLibLockRe.exec(lockfile);
     expect(resolvedMatch).not.toBeNull();
     const resolvedVersion = resolvedMatch![1];
-    expect(workspaceYaml).toContain(
-      `app-builder-lib@${resolvedVersion}: patches/app-builder-lib@${resolvedVersion}.patch`,
+    // electron-builder#10101 shipped in published 26.18.0 — do not reintroduce a local patch.
+    expect(workspaceYaml).not.toMatch(/app-builder-lib@[\d.]+:\s*patches\/app-builder-lib/);
+    expect(resolvedVersion.split('.').map(Number)).toEqual(
+      expect.arrayContaining([expect.any(Number)]),
     );
+    const [major, minor] = resolvedVersion.split('.').map(Number);
+    expect(major).toBe(26);
+    expect(minor).toBeGreaterThanOrEqual(18);
 
     const macCodeSign = readFileSync(
       join(REPO_ROOT, 'node_modules', 'app-builder-lib', 'out', 'codeSign', 'macCodeSign.js'),
@@ -485,6 +508,6 @@ describe('Windows packaging (contract)', () => {
     );
 
     const updateScript = readFileSync(join(REPO_ROOT, 'scripts', 'update.sh'), 'utf-8');
-    expect(updateScript).toMatch(/WATCH_ENTRIES=\([\s\S]*'app-builder-lib\|app-builder-lib\|/);
+    expect(updateScript).not.toMatch(/WATCH_ENTRIES=\([\s\S]*'app-builder-lib\|app-builder-lib\|/);
   });
 });

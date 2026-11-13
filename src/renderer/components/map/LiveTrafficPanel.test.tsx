@@ -9,6 +9,7 @@ import * as liveTrafficModel from '@/renderer/lib/map/liveTrafficModel';
 import type { RxPacketEntry } from '@/renderer/lib/meshcore/meshcoreHookTypes';
 import type { MeshtasticRawPacketEntry } from '@/renderer/lib/rawPacketLogConstants';
 import type { MeshNode } from '@/renderer/lib/types';
+import { mockConsoleWarn } from '@/renderer/lib/vitestConsoleMock';
 import { MS_PER_MINUTE, MS_PER_SECOND } from '@/shared/timeConstants';
 
 import type * as TrafficCanvasModule from './LiveTrafficCanvas';
@@ -37,6 +38,7 @@ const { canvas, map, mapContainer, marker, beaconFeed, feedRequest, translations
       zoomOut: vi.fn(),
       getCenter: () => ({ lat: 40.3, lng: -105.2 }),
       getZoom: () => 9.5,
+      setView: vi.fn(),
       getBounds: () => ({
         getSouth: (): number => 36,
         getWest: (): number => -110,
@@ -414,6 +416,7 @@ describe('LiveTrafficPanel', () => {
       );
       expect(screen.queryByRole('switch')).toBeNull();
       expect(screen.getByText('liveTraffic.waiting')).toBeInTheDocument();
+      expect(screen.getByText('liveTraffic.waitingHint')).toBeInTheDocument();
       expect(latestCanvas().events).toHaveLength(0);
       await act(() => vi.advanceTimersByTime(2 * MS_PER_MINUTE));
       fireEvent.click(screen.getByRole('button', { name: 'liveTraffic.pause' }));
@@ -421,9 +424,33 @@ describe('LiveTrafficPanel', () => {
       fireEvent.click(screen.getByRole('button', { name: 'liveTraffic.resume' }));
       expect(latestCanvas().events).toHaveLength(0);
       expect(screen.getByText('liveTraffic.waiting')).toBeInTheDocument();
+      expect(screen.getByText('liveTraffic.waitingHint')).toBeInTheDocument();
       expect(vi.getTimerCount()).toBe(0);
       unmount();
       expect(vi.getTimerCount()).toBe(0);
+    },
+  );
+
+  it.each(['meshcore', 'meshtastic'] as const)(
+    'explains the one-minute window for %s when only aged local packets remain',
+    async (protocol) => {
+      const agedTs = Date.now() - 2 * MS_PER_MINUTE;
+      await renderPanel(
+        <LiveTrafficPanel
+          nodes={nodes}
+          myNodeNum={1}
+          meshcorePackets={protocol === 'meshcore' ? [meshcorePacket(agedTs)] : undefined}
+          meshtasticPackets={protocol === 'meshtastic' ? [packet(agedTs)] : undefined}
+        />,
+      );
+      expect(latestCanvas().events).toHaveLength(0);
+      expect(screen.getByText('liveTraffic.waitingQuiet')).toBeInTheDocument();
+      expect(screen.getByText('liveTraffic.waitingHintQuiet')).toBeInTheDocument();
+      expect(screen.queryByText('liveTraffic.waitingHint')).toBeNull();
+      fireEvent.click(screen.getByRole('button', { name: 'liveTraffic.toggleFeed' }));
+      expect(screen.getByText('liveTraffic.emptyFeedQuiet')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'liveTraffic.aboutMap' }));
+      expect(screen.getByText('liveTraffic.retentionHint')).toBeInTheDocument();
     },
   );
 
@@ -1035,5 +1062,205 @@ describe('LiveTrafficPanel', () => {
     fireEvent.click(packetRows()[0]);
     hydrateAxeThemeColors(container);
     expect(await axe(container)).toHaveNoViolations();
+  });
+});
+
+describe('LiveTrafficPanel moving between windows', () => {
+  const handedOver = {
+    center: [45.52, -122.68] as [number, number],
+    zoom: 11,
+    basemapId: 'osm',
+    trafficSource: 'beacon' as const,
+    feed: { baseUrl: 'https://map.example.org', region: 'PDX' },
+  };
+
+  it('continues the map position, style and regional session it was handed', async () => {
+    const onViewChange = vi.fn();
+    await renderPanel(
+      <LiveTrafficPanel
+        nodes={nodes}
+        myNodeNum={1}
+        meshcorePackets={[]}
+        initialView={handedOver}
+        onViewChange={onViewChange}
+      />,
+    );
+    expect(mapContainer).toHaveBeenLastCalledWith(
+      expect.objectContaining({ center: [45.52, -122.68], zoom: 11 }),
+    );
+    expect(map.fitBounds).not.toHaveBeenCalled();
+    expect(screen.getByRole('combobox', { name: 'liveTraffic.trafficSource' })).toHaveValue(
+      'beacon',
+    );
+    expect(beaconFeed.connect).toHaveBeenCalledExactlyOnceWith('https://map.example.org', 'PDX');
+    expect(onViewChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ basemapId: 'osm', trafficSource: 'beacon', feed: handedOver.feed }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'liveTraffic.filters' }));
+    expect(screen.getByRole('combobox', { name: 'liveTraffic.basemap' })).toHaveValue('osm');
+  });
+
+  it('starts Meshtastic on its own radio whatever source it was handed', async () => {
+    await renderPanel(
+      <LiveTrafficPanel
+        nodes={nodes}
+        myNodeNum={1}
+        meshtasticPackets={[]}
+        initialView={handedOver}
+      />,
+    );
+    expect(beaconFeed.connect).not.toHaveBeenCalled();
+    expect(feedRequest).toHaveBeenLastCalledWith(false, 'beacon', true);
+  });
+
+  it('keeps a handed-over view while nodes arrive, until the user asks for a fit', async () => {
+    const localView = { ...handedOver, trafficSource: 'local' as const, feed: null };
+    const view = await renderPanel(
+      <LiveTrafficPanel
+        nodes={new Map()}
+        myNodeNum={1}
+        meshcorePackets={[]}
+        initialView={localView}
+      />,
+    );
+    view.rerender(
+      <LiveTrafficPanel nodes={nodes} myNodeNum={1} meshcorePackets={[]} initialView={localView} />,
+    );
+    expect(map.fitBounds).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'liveTraffic.fitTraffic' }));
+    expect(map.fitBounds).toHaveBeenCalledOnce();
+  });
+
+  it('frames all traffic again when the area is changed after a handed-over view', async () => {
+    const localView = { ...handedOver, trafficSource: 'local' as const, feed: null };
+    await renderPanel(
+      <LiveTrafficPanel nodes={nodes} myNodeNum={1} meshcorePackets={[]} initialView={localView} />,
+    );
+    const area = screen.getByRole('combobox', { name: 'liveTraffic.region' });
+    fireEvent.change(area, { target: { value: 'viewport' } });
+    expect(map.fitBounds).not.toHaveBeenCalled();
+    fireEvent.change(area, { target: { value: 'all' } });
+    expect(map.fitBounds).toHaveBeenCalledOnce();
+  });
+
+  it('applies a pushed view that only changes the regional feed', async () => {
+    const base = {
+      center: [45.52, -122.68] as [number, number],
+      zoom: 11,
+      basemapId: 'osm',
+      trafficSource: 'beacon' as const,
+      feed: { baseUrl: 'https://map.example.org', region: 'PDX' },
+    };
+    const view = await renderPanel(
+      <LiveTrafficPanel nodes={nodes} myNodeNum={1} meshcorePackets={[]} initialView={base} />,
+    );
+    beaconFeed.connect.mockClear();
+    const next = { ...base, feed: { baseUrl: 'https://map.example.org', region: 'DEN' } };
+    view.rerender(
+      <LiveTrafficPanel
+        nodes={nodes}
+        myNodeNum={1}
+        meshcorePackets={[]}
+        initialView={base}
+        navView={next}
+      />,
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(beaconFeed.connect).toHaveBeenCalledWith('https://map.example.org', 'DEN');
+    expect(map.setView).toHaveBeenCalledWith(next.center, next.zoom, { animate: false });
+  });
+
+  it('logs a handed-over session that fails to resume and does not hand it on', async () => {
+    const warn = mockConsoleWarn();
+    try {
+      const failure = new Error('feed unavailable');
+      beaconFeed.connect.mockRejectedValueOnce(failure);
+      const onViewChange = vi.fn();
+      await renderPanel(
+        <LiveTrafficPanel
+          nodes={nodes}
+          myNodeNum={1}
+          meshcorePackets={[]}
+          initialView={handedOver}
+          onViewChange={onViewChange}
+        />,
+      );
+      expect(warn.spy).toHaveBeenCalledWith('[live-map] regional feed did not resume', failure);
+      expect(onViewChange).toHaveBeenLastCalledWith(expect.objectContaining({ feed: null }));
+    } finally {
+      warn.restore();
+    }
+  });
+
+  it('reports a session the user connects and stops handing it over once disconnected', async () => {
+    const onViewChange = vi.fn();
+    const view = await renderPanel(
+      <LiveTrafficPanel
+        nodes={nodes}
+        myNodeNum={1}
+        meshcorePackets={[]}
+        onViewChange={onViewChange}
+      />,
+    );
+    expect(onViewChange).toHaveBeenLastCalledWith({
+      center: [40.3, -105.2],
+      zoom: 9.5,
+      basemapId: expect.any(String),
+      trafficSource: 'local',
+      feed: null,
+    });
+    fireEvent.change(screen.getByRole('combobox', { name: 'liveTraffic.trafficSource' }), {
+      target: { value: 'beacon' },
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'liveTraffic.beacon.connect' }));
+      await Promise.resolve();
+    });
+    expect(onViewChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        trafficSource: 'beacon',
+        feed: { baseUrl: beaconFeed.connect.mock.calls[0][0] as string },
+      }),
+    );
+    beaconFeed.status = 'disconnected';
+    view.rerender(
+      <LiveTrafficPanel
+        nodes={nodes}
+        myNodeNum={1}
+        meshcorePackets={[]}
+        onViewChange={onViewChange}
+      />,
+    );
+    expect(onViewChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({ trafficSource: 'beacon', feed: null }),
+    );
+    beaconFeed.status = 'live';
+  });
+
+  it('places window actions in the toolbar next to Pause', async () => {
+    await renderPanel(
+      <LiveTrafficPanel
+        nodes={nodes}
+        myNodeNum={1}
+        meshcorePackets={[]}
+        windowActions={<button type="button">Open window</button>}
+      />,
+    );
+    const pause = screen.getByRole('button', { name: 'liveTraffic.pause' });
+    expect(pause.parentElement).toContainElement(
+      screen.getByRole('button', { name: 'Open window' }),
+    );
+  });
+
+  it('frames the node directory without a few far-away positions', async () => {
+    const directory = new Map<number, MeshNode>();
+    for (let id = 1; id <= 30; id++) directory.set(id, node(id, 39 + id / 30, -105 - id / 30));
+    directory.set(99, node(99, 84.92, 12.92));
+    await renderPanel(<LiveTrafficPanel nodes={directory} myNodeNum={1} meshcorePackets={[]} />);
+    const fitted = map.fitBounds.mock.calls.at(-1)?.[0] as [number, number][];
+    expect(fitted).toHaveLength(30);
+    expect(fitted).not.toContainEqual([84.92, 12.92]);
   });
 });
