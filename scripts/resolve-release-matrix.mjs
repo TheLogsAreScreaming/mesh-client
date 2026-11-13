@@ -15,7 +15,9 @@ const ROWS = [
     sidecar_platform: 'darwin',
   },
   {
-    os: 'ubuntu-latest',
+    // Pinned: ubuntu-latest moved to 26.04, where the arm64 cross toolchain apt install
+    // downgrades packages and fails. Move forward once 26.04 cross builds work.
+    os: 'ubuntu-24.04',
     platform_key: 'linux',
     build_script: 'pnpm run dist:linux',
     upload_globs:
