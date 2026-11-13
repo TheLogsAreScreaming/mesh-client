@@ -1,13 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { meshcoreNodeHash } from '@/shared/meshcoreNodeHash';
-
 import { MAX_IN_MEMORY_CHAT_MESSAGES } from '../lib/chatInMemoryBuffer';
-import {
-  openHeardRepeatWindow,
-  recordMeshcoreRfRx,
-  resetHeardRepeatWindowsForTests,
-} from '../lib/meshcore/heardRepeatTracker';
+import { resetHeardRepeatWindowsForTests } from '../lib/meshcore/heardRepeatTracker';
 import * as meshtasticMessageLoadLimit from '../lib/meshtasticMessageLoadLimit';
 import type { Protocol } from '../lib/protocols/Protocol';
 import { useRelayCoverageStore } from '../lib/relayCoverage/relayCoverageStore';

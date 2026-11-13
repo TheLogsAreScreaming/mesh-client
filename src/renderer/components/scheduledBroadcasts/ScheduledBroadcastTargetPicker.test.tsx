@@ -27,8 +27,6 @@ import { ScheduledBroadcastTargetPicker } from './ScheduledBroadcastTargetPicker
 
 const ROOM_PUB = 'aa'.repeat(32);
 
-const HUB = 'aabbccddeeff00112233445566778899';
-
 beforeEach(() => {
   resetLiveChannelKeyStoreForTests();
   localStorage.clear();

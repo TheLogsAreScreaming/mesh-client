@@ -92,7 +92,6 @@ import {
   type BleScanOwner,
 } from './ble-coexistence-coordinator';
 import { BleSidecarManager } from './ble-sidecar-manager';
-import { formatBluetoothctlSpawnError } from './bluetoothctlSpawnError';
 import { ensureCameraAccess, isAllowedCameraPrivacySettingsUrl } from './cameraAccess';
 import {
   backfillChannelKeys,
@@ -343,13 +342,6 @@ const meshcoreMqttAdapter = new MeshcoreMqttAdapter();
 
 /** TAK status before the lazy-loaded `TakServerManager` module is imported. */
 const IDLE_TAK_STATUS: TAKServerStatus = { running: false, port: 8089, clientCount: 0 };
-
-/** MAC address format: XX:XX:XX:XX:XX:XX */
-function isMacAddress(value: string): boolean {
-  const parts = value.split(':');
-  if (parts.length !== 6) return false;
-  return parts.every((part) => /^[0-9A-Fa-f]{2}$/.test(part));
-}
 
 let takServerManager: TakServerManager | null = null;
 let takServerManagerLoadPromise: Promise<TakServerManager> | null = null;

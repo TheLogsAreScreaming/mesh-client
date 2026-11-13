@@ -56,7 +56,7 @@ export function querySummaryHistory(
   const args: (string | number)[] = [];
   const where: string[] = [];
   let table: string;
-  let body = 'payload';
+  const body = 'payload';
   let sender = "COALESCE(sender_name, CAST(sender_id AS TEXT), '')";
   let timestamp = 'timestamp';
   if (q.protocol === 'meshtastic' || q.protocol === 'meshcore') {

@@ -15,7 +15,6 @@ import {
   floodScopeOverridesStorageKey,
   lastReadStorageKey,
 } from './chatPanelProtocolStorage';
-import * as memorySampler from './coiMemorySampler';
 import {
   analyzeDebugSnapshot,
   buildDebugSnapshot,

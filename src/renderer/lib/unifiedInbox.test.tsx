@@ -1,19 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ChatMessage } from './types';
-import {
-  buildUnifiedInboxItems,
-  formatInboxItemLine,
-  inboxItemKey,
-  inboxItemsToExportMessages,
-  inboxItemToJumpTarget,
-  isUnifiedInboxShortcut,
-  loadDismissedInboxKeys,
-  messageStarId,
-  saveDismissedInboxKeys,
-  UNIFIED_INBOX_DISMISSED_KEY,
-  UNIFIED_INBOX_DISMISSED_LIMIT,
-} from './unifiedInbox';
+import { buildUnifiedInboxItems, formatInboxItemLine, inboxItemKey, inboxItemsToExportMessages, isUnifiedInboxShortcut, loadDismissedInboxKeys, messageStarId, saveDismissedInboxKeys, UNIFIED_INBOX_DISMISSED_KEY, UNIFIED_INBOX_DISMISSED_LIMIT } from './unifiedInbox';
 
 function msg(over: Partial<ChatMessage>): ChatMessage {
   return {

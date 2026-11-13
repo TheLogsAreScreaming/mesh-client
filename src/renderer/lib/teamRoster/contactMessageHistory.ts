@@ -1,6 +1,5 @@
 import type { ChatMessage } from '@/renderer/lib/types';
 import type { MeshProtocol } from '@/shared/meshProtocol';
-import type { TeamMemberLink } from '@/shared/teamRosterTypes';
 
 import type { LinkPresenceSnapshot } from './contactPresence';
 
@@ -113,9 +112,4 @@ export function buildContactMessageTimeline(
 /** Resolve a DM peer node id from a presence snapshot. */
 export function dmPeerFromPresence(snap: LinkPresenceSnapshot): number | null {
   return snap.peerNodeId;
-}
-
-/** Hash-addressed peer for a link; no protocol in this build addresses peers by hash. */
-export function reticulumHashFromLink(_link: TeamMemberLink): string | null {
-  return null;
 }

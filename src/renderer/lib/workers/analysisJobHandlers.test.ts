@@ -1,8 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import { ANALYSIS_WORKER_REQUEST_TIMEOUT_MS } from '../timeConstants';
-import { runAnalysisJob } from './analysisJobHandlers';
-import { createAnalysisWorkerPool, workerBudget } from './analysisWorkerPool';
+import { workerBudget } from './analysisWorkerPool';
 import { runDiagnosticsAnalyzeBatchInline } from './runDiagnosticsAnalyzeBatch';
 import { isAllowedWorkerMessageOrigin } from './workerOrigins';
 

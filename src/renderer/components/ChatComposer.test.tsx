@@ -5,15 +5,7 @@ import { axe } from 'vitest-axe';
 
 import { hydrateAxeThemeColors } from '@/renderer/lib/a11yTestHelpers';
 import { MESHTASTIC_PAYLOAD_LIMIT } from '@/renderer/lib/chatComposerLimits';
-import {
-  draftsStorageKey,
-  FLOOD_SCOPE_OVERRIDE_UNSCOPED,
-  floodScopeOverridesStorageKey,
-  loadDraftsInitial,
-  loadFloodScopeOverridesInitial,
-  saveDraft,
-  saveFloodScopeOverride,
-} from '@/renderer/lib/chatPanelProtocolStorage';
+import { draftsStorageKey, FLOOD_SCOPE_OVERRIDE_UNSCOPED, floodScopeOverridesStorageKey, loadFloodScopeOverridesInitial, saveFloodScopeOverride } from '@/renderer/lib/chatPanelProtocolStorage';
 import { resetLateSendOutcomesForTests } from '@/renderer/lib/lateSendOutcomes';
 import { meshcoreChannelScopeKey } from '@/renderer/lib/meshcoreChannelScope';
 import { resetMeshcoreSendRateForTests } from '@/renderer/lib/meshcoreSendRateNotice';

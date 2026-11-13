@@ -1,23 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  buildChannelChatCot,
-  buildChannelContactCot,
-  buildDirectChatCot,
-  buildDirectContactCot,
-  buildDirectReceiptCot,
-  buildGeochatCot,
-  channelContactUid,
-  geochatSenderUid,
-  parseTakChannelChatMessage,
-  parseTakChatChannels,
-  parseTakDirectMessage,
-  parseTakDirectPeers,
-  parseTakDmProtocols,
-  parseTakDmStatus,
-  parseTakRetiredRooms,
-  retiredRoomContactUid,
-} from './geochat-cot';
+import { buildChannelChatCot, buildChannelContactCot, buildDirectChatCot, buildDirectContactCot, buildDirectReceiptCot, buildGeochatCot, channelContactUid, geochatSenderUid, parseTakChannelChatMessage, parseTakChatChannels, parseTakDmStatus, parseTakRetiredRooms, retiredRoomContactUid } from './geochat-cot';
 
 const NOW = Date.parse('2026-10-09T12:00:00.000Z');
 const MSG = { room: 'Mesh Ops', senderCallsign: 'Bob', text: 'on scene', timeMs: NOW - 5000 };

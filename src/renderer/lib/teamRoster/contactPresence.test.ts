@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import type { MeshNode } from '@/renderer/lib/types';
-import type { TeamMember } from '@/shared/teamRosterTypes';
 
-import { resolveLinkPresence, resolveMemberPresence } from './contactPresence';
+import { resolveLinkPresence } from './contactPresence';
 
 function node(partial: Partial<MeshNode> & { node_id: number }): MeshNode {
   return {

@@ -12,12 +12,7 @@ import {
   isBlePeripheralConflictErrorMessage,
   isBleScanBusyErrorMessage,
 } from './bleAdapterLease';
-import {
-  extractGattBleErrorCode,
-  gattBleErrorI18nKey,
-  isMeshcoreSetupAbortError,
-  isReticulumSidecarResolveErrorMessage,
-} from './bleConnectErrors';
+import { extractGattBleErrorCode, gattBleErrorI18nKey, isMeshcoreSetupAbortError } from './bleConnectErrors';
 import { isDeviceChooserCancel } from './deviceChooserCancel';
 import { isMeshcoreI18nKey } from './meshcore/meshcoreMessageI18n';
 

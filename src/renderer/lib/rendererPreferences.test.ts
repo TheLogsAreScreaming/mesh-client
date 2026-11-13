@@ -3,9 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DURABLE_RENDERER_STORAGE_KEYS } from '@/shared/rendererOrigin';
 
-import joeyPreferences from '../../../e2e/fixtures/renderer-preferences.json';
 import { DEFAULT_APP_SETTINGS_SHARED } from './defaultAppSettings';
-import { mockConsoleWarn } from './vitestConsoleMock';
 
 const DATABASE_KEY = DURABLE_RENDERER_STORAGE_KEYS.preferences;
 class TestStorage implements Storage {

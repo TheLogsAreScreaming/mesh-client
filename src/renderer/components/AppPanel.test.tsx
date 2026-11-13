@@ -2,7 +2,6 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
-import joeyPreferences from '../../../e2e/fixtures/renderer-preferences.json';
 import { hydrateAxeThemeColors } from '../lib/a11yTestHelpers';
 import { APP_SETTINGS_STORAGE_KEY } from '../lib/appSettingsStorage';
 import { FONT_SCALE_STORAGE_KEY } from '../lib/fontScale';

@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 
 import { errLikeToLogString } from '@/renderer/lib/errLikeToLogString';
-import { readStoredStaticGps } from '@/renderer/lib/gpsSource';
 import { canTakDirectMessage } from '@/renderer/lib/tak/takDirectMessages';
 import {
   collectTakNodeUpdates,

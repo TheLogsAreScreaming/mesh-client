@@ -44,9 +44,6 @@ export async function runDiagnosticsAnalyzeBatch(args: DiagnosticsAnalyzeBatchAr
   clearedNodeIds: number[];
 }> {
   const result = await runAnalysisRequest(toRequest(args, nextAnalysisSequence()));
-  if (result.kind !== 'diagnosticsAnalyzeBatch') {
-    throw new Error(`unexpected analysis result ${result.kind}`);
-  }
   const anomalies = new Map<number, NodeAnomaly>();
   for (const row of result.anomalies) {
     anomalies.set(row.nodeId, row.anomaly);
@@ -59,9 +56,6 @@ export function runDiagnosticsAnalyzeBatchInline(args: DiagnosticsAnalyzeBatchAr
   clearedNodeIds: number[];
 } {
   const result = runAnalysisRequestInline(toRequest(args, nextAnalysisSequence()));
-  if (result.kind !== 'diagnosticsAnalyzeBatch') {
-    throw new Error(`unexpected analysis result ${result.kind}`);
-  }
   const anomalies = new Map<number, NodeAnomaly>();
   for (const row of result.anomalies) {
     anomalies.set(row.nodeId, row.anomaly);

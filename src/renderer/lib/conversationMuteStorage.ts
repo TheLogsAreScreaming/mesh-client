@@ -17,7 +17,7 @@ export function setConversationMuteMqttClientId(protocol: MeshProtocol, clientId
   const valid =
     protocol === 'meshtastic'
       ? /^meshtastic-electron-[0-9a-f]{16}$/.test(clientId)
-      : protocol === 'meshcore' && /^(meshcore-mqtt-[0-9a-f]{16}|v1_[0-9a-f]{64})$/i.test(clientId);
+      : /^(meshcore-mqtt-[0-9a-f]{16}|v1_[0-9a-f]{64})$/i.test(clientId);
   if (valid) mqttClientIds.set(protocol, clientId.toLowerCase());
   else mqttClientIds.delete(protocol);
 }

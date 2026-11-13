@@ -5,10 +5,8 @@ import { computeChannelIdentityKey } from '@/shared/channelIdentityKey';
 import type { TakChatChannel } from '@/shared/tak-types';
 
 import type { EmergencyIncident } from '../lib/mecp/incidentTypes';
-import { setConnection, useConnectionStore } from '../stores/connectionStore';
 import { useIncidentStore } from '../stores/incidentStore';
 import { useMecpBlockStore } from '../stores/mecpBlockStore';
-import { addMessage, useMessageStore } from '../stores/messageStore';
 import { getTakChannels, getTakRadio, useTakChannelStore } from '../stores/takChannelStore';
 import { useTakRelayPrefsStore } from '../stores/takRelayPrefsStore';
 import { useTakSinkStore } from '../stores/takSinkStore';

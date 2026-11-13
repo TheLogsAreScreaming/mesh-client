@@ -9,7 +9,6 @@ import {
   buildContactMessageTimeline,
   dmPeerFromPresence,
   type MessagesByProtocol,
-  reticulumHashFromLink,
 } from '@/renderer/lib/teamRoster/contactMessageHistory';
 import type { MemberPresenceSnapshot } from '@/renderer/lib/teamRoster/contactPresence';
 import type { MeshProtocol } from '@/shared/meshProtocol';
@@ -28,7 +27,6 @@ export interface TeamContactDetailDialogProps {
   onSendDm?: (args: {
     protocol: MeshProtocol;
     destination: number;
-    reticulumHash?: string | null;
     text: string;
   }) => boolean | undefined;
 }
@@ -76,8 +74,7 @@ export function TeamContactDetailDialog({
   const openSelectedChat = () => {
     if (!selected) return;
     const peer = dmPeerFromPresence(selected);
-    const hash = reticulumHashFromLink(selected.link);
-    if (peer == null && !hash) return;
+    if (peer == null) return;
     suppressRestoreFocus();
     onOpenChat({
       kind: 'chat',
@@ -96,7 +93,6 @@ export function TeamContactDetailDialog({
     const ok = onSendDm({
       protocol: selected.link.protocol,
       destination: peer,
-      reticulumHash: reticulumHashFromLink(selected.link),
       text,
     });
     if (ok !== false) setDraft('');

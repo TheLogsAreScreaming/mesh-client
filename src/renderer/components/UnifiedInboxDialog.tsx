@@ -18,7 +18,6 @@ import {
   type UnifiedInboxItem,
 } from '@/renderer/lib/unifiedInbox';
 import { starInboxItems } from '@/renderer/lib/unifiedInboxActions';
-import { deleteMessage } from '@/renderer/stores/messageStore';
 import type { MeshProtocol } from '@/shared/meshProtocol';
 
 import { useToast } from './Toast';

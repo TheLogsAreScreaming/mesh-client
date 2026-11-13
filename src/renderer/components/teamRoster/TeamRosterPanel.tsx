@@ -44,7 +44,6 @@ export interface TeamRosterPanelProps {
   onSendDm?: (args: {
     protocol: MeshProtocol;
     destination: number;
-    reticulumHash?: string | null;
     text: string;
   }) => boolean | undefined;
 }

@@ -70,7 +70,6 @@ export interface TeamMemberLinkRosterInput {
 }
 
 const MESHCORE_PUBKEY_RE = /^[0-9a-fA-F]{64}$/;
-const RETICULUM_HASH_RE = /^[0-9a-fA-F]{32}$/;
 const MESHTASTIC_NODE_RE = /^\d+$/;
 
 /** True when value is an integer Unit ID in range. */
@@ -99,22 +98,17 @@ export function normalizeTeamDurableKey(protocol: MeshProtocol, raw: string): st
     if (trimmed.length > 1 && trimmed.startsWith('0')) return null;
     return trimmed;
   }
-  if (protocol === 'meshcore') {
-    // Prefer 64-hex pubkey when known; otherwise allow decimal node id (heard without key).
-    if (MESHCORE_PUBKEY_RE.test(trimmed)) return trimmed.toLowerCase();
-    if (!MESHTASTIC_NODE_RE.test(trimmed)) return null;
-    if (trimmed.length > 1 && trimmed.startsWith('0')) return null;
-    return trimmed;
-  }
-  // reticulum
-  if (!RETICULUM_HASH_RE.test(trimmed)) return null;
-  return trimmed.toLowerCase();
+  // MeshCore: prefer 64-hex pubkey when known; otherwise allow decimal node id (heard without key).
+  if (MESHCORE_PUBKEY_RE.test(trimmed)) return trimmed.toLowerCase();
+  if (!MESHTASTIC_NODE_RE.test(trimmed)) return null;
+  if (trimmed.length > 1 && trimmed.startsWith('0')) return null;
+  return trimmed;
 }
 
 /** Narrow unknown input to a supported MeshProtocol. */
 export function assertTeamProtocol(value: unknown): MeshProtocol {
   if (typeof value !== 'string' || !isMeshProtocol(value)) {
-    throw new TypeError('protocol must be meshtastic, meshcore, or reticulum');
+    throw new TypeError('protocol must be meshtastic or meshcore');
   }
   return value;
 }

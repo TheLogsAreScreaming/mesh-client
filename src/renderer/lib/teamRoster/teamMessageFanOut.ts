@@ -1,13 +1,12 @@
 import type { MeshProtocol } from '@/shared/meshProtocol';
 import type { TeamMember } from '@/shared/teamRosterTypes';
 
-import { dmPeerFromPresence, reticulumHashFromLink } from './contactMessageHistory';
+import { dmPeerFromPresence } from './contactMessageHistory';
 import type { LinkPresenceSnapshot, MemberPresenceSnapshot } from './contactPresence';
 
 export interface TeamFanOutSendArgs {
   protocol: MeshProtocol;
   destination: number;
-  reticulumHash?: string | null;
   text: string;
 }
 
@@ -122,7 +121,6 @@ export function fanOutTeamMessage(opts: {
       const ok = opts.sendDm({
         protocol: link.link.protocol,
         destination,
-        reticulumHash: reticulumHashFromLink(link.link),
         text,
       });
       if (ok === false) {

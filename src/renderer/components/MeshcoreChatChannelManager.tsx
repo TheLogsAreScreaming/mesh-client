@@ -1,6 +1,5 @@
 import { Plus, X } from 'lucide-react-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 
 import { errLikeToLogString } from '@/renderer/lib/errLikeToLogString';
@@ -47,12 +46,6 @@ export default function MeshcoreChatChannelManager({
   const [privateChannel, setPrivateChannel] = useState(false);
   const [keyHex, setKeyHex] = useState('');
   const [saving, setSaving] = useState(false);
-  const [keepOpen, setKeepOpen] = useState(false);
-  const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'error' } | null>(
-    null,
-  );
-  const savingRef = useRef(false);
-  const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const normalizedName = privateChannel ? name.trim() : normalizeMeshcoreHashtagChannelName(name);
   const validName = privateChannel
@@ -68,65 +61,25 @@ export default function MeshcoreChatChannelManager({
     setName('');
     setKeyHex('');
     setPrivateChannel(false);
-    setKeepOpen(false);
-    setFeedback(null);
   }, []);
 
   useEffect(() => {
     if (!open) return;
-    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     inputRef.current?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        event.preventDefault();
         event.stopPropagation();
-        if (!savingRef.current) closeDialog();
-      }
-      if (event.key !== 'Tab') return;
-      const controls = [
-        ...(panelRef.current?.querySelectorAll<HTMLElement>(':is(button, input):not(:disabled)') ??
-          []),
-      ];
-      const first = controls[0];
-      const last = controls.at(-1);
-      // The panel itself (focused by clicking its heading or padding) counts as outside.
-      const active = document.activeElement;
-      const onControl = controls.some((control) => control === active);
-      if (controls.length === 0) {
-        event.preventDefault();
-        panelRef.current?.focus();
-      } else if (event.shiftKey && (active === first || !onControl)) {
-        event.preventDefault();
-        last?.focus();
-      } else if (!event.shiftKey && (active === last || !onControl)) {
-        event.preventDefault();
-        first?.focus();
+        if (!saving) closeDialog();
       }
     };
     window.addEventListener('keydown', onKeyDown, true);
     return () => {
       window.removeEventListener('keydown', onKeyDown, true);
-      previous?.focus();
     };
-  }, [open, closeDialog]);
-
-  useEffect(() => {
-    if (open && !saving) inputRef.current?.focus();
-  }, [open, saving]);
-
-  function finishAdd(message: string): void {
-    if (keepOpen) {
-      setName('');
-      setKeyHex('');
-      setFeedback({ message, type: 'success' });
-      inputRef.current?.focus();
-    } else {
-      closeDialog();
-    }
-  }
+  }, [open, saving, closeDialog]);
 
   async function handleAdd(): Promise<void> {
-    if (!valid || savingRef.current || disabled) return;
+    if (!valid || saving || disabled) return;
 
     const existing = configuredChannels.find((channel) => {
       if (channel.name !== normalizedName) return false;
@@ -136,40 +89,30 @@ export default function MeshcoreChatChannelManager({
     });
     if (existing) {
       onSelectChannel(existing.index);
-      const message = t('radioPanel.meshcoreChannel.alreadyAdded', { name: normalizedName });
-      if (!keepOpen) addToast(message, 'success');
-      finishAdd(message);
+      closeDialog();
       return;
     }
 
     const index = findFirstFreeMeshcoreChannelIndex(channels);
     if (index == null) {
-      const message = t('radioPanel.meshcoreChannel.slotsFull');
-      setFeedback({ message, type: 'error' });
-      addToast(message, 'error');
+      addToast(t('qrIngest.meshcoreChannelNoFreeIndex'), 'error');
       return;
     }
 
-    savingRef.current = true;
     setSaving(true);
-    setFeedback(null);
     try {
       const secretHex = privateChannel
         ? normalizedKeyHex
         : await meshcoreDeriveChannelKeyHexFromName(normalizedName);
       await onSetChannel(index, normalizedName, hexToBytesExactOrThrow(secretHex, 16));
-      const message = t('radioPanel.meshcoreChannel.added', { name: normalizedName });
-      addToast(message, 'success');
+      addToast(t('radioPanel.channelSavedStatus', { index }), 'success');
       onSelectChannel(index);
-      finishAdd(message);
+      closeDialog();
     } catch (error) {
       const message = errLikeToLogString(error);
       console.warn('[MeshcoreChatChannelManager] add failed ' + message);
-      const feedbackMessage = t('radioPanel.channelSaveFailed', { message });
-      setFeedback({ message: feedbackMessage, type: 'error' });
-      addToast(feedbackMessage, 'error');
+      addToast(t('radioPanel.channelSaveFailed', { message }), 'error');
     } finally {
-      savingRef.current = false;
       setSaving(false);
     }
   }

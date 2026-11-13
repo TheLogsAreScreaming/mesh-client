@@ -1,16 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import {
-  chatMessageFromSearchHit,
-  filterGlobalMessageSearchHits,
-  findMessageIndexForFocus,
-  type GlobalMessageSearchHit,
-  isGlobalMessageSearchShortcut,
-  normalizeMeshcoreSearchRow,
-  normalizeMeshtasticSearchRow,
-  runGlobalMessageSearch,
-  withFocusRowLoaded,
-} from './globalMessageSearch';
+import { filterGlobalMessageSearchHits, type GlobalMessageSearchHit, isGlobalMessageSearchShortcut, normalizeMeshcoreSearchRow, normalizeMeshtasticSearchRow } from './globalMessageSearch';
 
 describe('normalize*SearchRow', () => {
   it('maps Meshtastic channel vs DM', () => {

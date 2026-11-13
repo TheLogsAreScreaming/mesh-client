@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { mergeSummaryMessages, selectSummaryMessages } from './aiSummaryScope';
-import { mockConsoleWarn } from './vitestConsoleMock';
 
 describe('AI summary scope and RRC read boundaries', () => {
   const messages = [

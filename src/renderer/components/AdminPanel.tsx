@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { DetailsChevron } from '@/renderer/lib/icons/detailsChevron';
 import type { ProtocolCapabilities } from '@/renderer/lib/radio/BaseRadioProvider';
 import type { ConfigTargetContext } from '@/renderer/lib/types';
 

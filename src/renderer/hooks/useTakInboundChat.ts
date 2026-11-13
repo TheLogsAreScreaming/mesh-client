@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 
 import type {
   TakChatChannel,
-  TakDirectPeer,
   TakDmProtocol,
   TakIncidentMarker,
 } from '@/shared/tak-types';
@@ -26,11 +25,8 @@ import {
   toTakChatChannels,
 } from '../lib/tak/takServedChannels';
 import type { IdentityId } from '../lib/types';
-import { useConnectionStore } from '../stores/connectionStore';
 import { useIncidentStore } from '../stores/incidentStore';
 import { mecpBlockKey, useMecpBlockStore } from '../stores/mecpBlockStore';
-import { useMessageStore } from '../stores/messageStore';
-import { useNodeStore } from '../stores/nodeStore';
 import { setTakChannels, setTakRadio, type TakChannelInfo } from '../stores/takChannelStore';
 import {
   bindTakPendingSlots,
@@ -82,8 +78,6 @@ const sendChatChannels = (value: unknown): Promise<void> =>
   window.electronAPI.tak.setChatChannels(value as TakChatChannel[]);
 const sendDirectMessaging = (value: unknown): Promise<void> =>
   window.electronAPI.tak.setDirectMessaging(value as TakDmProtocol[]);
-const sendDirectPeers = (value: unknown): Promise<void> =>
-  window.electronAPI.tak.setDirectPeers(value as TakDirectPeer[]);
 const sendIncidentMarkers = (value: unknown): Promise<void> =>
   window.electronAPI.tak.setIncidentMarkers(value as TakIncidentMarker[]);
 

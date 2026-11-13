@@ -1,17 +1,8 @@
 import type { MeshProtocol } from '@/shared/meshProtocol';
 import { isMeshtasticBroadcastNodeNum } from '@/shared/nodeNameUtils';
-import {
-  isTakDmProtocol,
-  TAK_DIRECT_PEERS_MAX,
-  TAK_DM_PROTOCOLS,
-  TAK_GEOCHAT_CALLSIGN_MAX_LEN,
-  TAK_GEOCHAT_TEXT_MAX_LEN,
-  type TakDirectPeer,
-  type TakDmProtocol,
-} from '@/shared/tak-types';
+import { isTakDmProtocol, TAK_DM_PROTOCOLS, TAK_GEOCHAT_CALLSIGN_MAX_LEN, TAK_GEOCHAT_TEXT_MAX_LEN, type TakDmProtocol } from '@/shared/tak-types';
 
 import { getConnection } from '../../stores/connectionStore';
-import type { MessageRecord } from '../../stores/messageStore';
 import { type NodeRecord, useNodeStore } from '../../stores/nodeStore';
 import { getTakRadio } from '../../stores/takChannelStore';
 import { getTakRelayPrefs, type TakRelayIdentityPrefs } from '../../stores/takRelayPrefsStore';

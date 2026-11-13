@@ -270,9 +270,7 @@ import {
   TELEMETRY_PANEL_INDEX,
 } from './lib/appTabMappings';
 import { SHELL_COMPACT_QUERY } from './lib/bottomNav';
-import { meshcoreChatMessageRoute, meshtasticChatMessageRoute } from './lib/chatMessageRoute';
 import { playMessageNotification } from './lib/chatNotifications';
-import { meshcoreMessageReceptionStats } from './lib/chatSignalReport';
 import { startCoiMemorySampler } from './lib/coiMemorySampler';
 import {
   deviceHeaderVariant,
@@ -399,7 +397,6 @@ import { useMapViewportStore } from './stores/mapViewportStore';
 import { useNodeStore } from './stores/nodeStore';
 import { usePathHistoryStore } from './stores/pathHistoryStore';
 import { usePositionHistoryStore } from './stores/positionHistoryStore';
-import { useTimeFormatStore } from './stores/timeFormatStore';
 import { useWeatherFilterStore } from './stores/weatherFilterStore';
 
 // Tabs capability filtering lives in appTabMappings.ts (computeTabMappings).
@@ -651,7 +648,7 @@ function AppContent() {
     protocol: MeshProtocol;
     channel: number;
   } | null>(null);
-  const [pendingMessageFocus, setPendingMessageFocus] = useState<PendingMessageFocus | null>(null);
+  const [, setPendingMessageFocus] = useState<PendingMessageFocus | null>(null);
   const [globalMessageSearchOpen, setGlobalMessageSearchOpen] = useState(false);
   const [unifiedInboxOpen, setUnifiedInboxOpen] = useState(false);
   const [pendingSettingAnchor, setPendingSettingAnchor] = useState<PendingSettingAnchor | null>(
@@ -1773,7 +1770,6 @@ function AppContent() {
     },
     [
       protocol,
-      capabilitiesByProtocol,
       chatSendAvailableByProtocol,
       identityIdByProtocol,
       outboxSendFnByProtocol,
@@ -1825,7 +1821,6 @@ function AppContent() {
       chatSendAvailableByProtocol,
       identityIdByProtocol,
       outboxSendFnByProtocol,
-      capabilitiesByProtocol,
       addToast,
       t,
     ],
@@ -1864,10 +1859,6 @@ function AppContent() {
       meshtasticOwnNodeHistory,
       meshtasticSelfPublicKeyHex,
     ],
-  );
-  const meshcoreOwnNodeIdsForChat = useMemo(
-    () => Array.from(meshcoreOwnNodeIdSet),
-    [meshcoreOwnNodeIdSet],
   );
   const headerMyNodeNum = activeConnectionView.state.myNodeNum;
   const headerSelfNodeLabel = (() => {
@@ -2290,7 +2281,6 @@ function AppContent() {
       activeTab,
       activePanelIndex,
       tabsByProtocol,
-      capabilitiesByProtocol,
       scheduleProtocolCommit,
     ],
   );
@@ -2789,7 +2779,6 @@ function AppContent() {
     [
       activePanelIndex,
       activeTab,
-      capabilitiesByProtocol,
       enabledProtocols,
       pendingProtocolSelection,
       protocol,
@@ -2809,14 +2798,13 @@ function AppContent() {
     (args: {
       protocol: MeshProtocol;
       destination: number;
-      reticulumHash?: string | null;
       text: string;
     }): boolean => {
       if (!selectByProtocol(chatSendAvailableByProtocol, args.protocol)) {
         console.warn('[App] team roster send unavailable for protocol', args.protocol);
         return false;
       }
-      let destination = args.destination;
+      const destination = args.destination;
       try {
         const send = selectByProtocol(autoResendSendByProtocol, args.protocol);
         const storeId = send(args.text, 0, destination);
@@ -2956,12 +2944,6 @@ function AppContent() {
   }, []);
   const handleChannelTargetConsumed = useCallback(() => {
     setPendingChannelTarget(null);
-  }, []);
-  const handleMessageFocusConsumed = useCallback(() => {
-    setPendingMessageFocus(null);
-  }, []);
-  const openGlobalMessageSearch = useCallback(() => {
-    setGlobalMessageSearchOpen(true);
   }, []);
   const handleGlobalMessageSearchHit = useCallback(
     (hit: GlobalMessageSearchHit, query?: string) => {

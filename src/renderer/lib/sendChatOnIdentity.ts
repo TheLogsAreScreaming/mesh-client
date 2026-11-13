@@ -184,7 +184,7 @@ export function sendChatOnIdentity(
   identityId: IdentityId,
   request: ChatSendRequest,
 ): string | undefined {
-  const { text, channelIndex, destination, replyTo, retryOfStoreId } = request;
+  const { text, channelIndex, destination, replyTo } = request;
   // A lookup by id can miss (identity removed mid-send), whatever the record type says.
   const identity = useIdentityStore.getState().identities[identityId] as IdentityRecord | undefined;
   if (!identity) {

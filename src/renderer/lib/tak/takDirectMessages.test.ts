@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MESHTASTIC_BROADCAST_NODE_NUM } from '@/shared/nodeNameUtils';
 
 import { setConnection, useConnectionStore } from '../../stores/connectionStore';
-import type { MessageRecord } from '../../stores/messageStore';
 import { useNodeStore } from '../../stores/nodeStore';
 import { setTakRadio, useTakChannelStore } from '../../stores/takChannelStore';
 import { getTakRelayPrefs, useTakRelayPrefsStore } from '../../stores/takRelayPrefsStore';

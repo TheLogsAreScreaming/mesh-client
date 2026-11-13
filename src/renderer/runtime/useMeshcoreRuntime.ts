@@ -4,7 +4,6 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { flushSync } from 'react-dom';
 
 import { BLE_ADAPTER_LEASE_RELEASED_EVENT } from '@/renderer/lib/bleAdapterLease';
-import { dedupeChannelPillsByIndex } from '@/renderer/lib/channelListDedupe';
 import { requestChatOutboxDrain } from '@/renderer/lib/chatOutboxDrain';
 /* eslint-disable @typescript-eslint/no-confusing-void-expression */
 import {

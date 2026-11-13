@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { MeshNode } from '../../renderer/lib/types';
-import { cotDeleteEvent, cotPongEvent, meshNodeToCot, parseMeshNodeUid } from './cot-converter';
+import { cotDeleteEvent, cotPongEvent, meshNodeToCot } from './cot-converter';
 
 function makeNode(overrides: Partial<MeshNode> = {}): MeshNode {
   return {

@@ -1,12 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
-import {
-  announceLateSend,
-  holdSendError,
-  resetLateSendOutcomesForTests,
-  subscribeLateSendOutcomes,
-  takeHeldSendError,
-} from './lateSendOutcomes';
+import { announceLateSend, holdSendError, resetLateSendOutcomesForTests, takeHeldSendError } from './lateSendOutcomes';
 
 describe('lateSendOutcomes', () => {
   beforeEach(() => {

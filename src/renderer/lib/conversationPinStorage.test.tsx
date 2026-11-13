@@ -1,16 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  conversationPrefsStorageKey,
-  filterArchived,
-  loadConversationPrefs,
-  normalizeConversationPrefs,
-  orderPinnedFirst,
-  saveConversationPrefs,
-  subscribeConversationPrefs,
-  toggleArchived,
-  togglePinned,
-} from './conversationPinStorage';
+import { conversationPrefsStorageKey, filterArchived, loadConversationPrefs, normalizeConversationPrefs, orderPinnedFirst, saveConversationPrefs, toggleArchived, togglePinned } from './conversationPinStorage';
 import type { MeshProtocol } from './types';
 
 const PROTOCOLS: MeshProtocol[] = ['meshtastic', 'meshcore'];

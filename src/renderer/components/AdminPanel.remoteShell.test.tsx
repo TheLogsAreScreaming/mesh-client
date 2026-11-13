@@ -1,10 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  MESHCORE_CAPABILITIES,
-  MESHTASTIC_CAPABILITIES,
-} from '@/renderer/lib/radio/BaseRadioProvider';
+import { MESHTASTIC_CAPABILITIES } from '@/renderer/lib/radio/BaseRadioProvider';
 
 import AdminPanel from './AdminPanel';
 import { ToastProvider } from './Toast';

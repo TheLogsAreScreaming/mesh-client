@@ -2,13 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { encodeMeshcoreGroupText } from '@/shared/meshcoreGroupText';
 
-import {
-  formatChatSignalReport,
-  hasRfMessageReception,
-  meshcoreMessageReceptionStats,
-  messageReceptionStats,
-  radioMessageReceptionTransport,
-} from './chatSignalReport';
+import { formatChatSignalReport, hasRfMessageReception, meshcoreMessageReceptionStats, messageReceptionStats } from './chatSignalReport';
 import { isBotReplyText } from './firmwareBotReplyParse';
 import { parseHopReport } from './hopReportParse';
 import type { RxPacketEntry } from './meshcore/meshcoreHookTypes';

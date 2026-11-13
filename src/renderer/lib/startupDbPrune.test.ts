@@ -1,13 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  afterStartupDbPrune,
-  resetStartupDbPruneForTests,
-  runSessionDbPrune,
-  runStartupDbPrune,
-} from './startupDbPrune';
+import { resetStartupDbPruneForTests, runSessionDbPrune, runStartupDbPrune } from './startupDbPrune';
 import { MESH_PROTOCOL_STORAGE_KEY } from './storedMeshProtocol';
-import { mockConsoleWarn } from './vitestConsoleMock';
 
 describe('runStartupDbPrune', () => {
   beforeEach(() => {
