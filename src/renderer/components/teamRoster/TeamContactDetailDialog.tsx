@@ -111,7 +111,7 @@ export function TeamContactDetailDialog({
           <div className="min-w-0">
             <h2
               id={titleId}
-              className="text-ink-100 flex flex-wrap items-center gap-2 text-title font-semibold"
+              className="text-ink-100 text-title flex flex-wrap items-center gap-2 font-semibold"
             >
               <TeamPresenceDot status={presence.aggregateStatus} />
               <span>
@@ -144,7 +144,7 @@ export function TeamContactDetailDialog({
 
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
           <section aria-labelledby={`${titleId}-links`}>
-            <h3 id={`${titleId}-links`} className="text-ink-200 mb-2 text-body-lg font-medium">
+            <h3 id={`${titleId}-links`} className="text-ink-200 text-body-lg mb-2 font-medium">
               {t('teamRoster.linkedProtocols')}
             </h3>
             {presence.links.length === 0 ? (
@@ -154,7 +154,7 @@ export function TeamContactDetailDialog({
                 {presence.links.map((snap) => (
                   <li
                     key={`${snap.link.protocol}:${snap.link.durableKey}`}
-                    className="border-ink-800 flex items-center gap-2 rounded border px-2 py-1.5 text-body-lg"
+                    className="border-ink-800 text-body-lg flex items-center gap-2 rounded border px-2 py-1.5"
                   >
                     <TeamPresenceDot status={snap.status} />
                     <span className="text-ink-100 min-w-0 flex-1 truncate">
@@ -168,7 +168,7 @@ export function TeamContactDetailDialog({
           </section>
 
           <section aria-labelledby={`${titleId}-history`}>
-            <h3 id={`${titleId}-history`} className="text-ink-200 mb-2 text-body-lg font-medium">
+            <h3 id={`${titleId}-history`} className="text-ink-200 text-body-lg mb-2 font-medium">
               {t('teamRoster.messageHistory')}
             </h3>
             {timeline.length === 0 ? (
@@ -179,7 +179,7 @@ export function TeamContactDetailDialog({
                   <li key={item.key}>
                     <button
                       type="button"
-                      className="hover:bg-ink-800 w-full px-3 py-2 text-left text-body-lg"
+                      className="hover:bg-ink-800 text-body-lg w-full px-3 py-2 text-left"
                       aria-label={t('teamRoster.openMessageInChat')}
                       onClick={() => {
                         if (item.isDirectMessage && item.dmPeer != null) {

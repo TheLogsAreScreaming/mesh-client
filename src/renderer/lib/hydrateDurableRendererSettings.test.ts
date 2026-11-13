@@ -177,5 +177,4 @@ describe('durable renderer startup hydration', () => {
       directMessages: true,
     });
   });
-
 });

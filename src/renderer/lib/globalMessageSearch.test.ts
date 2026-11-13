@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { filterGlobalMessageSearchHits, type GlobalMessageSearchHit, isGlobalMessageSearchShortcut, normalizeMeshcoreSearchRow, normalizeMeshtasticSearchRow } from './globalMessageSearch';
+import {
+  filterGlobalMessageSearchHits,
+  type GlobalMessageSearchHit,
+  isGlobalMessageSearchShortcut,
+  normalizeMeshcoreSearchRow,
+  normalizeMeshtasticSearchRow,
+} from './globalMessageSearch';
 
 describe('normalize*SearchRow', () => {
   it('maps Meshtastic channel vs DM', () => {

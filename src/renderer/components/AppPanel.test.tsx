@@ -121,7 +121,6 @@ describe('AppPanel migrated settings preservation', () => {
     expect(document.getElementById('apppanel-gps-interval')).toHaveValue('0');
     expect(JSON.parse(localStorage.getItem('mesh-client:gpsSettings')!).refreshInterval).toBe(0);
   });
-
 });
 
 describe('AppPanel accessibility', () => {

@@ -1,11 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type {
-  TakChatChannel,
-  TakDmProtocol,
-  TakIncidentMarker,
-} from '@/shared/tak-types';
+import type { TakChatChannel, TakDmProtocol, TakIncidentMarker } from '@/shared/tak-types';
 
 import { errLikeToLogString } from '../lib/errLikeToLogString';
 import { listTakDmProtocols } from '../lib/tak/takDirectMessages';
@@ -230,5 +226,4 @@ export function useTakInboundChat(sources: TakChannelSources): void {
     return JSON.stringify(listTakDmProtocols(radios, relayPrefs));
   }, [meshcoreId, meshtasticId, relayPrefs]);
   useSendWhileSinkActive(sinkActive, dmJson, sendDirectMessaging, 'setDirectMessaging');
-
 }

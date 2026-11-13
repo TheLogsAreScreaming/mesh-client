@@ -2795,11 +2795,7 @@ function AppContent() {
   }, []);
 
   const handleTeamRosterSendDm = useCallback(
-    (args: {
-      protocol: MeshProtocol;
-      destination: number;
-      text: string;
-    }): boolean => {
+    (args: { protocol: MeshProtocol; destination: number; text: string }): boolean => {
       if (!selectByProtocol(chatSendAvailableByProtocol, args.protocol)) {
         console.warn('[App] team roster send unavailable for protocol', args.protocol);
         return false;

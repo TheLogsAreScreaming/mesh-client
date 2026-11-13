@@ -23,7 +23,7 @@ export function ChatSummaryCard({ summary }: { summary: ConversationSummaryContr
     !!state.text.trim();
   return (
     <section
-      className="border-ink-700 bg-deep-black mx-3 my-2 max-h-96 shrink-0 overflow-y-auto rounded-modal border p-3 text-body-lg"
+      className="border-ink-700 bg-deep-black rounded-modal text-body-lg mx-3 my-2 max-h-96 shrink-0 overflow-y-auto border p-3"
       aria-label={t('aiSummary.catchUp')}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -92,7 +92,7 @@ export function ChatSummaryCard({ summary }: { summary: ConversationSummaryContr
                 role="status"
                 aria-live="polite"
                 aria-atomic="true"
-                className="text-ink-100 mt-1 text-body-lg whitespace-pre-wrap"
+                className="text-ink-100 text-body-lg mt-1 whitespace-pre-wrap"
               >
                 {turn.error
                   ? t(`aiSummary.error.${turn.error}`)
@@ -106,7 +106,7 @@ export function ChatSummaryCard({ summary }: { summary: ConversationSummaryContr
                           : t('aiSummary.followUpWorking'))}
               </div>
               {turn.truncated && (
-                <p className="mt-1 text-label text-warning-300">
+                <p className="text-label text-warning-300 mt-1">
                   {t('aiSummary.followUpContextLimited')}
                 </p>
               )}
@@ -163,7 +163,7 @@ export function ChatSummaryCard({ summary }: { summary: ConversationSummaryContr
         !!state.text.trim() &&
         !state.error &&
         !state.streaming && (
-          <p className="text-muted mt-1 text-label">{t('aiSummary.followUpContextLimited')}</p>
+          <p className="text-muted text-label mt-1">{t('aiSummary.followUpContextLimited')}</p>
         )}
       <div className="mt-2 flex flex-wrap gap-2">
         <Button

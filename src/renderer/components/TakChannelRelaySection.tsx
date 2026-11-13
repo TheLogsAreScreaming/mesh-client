@@ -162,7 +162,7 @@ export default function TakChannelRelaySection({
       {channels.length === 0 ? (
         <p className="text-muted text-label">{emptyText}</p>
       ) : (
-        <div className="flex items-center gap-2 text-label">
+        <div className="text-label flex items-center gap-2">
           <label htmlFor={modeId} className="text-ink-300">
             {t('takServerPanel.channelModeLabel')}
           </label>
@@ -191,7 +191,7 @@ export default function TakChannelRelaySection({
             const sending = prefs?.sendChannels.includes(ch.key) ?? false;
             const rowId = `tak-channel-${identityId}-${ch.index}`;
             return (
-              <li key={ch.key} className="flex flex-wrap items-center gap-3 text-label">
+              <li key={ch.key} className="text-label flex flex-wrap items-center gap-3">
                 <span className="text-ink-200 min-w-24 font-medium">{name}</span>
                 {mode === 'selected' && (
                   <RowCheck
@@ -290,7 +290,7 @@ export function TakDirectMessagesToggle({ identityId, anchorId }: DirectMessages
   if (!identityId) return null;
   const id = `tak-direct-messages-${identityId}`;
   return (
-    <div data-setting-anchor={anchorId} className="space-y-1 text-label">
+    <div data-setting-anchor={anchorId} className="text-label space-y-1">
       <label htmlFor={id} className="text-ink-300 flex items-center gap-2">
         <input
           id={id}

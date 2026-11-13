@@ -135,7 +135,7 @@ export default function MeshcoreTelemetryPushSection({
         <p className="text-muted text-label">{t('meshcoreTelemetryPush.thresholdsHint')}</p>
         <div className="grid grid-cols-2 gap-2">
           {MESHCORE_TELEMETRY_PUSH_METRICS.map((metric) => (
-            <label key={metric} className="text-ink-300 flex flex-col gap-1 text-label">
+            <label key={metric} className="text-ink-300 text-label flex flex-col gap-1">
               {metricLabels[metric]}
               <input
                 type="number"
@@ -148,12 +148,12 @@ export default function MeshcoreTelemetryPushSection({
                   const value = e.target.value;
                   setThresholds((prev) => ({ ...prev, [metric]: value }));
                 }}
-                className="bg-secondary-dark border-ink-600 text-ink-200 rounded-control border px-2 py-1 text-body-lg disabled:opacity-50"
+                className="bg-secondary-dark border-ink-600 text-ink-200 rounded-control text-body-lg border px-2 py-1 disabled:opacity-50"
               />
             </label>
           ))}
         </div>
-        <label className="text-ink-300 flex flex-col gap-1 text-label">
+        <label className="text-ink-300 text-label flex flex-col gap-1">
           {t('meshcoreTelemetryPush.leaseLabel')}
           <input
             type="number"
@@ -166,7 +166,7 @@ export default function MeshcoreTelemetryPushSection({
             onChange={(e) => {
               setLeaseMinutes(e.target.value);
             }}
-            className="bg-secondary-dark border-ink-600 text-ink-200 rounded-control border px-2 py-1 text-body-lg disabled:opacity-50"
+            className="bg-secondary-dark border-ink-600 text-ink-200 rounded-control text-body-lg border px-2 py-1 disabled:opacity-50"
           />
         </label>
         <p className="text-muted text-label">{t('meshcoreTelemetryPush.leaseHint')}</p>

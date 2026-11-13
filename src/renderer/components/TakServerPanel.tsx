@@ -281,11 +281,14 @@ export default function TakServerPanel({
                 aria-describedby={`${id}-mecp-alarm-hint`}
                 className="accent-brand-green"
               />
-              <label htmlFor={`${id}-mecp-alarm`} className="text-ink-300 cursor-pointer text-body-lg">
+              <label
+                htmlFor={`${id}-mecp-alarm`}
+                className="text-ink-300 text-body-lg cursor-pointer"
+              >
                 {t('takServerPanel.mecpAlarm')}
               </label>
             </div>
-            <p id={`${id}-mecp-alarm-hint`} className="text-muted mt-1 text-label">
+            <p id={`${id}-mecp-alarm-hint`} className="text-muted text-label mt-1">
               {t('takServerPanel.mecpAlarmHint')}
             </p>
           </div>

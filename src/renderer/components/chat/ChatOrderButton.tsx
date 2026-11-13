@@ -104,7 +104,7 @@ function ChatOrderDialog({ items, ids, onSave, onClose }: Props & { onClose: () 
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="bg-app-bg border-ink-800 flex max-h-[85vh] w-full max-w-md flex-col gap-3 rounded-container border p-4"
+        className="bg-app-bg border-ink-800 rounded-container flex max-h-[85vh] w-full max-w-md flex-col gap-3 border p-4"
       >
         <h2 id={titleId} className="text-ink-100 text-body-lg font-semibold">
           {t('chatOrder.title')}
@@ -177,7 +177,7 @@ function ChatOrderDialog({ items, ids, onSave, onClose }: Props & { onClose: () 
               >
                 <GripVertical aria-hidden size={16} />
               </button>
-              <span className="text-ink-200 min-w-0 flex-1 text-body-lg break-words">
+              <span className="text-ink-200 text-body-lg min-w-0 flex-1 break-words">
                 {names.get(id)}
               </span>
               <IconButton

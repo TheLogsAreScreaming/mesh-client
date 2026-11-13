@@ -101,7 +101,7 @@ export function TeamContactEditorDialog({ member, onClose }: TeamContactEditorDi
         aria-labelledby={titleId}
         className="border-ink-600 bg-ink-900 rounded-modal shadow-level-3 w-full max-w-md border p-4"
       >
-        <h2 id={titleId} className="text-ink-100 mb-3 text-title font-semibold">
+        <h2 id={titleId} className="text-ink-100 text-title mb-3 font-semibold">
           {isCreate ? t('teamRoster.addContact') : t('teamRoster.editContact')}
         </h2>
         <div className="flex flex-col gap-3">

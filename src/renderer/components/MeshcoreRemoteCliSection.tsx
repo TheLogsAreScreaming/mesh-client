@@ -135,7 +135,7 @@ export default function MeshcoreRemoteCliSection({
           <p className="text-muted text-label">{t('meshcoreRemoteCli.consoleHint')}</p>
           <ol
             aria-label={t('meshcoreRemoteCli.consoleLog')}
-            className="bg-app-bg border-ink-700 rounded-control max-h-48 space-y-0.5 overflow-y-auto border p-2 font-mono text-label"
+            className="bg-app-bg border-ink-700 rounded-control text-label max-h-48 space-y-0.5 overflow-y-auto border p-2 font-mono"
           >
             {history.length === 0 ? (
               <li className="text-muted italic">{t('repeatersPanel.cliNoCommandsYet')}</li>
@@ -169,12 +169,12 @@ export default function MeshcoreRemoteCliSection({
               onChange={(e) => {
                 setInput(e.target.value);
               }}
-              className="bg-secondary-dark border-ink-600 text-ink-200 rounded-control min-w-0 flex-1 border px-3 py-1.5 font-mono text-body-lg"
+              className="bg-secondary-dark border-ink-600 text-ink-200 rounded-control text-body-lg min-w-0 flex-1 border px-3 py-1.5 font-mono"
             />
             <button
               type="submit"
               disabled={disabled || sending || input.trim() === ''}
-              className="bg-brand-green text-app-bg rounded-modal px-4 py-1.5 text-body-lg font-medium disabled:opacity-50"
+              className="bg-brand-green text-app-bg rounded-modal text-body-lg px-4 py-1.5 font-medium disabled:opacity-50"
             >
               {sending ? t('meshcoreRemoteCli.sending') : t('meshcoreRemoteCli.send')}
             </button>

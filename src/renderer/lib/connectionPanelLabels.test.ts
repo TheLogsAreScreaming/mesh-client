@@ -3,7 +3,14 @@ import { describe, expect, it } from 'vitest';
 
 import type { TAKRemoteStatus } from '@/shared/tak-types';
 
-import { connectionPanelMqttStatusLabel, connectionPanelRadioStatusLabel, connectionPanelTakRemoteLabel, connectionPanelTakStatusLabel, statusBarTransportLabel, takStatusBarLabels } from './connectionPanelLabels';
+import {
+  connectionPanelMqttStatusLabel,
+  connectionPanelRadioStatusLabel,
+  connectionPanelTakRemoteLabel,
+  connectionPanelTakStatusLabel,
+  statusBarTransportLabel,
+  takStatusBarLabels,
+} from './connectionPanelLabels';
 import type { ConnectionStatus, ConnectionType, MeshProtocol, MQTTStatus } from './types';
 
 function mockT(): TFunction {

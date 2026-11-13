@@ -52,8 +52,8 @@ export function LiveTrafficWindowSlot({
       >
         <div className="border-ink-700 bg-deep-black rounded-card shadow-level-1 max-w-sm border p-5 text-center">
           <AppWindow aria-hidden className="text-muted mx-auto mb-3 h-6 w-6" />
-          <h2 className="mb-1 text-body-lg font-medium">{t('liveTraffic.window.openElsewhere')}</h2>
-          <p className="text-muted mb-4 text-label leading-relaxed">
+          <h2 className="text-body-lg mb-1 font-medium">{t('liveTraffic.window.openElsewhere')}</h2>
+          <p className="text-muted text-label mb-4 leading-relaxed">
             {t('liveTraffic.window.openElsewhereHint')}
           </p>
           <div className="flex flex-wrap justify-center gap-2">

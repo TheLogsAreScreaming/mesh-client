@@ -253,5 +253,4 @@ describe('useDiagnosticSeverityAlerts', () => {
     rerender({ protocol: 'meshcore' });
     expect(fireNotification).toHaveBeenCalledTimes(1);
   });
-
 });

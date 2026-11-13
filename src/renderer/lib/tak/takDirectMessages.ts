@@ -1,6 +1,12 @@
 import type { MeshProtocol } from '@/shared/meshProtocol';
 import { isMeshtasticBroadcastNodeNum } from '@/shared/nodeNameUtils';
-import { isTakDmProtocol, TAK_DM_PROTOCOLS, TAK_GEOCHAT_CALLSIGN_MAX_LEN, TAK_GEOCHAT_TEXT_MAX_LEN, type TakDmProtocol } from '@/shared/tak-types';
+import {
+  isTakDmProtocol,
+  TAK_DM_PROTOCOLS,
+  TAK_GEOCHAT_CALLSIGN_MAX_LEN,
+  TAK_GEOCHAT_TEXT_MAX_LEN,
+  type TakDmProtocol,
+} from '@/shared/tak-types';
 
 import { getConnection } from '../../stores/connectionStore';
 import { type NodeRecord, useNodeStore } from '../../stores/nodeStore';

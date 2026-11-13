@@ -77,7 +77,6 @@ Developer reference: where to look first by area. Moved out of [`ARCHITECTURE.md
 
 ## Device firmware flash
 
-
 ## TAK gateway
 
 - Local CoT TLS server, remote TAK relay, ATAK/WinTAK/iTAK bridge. See [tak.md](tak.md).

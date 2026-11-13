@@ -101,7 +101,7 @@ export function TerrainProfileControl(): React.JSX.Element {
           {profileActive ? (
             <div
               role="status"
-              className="bg-deep-black/90 border-ink-700 text-ink-100 flex flex-col gap-1 rounded-modal border px-2.5 py-1.5 text-label"
+              className="bg-deep-black/90 border-ink-700 text-ink-100 rounded-modal text-label flex flex-col gap-1 border px-2.5 py-1.5"
             >
               <span>
                 {endpoints.length < 2
@@ -111,7 +111,7 @@ export function TerrainProfileControl(): React.JSX.Element {
               <label className="text-ink-300 flex items-center gap-1">
                 <span>{t('mapPanel.terrainProfile.frequency')}</span>
                 <select
-                  className="bg-ink-900 border-ink-600 rounded-control border px-1 py-0.5 text-label"
+                  className="bg-ink-900 border-ink-600 rounded-control text-label border px-1 py-0.5"
                   aria-label={t('mapPanel.terrainProfile.frequencyAria')}
                   value={frequencyMhz}
                   onChange={(e) => {

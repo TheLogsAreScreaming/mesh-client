@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { resetStartupDbPruneForTests, runSessionDbPrune, runStartupDbPrune } from './startupDbPrune';
+import {
+  resetStartupDbPruneForTests,
+  runSessionDbPrune,
+  runStartupDbPrune,
+} from './startupDbPrune';
 import { MESH_PROTOCOL_STORAGE_KEY } from './storedMeshProtocol';
 
 describe('runStartupDbPrune', () => {

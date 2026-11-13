@@ -236,7 +236,6 @@ export async function runGlobalMessageSearch(opts: {
     );
   }
 
-
   const nested = await Promise.all(tasks);
   const merged = nested.flat();
   const filtered = filterGlobalMessageSearchHits(merged, opts.filters);

@@ -56,7 +56,7 @@ export function RadioChatSyncButton({
           className={
             feedback === 'toast'
               ? 'sr-only'
-              : `max-w-56 text-label ${result === 'failed' ? 'text-danger-400' : 'text-muted'}`
+              : `text-label max-w-56 ${result === 'failed' ? 'text-danger-400' : 'text-muted'}`
           }
         >
           {t(result === 'failed' ? 'radioChatSync.failed' : 'radioChatSync.done')}

@@ -95,7 +95,7 @@ export function LiveMapWindow() {
 
   if (init === null) {
     return (
-      <main className="bg-app-bg text-muted flex h-dvh items-center justify-center p-5 text-body-lg">
+      <main className="bg-app-bg text-muted text-body-lg flex h-dvh items-center justify-center p-5">
         <p>{t('liveTraffic.window.unavailable')}</p>
       </main>
     );

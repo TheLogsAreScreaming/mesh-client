@@ -1442,7 +1442,7 @@ export default function RepeatersPanel({
                         >
                           {formatUptime(t, status?.totalUpTimeSecs)}
                           {status?.fetchedAt && status.totalUpTimeSecs ? (
-                            <span className="text-muted block text-label">
+                            <span className="text-muted text-label block">
                               {t('repeatersPanel.uptimeFetchedAgo', {
                                 time: formatRelativeTime(t, status.fetchedAt),
                               })}

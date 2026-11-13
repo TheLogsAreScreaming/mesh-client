@@ -158,7 +158,7 @@ export default function TeamContactsPanel({
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <button
                     type="button"
-                    className="hover:bg-ink-800/80 min-w-0 flex-1 rounded-card p-1 text-start"
+                    className="hover:bg-ink-800/80 rounded-card min-w-0 flex-1 p-1 text-start"
                     aria-label={t('teamRoster.openContactCard', { callsign: member.callsign })}
                     onClick={() => {
                       setDetailUnitId(member.unitId);

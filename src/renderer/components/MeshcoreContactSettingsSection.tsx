@@ -112,13 +112,13 @@ export default function MeshcoreContactSettingsSection({
       <p className="text-muted text-label">{t('meshcoreContactSettings.intro')}</p>
       <fieldset
         data-setting-anchor="radio.contacts.autoAddMode"
-        className="border-ink-600/80 space-y-3 rounded-modal border p-3"
+        className="border-ink-600/80 rounded-modal space-y-3 border p-3"
         disabled={disabled || applying}
       >
-        <legend className="text-ink-200 px-1 text-body-lg font-medium">
+        <legend className="text-ink-200 text-body-lg px-1 font-medium">
           {t('meshcoreContactSettings.autoAddModeLegend')}
         </legend>
-        <div className="hover:bg-secondary-dark/50 flex gap-2 rounded-card p-1.5">
+        <div className="hover:bg-secondary-dark/50 rounded-card flex gap-2 p-1.5">
           <input
             id={`${modeGroupId}-all`}
             type="radio"
@@ -143,7 +143,7 @@ export default function MeshcoreContactSettingsSection({
             </span>
           </label>
         </div>
-        <div className="hover:bg-secondary-dark/50 flex gap-2 rounded-card p-1.5">
+        <div className="hover:bg-secondary-dark/50 rounded-card flex gap-2 p-1.5">
           <input
             id={`${modeGroupId}-selected`}
             type="radio"
@@ -172,7 +172,7 @@ export default function MeshcoreContactSettingsSection({
 
       <div
         data-setting-anchor="radio.contacts.autoAddTypes"
-        className={`border-ink-600/60 space-y-2 rounded-modal border p-3 ${autoAddAll ? 'opacity-50' : ''}`}
+        className={`border-ink-600/60 rounded-modal space-y-2 border p-3 ${autoAddAll ? 'opacity-50' : ''}`}
         aria-disabled={autoAddAll}
       >
         <p className="text-ink-300 text-label font-medium">
@@ -237,13 +237,13 @@ export default function MeshcoreContactSettingsSection({
 
       <div
         data-setting-anchor="radio.contacts.overwriteOldest"
-        className="border-ink-600/60 flex items-center justify-between gap-3 rounded-modal border p-3"
+        className="border-ink-600/60 rounded-modal flex items-center justify-between gap-3 border p-3"
       >
         <div>
           <label htmlFor="meshcore-overwrite-oldest" className="text-ink-200 text-body-lg">
             {t('meshcoreContactSettings.overwriteOldestTitle')}
           </label>
-          <p className="text-muted mt-0.5 text-label">
+          <p className="text-muted text-label mt-0.5">
             {t('meshcoreContactSettings.overwriteOldestHelp')}
           </p>
         </div>
@@ -314,7 +314,7 @@ export default function MeshcoreContactSettingsSection({
             <span className="text-ink-200 text-body-lg">
               {t('meshcoreContactSettings.autoOffloadWhenFullLabel')}
             </span>
-            <p className="text-muted mt-0.5 text-label">
+            <p className="text-muted text-label mt-0.5">
               {t('meshcoreContactSettings.autoOffloadWhenFullDesc')}
             </p>
           </div>
@@ -342,7 +342,7 @@ export default function MeshcoreContactSettingsSection({
             <span className="text-ink-200 text-body-lg">
               {t('meshcoreContactSettings.showRefreshLabel')}
             </span>
-            <p className="text-muted mt-0.5 text-label">
+            <p className="text-muted text-label mt-0.5">
               {t('meshcoreContactSettings.showRefreshDesc')}
             </p>
           </div>
@@ -365,7 +365,7 @@ export default function MeshcoreContactSettingsSection({
             <span className="text-ink-200 text-body-lg">
               {t('meshcoreContactSettings.showPublicKeysLabel')}
             </span>
-            <p className="text-muted mt-0.5 text-label">
+            <p className="text-muted text-label mt-0.5">
               {t('meshcoreContactSettings.showPublicKeysDesc')}
             </p>
           </div>
@@ -385,9 +385,9 @@ export default function MeshcoreContactSettingsSection({
       {onClearAllContacts ? (
         <div
           data-setting-anchor="radio.contacts.clearAll"
-          className="border-t border-danger-900/50 pt-4"
+          className="border-danger-900/50 border-t pt-4"
         >
-          <p className="text-muted mb-2 text-label">{t('meshcoreContactSettings.clearAllIntro')}</p>
+          <p className="text-muted text-label mb-2">{t('meshcoreContactSettings.clearAllIntro')}</p>
           <button
             type="button"
             disabled={disabled || applying || clearingAll}
@@ -415,7 +415,7 @@ export default function MeshcoreContactSettingsSection({
                   setClearingAll(false);
                 });
             }}
-            className="rounded-modal border border-danger-700 bg-danger-950/40 px-4 py-2 text-body-lg font-medium text-danger-200 hover:bg-danger-900/50 disabled:opacity-50"
+            className="rounded-modal border-danger-700 bg-danger-950/40 text-body-lg text-danger-200 hover:bg-danger-900/50 border px-4 py-2 font-medium disabled:opacity-50"
             aria-label={t('meshcoreContactSettings.clearAllContacts')}
           >
             {clearingAll

@@ -51,7 +51,9 @@ export function KeyVerificationDialog() {
   switch (session.phase) {
     case 'initiating':
       body = (
-        <p className="text-muted text-body-lg">{t('keyVerification.dialog.initiatingHint', { name })}</p>
+        <p className="text-muted text-body-lg">
+          {t('keyVerification.dialog.initiatingHint', { name })}
+        </p>
       );
       break;
     case 'showNumber':
@@ -61,7 +63,9 @@ export function KeyVerificationDialog() {
             {t('keyVerification.dialog.showNumberHint', { name })}
           </p>
           <div className="space-y-1 text-center">
-            <p className="text-muted text-label">{t('keyVerification.dialog.securityNumberLabel')}</p>
+            <p className="text-muted text-label">
+              {t('keyVerification.dialog.securityNumberLabel')}
+            </p>
             <p
               className="text-ink-100 font-mono text-3xl tracking-widest"
               data-testid="key-verification-security-number"
@@ -93,7 +97,9 @@ export function KeyVerificationDialog() {
     case 'compare':
       body = (
         <>
-          <p className="text-muted text-body-lg">{t('keyVerification.dialog.compareHint', { name })}</p>
+          <p className="text-muted text-body-lg">
+            {t('keyVerification.dialog.compareHint', { name })}
+          </p>
           {session.errorCode === 'missing_node' ? (
             <p role="alert" className={NOTICE_CLASS.error}>
               {t('keyVerification.dialog.missingNode')}
@@ -224,8 +230,10 @@ function EnterNumberForm({
         void submitKeyVerificationSecurityNumber(numberInput);
       }}
     >
-      <p className="text-muted text-body-lg">{t('keyVerification.dialog.enterNumberHint', { name })}</p>
-      <label className="text-muted block text-label" htmlFor={inputId}>
+      <p className="text-muted text-body-lg">
+        {t('keyVerification.dialog.enterNumberHint', { name })}
+      </p>
+      <label className="text-muted text-label block" htmlFor={inputId}>
         {t('keyVerification.dialog.enterNumberLabel', { name })}
       </label>
       <input

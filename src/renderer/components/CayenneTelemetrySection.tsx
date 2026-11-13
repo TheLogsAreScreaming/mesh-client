@@ -80,11 +80,13 @@ export default function CayenneTelemetrySection({ capabilities }: Props) {
       data-testid="cayenne-telemetry-section"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-ink-200 text-heading font-semibold">{t('telemetryPanel.cayenne.title')}</h3>
-        <label className="text-muted flex items-center gap-2 text-label">
+        <h3 className="text-ink-200 text-heading font-semibold">
+          {t('telemetryPanel.cayenne.title')}
+        </h3>
+        <label className="text-muted text-label flex items-center gap-2">
           {t('telemetryPanel.cayenne.node')}
           <select
-            className="bg-ink-800 text-ink-200 rounded px-2 py-1 text-label"
+            className="bg-ink-800 text-ink-200 text-label rounded px-2 py-1"
             value={activeNodeNum ?? ''}
             onChange={(e) => {
               setSelected(Number(e.target.value));
@@ -118,8 +120,12 @@ export default function CayenneTelemetrySection({ capabilities }: Props) {
         });
         const unit = seriesList[0]?.unit ?? '';
         return (
-          <div key={kind} className="bg-deep-black rounded-modal p-4" data-testid={`cayenne-${kind}`}>
-            <h4 className="text-muted mb-3 text-body-lg font-medium">
+          <div
+            key={kind}
+            className="bg-deep-black rounded-modal p-4"
+            data-testid={`cayenne-${kind}`}
+          >
+            <h4 className="text-muted text-body-lg mb-3 font-medium">
               {kindLabel}
               {unit ? ` (${unit})` : ''}
             </h4>
@@ -172,8 +178,11 @@ function CayenneGpsRow({ label, series }: { label: string; series: CayenneSeries
   const lon = latest('lon');
   const alt = latest('alt');
   return (
-    <div className="bg-deep-black text-ink-300 rounded-modal p-4 text-body-lg" data-testid="cayenne-gps">
-      <h4 className="text-muted mb-1 text-body-lg font-medium">{label}</h4>
+    <div
+      className="bg-deep-black text-ink-300 rounded-modal text-body-lg p-4"
+      data-testid="cayenne-gps"
+    >
+      <h4 className="text-muted text-body-lg mb-1 font-medium">{label}</h4>
       <span className="font-mono">
         {lat?.toFixed(4) ?? '—'}, {lon?.toFixed(4) ?? '—'}
         {alt !== undefined ? ` · ${alt.toFixed(1)} m` : ''}

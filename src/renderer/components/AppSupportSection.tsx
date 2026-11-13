@@ -123,7 +123,7 @@ export function AppSupportSection({ exporting, onExport }: AppSupportSectionProp
           </button>
         </div>
         <div
-          className="border-ink-800 bg-ink-900/40 space-y-1 rounded-modal border p-2"
+          className="border-ink-800 bg-ink-900/40 rounded-modal space-y-1 border p-2"
           data-setting-anchor="app.support.coiCapability"
           aria-label={t('appPanel.coiCapabilityTitle')}
         >
@@ -166,7 +166,7 @@ export function AppSupportSection({ exporting, onExport }: AppSupportSectionProp
         {!memory.supported && (
           <p className="text-muted text-label">{t('appPanel.memoryUnsupported')}</p>
         )}
-        <div role="status" className="text-ink-200 space-y-1 text-body-lg">
+        <div role="status" className="text-ink-200 text-body-lg space-y-1">
           {memory.failed ? (
             <p className="text-warning-300">{t('appPanel.memoryFailed')}</p>
           ) : latest ? (
@@ -175,19 +175,19 @@ export function AppSupportSection({ exporting, onExport }: AppSupportSectionProp
                 {t('appPanel.memoryLatest', { value: formatMemory(latest.bytes) })}
               </p>
               {latest.jsHeapBytes != null && (
-                <p className="text-muted font-mono text-label tabular-nums">
+                <p className="text-muted text-label font-mono tabular-nums">
                   {t('appPanel.memoryJsHeap', { value: formatMemory(latest.jsHeapBytes) })}
                 </p>
               )}
               {workingSetDelta != null && (
-                <p className="text-muted font-mono text-label tabular-nums">
+                <p className="text-muted text-label font-mono tabular-nums">
                   {t('appPanel.memoryDeltaWorkingSet', {
                     value: formatSignedMemory(workingSetDelta, formatMemory),
                   })}
                 </p>
               )}
               {jsHeapDelta != null && (
-                <p className="text-muted font-mono text-label tabular-nums">
+                <p className="text-muted text-label font-mono tabular-nums">
                   {t('appPanel.memoryDeltaJsHeap', {
                     value: formatSignedMemory(jsHeapDelta, formatMemory),
                   })}

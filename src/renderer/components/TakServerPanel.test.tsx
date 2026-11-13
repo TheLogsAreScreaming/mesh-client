@@ -32,7 +32,10 @@ describe('TakServerPanel', () => {
     render(<TakServerPanel />);
     await act(async () => {});
     const docsLink = screen.getByRole('link', { name: /docs/i });
-    expect(docsLink).toHaveAttribute('href', 'https://thelogsarescreaming.github.io/mesh-client/tak/');
+    expect(docsLink).toHaveAttribute(
+      'href',
+      'https://thelogsarescreaming.github.io/mesh-client/tak/',
+    );
   });
 
   it('shows Start Server button when stopped', async () => {

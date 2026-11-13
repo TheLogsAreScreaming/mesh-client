@@ -98,11 +98,11 @@ export default function MeshtasticRemoteShellSection({
 
   return (
     <details
-      className="group rounded-modal border border-danger-900"
+      className="group rounded-modal border-danger-900 border"
       data-testid="admin-remote-shell"
       data-setting-anchor="admin.remoteShell"
     >
-      <summary className="hover:bg-ink-800 flex cursor-pointer items-center justify-between rounded-modal px-4 py-3 text-body-lg font-medium text-danger-400 transition-colors">
+      <summary className="hover:bg-ink-800 rounded-modal text-body-lg text-danger-400 flex cursor-pointer items-center justify-between px-4 py-3 font-medium transition-colors">
         <span>{t('remoteShell.title')}</span>
         <DetailsChevron />
       </summary>
@@ -110,7 +110,7 @@ export default function MeshtasticRemoteShellSection({
         <div
           role="group"
           aria-label={t('remoteShell.warningTitle')}
-          className="space-y-1 rounded-modal border border-danger-500/50 bg-danger-950/40 p-3 text-label text-danger-200"
+          className="rounded-modal border-danger-500/50 bg-danger-950/40 text-label text-danger-200 space-y-1 border p-3"
           data-testid="remote-shell-warning"
         >
           <p className="font-semibold">{t('remoteShell.warningTitle')}</p>
@@ -123,7 +123,7 @@ export default function MeshtasticRemoteShellSection({
           </ul>
         </div>
 
-        <label className="text-ink-200 flex items-start gap-2 text-label">
+        <label className="text-ink-200 text-label flex items-start gap-2">
           <input
             type="checkbox"
             checked={acknowledged}
@@ -137,7 +137,7 @@ export default function MeshtasticRemoteShellSection({
         </label>
 
         <div className="flex flex-wrap items-end gap-2">
-          <label className="text-muted flex flex-col gap-1 text-label">
+          <label className="text-muted text-label flex flex-col gap-1">
             {t('remoteShell.node')}
             <input
               type="text"
@@ -203,7 +203,7 @@ export default function MeshtasticRemoteShellSection({
           // Keyboard users must be able to focus and scroll the transcript.
           // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- scrollable log region
           tabIndex={0}
-          className="bg-deep-black text-ink-200 h-64 overflow-auto rounded-modal p-3 font-mono text-label whitespace-pre-wrap"
+          className="bg-deep-black text-ink-200 rounded-modal text-label h-64 overflow-auto p-3 font-mono whitespace-pre-wrap"
           data-testid="remote-shell-output"
         >
           {output}

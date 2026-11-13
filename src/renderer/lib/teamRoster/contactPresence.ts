@@ -1,5 +1,8 @@
 import { getNodeStatus, type NodeStatus } from '@/renderer/lib/nodeStatus';
-import { MESHCORE_CAPABILITIES, MESHTASTIC_CAPABILITIES } from '@/renderer/lib/radio/BaseRadioProvider';
+import {
+  MESHCORE_CAPABILITIES,
+  MESHTASTIC_CAPABILITIES,
+} from '@/renderer/lib/radio/BaseRadioProvider';
 import type { MeshNode } from '@/renderer/lib/types';
 import type { MeshProtocol } from '@/shared/meshProtocol';
 import type { TeamMember, TeamMemberLink } from '@/shared/teamRosterTypes';

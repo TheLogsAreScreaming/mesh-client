@@ -140,14 +140,7 @@ export function GlobalMessageSearchDialog({
         if (gen === searchGen.current) setLoading(false);
       }
     },
-    [
-      direction,
-      enabledProtocols,
-      ownNodeIdsByProtocol,
-      protocol,
-      senderQuery,
-      t,
-    ],
+    [direction, enabledProtocols, ownNodeIdsByProtocol, protocol, senderQuery, t],
   );
 
   useEffect(() => {
@@ -291,7 +284,7 @@ export function GlobalMessageSearchDialog({
               {t('globalMessageSearch.searching')}
             </p>
           ) : error ? (
-            <p className="text-label px-3 py-4 text-danger-400" role="alert">
+            <p className="text-label text-danger-400 px-3 py-4" role="alert">
               {error}
             </p>
           ) : query.trim() === '' ? (
@@ -313,7 +306,7 @@ export function GlobalMessageSearchDialog({
                   type="button"
                   role="option"
                   aria-selected={active}
-                  className={`hover:bg-sidebar-active-bg flex w-full flex-col gap-0.5 rounded-card px-3 py-2 text-start ${
+                  className={`hover:bg-sidebar-active-bg rounded-card flex w-full flex-col gap-0.5 px-3 py-2 text-start ${
                     active ? 'bg-sidebar-active-bg' : ''
                   }`}
                   onMouseEnter={() => {

@@ -107,7 +107,9 @@ export function MeshBeaconHeardList({
 
   return (
     <div className="border-ink-700 space-y-3 border-t pt-3">
-      <h4 className="text-ink-300 text-body-lg font-medium">{t('modulePanel.beacon.heardTitle')}</h4>
+      <h4 className="text-ink-300 text-body-lg font-medium">
+        {t('modulePanel.beacon.heardTitle')}
+      </h4>
       {!canJoin && <p className="text-muted text-label">{t('modulePanel.beacon.remoteHint')}</p>}
       {list.length === 0 ? (
         <p className="text-muted text-label">{t('modulePanel.beacon.none')}</p>
@@ -123,7 +125,7 @@ export function MeshBeaconHeardList({
             return (
               <li
                 key={b.from}
-                className="bg-ink-800/50 space-y-1 rounded px-3 py-2 text-label"
+                className="bg-ink-800/50 text-label space-y-1 rounded px-3 py-2"
                 aria-label={t('modulePanel.beacon.itemAria', { name: nodeName })}
               >
                 <div className="text-ink-300 flex justify-between gap-2">

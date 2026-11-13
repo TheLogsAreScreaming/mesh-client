@@ -107,7 +107,7 @@ function SectionHeading({
   badge?: ReactNode;
 }) {
   return (
-    <summary className="text-muted hover:bg-sidebar-active-bg grid cursor-pointer list-none grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-4 py-4 text-body-lg font-medium transition-colors sm:grid-cols-[auto_minmax(0,1fr)_auto_auto] [&::-webkit-details-marker]:hidden">
+    <summary className="text-muted hover:bg-sidebar-active-bg text-body-lg grid cursor-pointer list-none grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 px-4 py-4 font-medium transition-colors sm:grid-cols-[auto_minmax(0,1fr)_auto_auto] [&::-webkit-details-marker]:hidden">
       <span className="bg-app-bg text-muted rounded-control flex h-10 w-10 shrink-0 items-center justify-center">
         {icon}
       </span>
@@ -375,7 +375,7 @@ function ConfigSection({
                 {regions.entries.map((region, index) => (
                   <li
                     key={index}
-                    className="flex flex-wrap items-center justify-between gap-2 py-2 text-label"
+                    className="text-label flex flex-wrap items-center justify-between gap-2 py-2"
                   >
                     <span className="text-ink-200 min-w-0 wrap-anywhere">
                       <span className="font-mono whitespace-pre">

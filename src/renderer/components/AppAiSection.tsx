@@ -190,7 +190,7 @@ export function AppAiSection() {
     >
       <label
         data-setting-anchor="app.aiProvider.enabled"
-        className="flex items-center gap-2 text-body-lg"
+        className="text-body-lg flex items-center gap-2"
       >
         <input
           type="checkbox"
@@ -209,10 +209,10 @@ export function AppAiSection() {
         />
         {t('aiSummary.enabled')}
       </label>
-      <p className="text-muted mt-2 text-label">{t('aiSummary.optIn')}</p>
+      <p className="text-muted text-label mt-2">{t('aiSummary.optIn')}</p>
       {enabled && (
         <div className="mt-3 space-y-3">
-          <label data-setting-anchor="app.aiProvider.engine" className="block text-body-lg">
+          <label data-setting-anchor="app.aiProvider.engine" className="text-body-lg block">
             {t('aiSummary.engine')}
             <select
               aria-label={t('aiSummary.engine')}
@@ -332,7 +332,10 @@ export function AppAiSection() {
                       p && ['queued', 'downloading', 'verifying'].includes(p.state);
                     const mlxBlocked = item.runtime === 'mlx' && !status.mlxHelperAvailable;
                     return (
-                      <div key={item.id} className="border-ink-700 rounded-modal border p-2 text-body-lg">
+                      <div
+                        key={item.id}
+                        className="border-ink-700 rounded-modal text-body-lg border p-2"
+                      >
                         <p>{item.name}</p>
                         <p className="text-muted text-label">
                           {item.paramsLabel} · {(item.downloadBytes / 1024 / 1024).toFixed(0)} MB ·{' '}
@@ -442,7 +445,10 @@ export function AppAiSection() {
                   {models
                     .filter((item) => item.orphan)
                     .map((item) => (
-                      <div key={item.id} className="border-ink-700 rounded-modal border p-2 text-body-lg">
+                      <div
+                        key={item.id}
+                        className="border-ink-700 rounded-modal text-body-lg border p-2"
+                      >
                         <p>{item.id}</p>
                         <p className="text-muted text-label">
                           {(item.diskBytes / 1024 / 1024).toFixed(0)} MB ·{' '}
@@ -471,7 +477,7 @@ export function AppAiSection() {
           )}
           {(engine === 'local' || engine === 'remote') && (
             <>
-              <label data-setting-anchor="app.aiProvider.format" className="block text-body-lg">
+              <label data-setting-anchor="app.aiProvider.format" className="text-body-lg block">
                 {t('aiSummary.format')}
                 <select
                   className={`${SELECT_BOX_CLASS} mt-1 w-full`}
@@ -487,7 +493,7 @@ export function AppAiSection() {
                   <option value="ollama">Ollama</option>
                 </select>
               </label>
-              <label data-setting-anchor="app.aiProvider.baseUrl" className="block text-body-lg">
+              <label data-setting-anchor="app.aiProvider.baseUrl" className="text-body-lg block">
                 {t('aiSummary.baseUrl')}
                 <input
                   className={`${INPUT_BOX_CLASS} mt-1 w-full`}
@@ -534,7 +540,7 @@ export function AppAiSection() {
                   ))}
                 </div>
               )}
-              <label data-setting-anchor="app.aiProvider.model" className="block text-body-lg">
+              <label data-setting-anchor="app.aiProvider.model" className="text-body-lg block">
                 {t('aiSummary.model')}
                 <input
                   className={`${INPUT_BOX_CLASS} mt-1 w-full`}
@@ -551,7 +557,7 @@ export function AppAiSection() {
                   ))}
                 </datalist>
               </label>
-              <label data-setting-anchor="app.aiProvider.apiKey" className="block text-body-lg">
+              <label data-setting-anchor="app.aiProvider.apiKey" className="text-body-lg block">
                 {t('aiSummary.apiKey')}
                 <input
                   className={`${INPUT_BOX_CLASS} mt-1 w-full`}
@@ -584,7 +590,7 @@ export function AppAiSection() {
               {engine === 'remote' && (
                 <label
                   data-setting-anchor="app.aiProvider.allowRemote"
-                  className="flex items-start gap-2 text-body-lg"
+                  className="text-body-lg flex items-start gap-2"
                 >
                   <input
                     type="checkbox"
@@ -601,7 +607,7 @@ export function AppAiSection() {
               <p className="text-muted text-label">{t('aiSummary.urlHint')}</p>
             </>
           )}
-          <label data-setting-anchor="app.aiProvider.timeout" className="block text-body-lg">
+          <label data-setting-anchor="app.aiProvider.timeout" className="text-body-lg block">
             {t('aiSummary.timeoutSeconds')}
             <input
               className={`${INPUT_BOX_CLASS} mt-1 w-full`}
@@ -615,11 +621,11 @@ export function AppAiSection() {
                 setTimeoutSeconds(event.target.value);
               }}
             />
-            <span className="text-muted mt-1 block text-label">{t('aiSummary.timeoutHint')}</span>
+            <span className="text-muted text-label mt-1 block">{t('aiSummary.timeoutHint')}</span>
           </label>
           <label
             data-setting-anchor="app.aiProvider.maxCollectedMessages"
-            className="block text-body-lg"
+            className="text-body-lg block"
           >
             {t('aiSummary.maxCollectedMessages')}
             <input
@@ -634,7 +640,7 @@ export function AppAiSection() {
                 setMaxCollectedMessages(event.target.value);
               }}
             />
-            <span className="text-muted mt-1 block text-label">
+            <span className="text-muted text-label mt-1 block">
               {t('aiSummary.maxCollectedMessagesHint')}
             </span>
           </label>
@@ -693,7 +699,7 @@ export function AppAiSection() {
       <p
         data-setting-anchor="app.aiProvider.status"
         role="status"
-        className="text-muted mt-2 text-label"
+        className="text-muted text-label mt-2"
       >
         {notice}
       </p>

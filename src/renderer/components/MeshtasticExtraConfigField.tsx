@@ -98,7 +98,7 @@ export function MeshtasticExtraConfigField({
             {(spec.options ?? []).map((o) => {
               const optionLabel = extraFieldOptionLabel(o, t);
               return (
-                <label key={o.value} className="text-ink-300 flex items-center gap-2 text-body-lg">
+                <label key={o.value} className="text-ink-300 text-body-lg flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={(mask & o.value) !== 0}
@@ -149,7 +149,7 @@ export function MeshtasticAdvancedHardwareGroup({ children }: { children: React.
   const { t } = useTranslation();
   return (
     <details className="group border-ink-700 rounded-modal border">
-      <summary className="text-ink-300 hover:bg-ink-800 flex cursor-pointer items-center justify-between rounded-modal px-3 py-2 text-body-lg transition-colors">
+      <summary className="text-ink-300 hover:bg-ink-800 rounded-modal text-body-lg flex cursor-pointer items-center justify-between px-3 py-2 transition-colors">
         <span>{t('meshtasticExtraConfig.advancedHardware')}</span>
         <DetailsChevron />
       </summary>

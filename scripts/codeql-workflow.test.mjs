@@ -96,10 +96,6 @@ describe('CodeQL advanced workflow', () => {
     expect(load(init.with.config)).toEqual({
       'threat-models': ['remote'],
     });
-    const clone = job.steps.find((step) => step.name === 'Clone Ratspeak stack');
-    expect(clone.if).toBe("matrix.language == 'rust'");
-    expect(clone.run).toBe('bash scripts/clone-ratspeak-stack.sh');
-    expect(job.steps.indexOf(clone)).toBeLessThan(job.steps.indexOf(init));
     expect(init.with['config-file']).toBeUndefined();
     const build = job.steps.find((step) => step.name === 'Autobuild compiled languages');
     expect(build.if).toBe(

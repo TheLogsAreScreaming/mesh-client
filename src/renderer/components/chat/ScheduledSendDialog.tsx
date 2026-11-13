@@ -156,12 +156,12 @@ export function ScheduledSendDialog({
               onChange={(e) => {
                 setDraftText(e.target.value);
               }}
-              className="bg-app-bg border-secondary-dark text-body text-ink-200 focus:border-brand-green w-full rounded-modal border px-2.5 py-1.5 focus:outline-none"
+              className="bg-app-bg border-secondary-dark text-body text-ink-200 focus:border-brand-green rounded-modal w-full border px-2.5 py-1.5 focus:outline-none"
             />
           </div>
         ) : (
           <p
-            className="text-ink-300 bg-ink-800 max-h-24 overflow-y-auto rounded-modal px-3 py-2 text-body-lg break-words whitespace-pre-wrap"
+            className="text-ink-300 bg-ink-800 rounded-modal text-body-lg max-h-24 overflow-y-auto px-3 py-2 break-words whitespace-pre-wrap"
             data-testid="scheduled-send-preview"
           >
             {text}
@@ -179,7 +179,7 @@ export function ScheduledSendDialog({
               setWhenValue(e.target.value);
               setError(null);
             }}
-            className="bg-app-bg border-secondary-dark text-body text-ink-200 focus:border-brand-green w-full rounded-modal border px-2.5 py-1.5 focus:outline-none"
+            className="bg-app-bg border-secondary-dark text-body text-ink-200 focus:border-brand-green rounded-modal w-full border px-2.5 py-1.5 focus:outline-none"
           />
           <div className="flex flex-wrap gap-1 pt-1">
             {[
@@ -193,7 +193,7 @@ export function ScheduledSendDialog({
                 onClick={() => {
                   applyPreset(preset.at);
                 }}
-                className="bg-ink-700 text-ink-200 hover:bg-ink-600 rounded px-2 py-1 text-label"
+                className="bg-ink-700 text-ink-200 hover:bg-ink-600 text-label rounded px-2 py-1"
               >
                 {preset.label}
               </button>
@@ -210,7 +210,7 @@ export function ScheduledSendDialog({
           <button
             type="button"
             onClick={onCancel}
-            className="bg-secondary-dark text-ink-300 hover:bg-ink-600 flex-1 rounded-modal px-4 py-2.5 text-body-lg font-medium transition-colors"
+            className="bg-secondary-dark text-ink-300 hover:bg-ink-600 rounded-modal text-body-lg flex-1 px-4 py-2.5 font-medium transition-colors"
           >
             {t('common.cancel')}
           </button>
@@ -220,7 +220,7 @@ export function ScheduledSendDialog({
             onClick={() => {
               void submit();
             }}
-            className="bg-brand-green text-app-bg flex-1 rounded-modal px-4 py-2.5 text-body-lg font-medium transition-colors disabled:opacity-50"
+            className="bg-brand-green text-app-bg rounded-modal text-body-lg flex-1 px-4 py-2.5 font-medium transition-colors disabled:opacity-50"
           >
             {mode === 'edit' ? t('chatPanel.scheduleSendSave') : t('chatPanel.scheduleSendConfirm')}
           </button>

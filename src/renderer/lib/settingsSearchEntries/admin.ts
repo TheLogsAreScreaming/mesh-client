@@ -63,9 +63,7 @@ const DIALOG = 'confirmation dialog copy for an indexed device command';
 
 export const adminSurface: SettingsSearchSurface = {
   entries: adminEntries,
-  files: [
-    { path: 'src/renderer/components/AdminPanel.tsx', sweepAllKeys: true },
-  ],
+  files: [{ path: 'src/renderer/components/AdminPanel.tsx', sweepAllKeys: true }],
   exempt: {
     'tabs.admin': 'panel heading; the launcher already lists the Admin panel',
     'radioPanel.actionCompleted': 'success toast, not a control',

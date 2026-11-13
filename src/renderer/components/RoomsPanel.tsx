@@ -1663,7 +1663,7 @@ export default function RoomsPanel({
       {/* The list column is 288px wide: icon actions share the title row, text actions get
           their own row so the title is never squeezed. */}
       <div className="border-ink-800 flex min-h-14 shrink-0 items-center gap-1.5 border-b pr-2 pl-3">
-        <h2 className="text-ink-100 min-w-0 flex-1 truncate text-body-lg font-semibold">
+        <h2 className="text-ink-100 text-body-lg min-w-0 flex-1 truncate font-semibold">
           {t('roomsPanel.title')}{' '}
           <span className="text-muted font-normal tabular-nums">({roomServers.length})</span>
         </h2>

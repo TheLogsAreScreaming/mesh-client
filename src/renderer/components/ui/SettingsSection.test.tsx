@@ -69,7 +69,9 @@ describe('SettingsCollapsible', () => {
     );
     const details = container.querySelector('details');
     expect(details?.className).toContain('border-danger-900');
-    expect(screen.getByText('Danger zone').closest('summary')?.className).toContain('text-danger-300');
+    expect(screen.getByText('Danger zone').closest('summary')?.className).toContain(
+      'text-danger-300',
+    );
   });
 
   it('notifies onToggle when opened', () => {

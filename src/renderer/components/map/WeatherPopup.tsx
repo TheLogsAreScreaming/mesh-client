@@ -104,7 +104,7 @@ export function WeatherPopup(): React.JSX.Element | null {
   return (
     <Popup position={position} eventHandlers={{ remove: close }}>
       <div
-        className="text-ink-100 max-w-[320px] space-y-2 text-label"
+        className="text-ink-100 text-label max-w-[320px] space-y-2"
         role="dialog"
         aria-label={t('internetWeather.heading')}
       >

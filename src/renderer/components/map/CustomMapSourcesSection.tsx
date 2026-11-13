@@ -396,7 +396,7 @@ export function CustomMapSourcesSection() {
           <div className="flex gap-1">
             <button
               type="button"
-              className="flex-1 rounded border border-success-700 bg-success-950/50 px-1 py-0.5 text-success-200 disabled:opacity-50"
+              className="border-success-700 bg-success-950/50 text-success-200 flex-1 rounded border px-1 py-0.5 disabled:opacity-50"
               aria-label={t('mapPanel.customSources.importConfirmAria')}
               disabled={busy || !confirmed || name.trim() === '' || attribution.trim() === ''}
               onClick={() => {
@@ -501,7 +501,7 @@ export function CustomMapSourcesSection() {
           <div className="flex gap-1">
             <button
               type="button"
-              className="flex-1 rounded border border-success-700 bg-success-950/50 px-1 py-0.5 text-success-200 disabled:opacity-50"
+              className="border-success-700 bg-success-950/50 text-success-200 flex-1 rounded border px-1 py-0.5 disabled:opacity-50"
               aria-label={t('mapPanel.customSources.addConfirmAria')}
               disabled={!canAddXyz}
               onClick={() => {

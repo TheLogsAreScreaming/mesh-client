@@ -100,7 +100,7 @@ function IconsetPathField({
   return (
     <div className="min-w-0 flex-1 basis-64">
       {label && (
-        <label htmlFor={`${id}-path`} className="text-ink-400 mb-1 block text-label">
+        <label htmlFor={`${id}-path`} className="text-ink-400 text-label mb-1 block">
           {label}
         </label>
       )}
@@ -138,12 +138,12 @@ function IconsetPathField({
         </select>
       </div>
       {invalid ? (
-        <p id={`${id}-hint`} className="mt-1 text-label text-danger-300">
+        <p id={`${id}-hint`} className="text-label text-danger-300 mt-1">
           {t('takServerPanel.unitIconInvalid')}
         </p>
       ) : (
         hint && (
-          <p id={`${id}-hint`} className="text-ink-400 mt-1 text-label">
+          <p id={`${id}-hint`} className="text-ink-400 text-label mt-1">
             {hint}
           </p>
         )

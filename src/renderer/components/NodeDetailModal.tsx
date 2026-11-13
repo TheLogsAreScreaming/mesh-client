@@ -1893,7 +1893,7 @@ export default function NodeDetailModal({
               <h4 className="text-ink-300 text-label font-semibold">
                 {t('nodeDetailModal.packetsLocalHeading')}
               </h4>
-              <div className="bg-secondary-dark grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2 text-label">
+              <div className="bg-secondary-dark text-label grid grid-cols-2 gap-x-4 gap-y-1 rounded p-2">
                 <div className="text-muted inline-flex items-center gap-1">
                   <span>{t('nodeDetailModal.sentFloodDirectLabel')}</span>
                   <HelpTooltip
@@ -1940,7 +1940,7 @@ export default function NodeDetailModal({
                 <h4 className="text-ink-300 text-label font-semibold">
                   {t('nodeDetailModal.nodeStatus.heading')}
                 </h4>
-                <div className="bg-secondary-dark space-y-1 rounded p-2 text-label">
+                <div className="bg-secondary-dark text-label space-y-1 rounded p-2">
                   <p className="text-ink-200 break-words">{entry.status}</p>
                   <p className="text-muted">
                     {t('nodeDetailModal.nodeStatus.updated', {
@@ -2275,7 +2275,7 @@ export default function NodeDetailModal({
             )}
 
           {protocol === 'meshtastic' && hasKeyVerification && !isOurNode && (
-            <div className="border-ink-700 mt-4 space-y-2 rounded-modal border px-3 py-2 text-body-lg">
+            <div className="border-ink-700 rounded-modal text-body-lg mt-4 space-y-2 border px-3 py-2">
               <p className="text-ink-200 text-label font-medium">
                 {t('keyVerification.sectionTitle')}
               </p>

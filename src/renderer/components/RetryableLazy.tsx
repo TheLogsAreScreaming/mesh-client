@@ -73,7 +73,7 @@ function LazyLoadErrorFallback({
   if (variant === 'strip') {
     return (
       <div
-        className="border-ink-700 bg-ink-900 shadow-level-3 fixed right-3 bottom-3 z-50 max-w-sm rounded-modal border px-3 py-2"
+        className="border-ink-700 bg-ink-900 shadow-level-3 rounded-modal fixed right-3 bottom-3 z-50 max-w-sm border px-3 py-2"
         role="alert"
       >
         <p className="text-ink-300 text-label break-words">
@@ -81,7 +81,7 @@ function LazyLoadErrorFallback({
         </p>
         <button
           type="button"
-          className="bg-ink-700 text-ink-200 hover:bg-ink-600 mt-2 rounded px-2 py-1 text-label font-medium"
+          className="bg-ink-700 text-ink-200 hover:bg-ink-600 text-label mt-2 rounded px-2 py-1 font-medium"
           onClick={onRetry}
           aria-label={t('errorBoundary.tryAgain')}
         >
@@ -98,14 +98,14 @@ function LazyLoadErrorFallback({
       aria-modal="true"
       aria-label={t('errorBoundary.title')}
     >
-      <div className="shadow-level-4 bg-ink-900 w-full max-w-md space-y-3 rounded-modal border border-danger-800 p-5">
-        <div className="text-heading font-semibold text-danger-400">{t('errorBoundary.title')}</div>
-        <p className="font-mono text-body-lg break-words text-danger-300" role="alert">
+      <div className="shadow-level-4 bg-ink-900 rounded-modal border-danger-800 w-full max-w-md space-y-3 border p-5">
+        <div className="text-heading text-danger-400 font-semibold">{t('errorBoundary.title')}</div>
+        <p className="text-body-lg text-danger-300 font-mono break-words" role="alert">
           {error?.message || t('errorBoundary.unexpectedError')}
         </p>
         <button
           type="button"
-          className="bg-ink-700 text-ink-200 hover:bg-ink-600 rounded-modal px-4 py-2 text-body-lg font-medium"
+          className="bg-ink-700 text-ink-200 hover:bg-ink-600 rounded-modal text-body-lg px-4 py-2 font-medium"
           onClick={onRetry}
           aria-label={t('errorBoundary.tryAgain')}
         >

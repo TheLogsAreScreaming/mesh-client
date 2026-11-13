@@ -57,9 +57,9 @@ function GroupFieldset({
   return (
     <fieldset
       data-setting-anchor={anchorId}
-      className="border-ink-600/80 space-y-3 rounded-modal border p-3"
+      className="border-ink-600/80 rounded-modal space-y-3 border p-3"
     >
-      <legend className="text-ink-200 px-1 text-body-lg font-medium">{legend}</legend>
+      <legend className="text-ink-200 text-body-lg px-1 font-medium">{legend}</legend>
       {children}
     </fieldset>
   );
@@ -308,7 +308,7 @@ export default function MeshcoreCompanionCliSection({
             description={unsupported ? t('meshcoreCompanionCli.unsupported') : hint || undefined}
             disabled={busy || unsupported}
           />
-          {error && <p className="mt-1 text-label text-danger-400">{error}</p>}
+          {error && <p className="text-label text-danger-400 mt-1">{error}</p>}
         </div>
       );
     }
@@ -353,7 +353,7 @@ export default function MeshcoreCompanionCliSection({
             onChange={(e) => {
               setEdit(s.key, e.target.value);
             }}
-            className="bg-secondary-dark border-ink-600 text-ink-200 rounded-control min-w-0 flex-1 border px-3 py-1.5 text-body-lg"
+            className="bg-secondary-dark border-ink-600 text-ink-200 rounded-control text-body-lg min-w-0 flex-1 border px-3 py-1.5"
           />
           {isSecret && s.key !== 'pin' && (
             <button
@@ -363,7 +363,7 @@ export default function MeshcoreCompanionCliSection({
                 shown ? t('meshcoreCompanionCli.hideSecret') : t('meshcoreCompanionCli.showSecret')
               }
               onClick={() => void reveal(s.key)}
-              className="border-ink-600 text-ink-200 hover:bg-ink-800 rounded-control border px-3 py-1.5 text-body-lg disabled:opacity-50"
+              className="border-ink-600 text-ink-200 hover:bg-ink-800 rounded-control text-body-lg border px-3 py-1.5 disabled:opacity-50"
             >
               {shown ? t('meshcoreCompanionCli.hideSecret') : t('meshcoreCompanionCli.showSecret')}
             </button>
@@ -382,16 +382,18 @@ export default function MeshcoreCompanionCliSection({
   const renderRebootNotice = () => (
     <div
       role="status"
-      className="flex flex-wrap items-center justify-between gap-2 rounded-modal border border-warning-700 bg-warning-900/40 px-3 py-2"
+      className="rounded-modal border-warning-700 bg-warning-900/40 flex flex-wrap items-center justify-between gap-2 border px-3 py-2"
     >
-      <span className="text-body-lg text-warning-200">{t('meshcoreCompanionCli.rebootPending')}</span>
+      <span className="text-body-lg text-warning-200">
+        {t('meshcoreCompanionCli.rebootPending')}
+      </span>
       <button
         type="button"
         disabled={busy}
         onClick={() => {
           setConfirm('reboot');
         }}
-        className="text-body-lg font-medium text-warning-200 underline hover:text-warning-100"
+        className="text-body-lg text-warning-200 hover:text-warning-100 font-medium underline"
       >
         {t('meshcoreCompanionCli.rebootNow')}
       </button>
@@ -415,7 +417,7 @@ export default function MeshcoreCompanionCliSection({
                 type="button"
                 onClick={() => void copyIp(ip)}
                 aria-label={t('meshcoreCompanionCli.copyIp')}
-                className="border-ink-600 text-ink-200 hover:bg-ink-800 rounded-control border px-3 py-1.5 text-body-lg"
+                className="border-ink-600 text-ink-200 hover:bg-ink-800 rounded-control text-body-lg border px-3 py-1.5"
               >
                 {t('meshcoreCompanionCli.copyIp')}
               </button>
@@ -427,7 +429,7 @@ export default function MeshcoreCompanionCliSection({
                 setConfirm('clearWifi');
               }}
               aria-label={t('meshcoreCompanionCli.clearWifi')}
-              className="rounded-control border border-danger-700 px-3 py-1.5 text-body-lg text-danger-300 hover:bg-danger-900/40 disabled:opacity-50"
+              className="rounded-control border-danger-700 text-body-lg text-danger-300 hover:bg-danger-900/40 border px-3 py-1.5 disabled:opacity-50"
             >
               {t('meshcoreCompanionCli.clearWifi')}
             </button>
@@ -440,7 +442,7 @@ export default function MeshcoreCompanionCliSection({
           type="button"
           disabled={busy || !dirty}
           onClick={() => void applyGroup(group)}
-          className="bg-brand-green text-app-bg rounded-modal px-4 py-2 text-body-lg font-medium disabled:opacity-50"
+          className="bg-brand-green text-app-bg rounded-modal text-body-lg px-4 py-2 font-medium disabled:opacity-50"
         >
           {applyingGroup === group
             ? t('meshcoreCompanionCli.applying')
@@ -469,13 +471,15 @@ export default function MeshcoreCompanionCliSection({
         ) : (
           <>
             {rebootPending && rebootGroup === null && renderRebootNotice()}
-            {loading && <p className="text-muted text-body-lg">{t('meshcoreCompanionCli.loading')}</p>}
+            {loading && (
+              <p className="text-muted text-body-lg">{t('meshcoreCompanionCli.loading')}</p>
+            )}
             {loadError && <p className="text-body-lg text-danger-400">{loadError}</p>}
             <button
               type="button"
               disabled={busy}
               onClick={() => void load()}
-              className="border-ink-600 text-ink-200 hover:bg-ink-800 rounded-control border px-3 py-1.5 text-body-lg disabled:opacity-50"
+              className="border-ink-600 text-ink-200 hover:bg-ink-800 rounded-control text-body-lg border px-3 py-1.5 disabled:opacity-50"
             >
               {t('meshcoreCompanionCli.refresh')}
             </button>
@@ -514,7 +518,7 @@ export default function MeshcoreCompanionCliSection({
                   onClick={() => {
                     setConfirm('reboot');
                   }}
-                  className="bg-brand-green text-app-bg rounded-modal px-4 py-2 text-body-lg font-medium disabled:opacity-50"
+                  className="bg-brand-green text-app-bg rounded-modal text-body-lg px-4 py-2 font-medium disabled:opacity-50"
                 >
                   {t('meshcoreCompanionCli.reboot')}
                 </button>
@@ -524,7 +528,7 @@ export default function MeshcoreCompanionCliSection({
                   onClick={() => {
                     setConfirm('poweroff');
                   }}
-                  className="rounded-modal border border-danger-700 px-4 py-2 text-body-lg text-danger-300 hover:bg-danger-900/40 disabled:opacity-50"
+                  className="rounded-modal border-danger-700 text-body-lg text-danger-300 hover:bg-danger-900/40 border px-4 py-2 disabled:opacity-50"
                 >
                   {t('meshcoreCompanionCli.powerOff')}
                 </button>
@@ -538,7 +542,7 @@ export default function MeshcoreCompanionCliSection({
               <p className="text-muted text-label">{t('meshcoreCompanionCli.consoleHint')}</p>
               <ol
                 aria-label={t('meshcoreCompanionCli.consoleLog')}
-                className="bg-app-bg border-ink-700 rounded-control max-h-48 space-y-0.5 overflow-y-auto border p-2 font-mono text-label"
+                className="bg-app-bg border-ink-700 rounded-control text-label max-h-48 space-y-0.5 overflow-y-auto border p-2 font-mono"
               >
                 {consoleLog.map((entry) => (
                   <li
@@ -573,12 +577,12 @@ export default function MeshcoreCompanionCliSection({
                   onChange={(e) => {
                     setConsoleInput(e.target.value);
                   }}
-                  className="bg-secondary-dark border-ink-600 text-ink-200 rounded-control min-w-0 flex-1 border px-3 py-1.5 font-mono text-body-lg"
+                  className="bg-secondary-dark border-ink-600 text-ink-200 rounded-control text-body-lg min-w-0 flex-1 border px-3 py-1.5 font-mono"
                 />
                 <button
                   type="submit"
                   disabled={busy || consoleBusy || consoleInput.trim() === ''}
-                  className="bg-brand-green text-app-bg rounded-modal px-4 py-1.5 text-body-lg font-medium disabled:opacity-50"
+                  className="bg-brand-green text-app-bg rounded-modal text-body-lg px-4 py-1.5 font-medium disabled:opacity-50"
                 >
                   {t('meshcoreCompanionCli.consoleSend')}
                 </button>

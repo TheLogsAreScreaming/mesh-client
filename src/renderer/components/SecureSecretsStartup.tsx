@@ -118,7 +118,7 @@ export function SecureSecretsStartup({
           <div className="bg-ink-700 h-8 w-8 animate-pulse rounded-full" aria-hidden />
         </output>
       ) : (
-        <div role="alert" className="text-ink-200 my-auto max-w-md space-y-3 text-body-lg">
+        <div role="alert" className="text-ink-200 text-body-lg my-auto max-w-md space-y-3">
           <h1 className="text-heading font-semibold">
             {t(confirming ? 'app.forgetCredentialsTitle' : 'app.savedSettingsUnavailable')}
           </h1>

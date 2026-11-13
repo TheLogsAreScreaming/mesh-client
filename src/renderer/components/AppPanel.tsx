@@ -912,7 +912,7 @@ export default function AppPanel({
         summaryExtra={
           // Inside <summary>: must not be a nested focusable control (axe nested-interactive).
           <HelpTooltip text={t('appPanel.protocolsEnabledDesc')} nonFocusableWrapper>
-            <span className="text-muted cursor-help text-label select-none" aria-hidden="true">
+            <span className="text-muted text-label cursor-help select-none" aria-hidden="true">
               ⓘ
             </span>
           </HelpTooltip>
@@ -972,12 +972,12 @@ export default function AppPanel({
               />
               <label
                 htmlFor="log-panel-visible-checkbox"
-                className="text-ink-300 cursor-pointer text-body-lg"
+                className="text-ink-300 text-body-lg cursor-pointer"
               >
                 {t('appPanel.showLogPanel')}
               </label>
             </div>
-            <p className="text-muted mt-2 text-label">{t('appPanel.logPanelHelp')}</p>
+            <p className="text-muted text-label mt-2">{t('appPanel.logPanelHelp')}</p>
           </div>
         </SettingsCollapsible>
       )}
@@ -1044,7 +1044,7 @@ export default function AppPanel({
               aria-label={t('appPanel.shareMyLocation')}
               className="accent-brand-green"
             />
-            <label htmlFor="shareMyLocation" className="text-ink-300 cursor-pointer text-body-lg">
+            <label htmlFor="shareMyLocation" className="text-ink-300 text-body-lg cursor-pointer">
               {t('appPanel.shareMyLocation')}
             </label>
             <HelpTooltip text={t('appPanel.shareMyLocationHint')} />
@@ -1075,14 +1075,16 @@ export default function AppPanel({
                       })}
             </p>
           )}
-          {!ourPosition && <p className="text-muted text-label">{t('appPanel.noGpsPositionYet')}</p>}
+          {!ourPosition && (
+            <p className="text-muted text-label">{t('appPanel.noGpsPositionYet')}</p>
+          )}
 
           <div data-setting-anchor="app.gps.savedLocations">
             <SavedLocationsSection onLocationChanged={handleSavedLocationChanged} />
           </div>
 
           <div data-setting-anchor="app.gps.refreshInterval" className="flex items-center gap-2">
-            <label htmlFor="apppanel-gps-interval" className="text-ink-300 flex-1 text-body-lg">
+            <label htmlFor="apppanel-gps-interval" className="text-ink-300 text-body-lg flex-1">
               {t('appPanel.autoRefreshInterval')}
             </label>
             <select
@@ -1106,7 +1108,7 @@ export default function AppPanel({
             <p className="text-muted text-label">{t('appPanel.autoRefreshDisabledStatic')}</p>
           )}
           <div data-setting-anchor="app.gps.coordinateFormat" className="flex items-center gap-2">
-            <label htmlFor="apppanel-coord-format" className="text-ink-300 flex-1 text-body-lg">
+            <label htmlFor="apppanel-coord-format" className="text-ink-300 text-body-lg flex-1">
               {t('appPanel.coordinateFormat')}
             </label>
             <select
@@ -1139,7 +1141,7 @@ export default function AppPanel({
                 : undefined
             }
             aria-label={gpsLoading ? t('appPanel.gpsRefreshing') : t('appPanel.gpsRefreshNow')}
-            className={`bg-secondary-dark text-ink-300 rounded-modal px-4 py-2 text-body-lg font-medium transition-colors ${gpsLoading || !onRefreshGps ? 'cursor-not-allowed opacity-50' : 'hover:bg-ink-600'}`}
+            className={`bg-secondary-dark text-ink-300 rounded-modal text-body-lg px-4 py-2 font-medium transition-colors ${gpsLoading || !onRefreshGps ? 'cursor-not-allowed opacity-50' : 'hover:bg-ink-600'}`}
           >
             {gpsLoading ? t('appPanel.gpsRefreshing') : t('appPanel.gpsRefreshNow')}
           </button>
@@ -1161,7 +1163,7 @@ export default function AppPanel({
               aria-label={t('appPanel.filterDistantNodes')}
               className="accent-brand-green"
             />
-            <label htmlFor="distanceFilter" className="text-ink-300 cursor-pointer text-body-lg">
+            <label htmlFor="distanceFilter" className="text-ink-300 text-body-lg cursor-pointer">
               {t('appPanel.filterDistantNodesCheckbox')}
             </label>
           </div>
@@ -1211,7 +1213,7 @@ export default function AppPanel({
                 homeNodeFromStore.longitude != null &&
                 homeNodeFromStore.longitude !== 0;
               return !homeHasLocation ? (
-                <p className="rounded border border-warning-700 bg-warning-900/30 px-2 py-1.5 text-label text-warning-300">
+                <p className="border-warning-700 bg-warning-900/30 text-label text-warning-300 rounded border px-2 py-1.5">
                   {t('appPanel.noGpsFix')}
                 </p>
               ) : null;
@@ -1228,7 +1230,7 @@ export default function AppPanel({
               aria-label={t('appPanel.hideMqttOnlyNodes')}
               className="accent-brand-green"
             />
-            <label htmlFor="filterMqttOnly" className="text-ink-300 cursor-pointer text-body-lg">
+            <label htmlFor="filterMqttOnly" className="text-ink-300 text-body-lg cursor-pointer">
               {t('appPanel.hideMqttOnlyNodes')}
             </label>
           </div>
@@ -1246,7 +1248,7 @@ export default function AppPanel({
               aria-label={t('appPanel.showMovementPaths')}
               className="accent-brand-green"
             />
-            <label htmlFor="showMovementPaths" className="text-ink-300 cursor-pointer text-body-lg">
+            <label htmlFor="showMovementPaths" className="text-ink-300 text-body-lg cursor-pointer">
               {t('appPanel.showMovementPaths')}
             </label>
           </div>
@@ -1254,7 +1256,7 @@ export default function AppPanel({
             data-setting-anchor="app.mapFilter.historyWindow"
             className="flex items-center gap-2"
           >
-            <label htmlFor="apppanel-history-window" className="text-ink-400 shrink-0 text-body-lg">
+            <label htmlFor="apppanel-history-window" className="text-ink-400 text-body-lg shrink-0">
               {t('appPanel.positionHistoryWindowLabel')}
             </label>
             <select
@@ -1281,7 +1283,7 @@ export default function AppPanel({
         <div className="space-y-3">
           {/* Meshtastic node retention */}
           {protocol === 'meshtastic' && (
-            <div className="bg-deep-black border-ink-800 space-y-4 rounded-container border p-4">
+            <div className="bg-deep-black border-ink-800 rounded-container space-y-4 border p-4">
               {/* Auto-prune nodes on startup */}
               <div
                 data-setting-anchor="app.retention.autoPruneNodes"
@@ -1300,7 +1302,7 @@ export default function AppPanel({
                 <label
                   id="apppanel-auto-prune-label"
                   htmlFor="autoPrune"
-                  className="text-ink-300 flex-1 cursor-pointer text-body-lg"
+                  className="text-ink-300 text-body-lg flex-1 cursor-pointer"
                 >
                   {t('appPanel.autoPruneNodesOlderThan')}
                 </label>
@@ -1337,12 +1339,12 @@ export default function AppPanel({
                   />
                   <label
                     htmlFor="pruneEmptyNames"
-                    className="text-ink-300 flex-1 cursor-pointer text-body-lg"
+                    className="text-ink-300 text-body-lg flex-1 cursor-pointer"
                   >
                     {t('appPanel.removeUnnamedNodesLabel')}
                   </label>
                 </div>
-                <p className="text-muted pl-6 text-label">{t('appPanel.unnamedNodesHint')}</p>
+                <p className="text-muted text-label pl-6">{t('appPanel.unnamedNodesHint')}</p>
               </div>
 
               {/* Node cap */}
@@ -1360,7 +1362,7 @@ export default function AppPanel({
                 <label
                   id="apppanel-node-cap-label"
                   htmlFor="nodeCap"
-                  className="text-ink-300 flex-1 cursor-pointer text-body-lg"
+                  className="text-ink-300 text-body-lg flex-1 cursor-pointer"
                 >
                   {t('appPanel.capTotalNodesLabel')}
                 </label>
@@ -1400,7 +1402,7 @@ export default function AppPanel({
                 <label
                   id="apppanel-position-history-prune-label"
                   htmlFor="positionHistoryPrune"
-                  className="text-ink-300 flex-1 cursor-pointer text-body-lg"
+                  className="text-ink-300 text-body-lg flex-1 cursor-pointer"
                 >
                   {t('appPanel.autoPrunePositionHistoryLabel')}
                 </label>
@@ -1429,7 +1431,7 @@ export default function AppPanel({
 
           {/* MeshCore contact retention */}
           {protocol === 'meshcore' && (
-            <div className="bg-deep-black border-ink-800 space-y-4 rounded-container border p-4">
+            <div className="bg-deep-black border-ink-800 rounded-container space-y-4 border p-4">
               {/* Delete contacts that never advertised */}
               <div
                 data-setting-anchor="app.retention.neverAdvertisedContacts"
@@ -1448,12 +1450,12 @@ export default function AppPanel({
                   />
                   <label
                     htmlFor="meshcoreDeleteNeverAdvertised"
-                    className="text-ink-300 flex-1 cursor-pointer text-body-lg"
+                    className="text-ink-300 text-body-lg flex-1 cursor-pointer"
                   >
                     {t('appPanel.meshcoreRemoveNeverAdvertisedLabel')}
                   </label>
                 </div>
-                <p className="text-muted pl-6 text-label">
+                <p className="text-muted text-label pl-6">
                   {t('appPanel.meshcoreRemoveNeverAdvertisedHint')}
                 </p>
               </div>
@@ -1476,7 +1478,7 @@ export default function AppPanel({
                 <label
                   id="apppanel-meshcore-auto-prune-label"
                   htmlFor="meshcoreAutoPrune"
-                  className="text-ink-300 flex-1 cursor-pointer text-body-lg"
+                  className="text-ink-300 text-body-lg flex-1 cursor-pointer"
                 >
                   {t('appPanel.autoPruneUnheardContactsLabel')}
                 </label>
@@ -1519,7 +1521,7 @@ export default function AppPanel({
                 <label
                   id="apppanel-meshcore-contact-cap-label"
                   htmlFor="meshcoreContactCap"
-                  className="text-ink-300 flex-1 cursor-pointer text-body-lg"
+                  className="text-ink-300 text-body-lg flex-1 cursor-pointer"
                 >
                   {t('appPanel.capTotalContactsLabel')}
                 </label>
@@ -1548,7 +1550,7 @@ export default function AppPanel({
           )}
 
           {/* Messages: load limit (localStorage) + DB retention cap — single card (issue #387). */}
-          <div className="bg-deep-black border-ink-800 space-y-3 rounded-container border p-4">
+          <div className="bg-deep-black border-ink-800 rounded-container space-y-3 border p-4">
             <p className="text-muted text-label leading-relaxed">
               {t('appPanel.messagesLoadLimitIntro')}
             </p>
@@ -1569,7 +1571,7 @@ export default function AppPanel({
               <label
                 id="apppanel-message-limit-label"
                 htmlFor="messageLimit"
-                className="text-ink-300 flex-1 cursor-pointer text-body-lg"
+                className="text-ink-300 text-body-lg flex-1 cursor-pointer"
               >
                 {t('appPanel.limitMessagesLoadedLabel')}
               </label>
@@ -1613,7 +1615,7 @@ export default function AppPanel({
                   <label
                     id="apppanel-message-retention-meshcore-label"
                     htmlFor="messageRetentionMeshcore"
-                    className="text-ink-300 flex-1 cursor-pointer text-body-lg"
+                    className="text-ink-300 text-body-lg flex-1 cursor-pointer"
                   >
                     {t('appPanel.capStoredMessagesLabel')}
                   </label>
@@ -1639,7 +1641,7 @@ export default function AppPanel({
                   <span className="text-ink-300 text-body-lg">{t('common.messages')}</span>
                 </div>
                 {/* Protocol-specific: only MeshCore has Rooms in this cap (RRC has its own row). */}
-                <p className="text-muted pl-6 text-label">
+                <p className="text-muted text-label pl-6">
                   {t('appPanel.meshcoreRoomPostRetentionHint')}
                 </p>
               </>
@@ -1661,7 +1663,7 @@ export default function AppPanel({
                 <label
                   id="apppanel-message-retention-meshtastic-label"
                   htmlFor="messageRetentionMeshtastic"
-                  className="text-ink-300 flex-1 cursor-pointer text-body-lg"
+                  className="text-ink-300 text-body-lg flex-1 cursor-pointer"
                 >
                   {t('appPanel.capStoredMessagesLabel')}
                 </label>
@@ -1701,7 +1703,7 @@ export default function AppPanel({
                 aria-label={t('appPanel.compactMessages')}
                 className="accent-brand-green"
               />
-              <label htmlFor="chatCompactMode" className="text-ink-300 cursor-pointer text-body-lg">
+              <label htmlFor="chatCompactMode" className="text-ink-300 text-body-lg cursor-pointer">
                 {t('appPanel.compactMessages')}
               </label>
             </div>
@@ -1721,7 +1723,7 @@ export default function AppPanel({
               />
               <label
                 htmlFor="alwaysShowMessageActions"
-                className="text-ink-300 cursor-pointer text-body-lg"
+                className="text-ink-300 text-body-lg cursor-pointer"
               >
                 {t('appPanel.alwaysShowMessageActions')}
               </label>
@@ -1754,7 +1756,7 @@ export default function AppPanel({
                   />
                   <label
                     htmlFor="storeForwardAutoFetchHistory"
-                    className="text-ink-300 cursor-pointer text-body-lg"
+                    className="text-ink-300 text-body-lg cursor-pointer"
                   >
                     {t('appPanel.storeForwardAutoFetchHistory')}
                   </label>
@@ -1765,7 +1767,10 @@ export default function AppPanel({
                     data-setting-anchor="app.retention.storeForwardProfile"
                     className="flex flex-wrap items-center gap-2 pl-6"
                   >
-                    <label htmlFor="storeForwardHistoryProfile" className="text-ink-300 text-body-lg">
+                    <label
+                      htmlFor="storeForwardHistoryProfile"
+                      className="text-ink-300 text-body-lg"
+                    >
                       {t('appPanel.storeForwardHistoryProfileLabel')}
                     </label>
                     <select
@@ -1813,7 +1818,7 @@ export default function AppPanel({
                   />
                   <label
                     htmlFor="shareLocationSendWaypoint"
-                    className="text-ink-300 cursor-pointer text-body-lg"
+                    className="text-ink-300 text-body-lg cursor-pointer"
                   >
                     {t('appPanel.shareLocationSendWaypoint')}
                   </label>
@@ -1838,7 +1843,7 @@ export default function AppPanel({
             aria-label={t('appPanel.closeToTray')}
             className="accent-brand-green"
           />
-          <label htmlFor="closeToTray" className="text-ink-300 cursor-pointer text-body-lg">
+          <label htmlFor="closeToTray" className="text-ink-300 text-body-lg cursor-pointer">
             {t('appPanel.closeToTray')}
           </label>
           <HelpTooltip text={t('appPanel.closeToTrayDesc')} />
@@ -1881,7 +1886,7 @@ export default function AppPanel({
           />
           <label
             htmlFor="autoUpdateDownloadEnabled"
-            className="text-ink-300 cursor-pointer text-body-lg"
+            className="text-ink-300 text-body-lg cursor-pointer"
           >
             {t('appPanel.autoUpdateDownload')}
           </label>
@@ -1902,7 +1907,7 @@ export default function AppPanel({
             aria-label={t('appPanel.reduceMotion')}
             className="accent-brand-green"
           />
-          <label htmlFor="reduceMotion" className="text-ink-300 cursor-pointer text-body-lg">
+          <label htmlFor="reduceMotion" className="text-ink-300 text-body-lg cursor-pointer">
             {t('appPanel.reduceMotion')}
           </label>
           <HelpTooltip text={t('appPanel.reduceMotionDesc')} />
@@ -1919,18 +1924,18 @@ export default function AppPanel({
             aria-label={t('appPanel.use24HourTime')}
             className="accent-brand-green"
           />
-          <label htmlFor="use24HourTime" className="text-ink-300 cursor-pointer text-body-lg">
+          <label htmlFor="use24HourTime" className="text-ink-300 text-body-lg cursor-pointer">
             {t('appPanel.use24HourTime')}
           </label>
           <HelpTooltip text={t('appPanel.use24HourTimeDesc')} />
         </div>
         <div data-setting-anchor="app.appearance.fontSize" className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <label htmlFor="fontScale" className="text-ink-300 cursor-pointer text-body-lg">
+            <label htmlFor="fontScale" className="text-ink-300 text-body-lg cursor-pointer">
               {t('appPanel.fontSize')}
             </label>
             <HelpTooltip text={t('appPanel.fontSizeDesc')} />
-            <span className="text-muted ml-auto text-label" aria-live="polite">
+            <span className="text-muted text-label ml-auto" aria-live="polite">
               {Math.round(fontScale * 100)}%
             </span>
           </div>
@@ -1942,7 +1947,7 @@ export default function AppPanel({
                 updateFontScale(fontScale - FONT_SCALE_STEP);
               }}
               disabled={fontScale <= FONT_SCALE_MIN}
-              className="border-ink-600 text-ink-300 hover:bg-ink-600 rounded border px-2 py-1 text-body-lg transition-colors disabled:opacity-40"
+              className="border-ink-600 text-ink-300 hover:bg-ink-600 text-body-lg rounded border px-2 py-1 transition-colors disabled:opacity-40"
             >
               −
             </button>
@@ -1966,7 +1971,7 @@ export default function AppPanel({
                 updateFontScale(fontScale + FONT_SCALE_STEP);
               }}
               disabled={fontScale >= FONT_SCALE_MAX}
-              className="border-ink-600 text-ink-300 hover:bg-ink-600 rounded border px-2 py-1 text-body-lg transition-colors disabled:opacity-40"
+              className="border-ink-600 text-ink-300 hover:bg-ink-600 text-body-lg rounded border px-2 py-1 transition-colors disabled:opacity-40"
             >
               +
             </button>
@@ -1992,7 +1997,7 @@ export default function AppPanel({
           data-setting-anchor="app.appearance.colorScheme"
           className="group bg-deep-black border-secondary-dark rounded-modal border"
         >
-          <summary className="text-muted hover:bg-ink-800/40 flex cursor-pointer list-none items-center justify-between gap-2 rounded-modal px-4 py-3 text-body-lg font-medium [&::-webkit-details-marker]:hidden">
+          <summary className="text-muted hover:bg-ink-800/40 rounded-modal text-body-lg flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 font-medium [&::-webkit-details-marker]:hidden">
             <span>{t('appPanel.colorScheme')}</span>
             <DetailsChevron className="text-muted h-4 w-4 shrink-0 transition-transform group-open:rotate-180" />
           </summary>
@@ -2084,7 +2089,7 @@ export default function AppPanel({
                 type="button"
                 onClick={handleSaveThemeSnapshot}
                 aria-label={t('appPanel.saveTheme')}
-                className="bg-deep-black border-ink-600 text-ink-300 hover:bg-ink-700 flex-1 rounded-modal border px-3 py-2 text-body-lg font-medium transition-colors"
+                className="bg-deep-black border-ink-600 text-ink-300 hover:bg-ink-700 rounded-modal text-body-lg flex-1 border px-3 py-2 font-medium transition-colors"
               >
                 {t('appPanel.saveThemeButton')}
               </button>
@@ -2094,7 +2099,7 @@ export default function AppPanel({
                 disabled={!hasSavedThemeSnapshot}
                 aria-label={t('appPanel.restoreTheme')}
                 title={hasSavedThemeSnapshot ? undefined : t('appPanel.noSavedThemeTooltip')}
-                className="bg-deep-black border-ink-600 text-ink-300 hover:bg-ink-700 flex-1 rounded-modal border px-3 py-2 text-body-lg font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                className="bg-deep-black border-ink-600 text-ink-300 hover:bg-ink-700 rounded-modal text-body-lg flex-1 border px-3 py-2 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {t('appPanel.restoreThemeButton')}
               </button>
@@ -2102,7 +2107,7 @@ export default function AppPanel({
                 type="button"
                 onClick={handleResetThemeColors}
                 aria-label={t('appPanel.resetAllColors')}
-                className="bg-deep-black border-ink-600 text-ink-300 hover:bg-ink-700 flex-1 rounded-modal border px-3 py-2 text-body-lg font-medium transition-colors"
+                className="bg-deep-black border-ink-600 text-ink-300 hover:bg-ink-700 rounded-modal text-body-lg flex-1 border px-3 py-2 font-medium transition-colors"
               >
                 {t('appPanel.resetAllColorsButton')}
               </button>
@@ -2124,7 +2129,7 @@ export default function AppPanel({
             aria-label={t('appPanel.soundNotifications')}
             className="accent-brand-green h-4 w-4 rounded"
           />
-          <label htmlFor="soundNotifications" className="text-ink-300 cursor-pointer text-body-lg">
+          <label htmlFor="soundNotifications" className="text-ink-300 text-body-lg cursor-pointer">
             {t('appPanel.soundNotifications')}
           </label>
         </div>
@@ -2193,7 +2198,7 @@ export default function AppPanel({
               aria-label={t('appPanel.notifyOnLinkDown')}
               className="accent-brand-green h-4 w-4 rounded"
             />
-            <label htmlFor="notifyOnLinkDown" className="text-ink-300 cursor-pointer text-body-lg">
+            <label htmlFor="notifyOnLinkDown" className="text-ink-300 text-body-lg cursor-pointer">
               {t('appPanel.notifyOnLinkDown')}
             </label>
           </div>
@@ -2213,7 +2218,7 @@ export default function AppPanel({
             />
             <label
               htmlFor="notifyOnDiagnosticErrors"
-              className="text-ink-300 cursor-pointer text-body-lg"
+              className="text-ink-300 text-body-lg cursor-pointer"
             >
               {t('appPanel.notifyOnDiagnosticErrors')}
             </label>
@@ -2252,7 +2257,7 @@ export default function AppPanel({
                 );
               }
             }}
-            className="bg-secondary-dark text-ink-300 hover:bg-ink-600 rounded-modal px-4 py-3 text-body-lg font-medium transition-colors"
+            className="bg-secondary-dark text-ink-300 hover:bg-ink-600 rounded-modal text-body-lg px-4 py-3 font-medium transition-colors"
           >
             {t('appPanel.exportDatabaseButton')}
           </button>
@@ -2274,7 +2279,7 @@ export default function AppPanel({
                 addToast(t('appPanel.debugSnapshotFailed'), 'error');
               }
             }}
-            className="bg-secondary-dark text-ink-300 hover:bg-ink-600 rounded-modal px-4 py-3 text-body-lg font-medium transition-colors"
+            className="bg-secondary-dark text-ink-300 hover:bg-ink-600 rounded-modal text-body-lg px-4 py-3 font-medium transition-colors"
           >
             {t('appPanel.copyDebugSnapshotButton')}
           </button>
@@ -2313,7 +2318,7 @@ export default function AppPanel({
                 );
               }
             }}
-            className="bg-secondary-dark text-ink-300 hover:bg-ink-600 rounded-modal px-4 py-3 text-body-lg font-medium transition-colors"
+            className="bg-secondary-dark text-ink-300 hover:bg-ink-600 rounded-modal text-body-lg px-4 py-3 font-medium transition-colors"
           >
             {t('appPanel.importMergeButton')}
           </button>
@@ -2328,12 +2333,12 @@ export default function AppPanel({
         </div>
       ) : null}
 
-      <details className="group rounded-modal border border-danger-900/40 bg-danger-950/10">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-modal px-4 py-3 hover:bg-danger-950/30 [&::-webkit-details-marker]:hidden">
-          <h3 className="text-body-lg font-semibold text-danger-200">{t('mecp.section.title')}</h3>
+      <details className="group rounded-modal border-danger-900/40 bg-danger-950/10 border">
+        <summary className="rounded-modal hover:bg-danger-950/30 flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden">
+          <h3 className="text-body-lg text-danger-200 font-semibold">{t('mecp.section.title')}</h3>
           <DetailsChevron className="text-muted h-4 w-4 shrink-0 transition-transform group-open:rotate-180" />
         </summary>
-        <div className="space-y-3 border-t border-danger-900/40 px-4 pt-3 pb-4">
+        <div className="border-danger-900/40 space-y-3 border-t px-4 pt-3 pb-4">
           <div className="space-y-1">
             <p className="text-muted text-label leading-relaxed">{t('mecp.section.hint')}</p>
             <div className="flex flex-wrap gap-x-3 gap-y-1">
@@ -2369,11 +2374,14 @@ export default function AppPanel({
                 aria-label={t('mecp.section.showComposeButtons')}
                 className="accent-brand-green h-4 w-4 rounded"
               />
-              <label htmlFor="mecpComposeEnabled" className="text-ink-300 cursor-pointer text-body-lg">
+              <label
+                htmlFor="mecpComposeEnabled"
+                className="text-ink-300 text-body-lg cursor-pointer"
+              >
                 {t('mecp.section.showComposeButtons')}
               </label>
             </div>
-            <p className="text-muted pl-7 text-label leading-relaxed">
+            <p className="text-muted text-label pl-7 leading-relaxed">
               {t('mecp.section.showComposeButtonsHint')}
             </p>
           </div>
@@ -2391,12 +2399,12 @@ export default function AppPanel({
               />
               <label
                 htmlFor="mecpStandingAlertEnabled"
-                className="text-ink-300 cursor-pointer text-body-lg"
+                className="text-ink-300 text-body-lg cursor-pointer"
               >
                 {t('mecp.section.standingAlert')}
               </label>
             </div>
-            <p className="text-muted pl-7 text-label leading-relaxed">
+            <p className="text-muted text-label pl-7 leading-relaxed">
               {t('mecp.section.standingAlertHint')}
             </p>
           </div>
@@ -2433,7 +2441,7 @@ export default function AppPanel({
             data-setting-anchor="app.mecp.exportLog"
             type="button"
             disabled={mecpExportBusy}
-            className="border-ink-600 bg-ink-900/60 text-ink-200 hover:bg-ink-800 rounded-modal border px-3 py-2 text-body-lg disabled:opacity-50"
+            className="border-ink-600 bg-ink-900/60 text-ink-200 hover:bg-ink-800 rounded-modal text-body-lg border px-3 py-2 disabled:opacity-50"
             aria-label={t('mecp.exportLog')}
             onClick={() => {
               if (mecpExportBusy) return;
@@ -2487,7 +2495,7 @@ export default function AppPanel({
 
         {/* Diagnostics (in-memory reset) */}
         <div className="space-y-2">
-          <div className="text-label font-medium text-danger-400/90">
+          <div className="text-label text-danger-400/90 font-medium">
             {t('appPanel.dangerZoneDiagnosticsHeading')}
           </div>
           <p className="text-muted text-label leading-relaxed">
@@ -2516,8 +2524,8 @@ export default function AppPanel({
           </button>
         </div>
 
-        <div className="space-y-2 border-t border-danger-900/50 pt-4">
-          <div className="text-label font-medium text-danger-400/90">
+        <div className="border-danger-900/50 space-y-2 border-t pt-4">
+          <div className="text-label text-danger-400/90 font-medium">
             {t('appPanel.dangerZoneGpsHeading')}
           </div>
           <p className="text-muted text-label leading-relaxed">{t('appPanel.dangerZoneGpsDesc')}</p>
@@ -2543,8 +2551,8 @@ export default function AppPanel({
           </button>
         </div>
 
-        <div className="space-y-2 border-t border-danger-900/50 pt-4">
-          <div className="text-label font-medium text-danger-400/90">
+        <div className="border-danger-900/50 space-y-2 border-t pt-4">
+          <div className="text-label text-danger-400/90 font-medium">
             {t('appPanel.dangerZonePositionHistoryHeading')}
           </div>
           <p className="text-muted text-label leading-relaxed">
@@ -2574,8 +2582,8 @@ export default function AppPanel({
         </div>
 
         {/* Nodes */}
-        <div className="space-y-3 border-t border-danger-900/50 pt-4">
-          <div className="text-label font-medium text-danger-400/90">
+        <div className="border-danger-900/50 space-y-3 border-t pt-4">
+          <div className="text-label text-danger-400/90 font-medium">
             {t('appPanel.dangerZoneNodesHeading')}
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -2591,7 +2599,7 @@ export default function AppPanel({
                 setDeleteAgeDays(Math.max(1, parseInt(e.target.value) || 1));
               }}
               aria-label={t('appPanel.deleteNodesOlderThanAria', { days: deleteAgeDays })}
-              className="bg-app-bg text-body text-ink-200 h-8 w-20 rounded-modal border border-danger-800/60 px-2.5 text-right focus:border-danger-500 focus:outline-none pointer-coarse:h-10"
+              className="bg-app-bg text-body text-ink-200 rounded-modal border-danger-800/60 focus:border-danger-500 h-8 w-20 border px-2.5 text-right focus:outline-none pointer-coarse:h-10"
             />
             <span className="text-ink-300 text-body-lg">{t('common.days')}</span>
             <button
@@ -2690,7 +2698,9 @@ export default function AppPanel({
             className={DANGER_ROW_CLASS}
           >
             <div className="font-medium">{t('appPanel.pruneNoFixNodesTitle')}</div>
-            <div className="text-muted text-label font-normal">{t('appPanel.pruneNoFixSubtitle')}</div>
+            <div className="text-muted text-label font-normal">
+              {t('appPanel.pruneNoFixSubtitle')}
+            </div>
           </button>
           <button
             data-setting-anchor="app.danger.pruneDistantNodes"
@@ -2846,10 +2856,12 @@ export default function AppPanel({
         </div>
 
         {/* Messages */}
-        <div className="space-y-2 border-t border-danger-900/50 pt-4">
-          <div className="text-label font-medium text-danger-400/90">{t('appPanel.messagesSection')}</div>
+        <div className="border-danger-900/50 space-y-2 border-t pt-4">
+          <div className="text-label text-danger-400/90 font-medium">
+            {t('appPanel.messagesSection')}
+          </div>
           <div className="flex items-center gap-2">
-            <label htmlFor="apppanel-clear-channel" className="text-ink-400 shrink-0 text-body-lg">
+            <label htmlFor="apppanel-clear-channel" className="text-ink-400 text-body-lg shrink-0">
               {t('appPanel.clearChannelLabel')}
             </label>
             <select
@@ -2859,7 +2871,7 @@ export default function AppPanel({
                 setClearChannelTarget(parseInt(e.target.value, 10));
               }}
               aria-label={t('common.channel')}
-              className="bg-app-bg text-body text-ink-200 h-8 flex-1 rounded-modal border border-danger-800/60 px-2 focus:border-danger-500 focus:outline-none pointer-coarse:h-10"
+              className="bg-app-bg text-body text-ink-200 rounded-modal border-danger-800/60 focus:border-danger-500 h-8 flex-1 border px-2 focus:outline-none pointer-coarse:h-10"
             >
               <option value={CLEAR_ALL_CHANNELS_VALUE}>{t('appPanel.allChannelsOption')}</option>
               {msgChannels.map((ch) => (
@@ -2937,8 +2949,8 @@ export default function AppPanel({
 
         {/* MeshCore */}
         {onClearMeshcoreRepeaters && (
-          <div className="space-y-2 border-t border-danger-900/50 pt-4">
-            <div className="text-label font-medium text-danger-400">
+          <div className="border-danger-900/50 space-y-2 border-t pt-4">
+            <div className="text-label text-danger-400 font-medium">
               {t('appPanel.dangerZoneMeshcoreHeading')}
             </div>
             <button
@@ -2963,8 +2975,8 @@ export default function AppPanel({
         )}
 
         {/* Everything */}
-        <div className="space-y-2 border-t border-danger-900/50 pt-4">
-          <div className="text-label font-medium text-danger-400">
+        <div className="border-danger-900/50 space-y-2 border-t pt-4">
+          <div className="text-label text-danger-400 font-medium">
             {t('appPanel.dangerZoneEverythingHeading')}
           </div>
           <button

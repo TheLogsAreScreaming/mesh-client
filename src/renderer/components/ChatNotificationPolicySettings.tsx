@@ -14,7 +14,7 @@ export function ChatNotificationPolicySettings() {
   const [failed, setFailed] = useState(false);
   return (
     <div className="space-y-2">
-      <label htmlFor="chatNotificationMode" className="text-ink-300 block text-body-lg">
+      <label htmlFor="chatNotificationMode" className="text-ink-300 text-body-lg block">
         {t('notificationPolicy.label')}
       </label>
       <select

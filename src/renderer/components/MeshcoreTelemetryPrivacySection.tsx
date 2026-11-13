@@ -216,7 +216,7 @@ export default function MeshcoreTelemetryPrivacySection({
             );
           })
         }
-        className="bg-brand-green text-app-bg rounded-modal px-4 py-2 text-body-lg font-medium disabled:opacity-50"
+        className="bg-brand-green text-app-bg rounded-modal text-body-lg px-4 py-2 font-medium disabled:opacity-50"
       >
         {applying
           ? t('meshcoreTelemetryPrivacy.applying')

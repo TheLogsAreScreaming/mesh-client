@@ -51,7 +51,7 @@ function CatchUpControls({ summary }: { summary: ConversationSummaryController }
         {t('aiSummary.catchUp')}
       </Button>
       <select
-        className={`${SELECT_BOX_CLASS} max-w-32 text-label`}
+        className={`${SELECT_BOX_CLASS} text-label max-w-32`}
         aria-label={t('aiSummary.scope')}
         value={customMode ? 'custom' : value}
         disabled={summary.pending}

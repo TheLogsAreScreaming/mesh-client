@@ -1759,7 +1759,7 @@ export function ChatComposer({
                         bottom: floodScopeMenuPos.bottom,
                         right: floodScopeMenuPos.right,
                       }}
-                      className="bg-deep-black shadow-level-4 border-ink-700 z-50 max-h-72 min-w-[12rem] overflow-y-auto rounded-modal border py-1"
+                      className="bg-deep-black shadow-level-4 border-ink-700 rounded-modal z-50 max-h-72 min-w-[12rem] overflow-y-auto border py-1"
                     >
                       {floodScopeCustomEditing ? (
                         <div className="space-y-2 px-2 py-1.5">
@@ -1845,7 +1845,7 @@ export function ChatComposer({
                                   closeFloodScopeMenu();
                                   setScheduleDialogOpen(true);
                                 }}
-                                className="text-ink-300 hover:bg-ink-800 hover:text-ink-100 w-full px-3 py-1.5 text-left text-label transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                                className="text-ink-300 hover:bg-ink-800 hover:text-ink-100 text-label w-full px-3 py-1.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                               >
                                 {t('chatPanel.sendLater')}
                               </button>
@@ -1891,7 +1891,7 @@ export function ChatComposer({
                                         persistFloodScopeOverride(option.value);
                                         closeFloodScopeMenu();
                                       }}
-                                      className={`w-full px-3 py-1.5 text-left text-label transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                                      className={`text-label w-full px-3 py-1.5 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                                         selected
                                           ? 'text-brand-green bg-ink-800'
                                           : 'text-ink-300 hover:bg-ink-800 hover:text-ink-100'
@@ -1917,7 +1917,7 @@ export function ChatComposer({
                                     );
                                     setFloodScopeCustomError(null);
                                   }}
-                                  className="hover:bg-ink-800 w-full px-3 py-1.5 text-left text-label text-cyan-300 transition-colors hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
+                                  className="hover:bg-ink-800 text-label w-full px-3 py-1.5 text-left text-cyan-300 transition-colors hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                   {t('chatPanel.floodScopeOverrideCustom')}
                                 </button>

@@ -205,7 +205,7 @@ export function ConfigText({
             onClick={() => {
               setShow((s) => !s);
             }}
-            className="text-muted hover:text-ink-300 px-2 py-2 text-label"
+            className="text-muted hover:text-ink-300 text-label px-2 py-2"
           >
             {show ? t('common.hide') : t('common.show')}
           </button>
@@ -295,7 +295,7 @@ export function ModuleStatus({
   const { t } = useTranslation();
   if (!packets || packets.size === 0) {
     return (
-      <div className="bg-ink-800/50 rounded px-3 py-2 text-label">
+      <div className="bg-ink-800/50 text-label rounded px-3 py-2">
         <span className="text-muted">{t('modulePanel.statusNoPackets', { label })}</span>
       </div>
     );
@@ -306,7 +306,7 @@ export function ModuleStatus({
   );
   const lastSeen = formatTimeAgo(latest, t);
   return (
-    <div className="bg-ink-800/50 rounded px-3 py-2 text-label">
+    <div className="bg-ink-800/50 text-label rounded px-3 py-2">
       <span className="text-ink-400">
         {t('modulePanel.statusLine', {
           count: packets.size,

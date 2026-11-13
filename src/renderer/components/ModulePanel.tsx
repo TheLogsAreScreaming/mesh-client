@@ -1950,11 +1950,13 @@ export default function ModulePanel({
           <div className="space-y-1">
             <p className="text-muted text-body-lg">{t('meshtasticExtraConfig.availablePins')}</p>
             {remoteHardwarePins.length === 0 ? (
-              <p className="text-muted text-label">{t('meshtasticExtraConfig.availablePinsNone')}</p>
+              <p className="text-muted text-label">
+                {t('meshtasticExtraConfig.availablePinsNone')}
+              </p>
             ) : (
               <ul
                 aria-label={t('meshtasticExtraConfig.availablePins')}
-                className="text-ink-300 space-y-0.5 text-label"
+                className="text-ink-300 text-label space-y-0.5"
               >
                 {remoteHardwarePins.map((pin) => (
                   <li key={pin.gpioPin}>

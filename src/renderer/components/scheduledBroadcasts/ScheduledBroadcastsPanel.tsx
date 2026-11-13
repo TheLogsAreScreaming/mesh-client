@@ -114,7 +114,7 @@ export default function ScheduledBroadcastsPanel() {
         <p className="text-ink-300 text-label max-w-prose">{t('scheduledBroadcasts.intro')}</p>
         <p
           role="note"
-          className="text-label rounded-card max-w-prose border border-warning-800/60 bg-warning-950/40 px-3 py-2 text-warning-200"
+          className="text-label rounded-card border-warning-800/60 bg-warning-950/40 text-warning-200 max-w-prose border px-3 py-2"
         >
           {t('scheduledBroadcasts.respectWarning')}
         </p>

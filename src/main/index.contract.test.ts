@@ -723,7 +723,6 @@ describe('MQTT forwarder dropped-event logs (source contract)', () => {
       /mqtt:clientId \(meshcore\) dropped \(mainWindow not ready\)',[\s\S]{0,40}sanitizeLogMessage\(id\)/,
     );
   });
-
 });
 
 describe('Meshtastic message DB IPC (source contract)', () => {
@@ -768,7 +767,6 @@ describe('MeshCore DB IPC (source contract)', () => {
     );
     expect(DATABASE_SOURCE).not.toContain('INSERT OR REPLACE INTO meshcore_contacts');
   });
-
 });
 
 describe('Persistent app settings IPC (source contract)', () => {

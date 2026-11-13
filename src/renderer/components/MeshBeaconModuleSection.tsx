@@ -249,7 +249,7 @@ export function MeshBeaconModuleSection({
           disabled={fieldsDisabled || !broadcast}
           description={t('modulePanel.fields.mbMessageDesc')}
         />
-        <p className="text-muted text-right text-label">
+        <p className="text-muted text-label text-right">
           {t('modulePanel.fields.mbMessageBytes', {
             used: messageBytes,
             max: MESH_BEACON_MESSAGE_MAX_BYTES,
@@ -314,7 +314,7 @@ export function MeshBeaconModuleSection({
           return (
             <fieldset
               key={i}
-              className="border-ink-700 space-y-2 rounded-modal border p-3"
+              className="border-ink-700 rounded-modal space-y-2 border p-3"
               aria-label={t('modulePanel.fields.mbTargetLabel', { n })}
             >
               <div className="flex items-center justify-between">
