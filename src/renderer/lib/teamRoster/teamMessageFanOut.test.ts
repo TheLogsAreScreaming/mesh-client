@@ -19,7 +19,6 @@ function member(
 }
 
 describe('fanOutTeamMessage', () => {
-
   it('skips when no link or online destination and when all sends fail', () => {
     const sendDm = vi.fn().mockReturnValue(false);
     const presenceByUnit = new Map<number, MemberPresenceSnapshot>([
@@ -98,6 +97,61 @@ describe('fanOutTeamMessage', () => {
       'no_destination',
       'send_failed',
     ]);
+  });
+
+  it('skips local-node destinations but still sends other online devices', () => {
+    const sendDm = vi.fn().mockReturnValue(true);
+    const selfNodeIdsByProtocol = new Map([
+      ['meshtastic' as const, new Set([10])],
+      ['meshcore' as const, new Set<number>()],
+    ]);
+    const presenceByUnit = new Map<number, MemberPresenceSnapshot>([
+      [
+        1,
+        {
+          unitId: 1,
+          aggregateStatus: 'online',
+          lastActive: {
+            link: { protocol: 'meshtastic', durableKey: '10', nodeId: 10, onRoster: true },
+            peerNodeId: 10,
+            lastHeardMs: 200,
+            status: 'online',
+            displayName: 'SelfRadio',
+          },
+          links: [
+            {
+              link: { protocol: 'meshtastic', durableKey: '10', nodeId: 10, onRoster: true },
+              peerNodeId: 10,
+              lastHeardMs: 200,
+              status: 'online',
+              displayName: 'SelfRadio',
+            },
+            {
+              link: { protocol: 'meshtastic', durableKey: '77', nodeId: 77, onRoster: true },
+              peerNodeId: 77,
+              lastHeardMs: 50,
+              status: 'online',
+              displayName: 'Peer',
+            },
+          ],
+        },
+      ],
+    ]);
+
+    const result = fanOutTeamMessage({
+      recipients: [member({ unitId: 1, callsign: 'LinkedLocal' })],
+      presenceByUnit,
+      text: 'no self dm',
+      sendDm,
+      selfNodeIdsByProtocol,
+    });
+
+    expect(result.sent).toBe(1);
+    expect(sendDm).toHaveBeenCalledTimes(1);
+    expect(sendDm).toHaveBeenCalledWith(
+      expect.objectContaining({ protocol: 'meshtastic', destination: 77, text: 'no self dm' }),
+    );
+    expect(activePresenceFanOutLinks(presenceByUnit.get(1), selfNodeIdsByProtocol)).toHaveLength(1);
   });
 
   it('skips isSelf roster members without calling send', () => {

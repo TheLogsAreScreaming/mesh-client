@@ -587,13 +587,6 @@ describe('analyzeDebugSnapshot', () => {
   });
 });
 
-describe('buildDebugSnapshotAsync', () => {
-  beforeEach(() => {
-    useIdentityStore.setState({ identities: {}, activeIdentityId: null });
-    resetDebugSnapshotUiContext();
-  });
-});
-
 describe('copyDebugSnapshotToClipboard', () => {
   afterEach(() => {
     vi.unstubAllGlobals();

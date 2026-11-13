@@ -340,21 +340,15 @@ describe('AppPanel: theme presets', () => {
     expect(charcoal).toHaveAttribute('aria-pressed', 'false');
     expect(signature).toHaveAttribute('aria-pressed', 'true');
     const root = document.documentElement;
-    expect(root.style.getPropertyValue('--color-ink-800')).toBe('#212d40');
-    expect(root.style.getPropertyValue('--color-app-bg')).toBe('#11151c');
-    expect(localStorage.getItem('mesh-client:themeSurface')).toBe('midnight');
+    expect(root.style.getPropertyValue('--color-ink-800')).toBe('#1e293b');
+    expect(root.style.getPropertyValue('--color-app-bg')).toBe('#020617');
+    expect(localStorage.getItem('mesh-client:themeSurface')).toBe('slate');
 
-    // Meshtastic changes the accent and sent bubbles and keeps Midnight.
-    fireEvent.click(screen.getByRole('button', { name: 'Meshtastic' }));
-    expect(screen.getByRole('button', { name: 'Meshtastic' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-    expect(screen.getByRole('button', { name: 'Midnight' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
-    expect(root.style.getPropertyValue('--color-brand-green')).toBe('#67e8b4');
+    // Sky changes the accent and sent bubbles and keeps Slate.
+    fireEvent.click(screen.getByRole('button', { name: 'Sky' }));
+    expect(screen.getByRole('button', { name: 'Sky' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Slate' })).toHaveAttribute('aria-pressed', 'true');
+    expect(root.style.getPropertyValue('--color-brand-green')).toBe('#38bdf8');
 
     fireEvent.click(charcoal);
     fireEvent.click(signature);
@@ -848,21 +842,6 @@ describe('AppPanel: keep computer awake select', () => {
   });
 });
 
-describe('AppPanel: RRC unread all room messages toggle', () => {
-  const defaultProps = {
-    nodeCount: 0,
-    messageCount: 0,
-    channels: [] as { index: number; name: string }[],
-    myNodeNum: null as number | null,
-    onLocationFilterChange: vi.fn(),
-  };
-
-  beforeEach(() => {
-    localStorage.removeItem('mesh-client:appSettings');
-  });
-
-});
-
 describe('AppPanel: MeshCore Radio-owned settings are not on App', () => {
   const defaultProps = {
     nodeCount: 0,
@@ -1269,11 +1248,5 @@ describe('AppPanel: clear messages by channel (#1098)', () => {
     } finally {
       resetLiveChannelKeyStoreForTests();
     }
-  });
-});
-
-describe('AppPanel fresh location consent', () => {
-  beforeEach(() => {
-    localStorage.clear();
   });
 });

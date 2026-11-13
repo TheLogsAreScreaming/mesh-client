@@ -120,7 +120,7 @@ Developer reference: [MeshCore companion CLI](development/meshcore-companion-cli
 
 MeshCore **Security** covers backup/restore of the companion identity **per node id**, signing, and export/import helpers. It does **not** implement Meshtastic-style PKI remote admin. Active MQTT identity cache keys are documented with the backup flow.
 
-See [Key backup and crypto](key-backup-and-crypto.md). Flash or replace firmware only after you have a backup you can restore — [Firmware](firmware.md).
+See [Key backup and crypto](key-backup-and-crypto.md).
 
 ---
 
@@ -161,4 +161,3 @@ Also useful:
 - [Maps](maps.md)
 - [Settings](settings.md)
 - [Diagnostics](diagnostics.md)
-- [Firmware](firmware.md)

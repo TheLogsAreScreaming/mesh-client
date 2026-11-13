@@ -86,7 +86,7 @@ export function AppRail({
           <span
             aria-hidden="true"
             data-rail-active-indicator=""
-            className="bg-brand-green absolute top-1/2 -left-1.5 h-6 w-1 -translate-y-1/2 rounded-full"
+            className="bg-brand-green absolute top-1/2 -start-1.5 h-6 w-1 -translate-y-1/2 rounded-full"
           />
         )}
         <NavSectionIcon id={section.id} />
@@ -148,7 +148,7 @@ export function AppRail({
               {isActive && (
                 <span
                   aria-hidden="true"
-                  className="bg-brand-green absolute top-1/2 -left-3 h-5 w-1 -translate-y-1/2 rounded-full"
+                  className="bg-brand-green absolute top-1/2 -start-3 h-5 w-1 -translate-y-1/2 rounded-full"
                 />
               )}
               <TabIcon name={pin.iconSlot} />

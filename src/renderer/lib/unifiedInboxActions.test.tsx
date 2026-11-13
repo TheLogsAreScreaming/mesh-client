@@ -16,10 +16,3 @@ function msg(id: number, over: Partial<ChatMessage> = {}): ChatMessage {
     ...over,
   };
 }
-
-describe('starInboxItems', () => {
-  beforeEach(() => {
-    localStorage.clear();
-  });
-
-});

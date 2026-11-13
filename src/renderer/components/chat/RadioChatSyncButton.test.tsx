@@ -50,7 +50,7 @@ describe('RadioChatSyncButton', () => {
       'Chats synced from radio.',
     );
     await user.click(button);
-    expect(await screen.findByRole('alert')).toHaveClass('sr-only');
+    expect((await screen.findAllByRole('alert'))[0]).toHaveClass('sr-only');
     expect(container.querySelector('[data-toast-stack]')).toHaveTextContent('Could not read chats');
     await user.click(button);
     expect(onSync).toHaveBeenCalledTimes(3);

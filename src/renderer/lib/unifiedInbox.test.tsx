@@ -30,7 +30,6 @@ function msg(over: Partial<ChatMessage>): ChatMessage {
 const EMPTY = { meshtastic: [], meshcore: [], reticulum: [] };
 
 describe('buildUnifiedInboxItems', () => {
-
   it('respects disabled protocols, protocol filter, text query, dismissed keys and limit', () => {
     const messagesByProtocol = {
       ...EMPTY,
@@ -60,10 +59,6 @@ describe('buildUnifiedInboxItems', () => {
       }),
     ).toHaveLength(1);
   });
-});
-
-describe('inboxItemToJumpTarget', () => {
-
 });
 
 describe('formatting', () => {

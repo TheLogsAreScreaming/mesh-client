@@ -105,7 +105,6 @@ nav:
       - Scheduled Broadcasts: scheduled-broadcasts.md
       - Maps and offline maps: maps.md
       - TAK gateway: tak.md
-      - Firmware and device maintenance: firmware.md
       - Meshtastic guide: meshtastic.md
       - MeshCore guide: meshcore.md
       - Settings and shortcuts: settings.md
@@ -146,7 +145,6 @@ nav:
           - AI summaries: development/ai-summarization.md
           - Connection panel: development/connection-panel.md
           - Meshtastic: development/meshtastic.md
-          - Firmware flash: development/firmware-flash.md
           - MQTT: development/mqtt.md
           - MeshCore Repeaters: development/meshcore-repeaters.md
           - MeshCore Rooms: development/meshcore-rooms.md

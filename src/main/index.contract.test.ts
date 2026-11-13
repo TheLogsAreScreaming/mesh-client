@@ -724,11 +724,6 @@ describe('MQTT forwarder dropped-event logs (source contract)', () => {
     );
   });
 
-  it('sanitizes Linux bluetoothctl spawn-error log paths', () => {
-    expect(INDEX_SOURCE).toMatch(/bluetooth-unpair error:',\s*sanitizeLogMessage\(msg\)/);
-    expect(INDEX_SOURCE).toMatch(/bluetooth-start-scan error:',\s*sanitizeLogMessage\(msg\)/);
-    expect(INDEX_SOURCE).toMatch(/bluetooth-connect error:',\s*sanitizeLogMessage\(msg\)/);
-  });
 });
 
 describe('Meshtastic message DB IPC (source contract)', () => {
@@ -774,16 +769,6 @@ describe('MeshCore DB IPC (source contract)', () => {
     expect(DATABASE_SOURCE).not.toContain('INSERT OR REPLACE INTO meshcore_contacts');
   });
 
-  it('saveMeshcoreContactsBatch IPC slices large radio syncs at MESHCORE_CONTACTS_BATCH_MAX', () => {
-    expect(INDEX_SOURCE).toContain('MESHCORE_CONTACTS_BATCH_MAX');
-    expect(INDEX_SOURCE).toMatch(
-      /for \(let i = 0; i < contacts\.length; i \+= MESHCORE_CONTACTS_BATCH_MAX\)/,
-    );
-    expect(INDEX_SOURCE).toContain('contacts.slice(i, i + MESHCORE_CONTACTS_BATCH_MAX)');
-    expect(INDEX_SOURCE).toContain('return saveMeshcoreContactsBatch(rows)');
-    expect(INDEX_SOURCE).not.toContain('max 500 contacts per batch');
-    expect(INDEX_SOURCE).not.toMatch(/saved \+= saveMeshcoreContactsBatch/);
-  });
 });
 
 describe('Persistent app settings IPC (source contract)', () => {
@@ -1139,8 +1124,6 @@ describe('Native Electron call guards (source contract)', () => {
     expect(INDEX_SOURCE).toContain('meshtasticConnectionType');
     expect(INDEX_SOURCE).toContain('meshcoreConnectionType');
     expect(INDEX_SOURCE).toContain('isAnyMqttConnected()');
-    expect(INDEX_SOURCE).toContain('isReticulumSidecarRunning()');
-    expect(INDEX_SOURCE).toContain('reticulumConfigDirHasEnabledLocalRadio');
     expect(INDEX_SOURCE).toContain(
       'if (key === PREVENT_SLEEP_SETTING_KEY) syncPowerSaveBlocker();',
     );

@@ -158,27 +158,4 @@ describe('AdminPanel', () => {
 
     expect(screen.queryAllByRole('note')).toHaveLength(0);
   });
-  describe('device firmware flasher', () => {
-    const mtDevice = {
-      protocol: 'meshtastic' as const,
-      isConnected: true,
-      connectionType: 'ble',
-      meshtasticHwModel: '43',
-    };
-
-    it('explains why flashing is unavailable when the capability is off', () => {
-      renderAdmin({
-        capabilities: {
-          ...MESHTASTIC_CAPABILITIES,
-          hasDeviceFirmwareFlash: false,
-        },
-      });
-      expect(screen.queryByTestId('admin-firmware-flash')).toBeNull();
-      expect(
-        screen
-          .getAllByRole('note')
-          .some((n) => n.getAttribute('data-capability-unavailable') === 'firmwareFlash'),
-      ).toBe(true);
-    });
-  });
 });

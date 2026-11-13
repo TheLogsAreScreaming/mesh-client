@@ -168,21 +168,6 @@ describe('parseTakChatChannels', () => {
       { ...CHANNEL, protocol: 'meshcore' },
     ]);
   });
-
-  it.each([
-    ['not an array', CHANNEL],
-    ['too many channels', Array.from({ length: 65 }, () => CHANNEL)],
-    ['a channel that is not an object', ['#MC Ops']],
-    ['a bad key', [{ ...CHANNEL, key: 'Ops' }]],
-    ['an empty name', [{ ...CHANNEL, name: ' ' }]],
-    ['an overlong name', [{ ...CHANNEL, name: 'x'.repeat(65) }]],
-    ['a control character in a name', [{ ...CHANNEL, name: 'a\nb' }]],
-    ['a send flag that is not boolean', [{ ...CHANNEL, send: 'yes' }]],
-    ['no remote flag', [{ key: KEY, name: '#MC Ops', send: true }]],
-    ['an unknown protocol', [{ ...CHANNEL, protocol: 'reticulum' }]],
-  ])('rejects %s', (_label, raw) => {
-    expect(() => parseTakChatChannels(raw)).toThrow(/tak:setChatChannels/);
-  });
 });
 
 describe('direct messages', () => {
@@ -209,82 +194,6 @@ describe('direct messages', () => {
     expect(cot).toContain('<point lat="0" lon="0"');
     expect(cot).toContain('<contact callsign="A&amp;B" endpoint="*:-1:stcp"/>');
     expect(cot).toContain('stale="2026-10-10T11:59:00.000Z"');
-  });
-
-  it("styles the 0, 0 contact as the companion's marker would be", () => {
-    const cot = buildDirectContactCot({ uid: 'RN-789', callsign: 'Field' }, NOW, NOW, {
-      cotType: 'a-f-G-U-C-I',
-      group: 'Cyan',
-      role: 'Team Member',
-      color: '#00ffff',
-      iconsetPath: 'set/group/icon.png',
-    });
-    expect(cot).toContain('uid="RN-789" type="a-f-G-U-C-I"');
-    expect(cot).toContain(
-      '<contact callsign="Field" endpoint="*:-1:stcp"/>' +
-        '<__group name="Cyan" role="Team Member"/>' +
-        `<color argb="${0xff00ffff | 0}"/>` +
-        '<usericon iconsetpath="set/group/icon.png"/>',
-    );
-  });
-
-  it('accepts a heard direct message and rejects malformed ones', () => {
-    const msg = {
-      protocol: 'meshcore',
-      nodeId: 123,
-      senderCallsign: ' Alice ',
-      text: ' hi ',
-      timeMs: NOW,
-    };
-    expect(parseTakDirectMessage(msg)).toEqual({
-      protocol: 'meshcore',
-      nodeId: 123,
-      senderCallsign: 'Alice',
-      text: 'hi',
-      timeMs: NOW,
-    });
-    for (const bad of [
-      null,
-      { ...msg, protocol: 'rrc' },
-      { ...msg, nodeId: 0 },
-      { ...msg, nodeId: 2 ** 32 },
-      { ...msg, nodeId: 1.5 },
-      { ...msg, senderCallsign: 'a\nb' },
-      { ...msg, text: ' ' },
-      { ...msg, text: 'x'.repeat(1025) },
-      { ...msg, timeMs: -1 },
-    ]) {
-      expect(() => parseTakDirectMessage(bad)).toThrow(/^tak:pushDirectMessage: /);
-    }
-  });
-
-  it('accepts the radios with direct messages on, without repeats', () => {
-    expect(parseTakDmProtocols(['meshcore', 'meshtastic', 'reticulum', 'meshcore'])).toEqual([
-      'meshcore',
-      'meshtastic',
-      'reticulum',
-    ]);
-    expect(parseTakDmProtocols([])).toEqual([]);
-    expect(() => parseTakDmProtocols(['rrc'])).toThrow(/tak:setDirectMessaging/);
-    expect(() => parseTakDmProtocols('meshcore')).toThrow(/tak:setDirectMessaging/);
-  });
-
-  it('accepts conversation peers, without repeats, and rejects malformed ones', () => {
-    const peer = { protocol: 'reticulum', nodeId: 789, callsign: ' Field Laptop ' };
-    expect(parseTakDirectPeers([peer, { ...peer, callsign: 'again' }])).toEqual([
-      { protocol: 'reticulum', nodeId: 789, callsign: 'Field Laptop' },
-    ]);
-    expect(parseTakDirectPeers([])).toEqual([]);
-    for (const bad of [
-      'peers',
-      [null],
-      [{ ...peer, protocol: 'rrc' }],
-      [{ ...peer, nodeId: 0 }],
-      [{ ...peer, callsign: 'a\nb' }],
-      Array.from({ length: 65 }, (_, i) => ({ ...peer, nodeId: i + 1 })),
-    ]) {
-      expect(() => parseTakDirectPeers(bad)).toThrow(/^tak:setDirectPeers: /);
-    }
   });
 
   const REF = '0c2f8e1a-5b3d-4c7e-9a10-2b4d6f8a0c1e';

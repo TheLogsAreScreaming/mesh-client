@@ -296,7 +296,7 @@ The **Administration** tab (Device section) holds device commands for the connec
 | **Factory Reset Config Only** | **Danger Zone.** Resets configuration but preserves the node database. Local radio only.                          |
 | **Factory Reset Device**      | **Danger Zone.** Erases all settings, channels, and stored data permanently.                                      |
 
-OTA and DFU are disabled when **Configure node** targets a remote node. **Flash device firmware** (USB, supported boards only) also appears here for a local radio; it needs the radio's USB serial connection closed and has its own checklist. See the [firmware guide](firmware.md).
+OTA and DFU are disabled when **Configure node** targets a remote node.
 
 ### Configure a remote node
 
@@ -341,7 +341,6 @@ For connection layers, use the [link troubleshooting](#link-troubleshooting) tab
 - [Chat guide](chat.md) and [Developer notes: Chat](development/chat.md)
 - [Maps guide](maps.md) and [Offline maps](development/offline-maps.md)
 - [TAK guide](tak.md) (TAK tab and CoT gateway)
-- [Firmware guide](firmware.md)
 - [Meshtastic: mesh vs local client telemetry](meshtastic-telemetry-local-client.md)
 - [Key backup and cryptography](key-backup-and-crypto.md)
 - [Developer notes: Meshtastic](development/meshtastic.md)

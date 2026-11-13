@@ -56,5 +56,4 @@ describe('contactPresence', () => {
     expect(snap.peerNodeId).toBe(9);
     expect(snap.status).toBe('online');
   });
-
 });

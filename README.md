@@ -204,7 +204,7 @@ Operator guide: [Meshtastic guide](docs/meshtastic.md).
 - **Launcher settings search**: Ctrl/Cmd+K finds panels and individual settings; choosing a setting opens its panel, expands the section, scrolls to the row, and focuses it — see [Settings and shortcuts](docs/settings.md)
 - **Stats** (packet distribution) and **Sniffer** (raw packet log) in the Monitor section on all three protocols — see [Diagnostics: Stats](docs/diagnostics.md#16-stats-panel-packet-distribution) and [Diagnostics: Sniffer](docs/diagnostics.md#17-sniffer-raw-packet-log)
 - **Enable / disable protocols** (App → Protocols): turn off protocols you don't use. A disabled protocol is hidden from the switcher, disconnected, and skipped by auto-connect, autostart, and sleep/wake recovery; with one protocol left, the switcher is hidden
-- **Firmware update toast**: **Don't remind me** silences the toast for that release (per protocol); it returns when a newer release ships — see [Firmware guide](docs/firmware.md#firmware-update-toast)
+- **Firmware update toast**: **Don't remind me** silences the toast for that release (per protocol); it returns when a newer release ships
 - **Developer announcements**: a dismissible strip at the top of the window shows short notices from the maintainers (outages, "please update", news), fetched from a JSON file in this repo; plain text only, and nothing shows when offline. See [`docs/service-announcements.md`](docs/service-announcements.md)
 
 ### Shared RF features (Meshtastic & MeshCore)
@@ -357,7 +357,6 @@ MeshCore runs simultaneously alongside Meshtastic. Use the protocol switcher at 
 **Device Control**
 
 - **Administration** tab: **Reboot** when connected (Meshtastic also gets shutdown, factory reset, NodeDB reset, reboot-to-OTA, and enter DFU on the same tab)
-- **Device firmware flash** (Meshtastic and MeshCore): USB flash with board detection, image/board/version/checksum validation, explicit acknowledgement, preflight blockers, ESP32 and nRF52 DFU, and a backup reminder — see [Firmware and device maintenance](docs/firmware.md). Reticulum RNode flashing is separate under Admin — see [Reticulum Admin (RNode flasher)](docs/reticulum.md#admin-rnode-flasher)
 - **MeshCore power off** is available in **Radio → Companion device settings → Power** on companion protocol 14+ (firmware 1.18+). Meshtastic-style factory reset, NodeDB reset, reboot-to-OTA, and DFU actions are not exposed for MeshCore
 
 **Transport Notes**

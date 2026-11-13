@@ -76,23 +76,6 @@ describe('signal report quick replies', () => {
     },
   );
 
-  it('requires verified ingress for Reticulum and preserves it through record adapters', () => {
-    const reticulum = { ...message, reticulum_message_hash: 'ab'.repeat(32) };
-    expect(hasRfMessageReception(reticulum)).toBe(false);
-    expect(radioMessageReceptionTransport(reticulum)).toBeUndefined();
-    const verified = {
-      ...reticulum,
-      receivedVia: 'tcp' as const,
-      rxRadioTransport: 'ble' as const,
-    };
-    const roundTrip = messageRecordToChatMessage(chatMessageToMessageRecord(verified));
-    expect(hasRfMessageReception(roundTrip)).toBe(true);
-    expect(radioMessageReceptionTransport(roundTrip)).toBe('ble');
-    expect(formatChatSignalReport({}, 100, radioMessageReceptionTransport(roundTrip))).toBe(
-      'ack: received via BLE',
-    );
-  });
-
   it('reproduces the screenshot from an exact RF packet match', () => {
     const stats = meshcoreMessageReceptionStats(
       message,

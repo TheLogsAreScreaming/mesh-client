@@ -57,9 +57,9 @@ describe('UnifiedInboxDialog', () => {
     hydrateAxeThemeColors(container);
     const list = screen.getByRole('list', { name: 'Inbox messages' });
     const rows = within(list).getAllByRole('listitem');
-    expect(rows).toHaveLength(4);
-    expect(rows[0]).toHaveTextContent('payload 4');
-    expect(rows[3]).toHaveTextContent('payload 1');
+    expect(rows).toHaveLength(3);
+    expect(rows[0]).toHaveTextContent('payload 3');
+    expect(rows[2]).toHaveTextContent('payload 1');
     expect(await axe(container)).toHaveNoViolations();
   });
 
@@ -91,7 +91,7 @@ describe('UnifiedInboxDialog', () => {
     renderInbox();
     expect(screen.getByRole('button', { name: 'Copy' })).toBeDisabled();
     await user.click(screen.getByRole('checkbox', { name: 'Select all messages' }));
-    expect(screen.getByText('4 selected')).toBeInTheDocument();
+    expect(screen.getByText('3 selected')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copy' })).toBeEnabled();
     await user.click(screen.getByRole('checkbox', { name: 'Select all messages' }));
     expect(screen.getByRole('button', { name: 'Copy' })).toBeDisabled();
@@ -144,7 +144,7 @@ describe('UnifiedInboxDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Delete locally' }));
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    expect(screen.getAllByRole('listitem')).toHaveLength(4);
+    expect(screen.getAllByRole('listitem')).toHaveLength(3);
     expect(loadDismissedInboxKeys().size).toBe(0);
   });
 
@@ -158,7 +158,7 @@ describe('UnifiedInboxDialog', () => {
       throw new Error('quota');
     });
     await user.click(screen.getByRole('button', { name: 'Delete' }));
-    expect(screen.getAllByRole('listitem')).toHaveLength(4);
+    expect(screen.getAllByRole('listitem')).toHaveLength(3);
     vi.restoreAllMocks();
   });
 

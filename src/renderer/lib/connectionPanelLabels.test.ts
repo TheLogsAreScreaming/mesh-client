@@ -43,9 +43,6 @@ describe('connectionPanelRadioStatusLabel', () => {
   });
 });
 
-describe('connectionPanelConnectionTypeLabel', () => {
-});
-
 describe('statusBarTransportLabel', () => {
   it('returns empty when there is no active transport', () => {
     expect(statusBarTransportLabel(englishT(), null, 'meshcore')).toBe('');

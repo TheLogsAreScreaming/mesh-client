@@ -149,11 +149,9 @@ describe('new page discoverability', () => {
       'chat',
       'maps',
       'tak',
-      'firmware',
       'meshtastic',
       'meshcore',
       'settings',
-      'development/firmware-flash',
       'development/tak',
     ];
     for (const page of required) {

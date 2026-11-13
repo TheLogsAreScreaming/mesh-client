@@ -96,24 +96,6 @@ describe('canTakDirectMessage', () => {
   });
 });
 
-describe('listTakConversationPeers', () => {
-  const msg = (
-    id: string,
-    from: number,
-    to: number,
-    timestamp: number,
-    extra = {},
-  ): MessageRecord => ({
-    id,
-    from,
-    to,
-    payload: 'hi',
-    channelIndex: 0,
-    timestamp,
-    ...extra,
-  });
-});
-
 describe('listTakDmProtocols', () => {
   it('lists the protocols whose TAK radio has direct messages on', () => {
     const prefs = {

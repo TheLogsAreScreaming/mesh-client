@@ -54,7 +54,3 @@ const presence: MemberPresenceSnapshot = {
     },
   ],
 };
-
-describe('TeamContactDetailDialog', () => {
-
-});

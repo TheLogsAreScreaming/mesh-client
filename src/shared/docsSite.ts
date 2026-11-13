@@ -27,7 +27,6 @@ export const CHAT_DOCS_URL = docsSitePageUrl('chat');
 export const SCHEDULED_BROADCASTS_DOCS_URL = docsSitePageUrl('scheduled-broadcasts');
 export const MAPS_DOCS_URL = docsSitePageUrl('maps');
 export const TAK_DOCS_URL = docsSitePageUrl('tak');
-export const FIRMWARE_DOCS_URL = docsSitePageUrl('firmware');
 export const MESHTASTIC_DOCS_URL = docsSitePageUrl('meshtastic');
 export const MESHCORE_DOCS_URL = docsSitePageUrl('meshcore');
 /** MeshCore Rooms (BBS) section of the MeshCore user guide. */

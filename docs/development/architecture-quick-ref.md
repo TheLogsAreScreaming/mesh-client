@@ -77,7 +77,6 @@ Developer reference: where to look first by area. Moved out of [`ARCHITECTURE.md
 
 ## Device firmware flash
 
-- USB Meshtastic/MeshCore flasher (Admin tab, Web Serial). See [firmware-flash.md](firmware-flash.md).
 
 ## TAK gateway
 

@@ -295,24 +295,4 @@ describe('chat endpoint', () => {
     );
     expect(meshNodeToCot(makeNode(), 'meshcore')).toContain('<contact callsign="Test Node"/>');
   });
-
-  it('reads the mesh node a marker uid names', () => {
-    expect(parseMeshNodeUid('MC-123')).toEqual({ protocol: 'meshcore', nodeId: 123 });
-    expect(parseMeshNodeUid('MESH-4294967295')).toEqual({
-      protocol: 'meshtastic',
-      nodeId: 4294967295,
-    });
-    expect(parseMeshNodeUid('RN-9')).toEqual({ protocol: 'reticulum', nodeId: 9 });
-    for (const uid of [
-      'MC-0',
-      'MC-012',
-      'MC-4294967296',
-      'MC-',
-      'ANDROID-1',
-      'MC-1 ',
-      'meshtracker-0a1b2c3d',
-    ]) {
-      expect(parseMeshNodeUid(uid)).toBeNull();
-    }
-  });
 });

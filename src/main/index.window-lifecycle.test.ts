@@ -262,13 +262,12 @@ describe('window close-to-tray behaviour', () => {
       isQuitting: false,
       meshtasticDeviceConnected: flags.meshtastic ?? false,
       meshcoreDeviceConnected: flags.meshcore ?? false,
-      reticulumSidecarManager: flags.sidecar ? { getStatus: () => ({ running: true }) } : null,
       isAnyMqttConnected: () => flags.mqtt ?? false,
       readCloseToTrayEnabled: () => true,
       tray: {},
       console: { debug: vi.fn() },
     };
-    const fnStart = INDEX_SOURCE.indexOf('function isReticulumSidecarRunning()');
+    const fnStart = INDEX_SOURCE.indexOf('/** Meshtastic, MeshCore, and MQTT are independent. */');
     const fnEnd = INDEX_SOURCE.indexOf('let mainWindow: BrowserWindow | null = null;');
     const closeStart = INDEX_SOURCE.indexOf("win.on('close', (event)");
     const closeEnd = INDEX_SOURCE.indexOf("win.on('focus'", closeStart);
@@ -299,9 +298,8 @@ describe('window close-to-tray behaviour', () => {
     });
   }
 
-  it('keeps the window when only MeshCore, or only the sidecar, is up', () => {
+  it('keeps the window when only MeshCore is up', () => {
     expect(closeActionFor({ meshcore: true })).toBe('hide');
-    expect(closeActionFor({ sidecar: true })).toBe('hide');
     expect(closeActionFor({})).toBe('allow');
   });
 

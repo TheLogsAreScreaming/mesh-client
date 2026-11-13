@@ -110,6 +110,7 @@ export function messageRecordToChatMessage(record: MessageRecord): ChatMessage {
     ...(record.roomServerId != null ? { roomServerId: record.roomServerId } : {}),
     ...(record.channelKey ? { channelKey: record.channelKey } : {}),
     ...(record.radioNodeId != null ? { radioNodeId: record.radioNodeId } : {}),
+    ...(record.meshcoreDedupeKey ? { meshcoreDedupeKey: record.meshcoreDedupeKey } : {}),
   };
 }
 

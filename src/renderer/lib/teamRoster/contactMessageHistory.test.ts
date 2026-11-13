@@ -14,7 +14,3 @@ function msg(
     ...partial,
   };
 }
-
-describe('contactMessageHistory', () => {
-
-});

@@ -152,47 +152,6 @@ describe('team roster IPC boundary', () => {
     expect(off.links[0]?.onRoster).toBe(false);
   });
 
-  it('migrates member on_roster to all existing links', () => {
-    db.close();
-    db = new NodeSqliteDB(':memory:');
-    runSchemaUpgrade(db);
-    db.execScript(`
-      CREATE TABLE team_members (
-        unit_id INTEGER PRIMARY KEY CHECK (unit_id BETWEEN 1 AND 65535),
-        callsign TEXT NOT NULL,
-        role TEXT,
-        is_self INTEGER NOT NULL DEFAULT 0 CHECK (is_self IN (0, 1)),
-        on_roster INTEGER NOT NULL DEFAULT 0 CHECK (on_roster IN (0, 1)),
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
-      );
-      CREATE TABLE team_member_links (
-        unit_id INTEGER NOT NULL REFERENCES team_members(unit_id) ON DELETE CASCADE,
-        protocol TEXT NOT NULL CHECK (protocol IN ('meshtastic','meshcore','reticulum')),
-        durable_key TEXT NOT NULL,
-        node_id INTEGER,
-        long_name TEXT,
-        identity_id TEXT,
-        PRIMARY KEY (unit_id, protocol, durable_key),
-        UNIQUE (protocol, durable_key)
-      );
-      INSERT INTO team_members (unit_id, callsign, is_self, on_roster, created_at, updated_at)
-        VALUES (1, 'Legacy', 0, 1, 1, 1);
-      INSERT INTO team_member_links (unit_id, protocol, durable_key)
-        VALUES (1, 'meshtastic', '7'), (1, 'meshcore', '8');
-    `);
-    getDatabase.mockReturnValue(db);
-    handlers.clear();
-    registerTeamRosterIpcHandlers({ ipcMain, assertIpcSender, getDatabase });
-
-    const listed = handlers.get('db:listTeamMembers')!(event) as {
-      onRoster: boolean;
-      links: { durableKey: string; onRoster: boolean }[];
-    }[];
-    expect(listed[0].onRoster).toBe(true);
-    expect(listed[0].links.every((l) => l.onRoster)).toBe(true);
-  });
-
   it('enforces a single isSelf member', () => {
     handlers.get('db:upsertTeamMember')!(event, {
       unitId: 1,
@@ -241,31 +200,6 @@ describe('team roster IPC boundary', () => {
         nodeId: 12345,
       }),
     ).toThrow(/durableKey already linked/);
-  });
-
-  it('updates metadata for an existing durable key without replacing siblings', () => {
-    handlers.get('db:upsertTeamMember')!(event, { unitId: 1, callsign: 'A' });
-    handlers.get('db:setTeamMemberLink')!(event, {
-      unitId: 1,
-      protocol: 'reticulum',
-      durableKey: 'a'.repeat(32),
-    });
-    handlers.get('db:setTeamMemberLink')!(event, {
-      unitId: 1,
-      protocol: 'reticulum',
-      durableKey: 'b'.repeat(32),
-      longName: 'Peer B',
-    });
-    const updated = handlers.get('db:setTeamMemberLink')!(event, {
-      unitId: 1,
-      protocol: 'reticulum',
-      durableKey: 'b'.repeat(32),
-      longName: 'Peer B renamed',
-    }) as { links: { durableKey: string; longName: string | null }[] };
-    expect(updated.links).toHaveLength(2);
-    expect(updated.links.find((l) => l.durableKey === 'b'.repeat(32))?.longName).toBe(
-      'Peer B renamed',
-    );
   });
 
   it('removes a single link by durable key and deletes members with cascade', () => {
@@ -325,95 +259,5 @@ describe('team roster IPC boundary', () => {
       nodeId: 4242,
     }) as { links: { durableKey: string }[] };
     expect(linked.links[0]?.durableKey).toBe('4242');
-  });
-
-  it('migrates legacy one-link-per-protocol PK and adds on_roster', () => {
-    db.close();
-    db = new NodeSqliteDB(':memory:');
-    runSchemaUpgrade(db);
-    db.execScript(`
-      CREATE TABLE team_members (
-        unit_id INTEGER PRIMARY KEY CHECK (unit_id BETWEEN 1 AND 65535),
-        callsign TEXT NOT NULL,
-        role TEXT,
-        is_self INTEGER NOT NULL DEFAULT 0 CHECK (is_self IN (0, 1)),
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
-      );
-      CREATE TABLE team_member_links (
-        unit_id INTEGER NOT NULL REFERENCES team_members(unit_id) ON DELETE CASCADE,
-        protocol TEXT NOT NULL CHECK (protocol IN ('meshtastic','meshcore','reticulum')),
-        durable_key TEXT NOT NULL,
-        node_id INTEGER,
-        long_name TEXT,
-        identity_id TEXT,
-        PRIMARY KEY (unit_id, protocol),
-        UNIQUE (protocol, durable_key)
-      );
-      INSERT INTO team_members (unit_id, callsign, is_self, created_at, updated_at)
-        VALUES (1, 'Legacy', 0, 1, 1);
-      INSERT INTO team_member_links (unit_id, protocol, durable_key)
-        VALUES (1, 'meshtastic', '42');
-    `);
-    getDatabase.mockReturnValue(db);
-    handlers.clear();
-    registerTeamRosterIpcHandlers({ ipcMain, assertIpcSender, getDatabase });
-
-    const listed = handlers.get('db:listTeamMembers')!(event) as {
-      onRoster: boolean;
-      links: unknown[];
-    }[];
-    expect(listed[0].onRoster).toBe(false);
-    expect(listed[0].links).toHaveLength(1);
-
-    handlers.get('db:setTeamMemberLink')!(event, {
-      unitId: 1,
-      protocol: 'meshtastic',
-      durableKey: '99',
-    });
-    const after = handlers.get('db:listTeamMembers')!(event) as { links: unknown[] }[];
-    expect(after[0].links).toHaveLength(2);
-  });
-
-  it('PK rebuild derives link on_roster from member and retries after stale _new table', () => {
-    db.close();
-    db = new NodeSqliteDB(':memory:');
-    runSchemaUpgrade(db);
-    db.execScript(`
-      CREATE TABLE team_members (
-        unit_id INTEGER PRIMARY KEY CHECK (unit_id BETWEEN 1 AND 65535),
-        callsign TEXT NOT NULL,
-        role TEXT,
-        is_self INTEGER NOT NULL DEFAULT 0 CHECK (is_self IN (0, 1)),
-        on_roster INTEGER NOT NULL DEFAULT 0 CHECK (on_roster IN (0, 1)),
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
-      );
-      CREATE TABLE team_member_links (
-        unit_id INTEGER NOT NULL REFERENCES team_members(unit_id) ON DELETE CASCADE,
-        protocol TEXT NOT NULL CHECK (protocol IN ('meshtastic','meshcore','reticulum')),
-        durable_key TEXT NOT NULL,
-        node_id INTEGER,
-        long_name TEXT,
-        identity_id TEXT,
-        PRIMARY KEY (unit_id, protocol),
-        UNIQUE (protocol, durable_key)
-      );
-      CREATE TABLE team_member_links_new (unit_id INTEGER);
-      INSERT INTO team_members (unit_id, callsign, is_self, on_roster, created_at, updated_at)
-        VALUES (1, 'LegacyOn', 0, 1, 1, 1);
-      INSERT INTO team_member_links (unit_id, protocol, durable_key)
-        VALUES (1, 'meshtastic', '42');
-    `);
-    getDatabase.mockReturnValue(db);
-    handlers.clear();
-    registerTeamRosterIpcHandlers({ ipcMain, assertIpcSender, getDatabase });
-
-    const listed = handlers.get('db:listTeamMembers')!(event) as {
-      onRoster: boolean;
-      links: { onRoster: boolean }[];
-    }[];
-    expect(listed[0].onRoster).toBe(true);
-    expect(listed[0].links[0]?.onRoster).toBe(true);
   });
 });

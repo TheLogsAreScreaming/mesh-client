@@ -156,10 +156,6 @@ describe('filterGlobalMessageSearchHits', () => {
   });
 });
 
-describe('runGlobalMessageSearch', () => {});
-
-describe('findMessageIndexForFocus', () => {});
-
 describe('isGlobalMessageSearchShortcut', () => {
   it('matches Ctrl/Cmd+Shift+F', () => {
     expect(

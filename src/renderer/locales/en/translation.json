@@ -777,10 +777,6 @@
       "empty": "No conversations match"
     },
     "floodScopeSaveFailed": "Could not save the send scope. The previous saved choice still applies.",
-    "sendSignalReport": "Send signal report",
-    "signalReportUnavailable": "Reception stats are unavailable or do not fit in one reply.",
-    "saveAttachmentAria": "Save attachment {{name}}",
-    "revealAttachmentAria": "Show attachment {{name}} in folder",
     "messageRoute": {
       "pillAriaLabel": "{{hops}}, route details",
       "receivedDirect": "Received directly from {{name}}, no relays",
@@ -800,14 +796,6 @@
       "unavailableNotCaptured": "Route not available: routes are kept only for recent messages from this session.",
       "notRecorded": "Packets on this network record how many relays they passed, not which ones."
     },
-    "pinConversation": "Pin this conversation",
-    "unpinConversation": "Unpin this conversation",
-    "pinConversationFailed": "Could not save pin. Storage may be full or disabled.",
-    "archiveConversation": "Archive this conversation",
-    "unarchiveConversation": "Unarchive this conversation",
-    "archiveConversationFailed": "Could not save archive. Storage may be full or disabled.",
-    "showArchivedConversations": "Show archived conversations ({{count}})",
-    "hideArchivedConversations": "Hide archived conversations",
     "scheduleSend": "Schedule send",
     "sendLater": "Send later",
     "sendMenuButton": "Send options",
@@ -824,40 +812,7 @@
     "scheduleSendErrorPast": "Pick a time in the future.",
     "scheduleSendErrorFar": "Pick a time within the next 30 days.",
     "scheduleSendErrorEmpty": "Message cannot be empty.",
-    "scheduleSendFailed": "Could not save the scheduled message. Try again.",
-    "outboxStatusScheduled": "Scheduled for {{time}}",
-    "outboxStatusScheduledDue": "Scheduled — waiting to send",
-    "outboxScheduledEdit": "Edit",
-    "outboxScheduledEditAria": "Edit scheduled message",
-    "outboxScheduledSendNow": "Send now",
-    "outboxScheduledSendNowAria": "Send scheduled message now",
-    "attachment": {
-      "attachAria": "Attach file or photo",
-      "menuAria": "Attach to LXMF message",
-      "attachFile": "Attach file…",
-      "attachPhoto": "Attach photo…",
-      "fileInputAria": "Choose files to send",
-      "photoInputAria": "Choose a photo to send",
-      "tooltip": "Send files or a photo in this LXMF direct message (native attachment — not rncp). Up to {{count}} files, {{limitKib}} KiB total. Photos are resized and stripped of metadata.",
-      "transfersAria": "Attachments being sent",
-      "sending": "Sending {{name}}…",
-      "progressAria": "Sending progress for {{name}}",
-      "cancelAria": "Cancel sending {{name}}",
-      "cancelled": "Attachment send cancelled.",
-      "errors": {
-        "tooMany": "Attach at most {{count}} files per message.",
-        "tooLarge": "Attachments are limited to {{limitKib}} KiB total per message. For larger files use Remote rncp.",
-        "photoTooLarge": "That photo is too large to send.",
-        "empty": "That file is empty.",
-        "photoUnsupported": "Only PNG, JPEG, WebP and GIF photos can be sent.",
-        "photoDecodeFailed": "Could not process that photo. Try a different image.",
-        "readFailed": "Could not read the selected file.",
-        "cacheFailed": "Could not store the attachment locally, so it was not sent.",
-        "runtimeUnavailable": "Reticulum is not ready. Start the stack and try again.",
-        "tooLargeForPropagation": "Attachment is too large for a propagation node — it can only be delivered directly while the peer is reachable.",
-        "sendFailed": "Could not send the attachment."
-      }
-    }
+    "scheduleSendFailed": "Could not save the scheduled message. Try again."
   },
   "chatPayload": {
     "mention": "Mention {{label}}",
@@ -3474,7 +3429,6 @@
     "meshcoreChannelNameLabel": "Name",
     "meshcoreChannel": {
       "privateChannel": "Private channel (enter key)",
-      "keepOpen": "Keep open after adding",
       "slotsFull": "All channel slots are full. Remove a channel before adding another.",
       "added": "{{name}} added.",
       "alreadyAdded": "{{name}} is already added.",
@@ -4930,17 +4884,7 @@
       "endpointA": "Listen / source (A)",
       "endpointB": "Forward / destination (B)",
       "protocol": "Protocol",
-      "channelIndex": "Channel index",
-      "reticulumKind": "Reticulum target type",
-      "reticulumKindLxmf": "LXMF peer",
-      "reticulumKindRrc": "RRC room",
-      "reticulumPeerHash": "Reticulum peer destination hash",
-      "reticulumPeerPlaceholder": "32-char hash, or * for any peer (source only)",
-      "reticulumHubHash": "RRC hub destination hash",
-      "reticulumHubPlaceholder": "Hub destination hash (32 hex)",
-      "reticulumRoom": "RRC room name",
-      "reticulumRoomPlaceholder": "Room name",
-      "hintReticulum": "Reticulum endpoints are an LXMF peer or an RRC hub room and need the Reticulum stack running. An LXMF source matches inbound DMs from that peer. An RRC source matches MECP heard in that hub room."
+      "channelIndex": "Channel index"
     }
   },
   "notificationSounds": {
@@ -5400,10 +5344,8 @@
     "senderPlaceholder": "Name or id",
     "channel": "Channel {{index}}",
     "directMessage": "Direct message",
-    "openFromChat": "Search all conversations",
     "meshtastic": "Meshtastic",
-    "meshcore": "MeshCore",
-    "reticulum": "Reticulum"
+    "meshcore": "MeshCore"
   },
   "unifiedInbox": {
     "title": "Unified inbox",
@@ -5439,8 +5381,7 @@
     "deleted_other": "Removed {{count}} messages.",
     "deleteFailed": "Couldn't save the change. Nothing was removed.",
     "meshtastic": "Meshtastic",
-    "meshcore": "MeshCore",
-    "reticulum": "Reticulum"
+    "meshcore": "MeshCore"
   },
   "meshcoreTelemetryPush": {
     "summary": "Live telemetry",
@@ -5704,7 +5645,6 @@
     "selectContactAria": "Select contact card",
     "protocolMeshtastic": "Meshtastic",
     "protocolMeshcore": "MeshCore",
-    "protocolReticulum": "Reticulum",
     "saveFailed": "Could not save contact card.",
     "deleteFailed": "Could not delete contact card.",
     "linkFailed": "Could not link node to contact card.",
@@ -5833,8 +5773,7 @@
     "targetKind": {
       "meshtasticChannel": "Meshtastic channel",
       "meshcoreChannel": "MeshCore channel",
-      "meshcoreRoom": "MeshCore room",
-      "rrcRoom": "RRC room"
+      "meshcoreRoom": "MeshCore room"
     },
     "channelNamed": "{{kind}} {{index}}: {{name}}",
     "identityConnected": "{{name}} (connected)",
@@ -6060,94 +5999,6 @@
     "busy": "Reading chats from radio…",
     "failed": "Could not read chats from the radio. Existing chats were kept. Reconnect and try again.",
     "done": "Chats synced from radio."
-  },
-  "deviceFirmware": {
-    "title": "Flash device firmware",
-    "summary": "Install or update firmware over USB. Only the boards listed here are supported; anything else is refused before any data is written.",
-    "supportedBoards": "Supported boards: {{boards}}",
-    "boardLabel": "Board",
-    "boardPlaceholder": "Select your board…",
-    "boardLocked": "Detected from the connected radio: {{board}}",
-    "boardManualHint": "The radio was not identified automatically. Pick your board manually.",
-    "boardUnsupported": "The connected radio reports “{{reported}}”, which is not a supported flash target. Flashing is disabled.",
-    "firmwareFile": "Firmware file",
-    "fileHint": {
-      "meshtastic": "Choose the release .zip from the Meshtastic firmware releases (firmware-esp32s3-….zip or firmware-nrf52840-….zip), or a single .factory.bin / -ota.zip for your board.",
-      "meshcore": "Choose the companion-radio -merged.bin (ESP32) or .zip (nRF52) for your board from the MeshCore releases."
-    },
-    "validating": "Checking firmware…",
-    "imageReady": "Ready: {{name}} ({{size}})",
-    "imageVersion": "Version: {{version}}",
-    "checksum": {
-      "fileLabel": "File SHA-256",
-      "payloadLabel": "Image SHA-256",
-      "expectedLabel": "Expected SHA-256 (optional)",
-      "expectedHint": "Paste the digest shown next to the asset on the release page. A mismatch blocks flashing."
-    },
-    "acknowledge": "I confirm the USB-connected device is a {{board}}, it has a stable cable and power, and I have backed up my settings and keys.",
-    "enterDfuHint": "nRF52 boards must be in bootloader (DFU) mode first: use Enter DFU mode above, double-tap the reset button, or use the button below, then click Flash.",
-    "flash": "Flash firmware",
-    "flashing": "Flashing… {{progress}}%",
-    "cancel": "Cancel flash",
-    "cancelling": "Cancelling…",
-    "successEsp32": "Firmware written and verified. The device is rebooting — wait about 30 seconds, then reconnect.",
-    "successNrf52": "Firmware sent to the bootloader. The device is rebooting — wait about 30 seconds, then reconnect.",
-    "cancelled": "Flash cancelled. The device may need to be flashed again — see the recovery steps below.",
-    "warningsTitle": "Before you flash",
-    "warnings": {
-      "cable": "Use a data-capable USB cable plugged directly into the computer (no hub) and do not unplug the device while flashing.",
-      "batteryUnknown": "Battery level unknown — make sure the device is well charged or externally powered.",
-      "espBootloader": "Mesh Client resets the board into the ESP32 ROM bootloader automatically. If it cannot, hold BOOT, tap RESET, release BOOT, then try again.",
-      "nrf52Bootloader": "nRF52 boards flash through the serial DFU bootloader. The bootloader itself is not touched, so a failed update can be retried.",
-      "settingsReset": "A full-flash image can erase device settings, channels, and keys. Export a backup first.",
-      "connectionDrops": "The radio connection will drop while the device reboots.",
-      "unverifiedBoard": "The radio was not identified automatically, so the board choice is unchecked. The wrong board can leave the device unbootable."
-    },
-    "blockers": {
-      "noBoard": "Select a board.",
-      "boardUnsupported": "The connected radio is not a supported board.",
-      "boardMismatch": "The selected board does not match the connected radio.",
-      "serialConnectionOpen": "Disconnect the radio's USB serial connection before flashing — Mesh Client needs the port.",
-      "lowBattery": "Battery is below {{percent}}% — charge the device or plug it in, then retry.",
-      "noImage": "Select a valid firmware file.",
-      "notAcknowledged": "Confirm the checklist below."
-    },
-    "errors": {
-      "imageEmpty": "The firmware file is empty.",
-      "imageNameUnrecognized": "This file name is not a recognized firmware image for the selected board.",
-      "imageBoardMismatch": "This firmware is for a different board ({{detail}}). Select the matching board or a different file.",
-      "imageBoardMismatchGeneric": "This firmware is for a different board than the one selected.",
-      "imageNotFoundForBoard": "The archive does not contain a firmware image for the selected board.",
-      "imageNotFullImage": "This is not the full-flash image Mesh Client writes (use the .factory.bin, -merged.bin, or DFU .zip).",
-      "imageNotCompanion": "This is not companion-radio firmware. Mesh Client only flashes companion images.",
-      "imageAmbiguous": "The archive contains more than one matching image. Extract the exact file you want and select it.",
-      "imageHeaderInvalid": "The file is not a valid ESP32 firmware image.",
-      "imageChipMismatch": "The image was built for a different chip than the selected board.",
-      "imageTooLarge": "The image is larger than the selected board's flash.",
-      "imageTooSmall": "The file is too small to be a full-flash firmware image.",
-      "dfuPackageInvalid": "The nRF52 DFU package is invalid or unsupported (needs an application-only legacy serial DFU package with a matching checksum).",
-      "checksumInvalid": "The expected SHA-256 is not a valid 64-character hex digest.",
-      "checksumMismatch": "The file's SHA-256 does not match the expected digest. Do not flash it — download it again.",
-      "readFailed": "Could not read the firmware file."
-    },
-    "recovery": {
-      "title": "If a flash fails",
-      "esp32": "ESP32: the ROM bootloader cannot be overwritten. Hold BOOT, tap RESET, release BOOT, and flash again, or use the vendor web flasher.",
-      "nrf52": "nRF52: double-tap RESET to enter the UF2 bootloader (a drive appears), then drag the board's .uf2 onto it, or retry the flash here.",
-      "docs": "More detail: docs/troubleshooting.md, “Firmware flashing recovery”."
-    },
-    "releases": {
-      "meshtastic": "Open Meshtastic firmware releases",
-      "meshcore": "Open MeshCore firmware releases"
-    },
-    "aria": {
-      "board": "Board to flash",
-      "file": "Firmware file to flash",
-      "expectedSha": "Expected SHA-256 digest",
-      "acknowledge": "Confirm flash checklist",
-      "flash": "Flash firmware to the device",
-      "cancel": "Cancel the firmware flash"
-    }
   },
   "remoteShell": {
     "title": "Remote shell (Meshtastic)",

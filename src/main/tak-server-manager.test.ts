@@ -1697,12 +1697,6 @@ describe('TakServerManager direct messages', () => {
     expect(chats(watcher)).toEqual([]);
   });
 
-  describe('conversation peers', () => {
-    const PEER = { protocol: 'reticulum' as const, nodeId: 789, callsign: 'Field Laptop' };
-    const contactFor = (socket: tls.TLSSocket, uid: string) =>
-      written(socket).filter((l) => l.includes(`uid="${uid}"`) && l.includes('a-f-G-U-C'));
-  });
-
   describe('outcomes', () => {
     const receipts = (socket: tls.TLSSocket) =>
       written(socket).filter((l) => l.includes('type="b-t-f-d"'));
