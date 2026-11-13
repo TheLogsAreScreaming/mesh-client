@@ -1,6 +1,6 @@
 # Catch up (AI conversation summaries)
 
-Catch up summarizes the selected conversation in Chat, Rooms, or RRC **without posting to the mesh**. AI is **off by default**. Nothing runs until you enable it under **App → AI conversation summaries** and choose a ready engine.
+AI is **off by default**. Nothing runs until you enable it under **App → AI conversation summaries** and choose a ready engine.
 
 ## Enable and choose an engine
 

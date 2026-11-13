@@ -14,7 +14,7 @@ Developer reference for the TAK tab: a local TLS CoT server, a remote TAK server
 | What to publish, per-protocol node feed, mesh sends for inbound ATAK chat | Renderer: `lib/tak/`, `hooks/useTak*`, stores                          |
 | Panel UI                                                                  | Renderer: `Tak*.tsx`                                                   |
 
-**TAK never transmits to RF from main.** Source-policy rule `tak-never-transmits-to-rf` forbids `src/main/tak/**`, `tak-server-manager.ts`, and `ipc/tak-handlers.ts` from importing radio, MQTT, serial, BLE, or Reticulum modules. An ATAK message that must go to the mesh is emitted from the manager as `client-chat` and handled in the renderer (`takInboundChat.ts`), which sends it with the normal protocol send path (`takMeshSend.ts`) so it shows in Chat like any other message.
+An ATAK message that must go to the mesh is emitted from the manager as `client-chat` and handled in the renderer (`takInboundChat.ts`), which sends it with the normal protocol send path (`takMeshSend.ts`) so it shows in Chat like any other message.
 
 ## Layout
 
@@ -98,7 +98,6 @@ Exposed on `electronAPI.tak` in `src/preload/index.ts`, typed in `src/shared/ele
   - A remote-server flag per channel streams it read only to the remote relay.
 - **Direct messages.** Per-protocol toggle (`tak:setDirectMessaging`), peers pushed with `tak:setDirectPeers`, delivery status with `tak:dmStatus`. `DM_TRIES` is 4 automatic attempts before a "Not confirmed" note. Pending entries expire after 30 minutes (`PENDING_DM_TTL_MS`). Replies go to the last-writing device, else to all connected devices, and are held while it is away. DMs are never sent to the remote relay.
 - **Incidents.** `tak:setIncidentMarkers` carries open incidents with a position (at most 50, most severe first). Markers and the optional MAYDAY alarm are never sent to the remote relay. The alarm (`mecpAlarm` in `takRelayPrefsStore`) applies at once, running or not, and ATAK drops an uncancelled alarm after 30 minutes.
-- **Node feed.** All three protocols feed one stream: Meshtastic and MeshCore nodes within their online window, Reticulum RMAP interfaces with coordinates, and the user's own Reticulum position when a static GPS position is set. `parseTakNodeUpdate` validates every IPC batch (`TAK_NODE_UPDATE_BATCH_MAX`).
 - **Unit styles.** The first enabled matching filter wins. A filter with no name pattern matches every node of its kind or protocol. Repeater and room icons follow the node kind, not the filter. `sendUnmatched` decides whether unmatched nodes are relayed.
 - **Status.** One status-bar label combines the local server and the remote relay.
 
@@ -108,7 +107,6 @@ Exposed on `electronAPI.tak` in `src/preload/index.ts`, typed in `src/shared/ele
 - **Secrets.** Private keys stay in main and are never returned over IPC. Enrollment passwords are held in renderer state (`TakRemoteRelaySection`) only long enough to call `remoteEnroll` / import, are not persisted, and are not logged.
 - **No RF from main.** See the source-policy rule above.
 - **Temp files.** Any new test that writes to disk uses `mkdtempSync` under `os.tmpdir()` (`check:insecure-temp-files`).
-- **Protocol parity.** The panel, node feed, and DM sections cover Meshtastic, MeshCore, and Reticulum. Gate protocol-specific sections (tracker channels, ATAK plugin packets) with `ProtocolCapabilities` (`hasTakTrackerChannels`, `hasAtakPlugin`), never with `protocol ===` checks.
 - **i18n.** All user text lives under `takServerPanel.*` and `takContacts.*`. Remote error codes map to `takServerPanel.remoteErrors.*` through `takRemoteUserError.ts`.
 - **Failure behaviour.** Credential, settings, and data-package writes that must not corrupt state use temp-file + rename (or equivalent) patterns; a failed package write throws and removes its temp file. **Certificate regeneration is not atomic:** `regenerateCerts` deletes existing files in the certs directory before generating replacements, so a failure mid-generation can leave the local server without a usable bundle until you regenerate again. A failed reveal in the file manager is logged and non-fatal. Handlers log and rethrow so the hook can show the error.
 

@@ -202,7 +202,7 @@ Operator guide: [Meshtastic guide](docs/meshtastic.md).
 - **SQLite persistence**: protocol-scoped history and settings; DB export/import/clear in the App tab; **Export for GitHub** (zip: debug snapshot + logs) and **Export for Developer** (includes full SQLite — share privately only)
 - **Updates & tray**: update status in the status bar; system tray unread badge when the window is backgrounded
 - **Launcher settings search**: Ctrl/Cmd+K finds panels and individual settings; choosing a setting opens its panel, expands the section, scrolls to the row, and focuses it — see [Settings and shortcuts](docs/settings.md)
-- **Stats** (packet distribution) and **Sniffer** (raw packet log) in the Monitor section on all three protocols — see [Diagnostics: Stats](docs/diagnostics.md#16-stats-panel-packet-distribution) and [Diagnostics: Sniffer](docs/diagnostics.md#17-sniffer-raw-packet-log)
+- **Stats** (packet distribution) and **Sniffer** (raw packet log) in the Monitor section on both protocols — see [Diagnostics: Stats](docs/diagnostics.md) and [Diagnostics: Sniffer](docs/diagnostics.md)
 - **Enable / disable protocols** (App → Protocols): turn off protocols you don't use. A disabled protocol is hidden from the switcher, disconnected, and skipped by auto-connect, autostart, and sleep/wake recovery; with one protocol left, the switcher is hidden
 - **Firmware update toast**: **Don't remind me** silences the toast for that release (per protocol); it returns when a newer release ships
 - **Developer announcements**: a dismissible strip at the top of the window shows short notices from the maintainers (outages, "please update", news), fetched from a JSON file in this repo; plain text only, and nothing shows when offline. See [`docs/service-announcements.md`](docs/service-announcements.md)
@@ -248,7 +248,7 @@ These sections apply to both LoRa companion-radio stacks.
 - **Global message search**: `Ctrl/Cmd+Shift+F` searches stored messages across enabled protocols and opens the conversation at the hit — see [Chat: Finding messages](docs/chat.md#finding-messages)
 - **Unified inbox**: `Ctrl/Cmd+Shift+U` lists recent received messages across enabled protocols with protocol/text filters; copy, export, star, or delete locally — see [Chat: Unified inbox](docs/chat.md#unified-inbox)
 - **Scheduled send**: presets (15 minutes, 1 hour, tomorrow 09:00) or a custom time; stored on this device and sent only while the app is running and the radio can send (MeshCore MQTT-only waits for RF) — see [Chat: Scheduled send](docs/chat.md#scheduled-send)
-- **Scheduled Broadcasts**: up to twelve recurring one-packet messages to channels, MeshCore rooms, or RRC rooms (Chat → Broadcasts); timers run only while the app is open — see [Scheduled Broadcasts](docs/scheduled-broadcasts.md)
+- **Scheduled Broadcasts**: up to twelve recurring one-packet messages to channels or MeshCore rooms (Chat → Broadcasts); timers run only while the app is open — see [Scheduled Broadcasts](docs/scheduled-broadcasts.md)
 - **Conversation pin / archive**: pin conversations to the front of the chip list; archive to hide them — separate from message starring — see [Chat: Channels and conversations](docs/chat.md#channels-and-conversations)
 - **Conversation search**: toolbar search filters the open conversation (Escape clears); use with jump-to-date for local navigation — see [Chat guide](docs/chat.md)
 

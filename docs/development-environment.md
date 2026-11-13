@@ -861,7 +861,6 @@ The repo-root `flake.nix` supports `x86_64-linux`, `aarch64-linux`, and `aarch64
 | ----------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `nix run` / `nix run .#mesh-client` | Build the packaged app and launch it                                                            |
 | `nix build .#mesh-client`           | Build the app to `./result` (gitignored, along with `result-*`)                                 |
-| `nix build .#reticulum-sidecar`     | Build only `mesh-client-reticulum` (features `rns-stack,rns-ble,rns-rnode-tcp`)                 |
 | `nix develop`                       | Enter a dev shell with Node.js, pnpm, Rust, and Python, then run `pnpm install && pnpm run dev` |
 
 On Linux, `nix develop` opens an FHS environment that carries Electron's runtime libraries (GTK, NSS, Mesa, BlueZ D-Bus, udev, and others), so the regular `pnpm` workflow and pre-commit hooks work unchanged. On macOS it is a plain shell, because the downloaded Electron runs natively.
@@ -869,9 +868,7 @@ On Linux, `nix develop` opens an FHS environment that carries Electron's runtime
 How the flake stays in sync with the rest of the build:
 
 - **App version** is read from `package.json`, so `pnpm run release` needs no flake change.
-- **Reticulum stack** sources are fetched at the SHAs in `reticulum-sidecar/ratspeak-stack-pins.env`, and overlays are applied from `scripts/lib/ratspeak-overlay-apply-list.sh`. These are the same inputs `scripts/clone-ratspeak-stack.sh` uses. Pin bumps and new overlays need no `flake.nix` or `flake.lock` edit.
 - **Toolchain majors:** the flake uses the nixpkgs attributes `electron_<major>`, `pnpm_<major>`, and `nodejs_<major>`. These must match `devDependencies.electron`, `packageManager`, and `engines.node` in `package.json`. Building the flake fails with an Electron mismatch, and `scripts/flake-stack-pins.test.mjs` fails on any mismatch. When one of those majors changes, update the attribute in `flake.nix`. If the locked nixpkgs does not have the new attribute yet, run `nix flake update` and commit `flake.lock`.
-- **Pre-commit and PR CI** run `scripts/flake-stack-pins.test.mjs` whenever `flake.nix`, the pins file, `scripts/clone-ratspeak-stack.sh`, or the overlay apply list changes (`scripts/precommit-tests.mjs`). No CI job evaluates or builds the flake.
 
 ## Build troubleshooting
 

@@ -1,6 +1,5 @@
 # Scheduled Broadcasts
 
-Recurring one-packet mesh broadcasts (channels, MeshCore rooms, RRC rooms) driven by a
 renderer-mounted scheduler. The app must be running with the target radio connected.
 
 ## Product rules
@@ -45,7 +44,7 @@ changes (including Forget).
 
 ## Protocol parity
 
-Reticulum has no LXMF “channel”; RRC rooms are the broadcast surface. Gate pickers with
+Gate pickers with
 `ProtocolCapabilities` / identity `protocol.type`, never `protocol === 'meshcore'`.
 
 ## Timer accuracy

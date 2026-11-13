@@ -3,7 +3,6 @@
 End-user workflow (engines, MLX vs CPU, Metal helper messaging): [Catch up user guide](../ai-catch-up.md).
 
 Catch up summarizes the selected conversation without posting to the mesh. It supports
-Meshtastic and MeshCore channels/DMs, Reticulum LXMF DMs, MeshCore rooms and RRC rooms.
 The shared button and card provide unread/hour/loaded scopes, streamed text, cancellation,
 copy, regenerate, dismiss, actual message count, truncation disclosure and a settings link.
 Summaries are session memory only and should be checked against original traffic.
@@ -126,13 +125,12 @@ inclusive time bounds and exact conversation filters **before** each page’s li
 plus one overflow row). Optional `beforeAt`/`beforeId` cursors page older history until the user’s
 `maxCollectedMessages` ceiling. Channels follow keyed identities across slot/radio changes; unkeyed
 legacy rows use the existing current/null-radio fallback. DMs and rooms use peer/server and radio
-filters; Reticulum uses identity plus full destination hash; RRC uses canonical hub/room and prose
 kinds. MeshCore skew normalization occurs before range filtering. `idx_mc_msgs_room_ts` is additive
 and idempotent; no schema version change is needed.
 
 Chat and Rooms reuse their opening unread-divider snapshots while the divider is active.
 After the divider is cleared, summaries use the current persisted read watermark; hiding a
-divider must never reset the unread range to all history. Empty ranges skip inference. RRC persists canonical read
+divider must never reset the unread range to all history. Empty ranges skip inference.
 watermarks through `rrcReadWatermark.ts`, snapshots before selection clears unread and retains
 that boundary while caught-up updates the live watermark. An absent watermark can fall back to
 the live unread count when enough opening history exists. Without that history or a known
@@ -142,7 +140,7 @@ History/live overlap uses a multiset union: matching copies across sources count
 messages with identical timestamp/sender/body within either source retain their multiplicity.
 The card reports a fixed collected count from the selected range at request start, then the actual
 included count after main prepares the prompt. Neither count claims all historical traffic still exists;
-new arrivals can increase the live unread badge while a summary runs. Legacy future RRC read values
+new arrivals can increase the live unread badge while a summary runs.
 are repaired in storage once, without emitting change events from the read helper. The pending card never labels
 offered messages as included before main confirms coverage.
 Channel summaries apply the same default/custom weather patterns and marked-sender rules to fetched
@@ -235,7 +233,7 @@ selection of a removed or off-platform model becomes not-ready; the app never si
 downloads a replacement. Choose explicitly from the catalog. Model cards show factual metadata
 (name, parameter count, bytes, license, runtime) plus the soft recommendation line when set.
 
-RRC unread UI works with AI disabled. Room selection snapshots an observable opening boundary
+Room selection snapshots an observable opening boundary
 without marking the transcript read. The first incoming prose/whisper row carries a measured
 New messages divider; hub notices and self echoes do not anchor it. Without saved read state,
 the first actual alert-eligible arrival supplies the opening boundary. Later notices, self
@@ -249,14 +247,12 @@ another view read. Linux, macOS and Windows share this lifecycle.
 
 ## Release notes
 
-See [Catch up release notes](../release-notes/ai-catch-up.md), including RRC behavior that applies with AI disabled.
-
 ## Validation
 
 Focused tests cover default-off IPC behavior, URL/key policy, all adapters, fragmented streams,
 response caps, cancellation, prompt framing, exact per-protocol DB scopes, broadcast/channel
 remap history, verified installs, native pipe/exit/callback failures, renderer request correlation,
-RRC watermarks and accessible controls. Run `pnpm run check:pr` before opening/updating the PR.
+Run `pnpm run check:pr` before opening/updating the PR.
 Native compilation and real-model smoke tests are separate from deterministic unit tests.
 Windows runtime activation and hardware validation require an eligible, correctly packaged host.
 

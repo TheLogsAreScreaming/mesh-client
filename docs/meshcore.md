@@ -1,6 +1,6 @@
 # MeshCore in mesh-client
 
-MeshCore is one of three protocols in mesh-client (cyan **MC** on the rail protocol switcher), alongside Meshtastic and Reticulum. All three can stay connected at the same time. This guide is the operator view of the MeshCore tab set: connect a companion radio, manage contacts and channels, chat and DMs, Repeaters and Rooms, companion CLI, and security. Wire-level repeater and room detail lives in the development docs linked from each section — this page stays at operator depth.
+All three can stay connected at the same time. This guide is the operator view of the MeshCore tab set: connect a companion radio, manage contacts and channels, chat and DMs, Repeaters and Rooms, companion CLI, and security. Wire-level repeater and room detail lives in the development docs linked from each section — this page stays at operator depth.
 
 Related docs: [README — MeshCore Features](../README.md#meshcore-features), [Meshtastic vs MeshCore parity](meshcore-meshtastic-parity.md), [MeshCore troubleshooting](troubleshooting-meshcore.md), [Meshtastic](meshtastic.md), [Chat](chat.md), [EMCOMM](emcomm.md).
 

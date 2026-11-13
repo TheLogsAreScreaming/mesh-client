@@ -1,10 +1,8 @@
 # Meshtastic in mesh-client
 
-Meshtastic is one of three protocols in mesh-client (green **MT** on the rail protocol switcher), alongside MeshCore and Reticulum. All three stay connected at the same time, so you can switch tabs without dropping a radio. This guide is the operator view of the Meshtastic tab set: how to connect a radio, set up channels, message other nodes, manage the node list, configure modules, and use the advanced tools under **Radio**, **Modules**, **Administration**, and **Telemetry**.
+All three stay connected at the same time, so you can switch tabs without dropping a radio. This guide is the operator view of the Meshtastic tab set: how to connect a radio, set up channels, message other nodes, manage the node list, configure modules, and use the advanced tools under **Radio**, **Modules**, **Administration**, and **Telemetry**.
 
 Panels are grouped into rail sections: **Chat**, **Network**, **Map**, **Monitor**, **Device**, then **Incident** and **App**. Every panel is also in the Ctrl/Cmd+K launcher, which can search individual settings as well. Meshtastic uses **Nodes** (where MeshCore uses **Contacts**), **Modules** (where MeshCore uses **Repeaters**), and has **Security** and **Administration** tabs with Meshtastic-specific content.
-
-Related docs: [README — Meshtastic Features](../README.md#meshtastic-features), [Developer notes: Meshtastic](development/meshtastic.md), [Diagnostics reference](diagnostics.md), [Troubleshooting — Meshtastic](troubleshooting.md#meshtastic), [MeshCore](meshcore.md), [Reticulum](reticulum.md), [Meshtastic vs MeshCore parity](meshcore-meshtastic-parity.md).
 
 ---
 
@@ -37,7 +35,6 @@ The **Connection Type** selector on **Device → Connection** chooses how mesh-c
 - Bluetooth uses the sidecar GATT stack on all platforms. Startup auto-reconnect can run without a user gesture.
 - On macOS, a radio that shows as "AdaDFU" should be paired first in System Settings → Bluetooth to reveal its Meshtastic name.
 - On Windows the app checks pairing and pairs the radio itself when needed, prefilling the Meshtastic PIN (`123456`). On Linux an unpaired radio asks for a PIN; use `123456` for Meshtastic. If pairing is stuck, use **Remove & Re-pair Device**.
-- A radio can be owned by only one protocol at a time. If it is already connected to MeshCore or Reticulum, disconnect it there first.
 
 ### USB serial
 
@@ -132,7 +129,6 @@ Open a DM from **Nodes** (node detail → **Message**) or from a channel message
 - **Automatic resend**: a failed message is resent up to 3 times (after 15 seconds, 1 minute, then 3 minutes). The bubble shows a **Retrying (n/max)** countdown with **Cancel retry**.
 - **Resend message** stays available on the bubble afterwards for a manual resend.
 - A DM tab can be closed with **Close DM tab**. The DM info header shows the peer's battery, last heard, and SNR.
-- Long messages are split into `[N/T]` chunks (at most 9) automatically. This is Meshtastic and Reticulum behavior; MeshCore is single-packet.
 - Reactions, replies, starring, link previews, export, drafts, and the F1–F12 macro bar are shared with the other protocols; see [Developer notes: Chat](development/chat.md) and [Chat guide](chat.md).
 
 ---
@@ -229,8 +225,6 @@ Only **Key verified** means a person confirmed the key. Details are in **How key
 - Use **Send**, **Send Ctrl+C**, **Clear**, and **Close shell**. The transcript stays in memory only and is discarded when you disconnect or close the app; leaving the Administration tab closes the session.
 - Lost output frames are reported in the panel, and older output is dropped to keep the transcript small.
 
-Reticulum has its own separate **Remote** tab (rnsh); this one is Meshtastic only.
-
 ### XMODEM file transfer
 
 **Device → Radio → XMODEM file transfer** transfers files to and from the connected radio's firmware. It is **local radio only**: the section is hidden while **Configure node** targets a remote node, and the buttons are disabled while disconnected.
@@ -274,7 +268,7 @@ Heard beacons list under **Heard beacons** with the offered channel, region, pre
 
 ### Cayenne LPP charts
 
-**Device → Telemetry → Cayenne LPP sensors** charts Cayenne Low Power Payload packets (CAYENNE_APP) sent by sensor nodes. This is **Meshtastic only**: it is gated by the Meshtastic-only `hasCayenneTelemetry` capability and does not apply to MeshCore or Reticulum.
+**Device → Telemetry → Cayenne LPP sensors** charts Cayenne Low Power Payload packets (CAYENNE_APP) sent by sensor nodes.
 
 - Pick a **Sensor node**, then read one chart per decoded kind: temperature, humidity, barometric pressure, illuminance, GPS position, analog and digital inputs and outputs, accelerometer, gyrometer, power, energy, distance, and more.
 - This is session history only; it is not saved.

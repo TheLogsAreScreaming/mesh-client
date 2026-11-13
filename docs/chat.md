@@ -1,6 +1,6 @@
 # Chat
 
-The **Chat** tab is where you read and send messages on Meshtastic, MeshCore, and Reticulum. This guide covers what Chat is on each protocol, how conversations are organized, the composer, searching and the unified inbox, scheduled send, and how to read delivery status honestly. For developer internals (storage, ingest, dedup), see [Chat panel (developer reference)](development/chat.md). For stuck or missing messages, see [Troubleshooting — Chat, nodes, and notifications](troubleshooting.md#chat-nodes-and-notifications).
+This guide covers what Chat is on each protocol, how conversations are organized, the composer, searching and the unified inbox, scheduled send, and how to read delivery status honestly. For developer internals (storage, ingest, dedup), see [Chat panel (developer reference)](development/chat.md). For stuck or missing messages, see [Troubleshooting — Chat, nodes, and notifications](troubleshooting.md#chat-nodes-and-notifications).
 
 ---
 
@@ -8,15 +8,12 @@ The **Chat** tab is where you read and send messages on Meshtastic, MeshCore, an
 
 Chat is one shared layout with protocol-specific plumbing underneath. Protocol accent colors differ; the controls are the same.
 
-| Protocol   | What you chat in                                                       | Message size                                                                  |
-| ---------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Meshtastic | Channels and direct messages (DMs)                                     | Long text is split into numbered parts automatically                          |
-| MeshCore   | Channels and direct messages. Rooms (BBS) have their own **Rooms** tab | One radio packet per message; text that does not fit is blocked, never split  |
-| Reticulum  | LXMF direct messages only. Hub rooms live on the separate **RRC** tab  | Large text limit; no packet-style splitting (attachments and voice memos too) |
+| Protocol   | What you chat in                                                       | Message size                                                                 |
+| ---------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Meshtastic | Channels and direct messages (DMs)                                     | Long text is split into numbered parts automatically                         |
+| MeshCore   | Channels and direct messages. Rooms (BBS) have their own **Rooms** tab | One radio packet per message; text that does not fit is blocked, never split |
 
-On Reticulum, Chat has no channel chips. Pick a contact, paste a 32-character destination hash or an `lxmf://` address, or open a peer from the Nodes tab. See [Reticulum — Chat (LXMF)](reticulum.md#chat-lxmf) and [Reticulum — RRC](reticulum.md#rrc-reticulum-relay-chat).
-
-Meshtastic and MeshCore can run at the same time as Reticulum. Chat shows the conversations of whichever protocol tab is active; unread badges and passive toasts tell you when another protocol hears traffic.
+Chat shows the conversations of whichever protocol tab is active; unread badges and passive toasts tell you when another protocol hears traffic.
 
 ---
 
@@ -28,7 +25,6 @@ Channels appear as chips across the top, and direct messages in their own strip 
 
 - Scroll controls show how many unread conversations sit above or below, and let you reveal one without selecting it or marking it read.
 - **All channels** and **All direct messages** open a searchable picker (**Find a channel**, **Find a conversation**) that also shows the unread count.
-- On Reticulum, DM chips wrap like channel chips; long peer names wrap, and avatars, unread badges, mute, and close stay on each chip.
 
 Unread counts stay on a conversation chip even while it is selected until you have actually read to the bottom. If the conversation holds an unread MECP report, the chip shows a shield icon colored by the most severe one (see [EMCOMM](emcomm.md)). A **New messages** divider marks where unread begins, and **Jump to Unread** / **Jump to Latest** scroll to either end.
 
@@ -61,7 +57,7 @@ Right-click a MeshCore channel chip (or press the menu key, or Shift+F10 with th
 
 Both ask for confirmation, and neither runs if the radio or the channel in that slot changed while the confirmation was open.
 
-Meshtastic channels are managed on the **Radio** tab, not from Chat. Reticulum DM chips use the close button to remove a conversation tab.
+Meshtastic channels are managed on the **Radio** tab, not from Chat.
 
 ### Catching up
 
@@ -96,7 +92,6 @@ Limits are counted in bytes on the wire, so non-Latin scripts and emoji use more
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | Meshtastic | 228 bytes of text (a reply uses 5 more bytes of the budget)                                                                        | Split into up to 9 parts, each prefixed `[1/N]`, `[2/N]`       |
 | MeshCore   | 160-byte wire packet. A channel message loses your display name plus a colon-space prefix; a DM keeps all 160; a room post loses 4 | Blocked. The send button is disabled and a notice explains why |
-| Reticulum  | 4096 for the composer                                                                                                              | Not split in Chat                                              |
 
 MeshCore does not split because busy repeaters often drop numbered parts. Multi-part messages from other clients still reassemble when received. Sending several MeshCore messages close together also shows a dismissible warning that repeaters may drop messages sent too fast; it does not block the send.
 
@@ -105,7 +100,6 @@ MeshCore does not split because busy repeaters often drop numbered parts. Multi-
 - Spellcheck is on. Right-click a misspelled word for replacements.
 - **Emoji** inserts an emoji: the system emoji panel on macOS and Windows, an inline picker on Linux.
 - **Share location** sends your current GPS or static position as a chat message.
-- Reticulum DMs add **Attach file or photo**, a voice-memo recorder, and **Share as paper** / **Scan paper** for encrypted offline LXMF messages. Attachments are limited per message; see the tooltip on the attach button for the exact count and size.
 - MeshCore Giphy GIF send appears only when **MeshCore Open compatibility** is enabled under **Radio**. See [MeshCore / Meshtastic parity](meshcore-meshtastic-parity.md).
 
 ### F1–F12 macros
@@ -169,7 +163,7 @@ The inbox lists **received** messages from every enabled protocol, newest first,
 | **Star**           | Adds to the same Starred list used in Chat. Already-starred messages are skipped.                        |
 | **Delete locally** | Asks for confirmation, then removes the message from this inbox.                                         |
 
-**Delete locally** does not delete Meshtastic or MeshCore chat history: those messages are only hidden from the inbox and remain in their conversations. For Reticulum, the message is also removed from the saved Reticulum history. Nothing is ever deleted from a radio or sent to other people. If the change cannot be saved, nothing is removed.
+**Delete locally** does not delete Meshtastic or MeshCore chat history: those messages are only hidden from the inbox and remain in their conversations. Nothing is ever deleted from a radio or sent to other people. If the change cannot be saved, nothing is removed.
 
 ---
 
@@ -188,7 +182,6 @@ Rules:
 - The time must be at least 5 seconds in the future and within the next 30 days.
 - Scheduled messages are stored on this computer and survive a restart. **The app must be running** at the scheduled time; nothing is sent from a closed app.
 - At the time, the message sends only if a radio or stack is connected and ready. If it is not, the message waits and tries again once sending is possible (the outbox's normal 24-hour limit counts from the scheduled time).
-- Scheduling works from the Chat composer only (not Rooms or RRC). It works from any tab, so you do not need to keep Chat open.
 - Long text that would be split is split when you schedule it, and each part is queued.
 
 The pending message appears in the conversation as **Scheduled for time**. From there you can **Edit** (change the text and time) or **Send now**. Messages that were split into parts can be rescheduled but not reworded.
@@ -212,7 +205,7 @@ Hover or focus a message to reveal its action row (or turn on **Always show mess
 | **Send signal report** | Replies with reception stats for messages heard over RF or Bluetooth; unavailable otherwise.        |
 | Translate              | Appears when offline translation is enabled in **App → Translation**.                               |
 
-Other bubble features: hop badges, link previews (HTTPS only), inline images, structured cards for signal reports, and weather posts. A toolbar toggle shows only weather posts in the selected channel, and its inline settings can hide them from the normal channel view, add a pattern, or mark a sender as a weather sender. Hidden weather posts do not add unread badges or play sounds. DMs are never filtered, and Reticulum (DM-only) has no weather view.
+Other bubble features: hop badges, link previews (HTTPS only), inline images, structured cards for signal reports, and weather posts. A toolbar toggle shows only weather posts in the selected channel, and its inline settings can hide them from the normal channel view, add a pattern, or mark a sender as a weather sender. Hidden weather posts do not add unread badges or play sounds.
 
 **Export chat** in the toolbar saves the current conversation as a `.txt` file through a Save dialog.
 
@@ -245,7 +238,6 @@ What counts as an acknowledgement differs by protocol:
 
 - **Meshtastic:** a channel or broadcast message is **Delivered** when the mesh sends back an ACK. A Wi-Fi/TCP link to your own radio working does not imply a mesh ACK.
 - **MeshCore:** a DM is acknowledged by the recipient. A channel message is a flood with no delivery ACK, so Chat shows **Heard by** repeaters instead: the repeaters confirmed to have forwarded your own packet, counted for about two minutes after sending. Treat "Heard by 0" as unknown, not as proof of loss.
-- **Reticulum:** statuses are explicit about where the message is: **Sending…**, **Sent (awaiting peer receipt)**, **Queued at propagation node**, **Stored at propagation node (not yet delivered to peer)**, **Kept in your local propagation inbox (not delivered to peer)**, **Paper**, **Delivered**, or **Failed to send**. A path being reachable (**Path reachable**) means a route is known, not that the message was delivered. See [Reticulum — Chat (LXMF)](reticulum.md#chat-lxmf).
 
 A message stored at a propagation node is waiting for the recipient to pick it up; it is not **Delivered**.
 
@@ -253,16 +245,14 @@ A message stored at a propagation node is waiting for the recipient to pick it u
 
 ## Per-protocol differences
 
-| Area                    | Meshtastic                           | MeshCore                                                       | Reticulum                                         |
 | ----------------------- | ------------------------------------ | -------------------------------------------------------------- | ------------------------------------------------- |
-| Conversations           | Channels and DMs                     | Channels and DMs; Rooms on the **Rooms** tab                   | LXMF DMs only; hub rooms on **RRC**               |
-| Message size            | 228 bytes, auto-split to 9 parts     | One packet (about 160 bytes on the wire); no splitting         | 4096 in the composer; attachments and voice memos |
-| Channel delivery ACK    | Yes                                  | No (flood); **Heard by** repeaters instead                     | Not applicable (no channels)                      |
-| Auto resend             | Yes                                  | DMs yes; channel sends no                                      | Yes                                               |
-| Remove / clear channel  | Manage channels on the **Radio** tab | Chip menu: **Remove channel**, **Clear messages**              | Close a DM chip                                   |
-| History catch-up        | **Catch up from Store & Forward**    | **Sync chats from radio**                                      | Propagation nodes deliver stored messages         |
-| Extra composer features | Share location                       | Share location; Giphy GIF with **MeshCore Open compatibility** | Attach file or photo, voice memo, paper messages  |
-| MQTT-only sending       | Allowed                              | Not sent (no RF path); queued and scheduled messages wait      | Not applicable                                    |
+| Message size | 228 bytes, auto-split to 9 parts | One packet (about 160 bytes on the wire); no splitting | 4096 in the composer; attachments and voice memos |
+| Channel delivery ACK | Yes | No (flood); **Heard by** repeaters instead | Not applicable (no channels) |
+| Auto resend | Yes | DMs yes; channel sends no | Yes |
+| Remove / clear channel | Manage channels on the **Radio** tab | Chip menu: **Remove channel**, **Clear messages** | Close a DM chip |
+| History catch-up | **Catch up from Store & Forward** | **Sync chats from radio** | Propagation nodes deliver stored messages |
+| Extra composer features | Share location | Share location; Giphy GIF with **MeshCore Open compatibility** | Attach file or photo, voice memo, paper messages |
+| MQTT-only sending | Allowed | Not sent (no RF path); queued and scheduled messages wait | Not applicable |
 
 Pin, archive, mute, star, search, the unified inbox, macros, and scheduled send are available on all three.
 
@@ -274,7 +264,6 @@ Pin, archive, mute, star, search, the unified inbox, macros, and scheduled send 
 - [Settings and keyboard shortcuts](settings.md) — launcher, App and Radio tabs, shortcut table
 - [Maps](maps.md) — shared locations and node positions on the Map
 - [Notification sounds](notification-sounds.md) — tones, volume, per-event presets
-- [Reticulum in mesh-client](reticulum.md) — LXMF Chat, RRC, propagation nodes
 - [Localization & Languages](localization.md)
 - [Troubleshooting — Chat, nodes, and notifications](troubleshooting.md#chat-nodes-and-notifications)
 - [Chat panel (developer reference)](development/chat.md)

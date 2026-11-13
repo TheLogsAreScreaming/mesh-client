@@ -23,15 +23,14 @@ On a database read failure, keep the current state and log the failure; do not p
 
 The `file://` → `mesh-client://renderer` migration seeds SQLite durables before switching the built renderer origin, both for `pnpm start` and installed apps. It also copies the remaining localStorage preferences and verifies the imported values. Explicit Vite/E2E URLs do not trigger this cutover. Keep the old origin storage and migration export available for recovery. See the [startup matrix and verification steps](renderer-origin-coi.md) for each launch mode.
 
-This migration moves chat/Rooms/RRC last-read watermarks, MECP blocks and TAK relay preferences to `app_settings`. Incidents use `emergency_incidents`, `emergency_incident_tombstones`, and the singleton `emergency_incident_storage` import marker. The marker is written in the same transaction as the seed, including for an empty store, so a later retry or old export cannot resurrect cleared incidents.
+Incidents use `emergency_incidents`, `emergency_incident_tombstones`, and the singleton `emergency_incident_storage` import marker. The marker is written in the same transaction as the seed, including for an empty store, so a later retry or old export cannot resurrect cleared incidents.
 
 `incidentStore` retains `mesh-client:incidents` in the legacy version-3 Zustand envelope as a recovery cache. Pre-v3 incident imports mark existing rows seen, preserving the standing-alert upgrade behavior. `seedIncidentsOn` imports only before durable initialization; subsequent hydration reads SQLite even when localStorage is empty or stale. Incident rows keep queryable status/time columns and their complete event history as a JSON payload. IPC snapshots and legacy imports are limited to 16 MiB of UTF-8 JSON; oversized input fails without truncating records, replacing the database or marking an import complete. Existing row and event caps still apply; open real MAYDAY/URGENT rows are never evicted to satisfy the soft row cap.
 
 Renderer preferences now also have a canonical `rendererPreferences` map in `app_settings`.
 It covers the complete app-settings object (including fields owned by other panels), remembered
-devices, MQTT metadata/profiles/presets, Reticulum client preferences, RRC nickname/hub/room
 choices, maps, appearance, chat macros, watched nodes and other browser preferences. Existing
-SQLite domain stores and native Reticulum configuration keep their own owners. Private identity
+Private identity
 material, passwords, channel PSKs, encrypted backup slots, transient diagnostics and control
 journals are excluded. The two backup indexes rebuild from surviving readable secure slots at
 startup, independently of a connected device or open panel.

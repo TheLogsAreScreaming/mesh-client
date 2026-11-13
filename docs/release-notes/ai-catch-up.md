@@ -13,8 +13,6 @@
 - Add an App settings summary timeout (30–1800 seconds), including model loading. Downloaded models can take several minutes.
 - Keep local packaging working when the optional Apple AI helper is absent. Exclude the unusable Windows OS AI helper from NSIS installers.
 
-## RRC changes, including when AI is disabled
-
 - Show a New messages divider and jump to the first unread incoming message after history loads.
 - Anchor first-time unread rooms to the actual unread arrival, so later hub notices, self messages and blur races cannot hide the divider.
 - Keep unread badges visible for the selected room while reading older messages.

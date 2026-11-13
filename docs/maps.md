@@ -1,6 +1,6 @@
 # Maps and offline maps
 
-The **Map** tab shows node positions, emergency incidents, weather forecasts, sensor values, and (on Reticulum) RMAP discovery interfaces on a shared basemap. This guide covers basemaps, overlays, custom tile sources, offline caching, your own position, SAR tools, and the protocol differences that matter on the map. For wilderness / no-WAN QA, see [Troubleshooting — Map tab without internet](troubleshooting.md#map-tab-without-internet-offline--no-wan). Developer tile-cache detail lives in [Offline maps](development/offline-maps.md).
+This guide covers basemaps, overlays, custom tile sources, offline caching, your own position, SAR tools, and the protocol differences that matter on the map. For wilderness / no-WAN QA, see [Troubleshooting — Map tab without internet](troubleshooting.md#map-tab-without-internet-offline--no-wan). Developer tile-cache detail lives in [Offline maps](development/offline-maps.md).
 
 ---
 
@@ -117,16 +117,10 @@ Open MECP incidents with coordinates appear under **Emergency incidents**. See [
 
 ---
 
-## Reticulum Map differences
-
-On the Reticulum tab the Map is a **Discovery map** for opt-in **RMAP v4** interfaces your stack has heard (local view), not the LoRa node-position map.
-
 - Filter by interface kind (LoRa, Backbone, I2P, TCP, Other).
 - Markers need GPS on the announcing interface; your App GPS position can show as self.
 - There are no Meshtastic/MeshCore movement trails or waypoints on this view.
 - **Global map** opens [rmap.world](https://rmap.world/). Publish settings live under Network → RMAP.
-
-Full behaviour: [Reticulum — Map / RMAP](reticulum.md).
 
 ---
 

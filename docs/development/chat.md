@@ -73,8 +73,8 @@ unknown-provenance messages do not expose the action.
 The action sends one reply to the same DM peer as the conversation (`resolveChatDmPeer`),
 or to the message channel when it is not a DM, and restores the saved flood-scope path.
 A direct message whose peer cannot be resolved is not sent, so a MeshCore DM stored with
-`channel: -1` and no `to` cannot fall through to public channel 0. Reticulum uses the
-normalized LXMF peer. The action preserves the composer draft and selected reply, and
+`channel: -1` and no `to` cannot fall through to public channel 0.
+The action preserves the composer draft and selected reply, and
 blocks duplicate clicks during a send.
 Reports use message-level SNR/RSSI/hops, including legitimate zero values. MeshCore channel
 routes and signal measurements are recovered on demand from local RF captures only after
@@ -88,12 +88,11 @@ with partial reports and 1/2/3-byte hashes rendered by `hopReportParse.ts` as hu
 
 Meshtastic reports use local packet measurements and RF reply IDs. Hybrid RF/MQTT merges
 retain the local RF measurements in either arrival order and never substitute a gateway's
-signal or hop count. Reticulum replies use LXMF message hashes. The sidecar binds
-opportunistic LXMF messages to an exact locally captured, destination-encrypted RX frame on
+signal or hop count. The sidecar binds
 a configured RF/BLE interface, carrying `rx_radio_transport` and available SNR/RSSI/hops
 through live and catch-up ingest. A bounded frame index preserves the first observed radio
 measurements. Missing/lagged captures leave the action unavailable. Cached peer-route labels
-are display hints and never qualify a Reticulum message for this action. Direct link,
+Direct link,
 resource and propagated delivery remain unavailable until those delivery paths expose
 per-message ingress evidence. These measurements are session-only and are not inferred for
 restored database history.
@@ -108,11 +107,11 @@ not assert a LoRa path.
 ## Chat display order and radio recovery
 
 **Order chats** opens the same ordering dialog for channel pills and direct messages on all
-protocols, MeshCore Rooms, and Reticulum RRC rooms. Drag a handle with a pointer or touch, use
+Drag a handle with a pointer or touch, use
 Up/Down on a focused handle, or use the arrow buttons. **Sort A–Z** orders by displayed name;
 **Default order** restores the surface's original order. Save applies the order; Cancel/Escape
 leaves it unchanged. Preferences persist through the renderer-preference map, scoped by protocol,
-radio/self id and surface (RRC uses the hub). This changes presentation only, never radio channel
+This changes presentation only, never radio channel
 indices, message destinations, room membership, favorites or credentials. Temporarily absent
 entries retain their slots while visible entries are reordered.
 

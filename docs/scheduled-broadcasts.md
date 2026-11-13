@@ -1,7 +1,6 @@
 # Scheduled Broadcasts
 
 Use the **Broadcasts** sub-tab under Chat to schedule up to twelve recurring one-packet
-messages (B1–B12) to Meshtastic or MeshCore channels, MeshCore rooms, or RRC rooms.
 
 ## Requirements
 

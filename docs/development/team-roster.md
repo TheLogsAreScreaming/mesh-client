@@ -6,16 +6,14 @@ check-in / Unit-ID packet addressing over RF is deferred (Phase 1C).
 ## How to use (operator workflow)
 
 1. **Create a Contact Card** for each teammate (Network → Contact Cards), or use **Add to
-   Contact Card** from a LoRa node / Reticulum peer detail.
-2. **Link every device** that person may use (handset, second radio, repeater, Reticulum peer,
    etc.). The card is the durable person hub across protocols.
-3. For an event or activity, open **Team Roster** → **Add from Contact Cards** (or **Create on
+2. For an event or activity, open **Team Roster** → **Add from Contact Cards** (or **Create on
    roster**), then **select only the devices in use** for that event. You cannot add a whole card
    without choosing at least one device.
-4. On the roster row, **Add device** / **Manage devices** / per-device **Remove** updates the
+3. On the roster row, **Add device** / **Manage devices** / per-device **Remove** updates the
    event set without unlinking hardware from the Contact Card.
-5. **Team message** fans out DMs using each member’s **last-active event device** first (roster
-   links only). If that protocol cannot send (disconnected / LXMF unavailable), it tries other
+4. **Team message** fans out DMs using each member’s **last-active event device** first (roster
+   links only).
    rostered devices for that person in newest-heard order.
 
 ## Product rules
@@ -32,13 +30,11 @@ check-in / Unit-ID packet addressing over RF is deferred (Phase 1C).
 - A card may hold **multiple links per protocol**; a durable node key still belongs to at most
   one card.
 - At most **one** `isSelf` member (cleared on upsert in SQLite).
-- Distinct from MeshCore radio contacts, Reticulum `is_contact`, favorites, Contact Groups, and
-  RRC room rosters.
 
 ## Presence & last-active
 
-- Resolve each `TeamMemberLink` against live `nodeStore` maps and Reticulum peer/contact/history
-  hashes (`useTeamRosterLiveData` + `contactPresence.ts`).
+hashes (`useTeamRosterLiveData` + `contactPresence.ts`).
+
 - Status uses `getNodeStatus` with per-protocol stale/offline thresholds from radio capabilities.
 - **Contact Card** presence: all links. **Team Roster** presence / fan-out:
   `resolveMemberPresence(..., { rosterLinksOnly: true })`.
@@ -56,9 +52,6 @@ check-in / Unit-ID packet addressing over RF is deferred (Phase 1C).
 | ---------- | ------------------------------------------------------------------------ |
 | Meshtastic | Decimal node number string                                               |
 | MeshCore   | 64-hex pubkey (lowercase) when known; otherwise decimal node id (no key) |
-| Reticulum  | 32-hex destination hash (lowercase)                                      |
-
-Do not use Reticulum’s synthetic uint32 alone as the durable identity.
 
 ## Schema notes
 

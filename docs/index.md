@@ -66,7 +66,7 @@ Companion radios over BLE, USB serial, or TCP. Contacts, channels, Rooms (BBS), 
 
 ![Repeaters](images/repeaters.png)
 
-![MECP emergency compose](images/MECP.png)
+![MECP emergency compose](images/mecp.png)
 
 </div>
 

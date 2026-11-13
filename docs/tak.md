@@ -1,6 +1,6 @@
 # TAK gateway (CoT)
 
-The **TAK** tab turns mesh-client into a Cursor on Target (CoT) gateway. It shows mesh nodes on the tactical maps of ATAK, WinTAK, and iTAK, and can pass chat between those apps and your radios. It works on Meshtastic, MeshCore, and Reticulum, and it can also relay the same positions to a remote OpenTAKServer, FreeTAKServer, or TAK Server.
+The **TAK** tab turns mesh-client into a Cursor on Target (CoT) gateway. It shows mesh nodes on the tactical maps of ATAK, WinTAK, and iTAK, and can pass chat between those apps and your radios.
 
 This guide is for operators. For problems, see [Troubleshooting — TAK (CoT gateway)](troubleshooting.md#tak-cot-gateway). For code, see [TAK gateway (developer map)](development/tak.md).
 
@@ -8,7 +8,7 @@ This guide is for operators. For problems, see [Troubleshooting — TAK (CoT gat
 
 ## What TAK does
 
-The **TAK** tab sits in the **Network** rail section, after **Remote**. It is available on Meshtastic, MeshCore, and Reticulum, and it feeds every protocol at once, whichever tab is open.
+The **TAK** tab sits in the **Network** rail section, after **Remote**.
 
 | Feature                       | What it does                                                                                                                                |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -25,8 +25,6 @@ The **TAK** tab sits in the **Network** rail section, after **Remote**. It is av
 **What is relayed.** Positions come from:
 
 - Meshtastic and MeshCore nodes heard within their protocol's online window.
-- Reticulum RMAP-discovered interfaces that have coordinates.
-- Your own Reticulum position, when a static GPS position is set.
 
 Positions are re-sent every 5 minutes so markers do not go stale in ATAK.
 
@@ -235,9 +233,6 @@ Tick **Direct messages** under a radio's messaging section. Every companion that
 
 - A MeshCore companion in its contacts.
 - Any Meshtastic node.
-- A Reticulum LXMF peer whose delivery address is known.
-
-Reticulum has its own **Reticulum messaging in ATAK** section for this. An LXMF peer with no position appears at 0, 0 only once mesh-client has a conversation with it, so ATAK's contact list does not fill with every peer heard.
 
 **Sending.** The message goes out from this radio as a direct message, prefixed with the sender's callsign, and shows in Chat like any other.
 
@@ -284,8 +279,6 @@ Use **Add filter** to restyle nodes by name, node type, protocol, or a combinati
 Use **Test a node name**, **Node type to test**, and **Protocol to test** to see which filter applies. Press **Save styles** to apply (**Saved and applied**).
 
 ### Repeater and room server icons
-
-Give repeaters (MeshCore repeaters, Meshtastic routers, Reticulum interfaces) and room servers each an icon from an ATAK icon set:
 
 - **Icon for repeaters and routers** and **Icon for room servers** take a path in the form `<set UID>/<group>/<file>`.
 - **GeoOps icon for repeaters and routers** and **GeoOps icon for room servers** pick from the GeoOps WildFire presets that MeshCore TAK Bridge offers (Repeater, Repeater Mobile Relay, Ranger Station, and others).
@@ -344,4 +337,3 @@ Quick checks first:
 - [Troubleshooting — TAK (CoT gateway)](troubleshooting.md#tak-cot-gateway)
 - [Features](features.md) — TAK Server (CoT Gateway) summary
 - [TAK gateway (developer map)](development/tak.md)
-- [Reticulum](reticulum.md) — LXMF peers that ATAK can message

@@ -151,7 +151,6 @@ When the owner enables Windows signing, use this checklist to verify that work:
       builds free of release credentials.
 - [ ] Once signing is enabled for official Windows releases, fail that job early when its required
       signing configuration is missing so a provider failure cannot silently ship unsigned files.
-- [ ] Sign the application, bundled executable components (including the Reticulum sidecar), and
       both x64 and arm64 NSIS installers. Check the final packaged payload, not just an intermediate
       build directory.
 - [ ] Before upload, verify Authenticode signatures, expected publisher, and timestamp on both

@@ -24,7 +24,6 @@ This page records the decision so contributors do not re-propose app-level DB en
 **Already protected separately (keep doing this):**
 
 - MeshCore / Meshtastic private-key backups, MQTT material, and room/repeater passwords via `safeStorage` → SQLite `secure_secrets` when strong OS key storage is available (see [Key backup and cryptography](key-backup-and-crypto.md)). That path stores **ciphertext in SQLite**, not plaintext passwords — with important exceptions below.
-- Reticulum identity files and the optional identity vault under `reticulum/` (sidecar-owned; not covered by a hypothetical DB toggle)
 
 **Credential exceptions (not “ciphertext only”):**
 
@@ -38,9 +37,7 @@ Compatibility copies live in **browser storage** (`localStorage`), not in the SQ
 - Channel chat and a small number of DMs
 - Node lists, path/GPS history, emergency incident text
 - MECP received audit log
-- LXMF attachment files under `userData/reticulum/attachments` (and `attachments/quarantine` for risky names), written by `src/main/reticulum-attachment-store.ts` — plaintext files beside the database, not rows inside it
 - **Export Database** (`db:export`): ordinary plaintext SQLite backup of `mesh-client.db` only
-- **Export for Developer**: a ZIP that includes that same DB snapshot **plus** app/MECP logs and selected Reticulum artifacts (`reticulum/config`, stack JSON with mnemonic redacted, etc.) — share only on a **private channel** when a maintainer asks ([Troubleshooting](troubleshooting.md))
 
 Most mesh traffic is not highly private. A few DMs do not justify a second crypto subsystem with key-loss failure modes.
 
@@ -98,7 +95,6 @@ Honest always-encrypted SQLite would require replacing built-in `node:sqlite` (`
 - Do not auto-recreate a DB when decrypt or keychain fails (that would destroy data).
 - Do not imply Mesh Client replaces OS full-disk encryption.
 - Do not encrypt exports “for free” without a separate product decision (exports are intentional plaintext handoffs for private diagnosis).
-- Do not claim Reticulum `config/identity`, attachments, or logs are covered by a future DB toggle — they are separate surfaces if ever revisited.
 - Do not add “encrypted at rest but decrypt for support” without a transferable recovery key maintainers can actually use.
 
 ## When to revisit
